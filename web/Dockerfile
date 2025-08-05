@@ -19,8 +19,8 @@ WORKDIR /app
 COPY --from=build /app/dist /app/dist
 COPY package*.json ./
 
-# Install production dependencies only
-RUN npm install --omit=dev
+# Install all dependencies (vite is needed for preview command)
+RUN npm install
 
 EXPOSE 3000
 
