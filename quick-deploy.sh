@@ -5,6 +5,9 @@
 
 set -e
 
+# 全局变量
+PROJECT_DIR="/root/wedding-master"
+
 # 颜色定义
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -373,9 +376,53 @@ get_server_ip() {
     log_info "服务器 IP: $SERVER_IP"
 }
 
+# 全局变量
+PROJECT_DIR="/root/wedding-master"
+
+# 克隆项目代码
+clone_project() {
+    log_info "克隆项目代码..."
+    
+    # 项目目录已在全局变量中定义
+    log_info "项目目录: $PROJECT_DIR"
+    
+    # 如果目录已存在，先备份
+    if [[ -d "$PROJECT_DIR" ]]; then
+        log_warning "项目目录已存在，创建备份..."
+        mv "$PROJECT_DIR" "${PROJECT_DIR}_backup_$(date +%Y%m%d_%H%M%S)"
+    fi
+    
+    # 克隆项目
+    log_info "从 GitHub 克隆项目..."
+    # 注意：请将下面的仓库地址替换为实际的项目仓库地址
+    # 如果项目是私有仓库，需要配置 SSH 密钥或使用 HTTPS 认证
+    if git clone https://github.com/your-username/wedding-client.git "$PROJECT_DIR" 2>/dev/null || \
+       git clone https://gitee.com/your-username/wedding-client.git "$PROJECT_DIR" 2>/dev/null; then
+        log_success "项目代码克隆成功"
+    else
+        log_warning "Git 克隆失败，尝试创建基本项目结构..."
+        mkdir -p "$PROJECT_DIR"
+        cd "$PROJECT_DIR"
+        
+        # 如果克隆失败，提示用户手动上传项目文件
+        log_error "无法自动获取项目代码，请手动执行以下步骤："
+        echo "1. 将项目文件上传到服务器的 $PROJECT_DIR 目录"
+        echo "2. 确保目录包含 docker-compose.yml、server/ 和 web/ 目录"
+        echo "3. 重新运行此脚本"
+        exit 1
+    fi
+    
+    # 切换到项目目录
+    cd "$PROJECT_DIR"
+    log_info "当前工作目录: $(pwd)"
+}
+
 # 创建环境配置
 setup_environment() {
     log_info "创建环境配置文件..."
+    
+    # 确保在项目目录中
+    cd "/root/wedding-master"
     
     # 创建 server .env
     mkdir -p server
@@ -447,22 +494,47 @@ setup_swap() {
     log_success "2G 交换文件创建并启用成功。"
 }
 
+
+
 # 部署应用
 deploy_application() {
     log_info "部署应用服务..."
     
+    # 确保在项目目录中执行
+    cd "$PROJECT_DIR" || {
+        log_error "无法切换到项目目录: $PROJECT_DIR"
+        exit 1
+    }
+    log_info "当前工作目录: $(pwd)"
+    
+    # 检查必要文件是否存在
+    if [[ ! -f "docker-compose.yml" ]]; then
+        log_error "未找到 docker-compose.yml 文件"
+        exit 1
+    fi
+    
+    if [[ ! -f "server/Dockerfile" ]]; then
+        log_error "未找到 server/Dockerfile 文件"
+        exit 1
+    fi
+    
+    if [[ ! -f "web/Dockerfile" ]]; then
+        log_error "未找到 web/Dockerfile 文件"
+        exit 1
+    fi
+    
     # 停止现有服务
-    /usr/local/bin/docker-compose down --remove-orphans 2>/dev/null || true
+    docker-compose down --remove-orphans 2>/dev/null || true
     
     # 清理资源
     docker system prune -f
     
     # 构建并启动服务
     log_info "构建应用镜像..."
-    /usr/local/bin/docker-compose build --no-cache
+    docker-compose build --no-cache
     
     log_info "启动所有服务..."
-    /usr/local/bin/docker-compose up -d
+    docker-compose up -d
     
     # 等待服务启动
     log_info "等待服务启动..."
@@ -473,6 +545,12 @@ deploy_application() {
 health_check() {
     log_info "执行健康检查..."
     
+    # 确保在项目目录中执行
+    cd "$PROJECT_DIR" || {
+        log_error "无法切换到项目目录: $PROJECT_DIR"
+        exit 1
+    }
+    
     local max_attempts=30
     local attempt=1
     
@@ -480,8 +558,8 @@ health_check() {
         log_info "健康检查 ($attempt/$max_attempts)..."
         
         # 检查容器状态
-        local running_containers=$(/usr/local/bin/docker-compose ps --services --filter "status=running" | wc -l)
-        local total_containers=$(/usr/local/bin/docker-compose ps --services | wc -l)
+        local running_containers=$(docker-compose ps --services --filter "status=running" | wc -l)
+        local total_containers=$(docker-compose ps --services | wc -l)
         
         if [[ $running_containers -eq $total_containers ]]; then
             log_success "所有服务运行正常"
@@ -493,7 +571,7 @@ health_check() {
     done
     
     log_error "健康检查失败，部分服务未正常启动"
-    /usr/local/bin/docker-compose ps
+    docker-compose ps
     return 1
 }
 
@@ -513,13 +591,13 @@ show_result() {
     echo "     密码: rustfssecret123"
     echo
     echo "🔧 管理命令："
-    echo "   查看状态: docker-compose ps"
-    echo "   查看日志: docker-compose logs -f"
-    echo "   重启服务: docker-compose restart"
-    echo "   停止服务: docker-compose down"
+    echo "   查看状态: cd /root/wedding-master && docker-compose ps"
+    echo "   查看日志: cd /root/wedding-master && docker-compose logs -f"
+    echo "   重启服务: cd /root/wedding-master && docker-compose restart"
+    echo "   停止服务: cd /root/wedding-master && docker-compose down"
     echo
     echo "📋 服务状态："
-    docker-compose ps
+    cd "$PROJECT_DIR" && docker-compose ps
     echo
     echo "🎉 恭喜！婚礼应用已成功部署到腾讯云服务器！"
 }
@@ -545,6 +623,7 @@ main() {
     install_docker
     install_docker_compose
     get_server_ip
+    clone_project
     setup_environment
     deploy_application
     
@@ -553,7 +632,7 @@ main() {
         show_result
     else
         log_error "部署过程中出现问题，请检查日志"
-        echo "查看日志命令: docker-compose logs"
+        echo "查看日志命令: cd /root/wedding-master && docker-compose logs"
         exit 1
     fi
 }
