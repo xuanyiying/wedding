@@ -16,8 +16,8 @@ COPY . .
 # Build the TypeScript code
 RUN npm run build
 
-# Remove devDependencies to reduce image size
-RUN npm prune --production
+# Install only production dependencies
+RUN npm install --only=production && npm cache clean --force
 
 # Make port 8000 available to the world outside this container
 EXPOSE 8000
