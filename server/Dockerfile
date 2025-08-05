@@ -16,8 +16,8 @@ COPY . .
 # Build the TypeScript code
 RUN npm run build
 
-# Install only production dependencies
-RUN npm install --only=production && npm cache clean --force
+# Remove devDependencies but keep the built dist folder
+RUN npm prune --production && npm cache clean --force
 
 # Make port 8000 available to the world outside this container
 EXPOSE 8000
