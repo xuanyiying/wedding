@@ -281,7 +281,7 @@ RUN npm ci --only=production --silent && npm cache clean --force
 
 # 开发阶段
 FROM base AS dev
-RUN npm ci --silent
+RUN npm install --only=production && npm cache clean --force
 COPY . .
 RUN npm run build
 
@@ -316,7 +316,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # 安装依赖
-RUN npm ci --silent && npm cache clean --force
+RUN npm install --only=production && npm cache clean --force
 
 # 构建阶段
 FROM base AS builder
