@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+  # 基础设施服务
+  mysql:
+    image: mysql:8.0
+    container_name: wedding_mysql
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: wedding_host
+      MYSQL_USER: wedding
+      MYSQL_PASSWORD: wedding123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - wedding-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: wedding_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - wedding-net
+
+  minio:
+    image: minio/minio:latest
+    container_name: wedding_minio
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    environment:
+      MINIO_ROOT_USER: rustfsadmin
+      MINIO_ROOT_PASSWORD: rustfssecret123
+    ports:
+      - "9000:9000"  # S3 API port
+      - "9001:9001"  # Console port
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - wedding-net
+
+  # 应用服务
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./server/.env
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    depends_on:
+      - mysql
+      - redis
+      - minio
+    networks:
+      - wedding-net
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./web/.env
+    volumes:
+      - ./web:/app
+      - /app/node_modules
+    depends_on:
+      - server
+    networks:
+      - wedding-net
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+      - server
+    networks:
+      - wedding-net
+
+networks:
+  wedding-net:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  redis_data:
+  minio_data:
+  caddy_data:
+  caddy_config:
