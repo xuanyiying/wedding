@@ -8,7 +8,7 @@ import { User , Work, Schedule } from '../models';
 import { PasswordUtils } from '../utils/helpers';
 import { generateId } from '@/utils/id.generator';
 import { UserRole, UserStatus } from '@/interfaces';
-import { WorkType, WorkCategory, WorkStatus, EventType, ScheduleStatus, WeddingTime } from '../types';
+import { EventType, ScheduleStatus, WeddingTime } from '../types';
 export class DatabaseInitializer {
   private userIdMap: { [key: string]: string } = {};
 
@@ -46,150 +46,6 @@ export class DatabaseInitializer {
           emailVerifiedAt: new Date(),
           lastLoginAt: new Date('2025-01-15T10:30:00Z'),
         },
-      
-        {
-          id: generateId(),
-          username: 'host_zhang',
-          email: 'zhang@wedding.com',
-          phone: '13800138002',
-          passwordHash: await PasswordUtils.hashPassword('host123'),
-          salt: 'host_zhang_salt',
-          role: UserRole.USER,
-          status: UserStatus.ACTIVE,
-          realName: '张主持',
-          nickname: '张老师',
-          bio: '资深婚礼主持人，擅长中式传统婚礼和现代时尚婚礼',
-          experienceYears: 8,
-          location: '广州市',
-          specialties: ['中式婚礼', '现代婚礼', '户外婚礼'],
-          contactInfo: {
-            wechat: 'zhang_host_2025',
-            qq: '123456789',
-          },
-          socialLinks: {
-            weibo: '@张主持婚礼',
-            douyin: '@张老师婚礼',
-          },
-          emailVerifiedAt: new Date(),
-          lastLoginAt: new Date('2025-01-13T09:20:00Z'),
-        },
-        {
-          id: generateId(),
-          username: 'host_li',
-          email: 'li@wedding.com',
-          phone: '13800138003',
-          passwordHash: await PasswordUtils.hashPassword('host123'),
-          salt: 'host_li_salt',
-          role: UserRole.USER,
-          status: UserStatus.ACTIVE,
-          realName: '李主持',
-          nickname: '李老师',
-          bio: '专业婚礼主持人，专注于浪漫温馨的婚礼氛围营造',
-          experienceYears: 6,
-          location: '深圳市',
-          specialties: ['浪漫婚礼', '小清新婚礼', '海边婚礼'],
-          contactInfo: {
-            wechat: 'li_host_wedding',
-            qq: '987654321',
-          },
-          emailVerifiedAt: new Date(),
-          lastLoginAt: new Date('2025-01-12T14:15:00Z'),
-        },
-        {
-          id: generateId(),
-          username: 'user_wang',
-          email: 'wang@example.com',
-          phone: '13800138004',
-          passwordHash: await PasswordUtils.hashPassword('user123'),
-          salt: 'user_wang_salt',
-          role: UserRole.USER,
-          status: UserStatus.ACTIVE,
-          realName: '王先生',
-          nickname: '小王',
-          bio: '即将步入婚姻殿堂的新人',
-          location: '杭州市',
-          emailVerifiedAt: new Date(),
-          lastLoginAt: new Date('2025-01-11T19:30:00Z'),
-        },
-        {
-          id: generateId(),
-          username: 'user_liu',
-          email: 'liu@example.com',
-          phone: '13800138005',
-          passwordHash: await PasswordUtils.hashPassword('user123'),
-          salt: 'user_liu_salt',
-          role: UserRole.USER,
-          status: UserStatus.ACTIVE,
-          realName: '刘女士',
-          nickname: '小刘',
-          bio: '正在筹备梦想中的婚礼',
-          location: '成都市',
-          emailVerifiedAt: new Date(),
-          lastLoginAt: new Date('2025-01-10T11:45:00Z'),
-        },
-        {
-          id: generateId(),
-          username: 'guest_chen',
-          email: 'chen@example.com',
-          phone: '13800138006',
-          passwordHash: await PasswordUtils.hashPassword('guest123'),
-          salt: 'guest_chen_salt',
-          role: UserRole.USER,
-          status: UserStatus.INACTIVE,
-          realName: '陈先生',
-          nickname: '访客陈',
-          bio: '婚礼行业观察者',
-          location: '西安市',
-        },
-        {
-          id: generateId(),
-          username: 'host_zhao',
-          email: 'zhao@wedding.com',
-          phone: '13800138007',
-          passwordHash: await PasswordUtils.hashPassword('host123'),
-          salt: 'host_zhao_salt',
-          role: UserRole.USER,
-          status: UserStatus.SUSPENDED,
-          realName: '赵主持',
-          nickname: '赵老师',
-          bio: '暂时停业的主持人',
-          experienceYears: 3,
-          location: '武汉市',
-          specialties: ['传统婚礼'],
-          emailVerifiedAt: new Date(),
-        },
-        {
-          id: generateId(),
-          username: 'user_sun',
-          email: 'sun@example.com',
-          phone: '13800138008',
-          passwordHash: await PasswordUtils.hashPassword('user123'),
-          salt: 'user_sun_salt',
-          role: UserRole.USER,
-          status: UserStatus.ACTIVE,
-          realName: '孙女士',
-          nickname: '阳光',
-          bio: '热爱生活的新娘',
-          location: '南京市',
-          emailVerifiedAt: new Date(),
-          lastLoginAt: new Date('2025-01-09T08:20:00Z'),
-        },
-        {
-          id: generateId(),
-          username: 'user_zhou',
-          email: 'zhou@example.com',
-          phone: '13800138009',
-          passwordHash: await PasswordUtils.hashPassword('user123'),
-          salt: 'user_zhou_salt',
-          role: UserRole.USER,
-          status: UserStatus.ACTIVE,
-          realName: '周先生',
-          nickname: '小周',
-          bio: '追求完美婚礼的新郎',
-          location: '青岛市',
-          emailVerifiedAt: new Date(),
-          lastLoginAt: new Date('2025-01-08T20:10:00Z'),
-        },
       ];
 
       // 批量插入用户数据
@@ -208,148 +64,7 @@ export class DatabaseInitializer {
     }
   }
 
-  /**
-   * 初始化作品数据
-   */
-  async initializeWorks(): Promise<void> {
-    try {
-      logger.info('开始初始化作品数据...');
 
-      // 准备初始作品数据
-      const videoUrl = 'http://minio:9000/wedding-media/videos/c3ed51d2-5702-4b41-9495-ff61ef1142ee.mp4';
-      const initialWorks = [
-        {
-          userId: this.userIdMap.host_zhang!, // host_zhang
-          title: '浪漫花园婚礼',
-          description:
-            '在美丽的花园中举办的浪漫婚礼，新人在花海中许下永恒的誓言。整场婚礼充满了自然的气息和温馨的氛围，每一个细节都体现了新人对美好生活的向往。',
-          type: WorkType.VIDEO,
-          category: WorkCategory.WEDDING,
-          coverUrl: '/images/wedding-1.jpg',
-          contentUrls: [videoUrl],
-          tags: ['户外婚礼', '花园主题', '浪漫', '自然'],
-          location: '上海植物园',
-          shootDate: new Date('2025-05-15'),
-          status: WorkStatus.PUBLISHED,
-          isFeatured: true,
-          viewCount: 1250,
-          likeCount: 89,
-          shareCount: 15,
-          sortOrder: 1,
-          publishedAt: new Date('2025-05-16'),
-        },
-        {
-          userId: this.userIdMap.host_zhang!, // host_zhang
-          title: '经典中式婚礼',
-          description:
-            '传统中式婚礼仪式，庄重典雅的红色主题，完美融合了传统文化与现代元素。新人身着传统中式礼服，在古典的环境中完成了神圣的结婚仪式。',
-          type: WorkType.VIDEO,
-          category: WorkCategory.WEDDING,
-          coverUrl: '/images/wedding-2.jpg',
-          contentUrls: [videoUrl],
-          tags: ['中式婚礼', '传统仪式', '红色主题', '古典'],
-          location: '豫园古建筑群',
-          shootDate: new Date('2025-04-20'),
-          status: WorkStatus.PUBLISHED,
-          isFeatured: true,
-          viewCount: 980,
-          likeCount: 76,
-          shareCount: 12,
-          sortOrder: 2,
-          publishedAt: new Date('2025-04-21'),
-        },
-        {
-          userId: this.userIdMap.host_li!, // host_li
-          title: '现代简约婚礼',
-          description:
-            '简约而不简单的现代婚礼设计，以白色和金色为主色调，营造出优雅高贵的氛围。整体设计注重线条的简洁和空间的利用，体现了现代都市人的审美品味。',
-          type: WorkType.VIDEO,
-          category: WorkCategory.WEDDING,
-          coverUrl: '/images/wedding-3.jpg',
-          contentUrls: [videoUrl],
-          tags: ['现代简约', '白色主题', '优雅', '都市'],
-          location: '外滩W酒店',
-          shootDate: new Date('2025-03-10'),
-          status: WorkStatus.PUBLISHED,
-          isFeatured: false,
-          viewCount: 1580,
-          likeCount: 112,
-          shareCount: 23,
-          sortOrder: 3,
-          publishedAt: new Date('2025-03-11'),
-        },
-        {
-          userId: this.userIdMap.host_li!, // host_li
-          title: '海滨度假婚礼',
-          description:
-            '在美丽的海边举办的度假风婚礼，蓝天白云、碧海金沙构成了最美的背景。新人在海风的见证下交换誓言，整场婚礼充满了自由和浪漫的气息。',
-          type: WorkType.VIDEO,
-          category: WorkCategory.WEDDING,
-          coverUrl: '/images/wedding-4.jpg',
-          contentUrls: [videoUrl],
-          tags: ['海滨婚礼', '度假风', '蓝色主题', '自由'],
-          location: '三亚亚龙湾',
-          shootDate: new Date('2025-06-08'),
-          status: WorkStatus.PUBLISHED,
-          isFeatured: true,
-          viewCount: 2100,
-          likeCount: 156,
-          shareCount: 31,
-          sortOrder: 4,
-          publishedAt: new Date('2025-06-09'),
-        },
-        {
-          userId: this.userIdMap.host_zhang!, // host_zhang
-          title: '森林主题婚礼',
-          description:
-            '在绿意盎然的森林中举办的主题婚礼，自然的绿色与木质元素完美结合。新人在大自然的怀抱中举行仪式，体验最原始的浪漫与纯真。',
-          type: WorkType.ALBUM,
-          category: WorkCategory.WEDDING,
-          coverUrl: '/images/wedding-5.jpg',
-          contentUrls: [videoUrl],
-          tags: ['森林主题', '绿色', '自然', '木质'],
-          location: '莫干山度假村',
-          shootDate: new Date('2025-07-22'),
-          status: WorkStatus.PUBLISHED,
-          isFeatured: false,
-          viewCount: 890,
-          likeCount: 67,
-          shareCount: 8,
-          sortOrder: 5,
-          publishedAt: new Date('2025-07-23'),
-        },
-        {
-          userId: this.userIdMap.admin!, // admin
-          title: '城堡古典婚礼',
-          description:
-            '在欧式城堡中举办的古典婚礼，华丽的装饰和精致的细节营造出童话般的氛围。新人仿佛王子公主般在城堡中完成了梦幻的婚礼仪式。',
-          type: WorkType.IMAGE,
-          category: WorkCategory.WEDDING,
-          coverUrl: '/images/wedding-6.jpg',
-          contentUrls: [videoUrl],
-          tags: ['城堡婚礼', '欧式', '古典', '华丽'],
-          location: '上海迪士尼城堡',
-          shootDate: new Date('2025-08-15'),
-          status: WorkStatus.PUBLISHED,
-          isFeatured: true,
-          viewCount: 1750,
-          likeCount: 134,
-          shareCount: 27,
-          sortOrder: 6,
-          publishedAt: new Date('2025-08-16'),
-        },
-      ];
-
-      // 批量插入作品数据
-      await Work.bulkCreate(initialWorks);
-      logger.info(`成功插入 ${initialWorks.length} 条作品数据`);
-
-      logger.info('作品数据初始化完成');
-    } catch (error) {
-      logger.error('作品数据初始化失败:', error);
-      throw error;
-    }
-  }
 
   /**
    * 初始化档期数据
@@ -439,7 +154,7 @@ export class DatabaseInitializer {
         endTime.setHours(endHour, 0, 0, 0);
         
         // 随机选择主持人
-         const hostIds = [this.userIdMap.host_zhang, this.userIdMap.host_li].filter(Boolean);
+         const hostIds = [this.userIdMap.admin].filter(Boolean);
          if (hostIds.length === 0) {
            throw new Error('没有可用的主持人ID');
          }
@@ -524,8 +239,7 @@ export class DatabaseInitializer {
       logger.info('已清除现有数据');
 
       await this.initializeUsers();
-      await this.initializeWorks();
-      await this.initializeSchedules();
+    await this.initializeSchedules();
 
       logger.info('数据库初始化完成');
     } catch (error) {

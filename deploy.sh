@@ -302,7 +302,7 @@ PORT=8000
 NODE_ENV=production
 
 # CORS 配置
-CORS_ORIGIN=http://localhost
+CORS_ORIGIN=http://114.132.225.94
 EOF
         log_success "server/.env 文件创建完成"
     else
@@ -314,7 +314,7 @@ EOF
         log_info "创建 web/.env 文件"
         cat > ./web/.env << EOF
 # API 配置
-VITE_API_BASE_URL=http://localhost/api
+VITE_API_BASE_URL=http://114.132.225.94/api
 VITE_APP_TITLE=婚礼主持人平台
 
 # 环境配置
@@ -349,6 +349,10 @@ deploy_services() {
     # 等待服务启动
     log_info "等待服务启动..."
     sleep 30
+
+    # 初始化数据库
+    log_info "执行数据库初始化..."
+    docker-compose exec -T server npm run db:init
     
     # 检查服务状态
     log_info "检查服务状态..."
