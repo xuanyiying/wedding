@@ -3,11 +3,11 @@
 import { Sequelize } from 'sequelize';
 import { config } from '../config/config';
 import { logger } from '../utils/logger';
-import { initModels } from '@/models';
+import { initModels } from '../models';
 import { User , Work, Schedule } from '../models';
 import { PasswordUtils } from '../utils/helpers';
-import { generateId } from '@/utils/id.generator';
-import { UserRole, UserStatus } from '@/interfaces';
+import { generateId } from '../utils/id.generator';
+import { UserRole, UserStatus } from '../interfaces';
 import { EventType, ScheduleStatus, WeddingTime } from '../types';
 export class DatabaseInitializer {
   private userIdMap: { [key: string]: string } = {};
