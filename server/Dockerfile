@@ -1,26 +1,33 @@
-# Use an official Node.js runtime as a parent image
-FROM node:18-alpine
+# Stage 1: Build the application
+FROM node:18-alpine AS builder
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json to the working directory
+# Copy package files and install all dependencies
 COPY package*.json ./
-
-# Install all dependencies (including devDependencies for building)
+RUN npm config set registry https://registry.npmmirror.com
 RUN npm install
 
-# Copy the rest of the application's source code from the host to the image's filesystem
+# Copy the rest of the source code
 COPY . .
 
-# Build the TypeScript code
-RUN npm run build && npm run build:scripts
+# Build the application
+RUN npm run build
 
-# Remove devDependencies but keep the built dist folder
-RUN npm prune --production && npm cache clean --force
+# Stage 2: Create the production image
+FROM node:18-alpine
 
-# Make port 8000 available to the world outside this container
+WORKDIR /app
+
+# Copy package files and install only production dependencies
+COPY package*.json ./
+RUN npm config set registry https://registry.npmmirror.com
+RUN npm install --production
+
+# Copy built artifacts from the builder stage
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/src/scripts/init-db.js ./src/scripts/init-db.js
+
 EXPOSE 3000
 
-# Define the command to run your app
 CMD ["npm", "start"]

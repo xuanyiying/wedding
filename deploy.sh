@@ -340,7 +340,7 @@ deploy_services() {
     
     # 构建镜像
     log_info "构建应用镜像..."
-    docker-compose build --no-cache
+    docker-compose build
     
     # 启动服务
     log_info "启动所有服务..."
@@ -541,7 +541,7 @@ update_services() {
     log_info "更新服务..."
     backup_deployment
     docker-compose down
-    docker-compose build --no-cache
+    docker-compose build
     docker-compose up -d
     sleep 30
     health_check

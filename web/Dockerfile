@@ -5,6 +5,7 @@ WORKDIR /app
 
 COPY package*.json ./
 
+RUN npm config set registry https://registry.npmmirror.com
 RUN npm install
 
 COPY . .
@@ -16,11 +17,14 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-COPY --from=build /app/dist /app/dist
+# Copy package files
 COPY package*.json ./
 
-# Install all dependencies (vite is needed for preview command)
-RUN npm install
+# Copy node_modules from the build stage
+COPY --from=build /app/node_modules ./node_modules
+
+# Copy the built application from the build stage
+COPY --from=build /app/dist ./dist
 
 EXPOSE 5173
 

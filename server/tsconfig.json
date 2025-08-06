@@ -39,7 +39,7 @@
   },
   "include": [
     "src/**/*"
-, "src/scripts/init-data.ts", "src/scripts/init-db.ts"  ],
+  ],
   "exclude": [
     "node_modules",
     "dist",
