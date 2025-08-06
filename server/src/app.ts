@@ -93,6 +93,20 @@ class App {
   private initializeRoutes(): void {
     const apiPrefix = config.apiPrefix;
 
+    // 根路径处理
+    this.app.get('/', (_req, res) => {
+      res.status(200).json({
+        message: 'Wedding Club API Server',
+        version: '1.0.0',
+        status: 'running',
+        timestamp: new Date().toISOString(),
+        api: {
+          base: apiPrefix,
+          docs: config.nodeEnv === 'development' ? `${apiPrefix}/docs` : undefined,
+        },
+      });
+    });
+
     // 健康检查
     this.app.get('/health', (_req, res) => {
       res.status(200).json({
