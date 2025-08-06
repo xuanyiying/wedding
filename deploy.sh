@@ -298,7 +298,7 @@ JWT_SECRET=your-super-secret-jwt-key-change-in-production
 JWT_EXPIRES_IN=7d
 
 # 服务器配置
-PORT=8000
+PORT=3000
 NODE_ENV=production
 
 # CORS 配置
@@ -314,7 +314,7 @@ EOF
         log_info "创建 web/.env 文件"
         cat > ./web/.env << EOF
 # API 配置
-VITE_API_BASE_URL=http://114.132.225.94/api
+VITE_API_BASE_URL=/api
 VITE_APP_TITLE=婚礼主持人平台
 
 # 环境配置
@@ -347,12 +347,24 @@ deploy_services() {
     docker-compose up -d
     
     # 等待服务启动
-    log_info "等待服务启动..."
-    sleep 30
+    log_info "等待服务稳定..."
+    sleep 15
 
-    # 初始化数据库
+    # 初始化数据库，增加重试机制
     log_info "执行数据库初始化..."
-    docker-compose exec -T server npm run db:init
+    local max_retries=5
+    local attempt=1
+    until docker-compose exec -T server npm run db:init; do
+        if [ $attempt -eq $max_retries ]; then
+            log_error "数据库初始化失败，已达到最大重试次数。"
+            log_info "请检查 'server' 服务日志以获取详细信息: docker-compose logs server"
+            exit 1
+        fi
+        log_warning "数据库初始化失败，将在 10 秒后重试 (尝试次数: $attempt/$max_retries)..."
+        sleep 10
+        attempt=$((attempt+1))
+    done
+    log_success "数据库初始化成功。"
     
     # 检查服务状态
     log_info "检查服务状态..."
