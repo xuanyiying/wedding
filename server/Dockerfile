@@ -14,7 +14,7 @@ RUN npm install
 COPY . .
 
 # Build the TypeScript code
-RUN npm run build
+RUN npm run build && npm run build:scripts
 
 # Remove devDependencies but keep the built dist folder
 RUN npm prune --production && npm cache clean --force

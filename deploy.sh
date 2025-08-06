@@ -344,7 +344,7 @@ deploy_services() {
     
     # 启动服务
     log_info "启动所有服务..."
-    docker-compose up -d
+    docker-compose up -d --build
     
     # 等待服务启动
     log_info "等待服务稳定..."

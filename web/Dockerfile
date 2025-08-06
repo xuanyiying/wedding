@@ -25,4 +25,4 @@ RUN npm install
 EXPOSE 5173
 
 # Run the app in preview (production) mode
-CMD ["npm", "run", "preview", "--", "--host", "114.132.225.94", "--port", "5173"]
+CMD ["npm", "run", "preview"]
