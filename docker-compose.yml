@@ -68,9 +68,7 @@ services:
       - API_HOST=server
     env_file:
       - ./server/.env
-    volumes:
-      - ./server:/app
-      - /app/node_modules
+
     depends_on:
       - mysql
       - redis
@@ -86,9 +84,7 @@ services:
       - "5173:5173"
     env_file:
       - ./web/.env
-    volumes:
-      - ./web:/app
-      - /app/node_modules
+
     depends_on:
       - server
     networks:

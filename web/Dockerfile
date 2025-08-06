@@ -22,7 +22,7 @@ COPY package*.json ./
 # Install all dependencies (vite is needed for preview command)
 RUN npm install
 
-EXPOSE 3000
+EXPOSE 5173
 
 # Run the app in preview (production) mode
-CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "3000"]
+CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "5173"]

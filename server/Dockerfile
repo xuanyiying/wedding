@@ -20,7 +20,7 @@ RUN npm run build
 RUN npm prune --production && npm cache clean --force
 
 # Make port 8000 available to the world outside this container
-EXPOSE 8000
+EXPOSE 3000
 
 # Define the command to run your app
 CMD ["npm", "start"]
