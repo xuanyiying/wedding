@@ -24,11 +24,11 @@ export interface OSSConfig {
 
 // MinIO配置 (兼容S3)
 export const minioConfig: MinIOConfig = {
-  endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+  endpoint: process.env.OSS_ENDPOINT || process.env.MINIO_ENDPOINT || 'http://minio:9000',
   region: process.env.MINIO_REGION || 'us-east-1',
-  accessKeyId: process.env.MINIO_ACCESS_KEY || 'rustfsadmin',
-  secretAccessKey: process.env.MINIO_SECRET_KEY || 'rustfssecret123',
-  bucket: process.env.MINIO_BUCKET || 'wedding-media',
+  accessKeyId: process.env.OSS_ACCESS_KEY || process.env.MINIO_ACCESS_KEY || 'rustfsadmin',
+  secretAccessKey: process.env.OSS_SECRET_KEY || process.env.MINIO_SECRET_KEY || 'rustfssecret123',
+  bucket: process.env.OSS_BUCKET || process.env.MINIO_BUCKET || 'wedding-media',
 };
 
 // 阿里云OSS配置

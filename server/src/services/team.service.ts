@@ -1,5 +1,6 @@
 import { Team, TeamMember } from '../models/Team';
 import { Op } from 'sequelize';
+import { sequelize } from '../config/database';
 import { logger } from '../utils/logger';
 import { User } from '@/models';
 import { TeamMemberRole, TeamMemberStatus, TeamStatus } from '../types';
@@ -114,25 +115,38 @@ export class TeamService {
           },
         ],
       });
-    //完成 memberCount， rating， ratingCount，viewCount
-    for (const team of rows) {
-      team.memberCount = await TeamMember.count({
+      // 批量获取团队成员数量，避免N+1查询问题
+      const teamIds = rows.map(team => team.id);
+      const memberCounts = await TeamMember.findAll({
         where: {
-          teamId: team.id,
-        }
+          teamId: { [Op.in]: teamIds }
+        },
+        attributes: [
+          'teamId',
+          [sequelize.fn('COUNT', sequelize.col('id')), 'memberCount'],
+          [sequelize.fn('COUNT', sequelize.literal('CASE WHEN status = "ACTIVE" THEN 1 END')), 'activeMemberCount']
+        ],
+        group: ['teamId'],
+        raw: true
       });
-      team.rating = await TeamMember.count({
-        where: {
-          teamId: team.id,
-          status: TeamMemberStatus.ACTIVE,
-        }
+
+      // 创建成员数量映射
+      const memberCountMap = new Map();
+      memberCounts.forEach((item: any) => {
+        memberCountMap.set(item.teamId, {
+          memberCount: parseInt(item.memberCount) || 0,
+          activeMemberCount: parseInt(item.activeMemberCount) || 0
+        });
       });
-      team.ratingCount = await TeamMember.count({
-        where: {
-          teamId: team.id,
-        }
+
+      // 为每个团队设置成员数量
+      rows.forEach(team => {
+        const counts = memberCountMap.get(team.id) || { memberCount: 0, activeMemberCount: 0 };
+        team.memberCount = counts.memberCount;
+        team.rating = 0; // 暂时设为0，后续可以实现真实的评分逻辑
+        team.ratingCount = counts.activeMemberCount;
+        team.viewCount = 0; // 暂时设为0，后续可以实现浏览量统计
       });
-    }
       // 序列化团队数据，转换JSON字段为数组
       const serializedTeams = rows.map(team => ({
         ...team.toJSON(),

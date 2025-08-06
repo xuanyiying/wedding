@@ -141,7 +141,7 @@ export const config: Config = {
   apiPrefix: getEnvVar('API_PREFIX', '/api/v1'),
 
   database: {
-    host: getEnvVar('DB_HOST', 'localhost'),
+    host: getEnvVar('DB_HOST', 'mysql'),
     port: getEnvNumber('DB_PORT', 3306),
     name: getEnvVar('DB_NAME', 'wedding_club'),
     username: getEnvVar('DB_USERNAME', 'root'),
@@ -157,7 +157,7 @@ export const config: Config = {
   },
 
   redis: {
-    host: getEnvVar('REDIS_HOST', 'localhost'),
+    host: getEnvVar('REDIS_HOST', 'redis'),
     port: getEnvNumber('REDIS_PORT', 6379),
     ...(process.env.REDIS_PASSWORD && { password: process.env.REDIS_PASSWORD }),
     db: getEnvNumber('REDIS_DB', 0),
@@ -208,7 +208,7 @@ export const config: Config = {
   },
 
   cors: {
-    origin: getEnvVar('CORS_ORIGIN', 'http://localhost:5173'),
+    origin: getEnvVar('CORS_ORIGIN', '*'),
     credentials: getEnvBoolean('CORS_CREDENTIALS', true),
   },
 

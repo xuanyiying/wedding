@@ -216,7 +216,7 @@ export class DatabaseInitializer {
       logger.info('开始初始化作品数据...');
 
       // 准备初始作品数据
-      const videoUrl = 'http://localhost:9000/wedding-media/videos/c3ed51d2-5702-4b41-9495-ff61ef1142ee.mp4';
+      const videoUrl = 'http://minio:9000/wedding-media/videos/c3ed51d2-5702-4b41-9495-ff61ef1142ee.mp4';
       const initialWorks = [
         {
           userId: this.userIdMap.host_zhang!, // host_zhang

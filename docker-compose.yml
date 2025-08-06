@@ -63,7 +63,9 @@ services:
         limits:
           memory: 512M
     ports:
-      - "8000:8000"
+      - "3000:3000"
+    environment:
+      - API_HOST=server
     env_file:
       - ./server/.env
     volumes:
@@ -81,7 +83,7 @@ services:
       context: ./web
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "5173:5173"
     env_file:
       - ./web/.env
     volumes:

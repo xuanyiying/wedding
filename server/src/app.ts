@@ -1,3 +1,4 @@
+require('module-alias/register');
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -144,11 +145,13 @@ class App {
   public listen(): void {
     const port = config.port;
     this.app.listen(port, () => {
+      // 在运行时动态获取API_HOST环境变量
+      const host = process.env.API_HOST || 'localhost';
       logger.info(`🚀 Server running on port ${port}`);
       logger.info(`📝 Environment: ${config.nodeEnv}`);
-      logger.info(`🔗 API Base URL: http://localhost:${port}${config.apiPrefix}`);
+      logger.info(`🔗 API Base URL: http://${host}:${port}${config.apiPrefix}`);
       if (config.nodeEnv === 'development') {
-        logger.info(`📚 API Docs: http://localhost:${port}${config.apiPrefix}/docs`);
+        logger.info(`📚 API Docs: http://${host}:${port}${config.apiPrefix}/docs`);
       }
     });
   }
