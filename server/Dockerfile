@@ -26,7 +26,7 @@ RUN npm install --production
 
 # Copy built artifacts from the builder stage
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/src/scripts/init-db.js ./src/scripts/init-db.js
+COPY --from=builder /app/dist/scripts/init-db.js ./dist/scripts/init-db.js
 
 EXPOSE 3000
 
