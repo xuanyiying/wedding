@@ -13,7 +13,7 @@
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "format": "prettier --write src/**/*.ts",
-    "init-db": "ts-node -r tsconfig-paths/register src/scripts/init-db.ts"
+    "db:init": "ts-node -r tsconfig-paths/register src/scripts/init-db.ts"
   },
   "keywords": [
     "wedding",
