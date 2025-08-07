@@ -245,7 +245,7 @@ install_docker_compose() {
 
 # 检查端口占用
 check_ports() {
-    local ports=("80" "443" "3000" "8000" "3306" "6379" "9000" "9001")
+    local ports=("80" "443" "3000" "5173" "3306" "6379" "9000" "9001")
     local occupied_ports=()
     
     log_info "检查端口占用情况..."
@@ -258,6 +258,13 @@ check_ports() {
     
     if [ ${#occupied_ports[@]} -gt 0 ]; then
         log_warning "以下端口已被占用: ${occupied_ports[*]}"
+        log_info "端口说明:"
+        log_info "  80/443: Caddy反向代理 (HTTP/HTTPS)"
+        log_info "  3000: Node.js后端API服务"
+        log_info "  5173: Vite前端开发服务器"
+        log_info "  3306: MySQL数据库"
+        log_info "  6379: Redis缓存"
+        log_info "  9000/9001: MinIO对象存储 (API/控制台)"
         read -p "是否继续部署？这可能导致服务冲突 (y/N): " -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -266,6 +273,26 @@ check_ports() {
     else
         log_success "所有必需端口都可用"
     fi
+}
+
+# 检查Docker网络配置
+check_docker_network() {
+    log_info "检查Docker网络配置..."
+    
+    # 检查是否存在IP冲突
+    local subnet="172.20.0.0/16"
+    if docker network ls --format "table {{.Name}}\t{{.Driver}}" | grep -q "wedding-net"; then
+        log_info "发现已存在的wedding-net网络，将进行清理"
+        docker network rm wedding-net 2>/dev/null || true
+    fi
+    
+    # 检查子网冲突
+    if ip route | grep -q "172.20."; then
+        log_warning "检测到可能的IP子网冲突 (172.20.0.0/16)"
+        log_info "当前路由表中存在172.20.x.x网段，可能影响容器网络通信"
+    fi
+    
+    log_success "Docker网络检查完成"
 }
 
 # 创建环境文件
@@ -338,18 +365,49 @@ deploy_services() {
     log_info "清理 Docker 资源..."
     docker system prune -f || true
     
+    # 创建自定义网络（如果不存在）
+    log_info "创建Docker网络..."
+    if ! docker network ls | grep -q "wedding-net"; then
+        docker network create \
+            --driver bridge \
+            --subnet=172.20.0.0/16 \
+            --gateway=172.20.0.1 \
+            --opt com.docker.network.bridge.name=wedding-br0 \
+            --opt com.docker.network.driver.mtu=1500 \
+            wedding-net
+        log_success "Docker网络创建成功"
+    else
+        log_info "Docker网络已存在"
+    fi
+    
     # 构建镜像
     log_info "构建应用镜像..."
-    docker-compose build
+    docker-compose build --no-cache
     
-    # 启动服务
-    log_info "启动所有服务..."
-    docker-compose up -d --build
+    # 分阶段启动服务以确保依赖关系
+    log_info "启动基础设施服务..."
+    docker-compose up -d mysql redis minio
     
-    # 等待服务启动
-    log_info "等待服务稳定..."
-    sleep 15
-
+    # 等待基础设施服务健康检查通过
+    log_info "等待基础设施服务就绪..."
+    wait_for_service_health "mysql" 60
+    wait_for_service_health "redis" 30
+    wait_for_service_health "minio" 30
+    
+    # 启动应用服务
+    log_info "启动应用服务..."
+    docker-compose up -d server
+    wait_for_service_health "server" 60
+    
+    # 启动前端服务
+    log_info "启动前端服务..."
+    docker-compose up -d web
+    wait_for_service_health "web" 30
+    
+    # 启动反向代理
+    log_info "启动反向代理服务..."
+    docker-compose up -d caddy
+    
     # 初始化数据库，增加重试机制
     log_info "执行数据库初始化..."
     local max_retries=5
@@ -371,29 +429,113 @@ deploy_services() {
     docker-compose ps
 }
 
+# 等待服务健康检查通过
+wait_for_service_health() {
+    local service_name=$1
+    local timeout=${2:-30}
+    local elapsed=0
+    local interval=5
+    
+    log_info "等待 $service_name 服务健康检查通过..."
+    
+    while [ $elapsed -lt $timeout ]; do
+        local health_status=$(docker-compose ps --format "table {{.Service}}\t{{.Status}}" | grep "$service_name" | awk '{print $2}')
+        
+        if echo "$health_status" | grep -q "healthy"; then
+            log_success "$service_name 服务健康检查通过"
+            return 0
+        elif echo "$health_status" | grep -q "unhealthy"; then
+            log_error "$service_name 服务健康检查失败"
+            docker-compose logs --tail=20 "$service_name"
+            return 1
+        fi
+        
+        sleep $interval
+        elapsed=$((elapsed + interval))
+        log_info "等待 $service_name 健康检查... ($elapsed/${timeout}s)"
+    done
+    
+    log_warning "$service_name 服务健康检查超时，但继续部署"
+    return 0
+}
+
 # 健康检查
 health_check() {
     log_info "执行健康检查..."
     
-    local services=("mysql:3306" "redis:6379" "minio:9000" "server:8000" "web:3000")
+    local services=("mysql:3306" "redis:6379" "minio:9000" "server:3000" "web:5173")
     local failed_services=()
     
+    # 检查容器状态
+    log_info "检查容器运行状态..."
+    local containers=("wedding_mysql" "wedding_redis" "wedding_minio" "wedding_server" "wedding_web" "wedding_caddy")
+    for container in "${containers[@]}"; do
+        if ! docker ps --format "table {{.Names}}\t{{.Status}}" | grep -q "$container.*Up"; then
+            failed_services+=("$container")
+        fi
+    done
+    
+    # 检查端口连通性
+    log_info "检查服务端口连通性..."
     for service in "${services[@]}"; do
         local name=$(echo $service | cut -d':' -f1)
         local port=$(echo $service | cut -d':' -f2)
         
         if ! docker-compose exec -T $name nc -z localhost $port 2>/dev/null; then
-            failed_services+=("$name")
+            failed_services+=("$name:$port")
         fi
     done
+    
+    # 检查网络连通性
+    log_info "检查服务间网络连通性..."
+    if docker-compose exec -T server nc -z mysql 3306 2>/dev/null; then
+        log_success "Server -> MySQL 连接正常"
+    else
+        failed_services+=("server->mysql")
+    fi
+    
+    if docker-compose exec -T server nc -z redis 6379 2>/dev/null; then
+        log_success "Server -> Redis 连接正常"
+    else
+        failed_services+=("server->redis")
+    fi
+    
+    if docker-compose exec -T server nc -z minio 9000 2>/dev/null; then
+        log_success "Server -> MinIO 连接正常"
+    else
+        failed_services+=("server->minio")
+    fi
+    
+    # 检查HTTP服务
+    log_info "检查HTTP服务可访问性..."
+    if curl -f -s http://localhost:3000/api/health >/dev/null 2>&1; then
+        log_success "API服务健康检查通过"
+    else
+        failed_services+=("api-health")
+    fi
+    
+    if curl -f -s http://localhost:5173 >/dev/null 2>&1; then
+        log_success "Web服务健康检查通过"
+    else
+        failed_services+=("web-health")
+    fi
     
     if [ ${#failed_services[@]} -gt 0 ]; then
         log_error "以下服务健康检查失败: ${failed_services[*]}"
         log_info "查看服务日志:"
         for service in "${failed_services[@]}"; do
-            echo "=== $service 日志 ==="
-            docker-compose logs --tail=20 $service
+            local service_name=$(echo $service | cut -d':' -f1 | cut -d'-' -f1)
+            if docker-compose ps --services | grep -q "$service_name"; then
+                echo "=== $service_name 日志 ==="
+                docker-compose logs --tail=20 $service_name
+            fi
         done
+        
+        # 显示网络诊断信息
+        log_info "网络诊断信息:"
+        docker network ls
+        docker network inspect wedding-net 2>/dev/null || log_warning "wedding-net网络不存在"
+        
         return 1
     else
         log_success "所有服务健康检查通过"
@@ -430,18 +572,61 @@ show_deployment_info() {
     log_success "部署完成！"
     echo
     echo "=== 服务访问信息 ==="
-    echo "🌐 Web 应用: http://$(hostname -I | awk '{print $1}')"
-    echo "🔧 API 服务: http://$(hostname -I | awk '{print $1}'):8000"
-    echo "📊 MinIO 控制台: http://$(hostname -I | awk '{print $1}'):9001"
+    local server_ip=$(hostname -I | awk '{print $1}')
+    echo "🌐 Web 应用: http://$server_ip (通过Caddy反向代理)"
+    echo "🔧 API 服务: http://$server_ip:3000"
+    echo "📊 MinIO 控制台: http://$server_ip:9001"
     echo "   用户名: rustfsadmin"
     echo "   密码: rustfssecret123"
+    echo "🗄️  MySQL 数据库: $server_ip:3306"
+    echo "   数据库: wedding_host"
+    echo "   用户名: wedding"
+    echo "   密码: wedding123"
+    echo "🔴 Redis 缓存: $server_ip:6379"
+    echo
+    echo "=== Docker 网络信息 ==="
+    echo "网络名称: wedding-net"
+    echo "网络类型: bridge"
+    echo "子网范围: 172.20.0.0/16"
+    echo "网关地址: 172.20.0.1"
+    echo "网桥名称: wedding-br0"
+    echo
+    echo "=== 服务间通信 ==="
+    echo "• Server 连接 MySQL: mysql:3306"
+    echo "• Server 连接 Redis: redis:6379"
+    echo "• Server 连接 MinIO: minio:9000"
+    echo "• Web 连接 Server: server:3000"
+    echo "• Caddy 代理 Web: web:5173"
+    echo "• Caddy 代理 Server: server:3000"
     echo
     echo "=== 管理命令 ==="
     echo "查看服务状态: docker-compose ps"
     echo "查看服务日志: docker-compose logs -f [service_name]"
+    echo "查看网络信息: docker network inspect wedding-net"
     echo "重启服务: docker-compose restart [service_name]"
     echo "停止所有服务: docker-compose down"
-    echo "更新并重启: ./deploy.sh"
+    echo "更新并重启: ./deploy.sh update"
+    echo "健康检查: ./deploy.sh status"
+    echo
+}
+
+# 显示故障排除信息
+show_troubleshooting_info() {
+    echo
+    echo "=== 故障排除指南 ==="
+    echo "1. 检查容器状态: docker-compose ps"
+    echo "2. 查看服务日志: docker-compose logs [service_name]"
+    echo "3. 检查网络连接: docker network inspect wedding-net"
+    echo "4. 测试端口连通性: telnet localhost [port]"
+    echo "5. 重启失败的服务: docker-compose restart [service_name]"
+    echo "6. 完全重新部署: docker-compose down && ./deploy.sh"
+    echo
+    echo "=== 常见问题 ==="
+    echo "• 端口被占用: 检查并停止占用端口的进程"
+    echo "• 内存不足: 增加系统内存或调整容器资源限制"
+    echo "• 网络冲突: 检查172.20.0.0/16网段是否与现有网络冲突"
+    echo "• 权限问题: 确保当前用户在docker组中"
+    echo "• 防火墙阻拦: 检查防火墙设置，开放必要端口"
     echo
 }
 
@@ -574,6 +759,9 @@ main() {
             # 检查端口
             check_ports
             
+            # 检查Docker网络配置
+            check_docker_network
+            
             # 创建环境文件
             create_env_files
             
@@ -588,6 +776,7 @@ main() {
                 show_deployment_info
             else
                 log_error "部署过程中出现问题，请检查日志"
+                show_troubleshooting_info
                 exit 1
             fi
             ;;

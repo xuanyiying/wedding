@@ -17,7 +17,11 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-    command: --default-authentication-plugin=mysql_native_password
+    command: --default-authentication-plugin=mysql_native_password --bind-address=0.0.0.0
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
     networks:
       - wedding-net
 
@@ -30,6 +34,11 @@ services:
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
     networks:
       - wedding-net
 
@@ -50,6 +59,11 @@ services:
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
     networks:
       - wedding-net
 
@@ -58,6 +72,8 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
+    container_name: wedding_server
+    restart: always
     deploy:
       resources:
         limits:
@@ -68,11 +84,19 @@ services:
       - API_HOST=server
     env_file:
       - ./server/.env
-
     depends_on:
-      - mysql
-      - redis
-      - minio
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - wedding-net
 
@@ -80,18 +104,27 @@ services:
     build:
       context: ./web
       dockerfile: Dockerfile
+    container_name: wedding_web
+    restart: always
     ports:
       - "5173:5173"
     env_file:
       - ./web/.env
-
     depends_on:
-      - server
+      server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     networks:
       - wedding-net
 
   caddy:
     image: caddy:2-alpine
+    container_name: wedding_caddy
     restart: unless-stopped
     ports:
       - "80:80"
@@ -101,14 +134,23 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - web
-      - server
+      web:
+        condition: service_healthy
+      server:
+        condition: service_healthy
     networks:
       - wedding-net
 
 networks:
   wedding-net:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
+    driver_opts:
+      com.docker.network.bridge.name: wedding-br0
+      com.docker.network.driver.mtu: 1500
 
 volumes:
   mysql_data:
