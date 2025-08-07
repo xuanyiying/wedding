@@ -231,16 +231,16 @@ EOF
      sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 "$SSH_USER@$SERVER_IP" << 'EOF'
         set -e
         
-        if [ -d "/opt/wedding-client/.git" ]; then
+        if [ -d "/opt/wedding/.git" ]; then
             echo "[INFO] 更新现有项目代码..."
-            cd /opt/wedding-client
+            cd /opt/wedding
             git fetch origin || {
                 echo "[WARN] Git fetch 失败，尝试重新克隆..."
                 cd /opt
-                rm -rf wedding-client
-                git clone https://github.com/yiying-wang/wedding-client.git wedding-client
+                rm -rf wedding
+                git clone https://github.com/xuanyiying/wedding.git wedding
             }
-            if [ -d "/opt/wedding-client/.git" ]; then
+            if [ -d "/opt/wedding/.git" ]; then
                 cd /opt/wedding-client
                 git reset --hard origin/main
                 git clean -fd
@@ -249,7 +249,7 @@ EOF
             echo "[INFO] 克隆项目代码..."
             cd /opt
             rm -rf wedding-client
-            git clone https://github.com/yiying-wang/wedding-client.git wedding-client
+            git clone https://github.com/xuanyiying/wedding.git wedding
         fi
 EOF
     
