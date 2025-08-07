@@ -279,20 +279,52 @@ check_ports() {
 check_docker_network() {
     log_info "检查Docker网络配置..."
     
-    # 检查是否存在IP冲突
-    local subnet="172.20.0.0/16"
+    # 清理已存在的wedding-net网络
     if docker network ls --format "table {{.Name}}\t{{.Driver}}" | grep -q "wedding-net"; then
         log_info "发现已存在的wedding-net网络，将进行清理"
+        # 停止使用该网络的容器
+        docker-compose down --remove-orphans 2>/dev/null || true
+        # 强制删除网络
         docker network rm wedding-net 2>/dev/null || true
+        sleep 2
     fi
     
-    # 检查子网冲突
-    if ip route | grep -q "172.20."; then
-        log_warning "检测到可能的IP子网冲突 (172.20.0.0/16)"
-        log_info "当前路由表中存在172.20.x.x网段，可能影响容器网络通信"
+    # 清理所有未使用的网络
+    log_info "清理未使用的Docker网络..."
+    docker network prune -f 2>/dev/null || true
+    
+    # 检查可用的子网范围
+    log_info "检查网络子网可用性..."
+    local test_subnets=("172.20.0.0/16" "172.21.0.0/16" "172.22.0.0/16" "172.23.0.0/16" "10.20.0.0/16")
+    AVAILABLE_SUBNET=""
+    AVAILABLE_GATEWAY=""
+    
+    for subnet in "${test_subnets[@]}"; do
+        local network_prefix=$(echo $subnet | cut -d'/' -f1 | cut -d'.' -f1-2)
+        local gateway="${network_prefix}.0.1"
+        
+        # 检查路由表冲突
+        if ! ip route | grep -q "$network_prefix"; then
+            # 检查Docker网络冲突
+            if ! docker network ls --format "table {{.Name}}\t{{.Subnet}}" | grep -q "$network_prefix"; then
+                AVAILABLE_SUBNET="$subnet"
+                AVAILABLE_GATEWAY="$gateway"
+                log_success "找到可用子网: $subnet (网关: $gateway)"
+                break
+            fi
+        fi
+    done
+    
+    if [[ -z "$AVAILABLE_SUBNET" ]]; then
+        log_error "无法找到可用的网络子网，请手动清理网络冲突"
+        log_info "当前Docker网络:"
+        docker network ls
+        log_info "当前路由表:"
+        ip route | grep -E "172\.|10\."
+        exit 1
     fi
     
-    log_success "Docker网络检查完成"
+    log_success "Docker网络检查完成，将使用子网: $AVAILABLE_SUBNET"
 }
 
 # 创建环境文件
@@ -368,14 +400,24 @@ deploy_services() {
     # 创建自定义网络（如果不存在）
     log_info "创建Docker网络..."
     if ! docker network ls | grep -q "wedding-net"; then
+        if [[ -z "$AVAILABLE_SUBNET" ]] || [[ -z "$AVAILABLE_GATEWAY" ]]; then
+            log_error "未找到可用的网络子网配置"
+            exit 1
+        fi
+        
         docker network create \
             --driver bridge \
-            --subnet=172.20.0.0/16 \
-            --gateway=172.20.0.1 \
+            --subnet="$AVAILABLE_SUBNET" \
+            --gateway="$AVAILABLE_GATEWAY" \
             --opt com.docker.network.bridge.name=wedding-br0 \
             --opt com.docker.network.driver.mtu=1500 \
-            wedding-net
-        log_success "Docker网络创建成功"
+            wedding-net || {
+            log_error "创建Docker网络失败，子网: $AVAILABLE_SUBNET"
+            log_info "尝试清理网络冲突..."
+            docker network prune -f 2>/dev/null || true
+            exit 1
+        }
+        log_success "Docker网络创建成功，使用子网: $AVAILABLE_SUBNET"
     else
         log_info "Docker网络已存在"
     fi
@@ -587,8 +629,8 @@ show_deployment_info() {
     echo "=== Docker 网络信息 ==="
     echo "网络名称: wedding-net"
     echo "网络类型: bridge"
-    echo "子网范围: 172.20.0.0/16"
-    echo "网关地址: 172.20.0.1"
+    echo "子网范围: ${AVAILABLE_SUBNET:-动态分配}"
+    echo "网关地址: ${AVAILABLE_GATEWAY:-动态分配}"
     echo "网桥名称: wedding-br0"
     echo
     echo "=== 服务间通信 ==="
@@ -624,7 +666,7 @@ show_troubleshooting_info() {
     echo "=== 常见问题 ==="
     echo "• 端口被占用: 检查并停止占用端口的进程"
     echo "• 内存不足: 增加系统内存或调整容器资源限制"
-    echo "• 网络冲突: 检查172.20.0.0/16网段是否与现有网络冲突"
+    echo "• 网络冲突: 检查Docker网络子网是否与现有网络冲突"
     echo "• 权限问题: 确保当前用户在docker组中"
     echo "• 防火墙阻拦: 检查防火墙设置，开放必要端口"
     echo

@@ -143,14 +143,7 @@ services:
 
 networks:
   wedding-net:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
-          gateway: 172.20.0.1
-    driver_opts:
-      com.docker.network.bridge.name: wedding-br0
-      com.docker.network.driver.mtu: 1500
+    external: true
 
 volumes:
   mysql_data:
