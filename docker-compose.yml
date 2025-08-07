@@ -143,7 +143,7 @@ services:
 
 networks:
   wedding-net:
-    external: true
+    driver: bridge
 
 volumes:
   mysql_data:
