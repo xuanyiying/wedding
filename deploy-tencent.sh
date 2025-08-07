@@ -1,183 +1,336 @@
 #!/bin/bash
 
-# 腾讯云服务器部署脚本
-# 服务器信息
+# 腾讯云部署脚本 - Wedding Client
+# 服务器: 114.132.225.94 (公网) / 10.1.12.15 (内网)
+# Web端口: 8080 (通过Nginx代理)
+# 协议: HTTP
+# GitHub: https://github.com/xuanyiying/wedding.git
+
+set -e
+
+# 配置变量
 SERVER_IP="114.132.225.94"
-SERVER_USER="root"
-SERVER_PASSWORD="lhins-3vhwz99j"
+INTERNAL_IP="10.1.12.15"
+SSH_USER="root"
+SSH_PASS="lhins-3vhwz99j"
 DEPLOY_DIR="/root/wedding"
 WEB_PORT="8080"
+PROJECT_NAME="wedding-client"
+REMOTE_DIR="/opt/wedding-client"
+GITHUB_REPO="https://github.com/xuanyiying/wedding.git"
+LOCAL_PROJECT_DIR="$(pwd)"
+DEPLOYMENT_DIR="${LOCAL_PROJECT_DIR}/deployment"
 
 # 颜色输出
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # 日志函数
 log_info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
+    echo -e "${BLUE}[INFO]${NC} $(date '+%Y-%m-%d %H:%M:%S') - $1"
 }
 
 log_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
+    echo -e "${GREEN}[SUCCESS]${NC} $(date '+%Y-%m-%d %H:%M:%S') - $1"
 }
 
 log_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
+    echo -e "${YELLOW}[WARNING]${NC} $(date '+%Y-%m-%d %H:%M:%S') - $1"
 }
 
 log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
+    echo -e "${RED}[ERROR]${NC} $(date '+%Y-%m-%d %H:%M:%S') - $1"
+}
+
+log_step() {
+    echo -e "${PURPLE}[STEP]${NC} $(date '+%Y-%m-%d %H:%M:%S') - $1"
+}
+
+log_debug() {
+    echo -e "${CYAN}[DEBUG]${NC} $(date '+%Y-%m-%d %H:%M:%S') - $1"
 }
 
 # 检查依赖
 check_dependencies() {
-    log_info "检查本地依赖..."
+    log_step "检查本地依赖..."
     
-    if ! command -v sshpass &> /dev/null; then
-        log_error "sshpass 未安装，请先安装: brew install sshpass (macOS) 或 apt-get install sshpass (Ubuntu)"
+    local missing_deps=()
+    
+    # 检查必要的命令
+    local required_commands=("sshpass" "ssh")
+    
+    for cmd in "${required_commands[@]}"; do
+        if ! command -v "$cmd" &> /dev/null; then
+            missing_deps+=("$cmd")
+        fi
+    done
+    
+    if [ ${#missing_deps[@]} -ne 0 ]; then
+        log_error "缺少以下依赖: ${missing_deps[*]}"
+        log_info "请安装缺少的依赖:"
+        for dep in "${missing_deps[@]}"; do
+            case $dep in
+                "sshpass")
+                    echo "  brew install sshpass"
+                    ;;
+                *)
+                    echo "  请安装 $dep"
+                    ;;
+            esac
+        done
         exit 1
     fi
     
-    if ! command -v rsync &> /dev/null; then
-        log_error "rsync 未安装，请先安装"
-        exit 1
-    fi
-    
-    log_success "依赖检查完成"
+    log_success "本地依赖检查完成"
 }
 
 # 测试服务器连接
 test_connection() {
-    log_info "测试服务器连接..."
+    log_step "测试服务器连接..."
     
-    if sshpass -p "$SERVER_PASSWORD" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 "$SERVER_USER@$SERVER_IP" "echo 'Connection successful'"; then
-        log_success "服务器连接成功"
-    else
-        log_error "无法连接到服务器 $SERVER_IP"
-        exit 1
-    fi
+    local max_retries=3
+    local retry_count=0
+    
+    while [ $retry_count -lt $max_retries ]; do
+        log_debug "尝试连接服务器 (${retry_count}/${max_retries})..."
+        
+        if sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -o BatchMode=no "$SSH_USER@$SERVER_IP" "echo 'Connection successful'" 2>/dev/null; then
+            log_success "服务器连接成功"
+            return 0
+        else
+            retry_count=$((retry_count + 1))
+            if [ $retry_count -lt $max_retries ]; then
+                log_warning "连接失败，${retry_count}秒后重试..."
+                sleep $retry_count
+            fi
+        fi
+    done
+    
+    log_error "无法连接到服务器 $SERVER_IP，请检查:"
+    echo "  1. 服务器IP地址是否正确: $SERVER_IP"
+    echo "  2. SSH用户名是否正确: $SSH_USER"
+    echo "  3. SSH密码是否正确"
+    echo "  4. 服务器防火墙是否允许SSH连接"
+    echo "  5. 网络连接是否正常"
+    exit 1
 }
 
-# 准备服务器环境
+# 设置服务器环境
 setup_server() {
-    log_info "准备服务器环境..."
+    log_step "设置服务器环境..."
     
-    sshpass -p "$SERVER_PASSWORD" ssh -o StrictHostKeyChecking=no "$SERVER_USER@$SERVER_IP" << 'EOF'
-        # 更新系统
-        apt-get update
+    sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "$SSH_USER@$SERVER_IP" << EOF
+        set -e
         
-        # 安装Docker
+        echo "[INFO] 创建项目目录..."
+        mkdir -p $REMOTE_DIR
+        mkdir -p $REMOTE_DIR/logs
+        mkdir -p $REMOTE_DIR/data
+        mkdir -p $REMOTE_DIR/uploads
+        
+        echo "[INFO] 检查Docker安装状态..."
         if ! command -v docker &> /dev/null; then
-            echo "安装Docker..."
+            echo "[INFO] 安装Docker..."
             curl -fsSL https://get.docker.com -o get-docker.sh
             sh get-docker.sh
             systemctl start docker
             systemctl enable docker
+            usermod -aG docker root
+        else
+            echo "[INFO] Docker已安装"
         fi
         
-        # 安装Docker Compose
+        echo "[INFO] 检查Docker Compose安装状态..."
         if ! command -v docker-compose &> /dev/null; then
-            echo "安装Docker Compose..."
-            curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            echo "[INFO] 安装Docker Compose..."
+            curl -L "https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-\$(uname -s)-\$(uname -m)" -o /usr/local/bin/docker-compose
             chmod +x /usr/local/bin/docker-compose
+            ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
+        else
+            echo "[INFO] Docker Compose已安装"
         fi
         
-        # 创建部署目录
-        mkdir -p /root/wedding
+        echo "[INFO] 启动Docker服务..."
+        systemctl start docker
+        systemctl enable docker
         
-        # 配置防火墙
-        ufw allow 22/tcp
-        ufw allow 8080/tcp
-        ufw allow 3000/tcp
-        ufw allow 3306/tcp
-        ufw allow 6379/tcp
-        ufw allow 9000/tcp
-        ufw allow 9001/tcp
+        echo "[INFO] 配置防火墙..."
+        if command -v ufw &> /dev/null; then
+            ufw --force enable
+            ufw allow 22/tcp
+            ufw allow $WEB_PORT/tcp
+            ufw allow 80/tcp
+            ufw allow 443/tcp
+            echo "[INFO] UFW防火墙配置完成"
+        elif command -v firewall-cmd &> /dev/null; then
+            firewall-cmd --permanent --add-port=22/tcp
+            firewall-cmd --permanent --add-port=$WEB_PORT/tcp
+            firewall-cmd --permanent --add-port=80/tcp
+            firewall-cmd --permanent --add-port=443/tcp
+            firewall-cmd --reload
+            echo "[INFO] Firewalld防火墙配置完成"
+        else
+            echo "[WARNING] 未检测到防火墙管理工具"
+        fi
         
-        echo "服务器环境准备完成"
+        echo "[INFO] 安装必要工具..."
+        if command -v apt-get &> /dev/null; then
+            apt-get update
+            apt-get install -y curl wget git htop
+        elif command -v yum &> /dev/null; then
+            yum update -y
+            yum install -y curl wget git htop
+        fi
+        
+        echo "[SUCCESS] 服务器环境设置完成"
 EOF
     
-    log_success "服务器环境准备完成"
+    if [ $? -eq 0 ]; then
+        log_success "服务器环境设置完成"
+    else
+        log_error "服务器环境设置失败"
+        exit 1
+    fi
 }
 
-# 上传项目文件
-upload_files() {
-    log_info "上传项目文件到服务器..."
+# 克隆或更新项目代码
+clone_or_update_project() {
+    log_step "克隆或更新项目代码..."
     
-    # 创建临时目录
-    TEMP_DIR="/tmp/wedding-deploy"
-    rm -rf "$TEMP_DIR"
-    mkdir -p "$TEMP_DIR"
+    sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "$SSH_USER@$SERVER_IP" << EOF
+        set -e
+        
+        if [ -d "$REMOTE_DIR/.git" ]; then
+            echo "[INFO] 项目已存在，更新代码..."
+            cd $REMOTE_DIR
+            git fetch origin
+            git reset --hard origin/main
+            git clean -fd
+        else
+            echo "[INFO] 克隆项目代码..."
+            rm -rf $REMOTE_DIR
+            git clone $GITHUB_REPO $REMOTE_DIR
+            cd $REMOTE_DIR
+        fi
+        
+        echo "[INFO] 当前分支和提交信息:"
+        git branch -v
+        git log --oneline -5
+        
+        echo "[INFO] 复制部署配置文件..."
+        # 使用项目中的腾讯云部署配置
+        if [ -f "deployment/docker-compose-tencent.yml" ]; then
+            cp deployment/docker-compose-tencent.yml docker-compose.yml
+            echo "[SUCCESS] docker-compose.yml 配置完成"
+        else
+            echo "[ERROR] 未找到 deployment/docker-compose-tencent.yml"
+            exit 1
+        fi
+        
+        if [ -f "deployment/nginx-tencent.conf" ]; then
+            cp deployment/nginx-tencent.conf nginx.conf
+            echo "[SUCCESS] nginx.conf 配置完成"
+        else
+            echo "[ERROR] 未找到 deployment/nginx-tencent.conf"
+            exit 1
+        fi
+        
+        if [ -f "deployment/.env.tencent" ]; then
+            cp deployment/.env.tencent .env
+            echo "[SUCCESS] .env 配置完成"
+        else
+            echo "[ERROR] 未找到 deployment/.env.tencent"
+            exit 1
+        fi
+        
+        echo "[SUCCESS] 项目代码和配置文件准备完成"
+EOF
     
-    # 复制必要文件
-    cp -r server "$TEMP_DIR/"
-    cp -r web "$TEMP_DIR/"
-    cp deployment/docker-compose-tencent.yml "$TEMP_DIR/docker-compose.yml"
-    cp deployment/nginx-tencent.conf "$TEMP_DIR/nginx.conf"
-    
-    # 上传到服务器
-    sshpass -p "$SERVER_PASSWORD" rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" "$TEMP_DIR/" "$SERVER_USER@$SERVER_IP:$DEPLOY_DIR/"
-    
-    # 清理临时目录
-    rm -rf "$TEMP_DIR"
-    
-    log_success "文件上传完成"
+    if [ $? -eq 0 ]; then
+        log_success "项目代码克隆/更新完成"
+    else
+        log_error "项目代码克隆/更新失败"
+        exit 1
+    fi
 }
 
-# 构建和启动服务
+# 部署服务
 deploy_services() {
-    log_info "构建和启动服务..."
+    log_step "部署服务..."
     
-    sshpass -p "$SERVER_PASSWORD" ssh -o StrictHostKeyChecking=no "$SERVER_USER@$SERVER_IP" << EOF
-        cd $DEPLOY_DIR
+    sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "$SSH_USER@$SERVER_IP" << EOF
+        set -e
+        cd $REMOTE_DIR
         
-        # 停止现有服务
-        echo "停止现有服务..."
-        docker-compose down --remove-orphans
+        echo "[INFO] 停止现有服务..."
+        if [ -f docker-compose.yml ]; then
+            docker-compose down --remove-orphans || true
+        fi
         
-        # 清理旧镜像
-        echo "清理旧镜像..."
-        docker system prune -f
+        echo "[INFO] 清理Docker资源..."
+        docker system prune -f || true
+        docker volume prune -f || true
         
-        # 构建镜像
-        echo "构建镜像..."
-        docker-compose build --no-cache
+        echo "[INFO] 拉取最新镜像..."
+        docker-compose pull || true
         
-        # 启动服务
-        echo "启动服务..."
-        docker-compose up -d
+        echo "[INFO] 构建并启动服务..."
+        docker-compose up -d --build
         
-        # 等待服务启动
-        echo "等待服务启动..."
-        sleep 60
+        echo "[INFO] 等待服务启动..."
+        sleep 30
         
-        # 检查服务状态
-        echo "检查服务状态..."
+        echo "[INFO] 检查服务状态..."
         docker-compose ps
         
-        echo "部署完成"
+        echo "[INFO] 检查服务日志..."
+        docker-compose logs --tail=20
+        
+        echo "[SUCCESS] 服务部署完成"
 EOF
     
-    log_success "服务部署完成"
+    if [ $? -eq 0 ]; then
+        log_success "服务部署完成"
+    else
+        log_error "服务部署失败"
+        exit 1
+    fi
 }
 
 # 检查服务状态
 check_services() {
-    log_info "检查服务状态..."
+    log_step "检查服务状态..."
     
-    # 检查容器状态
-    sshpass -p "$SERVER_PASSWORD" ssh -o StrictHostKeyChecking=no "$SERVER_USER@$SERVER_IP" << EOF
-        cd $DEPLOY_DIR
-        echo "=== 容器状态 ==="
+    sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "$SSH_USER@$SERVER_IP" << EOF
+        cd $REMOTE_DIR
+        
+        echo "=== Docker Compose 服务状态 ==="
         docker-compose ps
         
-        echo "\n=== 服务日志 ==="
-        docker-compose logs --tail=100 nginx
-        docker-compose logs --tail=100 web
-        docker-compose logs --tail=100 server
+        echo ""
+        echo "=== 服务健康检查 ==="
+        for service in \$(docker-compose ps --services); do
+            echo "检查服务: \$service"
+            docker-compose exec -T \$service echo "\$service is running" 2>/dev/null || echo "\$service is not responding"
+        done
+        
+        echo ""
+        echo "=== 网络连接测试 ==="
+        echo "测试Web服务 (端口$WEB_PORT):"
+        curl -s -o /dev/null -w "HTTP状态码: %{http_code}\n" http://localhost:$WEB_PORT/ || echo "Web服务连接失败"
+        
+        echo ""
+        echo "=== 最近日志 ==="
+        docker-compose logs --tail=20
+        
+        echo ""
+        echo "=== 系统资源使用情况 ==="
+        docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}"
 EOF
     
     # 测试HTTP访问
@@ -200,43 +353,177 @@ EOF
     else
         log_warning "API服务访问失败"
     fi
+    
+    log_success "服务状态检查完成"
 }
 
 # 显示访问信息
 show_access_info() {
-    log_success "=== 部署完成 ==="
-    echo -e "${GREEN}前端访问地址:${NC} http://$SERVER_IP:$WEB_PORT"
-    echo -e "${GREEN}API访问地址:${NC} http://$SERVER_IP:$WEB_PORT/api"
-    echo -e "${GREEN}MinIO控制台:${NC} http://$SERVER_IP:9001"
-    echo -e "${GREEN}健康检查:${NC} http://$SERVER_IP:$WEB_PORT/health"
     echo ""
-    echo -e "${YELLOW}管理命令:${NC}"
-    echo "  查看服务状态: ssh root@$SERVER_IP 'cd $DEPLOY_DIR && docker-compose ps'"
-    echo "  查看日志: ssh root@$SERVER_IP 'cd $DEPLOY_DIR && docker-compose logs -f'"
-    echo "  重启服务: ssh root@$SERVER_IP 'cd $DEPLOY_DIR && docker-compose restart'"
-    echo "  停止服务: ssh root@$SERVER_IP 'cd $DEPLOY_DIR && docker-compose down'"
+    log_success "🎉 部署完成！访问信息："
+    echo "================================"
+    echo "🌐 Web应用:     http://$SERVER_IP:$WEB_PORT"
+    echo "🔗 API接口:     http://$SERVER_IP:$WEB_PORT/api"
+    echo "📁 MinIO控制台: http://$SERVER_IP:$WEB_PORT/minio"
+    echo "❤️  健康检查:   http://$SERVER_IP:$WEB_PORT/health"
+    echo "================================"
+    echo "🖥️  服务器信息:"
+    echo "   公网IP: $SERVER_IP"
+    echo "   内网IP: $INTERNAL_IP"
+    echo "   SSH用户: $SSH_USER"
+    echo "   项目目录: $REMOTE_DIR"
+    echo "   Web端口: $WEB_PORT"
+    echo "================================"
+    echo "📋 管理命令:"
+    echo "   查看状态: $0 status"
+    echo "   查看日志: $0 logs"
+    echo "   重启服务: $0 restart"
+    echo "   停止服务: $0 stop"
+    echo "================================"
+}
+
+# 显示帮助信息
+show_help() {
+    echo "Wedding Client 腾讯云部署脚本"
+    echo ""
+    echo "用法: $0 [命令]"
+    echo ""
+    echo "命令:"
+    echo "  deploy          完整部署 (默认) - 从GitHub克隆最新代码"
+    echo "  status          检查服务状态"
+    echo "  logs            查看服务日志"
+    echo "  restart         重启服务"
+    echo "  stop            停止服务"
+    echo "  start           启动服务"
+    echo "  update          更新代码并重启服务"
+    echo "  clean           清理Docker资源"
+    echo "  test            测试服务器连接"
+    echo "  help            显示帮助信息"
+    echo ""
+    echo "特性:"
+    echo "  ✅ 自动从GitHub克隆/更新代码"
+    echo "  ✅ 自动配置部署环境"
+    echo "  ✅ 支持服务管理和监控"
+    echo "  ✅ 完整的错误处理和日志"
+    echo ""
+    echo "示例:"
+    echo "  $0 deploy        # 完整部署"
+    echo "  $0 update        # 更新代码并重启"
+    echo "  $0 status        # 检查状态"
+    echo "  $0 logs          # 查看日志"
+    echo ""
+    echo "GitHub仓库: $GITHUB_REPO"
+    echo ""
+}
+
+# 服务管理功能
+manage_services() {
+    local action="$1"
+    
+    case "$action" in
+        "start")
+             log_step "启动服务..."
+             sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "$SSH_USER@$SERVER_IP" "cd $REMOTE_DIR && docker-compose start"
+             ;;
+         "stop")
+             log_step "停止服务..."
+             sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "$SSH_USER@$SERVER_IP" "cd $REMOTE_DIR && docker-compose stop"
+             ;;
+         "restart")
+             log_step "重启服务..."
+             sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "$SSH_USER@$SERVER_IP" "cd $REMOTE_DIR && docker-compose restart"
+             ;;
+         "logs")
+             log_step "查看服务日志..."
+             sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "$SSH_USER@$SERVER_IP" "cd $REMOTE_DIR && docker-compose logs -f --tail=100"
+             ;;
+         "clean")
+             log_step "清理Docker资源..."
+             sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "$SSH_USER@$SERVER_IP" "cd $REMOTE_DIR && docker-compose down && docker system prune -af && docker volume prune -f"
+            ;;
+        *)
+            log_error "未知的服务管理操作: $action"
+            exit 1
+            ;;
+    esac
+}
+
+# 主要部署流程
+main_deploy() {
+    log_info "🚀 开始部署 Wedding Client 到腾讯云服务器..."
+    echo "服务器: $SERVER_IP"
+    echo "项目: $PROJECT_NAME"
+    echo "端口: $WEB_PORT"
+    echo "GitHub: $GITHUB_REPO"
+    echo ""
+    
+    check_dependencies
+    test_connection
+    setup_server
+    clone_or_update_project
+    deploy_services
+    sleep 10  # 等待服务完全启动
+    check_services
+    show_access_info
+    
+    log_success "🎉 部署完成！"
 }
 
 # 主函数
 main() {
-    echo -e "${BLUE}=== 腾讯云Wedding项目部署脚本 ===${NC}"
-    echo -e "${BLUE}服务器: $SERVER_IP${NC}"
-    echo -e "${BLUE}端口: $WEB_PORT${NC}"
-    echo ""
+    local command="${1:-deploy}"
     
-    # 执行部署步骤
-    check_dependencies
-    test_connection
-    setup_server
-    upload_files
-    deploy_services
-    
-    # 等待服务完全启动
-    log_info "等待服务完全启动..."
-    sleep 30
-    
-    check_services
-    show_access_info
+    case "$command" in
+        "deploy")
+            main_deploy
+            ;;
+        "status")
+            test_connection
+            check_services
+            ;;
+        "logs")
+            test_connection
+            manage_services "logs"
+            ;;
+        "restart")
+            test_connection
+            manage_services "restart"
+            log_success "服务重启完成"
+            ;;
+        "stop")
+            test_connection
+            manage_services "stop"
+            log_success "服务停止完成"
+            ;;
+        "start")
+            test_connection
+            manage_services "start"
+            log_success "服务启动完成"
+            ;;
+        "update")
+            test_connection
+            clone_or_update_project
+            manage_services "restart"
+            log_success "服务更新完成"
+            ;;
+        "clean")
+            test_connection
+            manage_services "clean"
+            log_success "清理完成"
+            ;;
+        "test")
+            test_connection
+            log_success "连接测试完成"
+            ;;
+        "help"|"--help"|"-h")
+            show_help
+            ;;
+        *)
+            log_error "未知命令: $command"
+            echo "使用 '$0 help' 查看帮助信息"
+            exit 1
+            ;;
+    esac
 }
 
 # 错误处理
