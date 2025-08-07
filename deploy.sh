@@ -43,14 +43,36 @@ check_root() {
 
 # 检测操作系统
 detect_os() {
+    # 首先检查是否为macOS
+    if [[ "$(uname)" == "Darwin" ]]; then
+        OS="macOS"
+        VER=$(sw_vers -productVersion 2>/dev/null || echo "Unknown")
+        log_info "检测到操作系统: $OS $VER"
+        log_warning "macOS环境检测到，请确保已安装Docker Desktop"
+        return
+    fi
+    
+    # Linux系统检测
     if [[ -f /etc/os-release ]]; then
         . /etc/os-release
         OS=$NAME
         VER=$VERSION_ID
+    elif [[ -f /etc/redhat-release ]]; then
+        OS=$(cat /etc/redhat-release | awk '{print $1}')
+        VER=$(cat /etc/redhat-release | grep -oE '[0-9]+\.[0-9]+' | head -1)
+    elif [[ -f /etc/debian_version ]]; then
+        OS="Debian"
+        VER=$(cat /etc/debian_version)
+    elif command -v lsb_release &> /dev/null; then
+        OS=$(lsb_release -si)
+        VER=$(lsb_release -sr)
     else
-        log_error "无法检测操作系统"
-        exit 1
+        # 通用检测
+        OS=$(uname -s)
+        VER=$(uname -r)
+        log_warning "使用通用系统检测: $OS $VER"
     fi
+    
     log_info "检测到操作系统: $OS $VER"
 }
 
@@ -60,6 +82,14 @@ install_docker() {
         log_success "Docker 已安装"
         docker --version
         return
+    fi
+
+    # macOS特殊处理
+    if [[ $OS == "macOS" ]]; then
+        log_error "检测到macOS系统，请手动安装Docker Desktop"
+        log_info "请访问 https://www.docker.com/products/docker-desktop 下载并安装Docker Desktop"
+        log_info "安装完成后请重新运行此脚本"
+        exit 1
     fi
 
     log_info "开始安装 Docker..."
@@ -113,6 +143,19 @@ install_docker() {
 
 # 安装 Docker Compose
 install_docker_compose() {
+    # macOS特殊处理
+    if [[ $OS == "macOS" ]]; then
+        if command -v docker-compose &> /dev/null; then
+            log_success "Docker Compose 已安装且可用: $(docker-compose --version)"
+            return
+        else
+            log_error "macOS系统上未找到docker-compose命令"
+            log_info "Docker Compose通常随Docker Desktop一起安装"
+            log_info "请检查Docker Desktop是否正在运行，或重新安装Docker Desktop"
+            exit 1
+        fi
+    fi
+
     # 1. 优先检查命令是否直接可用
     if command -v docker-compose &> /dev/null && docker-compose --version &> /dev/null; then
         log_success "Docker Compose 已安装且可用: $(docker-compose --version)"
@@ -331,6 +374,17 @@ check_docker_network() {
 create_env_files() {
     log_info "创建环境配置文件..."
     
+    # 获取服务器IP地址
+    local server_ip
+    if [[ $OS == "macOS" ]]; then
+        server_ip="localhost"
+    else
+        # 尝试获取公网IP
+        server_ip=$(curl -s --connect-timeout 10 ifconfig.me 2>/dev/null || curl -s --connect-timeout 10 ipinfo.io/ip 2>/dev/null || hostname -I | awk '{print $1}' || echo "localhost")
+    fi
+    
+    log_info "检测到服务器IP: $server_ip"
+    
     # 创建 server .env 文件
     if [[ ! -f "./server/.env" ]]; then
         log_info "创建 server/.env 文件"
@@ -361,7 +415,7 @@ PORT=3000
 NODE_ENV=production
 
 # CORS 配置
-CORS_ORIGIN=http://114.132.225.94
+CORS_ORIGIN=http://$server_ip
 EOF
         log_success "server/.env 文件创建完成"
     else
@@ -609,12 +663,128 @@ setup_swap() {
     log_success "2G 交换文件创建并启用成功。"
 }
 
+# 云服务器环境配置
+setup_cloud_server() {
+    if [[ $OS == "macOS" ]]; then
+        log_info "macOS环境，跳过云服务器配置"
+        return
+    fi
+
+    log_info "配置云服务器环境..."
+    
+    # 检查并配置防火墙
+    configure_firewall
+    
+    # 优化系统参数
+    optimize_system_params
+    
+    # 检查系统资源
+    check_system_resources
+}
+
+# 配置防火墙
+configure_firewall() {
+    log_info "配置防火墙规则..."
+    
+    # 检查防火墙状态
+    if command -v ufw &> /dev/null; then
+        # Ubuntu/Debian UFW
+        log_info "检测到UFW防火墙"
+        sudo ufw --force enable
+        sudo ufw allow 22/tcp comment 'SSH'
+        sudo ufw allow 80/tcp comment 'HTTP'
+        sudo ufw allow 443/tcp comment 'HTTPS'
+        sudo ufw allow 3000/tcp comment 'API Server'
+        sudo ufw allow 9001/tcp comment 'MinIO Console'
+        log_success "UFW防火墙规则配置完成"
+    elif command -v firewall-cmd &> /dev/null; then
+        # CentOS/RHEL firewalld
+        log_info "检测到firewalld防火墙"
+        sudo systemctl enable firewalld
+        sudo systemctl start firewalld
+        sudo firewall-cmd --permanent --add-port=22/tcp
+        sudo firewall-cmd --permanent --add-port=80/tcp
+        sudo firewall-cmd --permanent --add-port=443/tcp
+        sudo firewall-cmd --permanent --add-port=3000/tcp
+        sudo firewall-cmd --permanent --add-port=9001/tcp
+        sudo firewall-cmd --reload
+        log_success "firewalld防火墙规则配置完成"
+    else
+        log_warning "未检测到支持的防火墙，请手动配置以下端口: 22, 80, 443, 3000, 9001"
+    fi
+}
+
+# 优化系统参数
+optimize_system_params() {
+    log_info "优化系统参数..."
+    
+    # 优化内核参数
+    cat > /tmp/docker-sysctl.conf << EOF
+# Docker优化参数
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
+vm.max_map_count = 262144
+fs.file-max = 65536
+EOF
+    
+    sudo cp /tmp/docker-sysctl.conf /etc/sysctl.d/99-docker.conf
+    sudo sysctl -p /etc/sysctl.d/99-docker.conf
+    
+    log_success "系统参数优化完成"
+}
+
+# 检查系统资源
+check_system_resources() {
+    log_info "检查系统资源..."
+    
+    # 检查内存
+    local total_mem=$(free -m | awk 'NR==2{printf "%.0f", $2}')
+    if [ $total_mem -lt 1024 ]; then
+        log_warning "系统内存不足1GB ($total_mem MB)，建议至少2GB内存"
+        log_info "将创建交换文件以增加虚拟内存"
+        setup_swap
+    else
+        log_success "系统内存充足: ${total_mem}MB"
+    fi
+    
+    # 检查磁盘空间
+    local disk_usage=$(df / | awk 'NR==2 {print $5}' | sed 's/%//')
+    if [ $disk_usage -gt 80 ]; then
+        log_warning "磁盘使用率过高: ${disk_usage}%，建议清理磁盘空间"
+    else
+        log_success "磁盘空间充足，使用率: ${disk_usage}%"
+    fi
+    
+    # 检查CPU核心数
+    local cpu_cores=$(nproc)
+    log_info "CPU核心数: $cpu_cores"
+    if [ $cpu_cores -lt 2 ]; then
+        log_warning "CPU核心数较少，可能影响性能"
+    fi
+}
+
 # 显示部署信息
 show_deployment_info() {
     log_success "部署完成！"
     echo
     echo "=== 服务访问信息 ==="
-    local server_ip=$(hostname -I | awk '{print $1}')
+    
+    # 获取服务器IP地址
+    local server_ip
+    if [[ $OS == "macOS" ]]; then
+        server_ip="localhost"
+    else
+        # 优先显示公网IP
+        server_ip=$(curl -s --connect-timeout 10 ifconfig.me 2>/dev/null || curl -s --connect-timeout 10 ipinfo.io/ip 2>/dev/null)
+        if [[ -z "$server_ip" ]]; then
+            server_ip=$(hostname -I | awk '{print $1}')
+            log_warning "无法获取公网IP，显示内网IP: $server_ip"
+        else
+            log_info "显示公网IP: $server_ip"
+        fi
+    fi
+    
     echo "🌐 Web 应用: http://$server_ip (通过Caddy反向代理)"
     echo "🔧 API 服务: http://$server_ip:3000"
     echo "📊 MinIO 控制台: http://$server_ip:9001"
@@ -656,19 +826,67 @@ show_deployment_info() {
 show_troubleshooting_info() {
     echo
     echo "=== 故障排除指南 ==="
-    echo "1. 检查容器状态: docker-compose ps"
-    echo "2. 查看服务日志: docker-compose logs [service_name]"
-    echo "3. 检查网络连接: docker network inspect wedding-net"
-    echo "4. 测试端口连通性: telnet localhost [port]"
-    echo "5. 重启失败的服务: docker-compose restart [service_name]"
-    echo "6. 完全重新部署: docker-compose down && ./deploy.sh"
+    echo "如果遇到问题，请检查以下几点："
     echo
-    echo "=== 常见问题 ==="
-    echo "• 端口被占用: 检查并停止占用端口的进程"
-    echo "• 内存不足: 增加系统内存或调整容器资源限制"
-    echo "• 网络冲突: 检查Docker网络子网是否与现有网络冲突"
-    echo "• 权限问题: 确保当前用户在docker组中"
-    echo "• 防火墙阻拦: 检查防火墙设置，开放必要端口"
+    echo "1. 🔍 检查服务状态:"
+    echo "   docker-compose ps"
+    echo "   docker-compose logs [service_name]"
+    echo
+    echo "2. 🌐 检查网络连接:"
+    echo "   docker network ls"
+    echo "   docker network inspect wedding-net"
+    echo
+    echo "3. 🔧 重启服务:"
+    echo "   docker-compose restart [service_name]"
+    echo "   docker-compose down && docker-compose up -d"
+    echo
+    echo "4. 🧹 清理和重建:"
+    echo "   docker-compose down -v"
+    echo "   docker system prune -f"
+    echo "   ./deploy.sh"
+    echo
+    echo "5. 📊 检查资源使用:"
+    echo "   docker stats"
+    echo "   df -h"
+    echo "   free -h"
+    echo
+    echo "6. 🔒 检查权限:"
+    echo "   sudo usermod -aG docker \$USER"
+    echo "   newgrp docker"
+    echo
+    echo "7. 🌐 网络问题:"
+    echo "   检查Docker网络子网是否与现有网络冲突"
+    echo "   检查防火墙设置是否阻止了必要端口"
+    echo
+    echo "8. 🔥 云服务器防火墙配置:"
+    if command -v ufw &> /dev/null; then
+        echo "   sudo ufw status"
+        echo "   sudo ufw allow 80/tcp"
+        echo "   sudo ufw allow 443/tcp"
+        echo "   sudo ufw allow 3000/tcp"
+    elif command -v firewall-cmd &> /dev/null; then
+        echo "   sudo firewall-cmd --list-all"
+        echo "   sudo firewall-cmd --permanent --add-port=80/tcp"
+        echo "   sudo firewall-cmd --permanent --add-port=443/tcp"
+        echo "   sudo firewall-cmd --permanent --add-port=3000/tcp"
+        echo "   sudo firewall-cmd --reload"
+    fi
+    echo
+    echo "9. 🌍 云服务器安全组配置:"
+    echo "   确保云服务器安全组开放以下端口:"
+    echo "   - 22 (SSH)"
+    echo "   - 80 (HTTP)"
+    echo "   - 443 (HTTPS)"
+    echo "   - 3000 (API服务)"
+    echo "   - 9001 (MinIO控制台)"
+    echo
+    echo "10. 📝 查看详细日志:"
+    echo "    journalctl -u docker.service"
+    echo "    docker-compose logs --follow"
+    echo
+    echo "11. 🔄 重新获取公网IP:"
+    echo "    curl ifconfig.me"
+    echo "    如果CORS错误，请检查server/.env中的CORS_ORIGIN配置"
     echo
 }
 
@@ -789,14 +1007,14 @@ main() {
             # 检测操作系统
             detect_os
             
+            # 云服务器环境配置
+            setup_cloud_server
+            
             # 安装 Docker
             install_docker
             
             # 安装 Docker Compose
             install_docker_compose
-
-            # 配置交换文件
-            setup_swap
             
             # 检查端口
             check_ports
