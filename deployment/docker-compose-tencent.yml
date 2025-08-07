@@ -1,8 +1,10 @@
+version: '3.8'
+
 services:
-  # 基础设施服务
+  # MySQL数据库
   mysql:
     image: mysql:8.0
-    container_name: wedding_mysql
+    container_name: mysql
     restart: always
     deploy:
       resources:
@@ -10,24 +12,25 @@ services:
           memory: 512M
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: wedding_host
-      MYSQL_USER: wedding
-      MYSQL_PASSWORD: wedding123
+      MYSQL_DATABASE: host
+      MYSQL_USER: host
+      MYSQL_PASSWORD: host123
     ports:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     command: --default-authentication-plugin=mysql_native_password --bind-address=0.0.0.0
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "114.132.225.94"]
       timeout: 20s
       retries: 10
     networks:
       - wedding-net
 
+  # Redis缓存
   redis:
     image: redis:7-alpine
-    container_name: wedding_redis
+    container_name: redis
     restart: always
     ports:
       - "6379:6379"
@@ -42,17 +45,18 @@ services:
     networks:
       - wedding-net
 
+  # MinIO对象存储
   minio:
     image: minio/minio:latest
-    container_name: wedding_minio
+    container_name: minio
     restart: always
     deploy:
       resources:
         limits:
           memory: 256M
     environment:
-      MINIO_ROOT_USER: rustfsadmin
-      MINIO_ROOT_PASSWORD: rustfssecret123
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
     ports:
       - "9000:9000"  # S3 API port
       - "9001:9001"  # Console port
@@ -60,19 +64,19 @@ services:
       - minio_data:/data
     command: server /data --console-address ":9001"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "curl", "-f", "http://114.132.225.94:9000/minio/health/live"]
       interval: 30s
       timeout: 20s
       retries: 3
     networks:
       - wedding-net
 
-  # 应用服务
+  # 后端API服务
   server:
     build:
-      context: ./server
+      context: ../server
       dockerfile: Dockerfile
-    container_name: wedding_server
+    container_name: server
     restart: always
     deploy:
       resources:
@@ -81,9 +85,16 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - API_HOST=server
-    env_file:
-      - ./server/.env
+      - NODE_ENV=production
+      - API_HOST=0.0.0.0
+      - DATABASE_URL=mysql://host:host123@mysql:3306/host
+      - REDIS_URL=redis://redis:6379
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin123
+      - MINIO_BUCKET_NAME=host-photos
+      - JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+      - PORT=3000
     depends_on:
       mysql:
         condition: service_healthy
@@ -92,7 +103,7 @@ services:
       minio:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://114.132.225.94:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -100,44 +111,49 @@ services:
     networks:
       - wedding-net
 
+  # 前端Web服务
   web:
     build:
-      context: ./web
+      context: ../web
       dockerfile: Dockerfile
-    container_name: wedding_web
+    container_name: web
     restart: always
     ports:
-      - "5173:5173"
-    env_file:
-      - ./web/.env
+      - "8080:80"
+    environment:
+      - NODE_ENV=production
+      - VITE_API_URL=http://114.132.225.94:8080/api
     depends_on:
       server:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://114.132.225.94:8080/"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 30s
+      retries: 5
+      start_period: 60s
     networks:
       - wedding-net
 
-  caddy:
-    image: caddy:2-alpine
-    container_name: wedding_caddy
+  # Nginx反向代理 (HTTP only)
+  nginx:
+    image: nginx:alpine
+    container_name: wedding_nginx
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "8080:80"  # 映射到8080端口
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
+      - ./nginx-tencent.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       web:
         condition: service_healthy
       server:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://114.132.225.94:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - wedding-net
 
@@ -149,5 +165,3 @@ volumes:
   mysql_data:
   redis_data:
   minio_data:
-  caddy_data:
-  caddy_config:

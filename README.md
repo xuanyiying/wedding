@@ -78,10 +78,7 @@ npm run dev
 wedding-client/
 ├── web/                 # React 前端应用
 ├── server/              # Node.js 后端 API
-├── docker-compose.yml   # Docker 编排文件
 ├── Caddyfile           # Caddy 反向代理配置
-├── deploy.sh           # 完整部署脚本
-├── quick-deploy.sh     # 快速部署脚本
 ├── DEPLOYMENT_GUIDE.md # 详细部署指南
 └── deployment/         # 部署相关文档
 ```
