@@ -202,21 +202,67 @@ EOF
 clone_or_update_project() {
     log_step "克隆或更新项目代码..."
     
-    sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "$SSH_USER@$SERVER_IP" << EOF
+    # 分步执行，避免长时间SSH连接超时
+    
+    # 第一步：检查和准备项目目录
+     log_info "检查项目目录..."
+     sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 "$SSH_USER@$SERVER_IP" << 'EOF'
         set -e
         
-        if [ -d "$REMOTE_DIR/.git" ]; then
-            echo "[INFO] 项目已存在，更新代码..."
-            cd $REMOTE_DIR
-            git fetch origin
-            git reset --hard origin/main
-            git clean -fd
+        # 检查项目目录是否存在
+        if [ -d "/opt/wedding-client" ]; then
+            echo "[INFO] 项目目录已存在，准备更新..."
+            cd /opt/wedding-client
+            # 备份可能的本地修改
+            git stash || true
+        else
+            echo "[INFO] 创建项目目录..."
+            mkdir -p /opt
+        fi
+EOF
+    
+    if [ $? -ne 0 ]; then
+        log_error "项目目录检查失败"
+        exit 1
+    fi
+    
+    # 第二步：克隆或更新代码
+     log_info "同步代码仓库..."
+     sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 "$SSH_USER@$SERVER_IP" << 'EOF'
+        set -e
+        
+        if [ -d "/opt/wedding-client/.git" ]; then
+            echo "[INFO] 更新现有项目代码..."
+            cd /opt/wedding-client
+            git fetch origin || {
+                echo "[WARN] Git fetch 失败，尝试重新克隆..."
+                cd /opt
+                rm -rf wedding-client
+                git clone https://github.com/yiying-wang/wedding-client.git wedding-client
+            }
+            if [ -d "/opt/wedding-client/.git" ]; then
+                cd /opt/wedding-client
+                git reset --hard origin/main
+                git clean -fd
+            fi
         else
             echo "[INFO] 克隆项目代码..."
-            rm -rf $REMOTE_DIR
-            git clone $GITHUB_REPO $REMOTE_DIR
-            cd $REMOTE_DIR
+            cd /opt
+            rm -rf wedding-client
+            git clone https://github.com/yiying-wang/wedding-client.git wedding-client
         fi
+EOF
+    
+    if [ $? -ne 0 ]; then
+        log_error "代码同步失败"
+        exit 1
+    fi
+    
+    # 第三步：复制配置文件
+     log_info "配置部署文件..."
+     sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 "$SSH_USER@$SERVER_IP" << 'EOF'
+        set -e
+        cd /opt/wedding-client
         
         echo "[INFO] 当前分支和提交信息:"
         git branch -v
@@ -254,7 +300,7 @@ EOF
     if [ $? -eq 0 ]; then
         log_success "项目代码克隆/更新完成"
     else
-        log_error "项目代码克隆/更新失败"
+        log_error "配置文件复制失败"
         exit 1
     fi
 }
