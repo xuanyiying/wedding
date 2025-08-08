@@ -603,6 +603,7 @@ const TeamManagePage: React.FC = () => {
               disabled={avatarUploading}
               size={120}
               shape="square"
+              category="avatar"
             />
           </Form.Item>
 
@@ -672,7 +673,7 @@ const TeamManagePage: React.FC = () => {
             </Col>
             <Col span={12}>
               <Form.Item
-                name="establishedYear"
+                name="establishedAt"
                 label="成立年份"
               >
                 <InputNumber

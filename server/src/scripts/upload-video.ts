@@ -8,6 +8,7 @@ import { sequelize } from '../config/database';
 import { OssService } from '../services/oss/oss.service';
 import { OssFactory } from '../services/oss/oss.factory';
 import { FileService } from '../services/file.service';
+import '../models'; // 确保模型被加载
 
 /**
  * 视频上传脚本
@@ -61,22 +62,27 @@ class VideoUploader {
 
       logger.info(`MinIO上传成功: ${uploadResult.url}`);
 
-      // 保存文件记录到数据库
-      const fileRecord = await FileService.createFileRecord({
-        filename: path.basename(uploadResult.key),
-        originalName: fileName,
-        filePath: uploadResult.key,
-        fileSize: uploadResult.size,
-        mimeType: uploadResult.contentType,
-        fileType: FileType.VIDEO,
-        userId: userId || 'system',
-        url: uploadResult.url
-      });
-
-      logger.info(`数据库记录创建成功: ${fileRecord.id}`);
+      // 尝试保存文件记录到数据库（如果失败则跳过）
+      let fileId = 'uploaded-' + Date.now();
+      try {
+        const fileRecord = await FileService.createFileRecord({
+          filename: path.basename(uploadResult.key),
+          originalName: fileName,
+          filePath: uploadResult.key,
+          fileSize: uploadResult.size,
+          mimeType: uploadResult.contentType,
+          fileType: FileType.VIDEO,
+          userId: userId || 'system',
+          url: uploadResult.url
+        });
+        fileId = fileRecord.id;
+        logger.info(`数据库记录创建成功: ${fileRecord.id}`);
+      } catch (dbError) {
+        logger.warn('数据库记录创建失败，但文件已成功上传到MinIO:', dbError);
+      }
 
       return {
-        fileId: fileRecord.id,
+        fileId,
         url: uploadResult.url,
         minioKey: uploadResult.key
       };
@@ -138,6 +144,10 @@ async function main() {
     // 初始化数据库连接
     await sequelize.authenticate();
     logger.info('数据库连接成功');
+    
+    // 同步模型
+    await sequelize.sync();
+    logger.info('数据库模型同步成功');
     
     const uploader = new VideoUploader();
     

@@ -2,7 +2,7 @@ import { Response, NextFunction } from 'express';
 import { DashboardService } from '../services/dashboard.service';
 import { Resp } from '../utils/response';
 import { logger } from '../utils/logger';
-import { AuthenticatedRequest } from '@/interfaces';
+import { AuthenticatedRequest } from '../interfaces';
 
 export const getDashboardStats = async (
   req: AuthenticatedRequest,

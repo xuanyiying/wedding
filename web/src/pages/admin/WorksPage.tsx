@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Row, Col, Modal, message } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useTheme } from '../../hooks/useTheme';
-import { WorkType, WorkStatus, type Work } from '../../types';
-import { workService } from '../../services';
+import { WorkType, WorkStatus, type Work, type User } from '../../types';
+import { workService, userService } from '../../services';
 import { useDirectUpload } from '../../hooks/useDirectUpload';
 import type { RootState } from '../../store';
 import { useAppSelector } from '../../store';
 import { PageHeader, StatCard, FilterBar } from '../../components/admin/common';
 import { WorkForm, WorkPreviewModal, type Work as WorkCardType } from '../../components/admin/work';
+import { isAdmin } from '../../utils/auth';
 import styled from 'styled-components';
 
 const WorksContainer = styled.div`
@@ -170,6 +171,7 @@ const formatCount = (count: number): string => {
 
 const WorksPage: React.FC = () => {
   const [works, setWorks] = useState<Work[]>([]);
+  const [teamMembers, setTeamMembers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [previewVisible, setPreviewVisible] = useState(false);
@@ -177,12 +179,13 @@ const WorksPage: React.FC = () => {
   const [previewWork, setPreviewWork] = useState<WorkCardType | null>(null);
   const [filters, setFilters] = useState({
     search: '',
-    category: '',
+    userId: '',
     type: '',
   });
   const { uploadWorkImages } = useDirectUpload();
   const user = useAppSelector((state: RootState) => state.auth.user);
   const { initTheme } = useTheme();
+  const userIsAdmin = isAdmin();
 
   useEffect(() => {
     initTheme('admin');
@@ -191,14 +194,18 @@ const WorksPage: React.FC = () => {
   // 加载数据
   useEffect(() => {
     loadWorks();
-  }, []);
+    if (userIsAdmin) {
+      loadTeamMembers();
+    }
+  }, [userIsAdmin]);
 
   const loadWorks = async () => {
     setLoading(true);
     try {
       const response = await workService.getWorks({
         page: 1,
-        pageSize: 100
+        limit: 100,
+        ...(userIsAdmin ? {} : { userId: user?.id })
       });
       setWorks(response.data?.works || []);
     } catch (error) {
@@ -209,16 +216,33 @@ const WorksPage: React.FC = () => {
     }
   };
 
+  const loadTeamMembers = async () => {
+    try {
+      const response = await userService.getUsers({
+        page: 1,
+        limit: 100
+      });
+      setTeamMembers(response.data?.users || []);
+    } catch (error) {
+      console.error('加载团队成员失败:', error);
+    }
+  };
+
   // 筛选作品
   const filteredWorks = works.filter(work => {
-    const matchesCategory = !filters.category || work.category === filters.category;
+    // 权限控制：普通用户只能看到自己的作品
+    if (!userIsAdmin && work.userId !== user?.id) {
+      return false;
+    }
+    
+    const matchesUser = !filters.userId || work.userId === filters.userId;
     const matchesType = !filters.type || work.type === filters.type;
     const matchesSearch = !filters.search ||
-      work.title.toLowerCase().includes(filters.search.toLowerCase()) ||
-      work.description?.toLowerCase().includes(filters.search.toLowerCase()) ||
-      work.tags?.some(tag => tag.toLowerCase().includes(filters.search.toLowerCase()));
+      work.title.includes((filters.search || '')) ||
+      work.description?.includes((filters.search || '')) ||
+      work.tags?.some(tag => tag.includes((filters.search || '')));
 
-    return matchesCategory && matchesType && matchesSearch;
+    return matchesUser && matchesType && matchesSearch;
   });
 
   // 统计数据
@@ -233,6 +257,13 @@ const WorksPage: React.FC = () => {
 
   // 打开添加/编辑模态框
   const openModal = (work?: Work) => {
+    if (work) {
+      // 权限检查：普通用户只能编辑自己的作品
+      if (!userIsAdmin && work.userId !== user?.id) {
+        message.error('您没有权限编辑此作品');
+        return;
+      }
+    }
     setEditingWork(work || null);
     setModalVisible(true);
   };
@@ -320,6 +351,18 @@ const WorksPage: React.FC = () => {
 
   // 删除作品
   const handleDelete = async (workId: string) => {
+    const work = works.find(w => w.id === workId);
+    if (!work) {
+      message.error('作品不存在');
+      return;
+    }
+    
+    // 权限检查：普通用户只能删除自己的作品
+    if (!userIsAdmin && work.userId !== user?.id) {
+      message.error('您没有权限删除此作品');
+      return;
+    }
+    
     try {
       await workService.deleteWork(workId);
       message.success('作品删除成功');
@@ -402,27 +445,29 @@ const WorksPage: React.FC = () => {
             type: 'search',
             placeholder: '搜索作品标题、描述或标签'
           },
-          {
-            key: 'category',
-            type: 'select',
-            placeholder: '选择分类',
+          // 仅管理员可以看到用户过滤选项
+          ...(userIsAdmin ? [{
+            key: 'userId',
+            type: 'select' as const,
+            placeholder: '选择团队成员',
             options: [
-              { label: '全部分类', value: '' },
-              { label: '婚纱摄影', value: '婚纱摄影' },
-              { label: '婚礼跟拍', value: '婚礼跟拍' },
-              { label: '婚礼录像', value: '婚礼录像' },
-              { label: '写真摄影', value: '写真摄影' },
-              { label: '商业摄影', value: '商业摄影' },
-              { label: '其他', value: '其他' },
+              { label: '全部成员', value: '' },
+              { label: '我的作品', value: user?.id || '' },
+              ...teamMembers
+                .filter(member => member.id !== user?.id)
+                .map(member => ({
+                  label: member.realName || member.username,
+                  value: member.id
+                }))
             ]
-          },
+          }] : []),
           {
             key: 'type',
-            type: 'select',
+            type: 'select' as const,
             placeholder: '选择类型',
             options: [
               { label: '全部类型', value: '' },
-              { label: '图片', value: 'photo' },
+              { label: '图片', value: 'image' },
               { label: '视频', value: 'video' },
             ]
           }
@@ -481,18 +526,24 @@ const WorksPage: React.FC = () => {
                 >
                   预览
                 </button>
-                <button 
-                  className="ant-btn ant-btn-sm"
-                  onClick={() => openModal(work)}
-                >
-                  编辑
-                </button>
-                <button 
-                  className="ant-btn ant-btn-sm ant-btn-danger"
-                  onClick={() => handleDelete(work.id)}
-                >
-                  删除
-                </button>
+                {/* 只有管理员或作品所有者可以编辑 */}
+                {(userIsAdmin || work.userId === user?.id) && (
+                  <button 
+                    className="ant-btn ant-btn-sm"
+                    onClick={() => openModal(work)}
+                  >
+                    编辑
+                  </button>
+                )}
+                {/* 只有管理员或作品所有者可以删除 */}
+                {(userIsAdmin || work.userId === user?.id) && (
+                  <button 
+                    className="ant-btn ant-btn-sm ant-btn-danger"
+                    onClick={() => handleDelete(work.id)}
+                  >
+                    删除
+                  </button>
+                )}
               </WorkActions>
             </WorkInfo>
           </AdminWorkCard>

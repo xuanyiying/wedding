@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ConfigProvider, App as AntdApp } from 'antd';
 import { Provider } from 'react-redux';
@@ -8,6 +8,7 @@ import './App.css';
 import { store } from './store';
 import { useAuthInit } from './hooks/useAuthInit';
 import { setMessageApi } from './utils/request';
+import { settingsService } from './services';
 import AdminLayout from './components/AdminLayout';
 import ClientLayout from './components/layout/ClientLayout';
 import LoginPage from './pages/admin/LoginPage';
@@ -54,6 +55,53 @@ const theme = {
 function AppInitializer() {
   // 使用认证初始化Hook
   useAuthInit();
+
+  // 应用全局配置
+  useEffect(() => {
+    const applySiteConfig = async () => {
+      try {
+        const response = await settingsService.getSiteConfig();
+        const config = response.data;
+        
+        if (config) {
+          // 应用网站标题
+          if (config.siteName) {
+            document.title = config.siteName;
+          }
+          
+          // 应用favicon
+          if (config.favicon) {
+            const favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement;
+            if (favicon) {
+              favicon.href = config.favicon;
+            } else {
+              const newFavicon = document.createElement('link');
+              newFavicon.rel = 'icon';
+              newFavicon.href = config.favicon;
+              document.head.appendChild(newFavicon);
+            }
+          }
+          
+          // 应用meta描述
+          if (config.siteDescription) {
+            let metaDescription = document.querySelector('meta[name="description"]') as HTMLMetaElement;
+            if (metaDescription) {
+              metaDescription.content = config.siteDescription;
+            } else {
+              metaDescription = document.createElement('meta');
+              metaDescription.name = 'description';
+              metaDescription.content = config.siteDescription;
+              document.head.appendChild(metaDescription);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load site config:', error);
+      }
+    };
+    
+    applySiteConfig();
+  }, []);
 
   return null;
 }

@@ -3,7 +3,7 @@ import { WorkService } from '../services/work.service';
 import { Resp } from '../utils/response';
 import { logger } from '../utils/logger';
 import {  WorkCategory, WorkStatus, WorkType } from '../types';
-import { AuthenticatedRequest } from '@/interfaces';
+import { AuthenticatedRequest } from '../interfaces';
 
 /**
  * 获取作品列表

@@ -1,6 +1,7 @@
 import { Model, DataTypes, Sequelize, Optional } from 'sequelize';
 import User from './User';
-import { FileType, StorageType } from '../types';
+import { FileType, StorageType, FileCategory } from '../types';
+
 
 // File attributes interface
 export interface FileAttributes {
@@ -13,6 +14,7 @@ export interface FileAttributes {
   fileSize: number;
   mimeType: string;
   fileType: FileType;
+  category: FileCategory;
   width: number | null;
   height: number | null;
   duration: number | null;
@@ -30,7 +32,26 @@ export interface FileAttributes {
 }
 
 // File creation attributes interface
-export interface FileCreationAttributes extends Optional<FileAttributes, 'id'> {}
+export interface FileCreationAttributes
+  extends Optional<
+    FileAttributes,
+    |
+      'id'
+      | 'width'
+      | 'height'
+      | 'duration'
+      | 'thumbnailUrl'
+      | 'hashMd5'
+      | 'hashSha256'
+      | 'bucketName'
+      | 'isPublic'
+      | 'downloadCount'
+      | 'metadata'
+      | 'createdAt'
+      | 'updatedAt'
+      | 'deletedAt'
+      | 'category'
+  > {}
 
 // File model class
 class File extends Model<FileAttributes, FileCreationAttributes> implements FileAttributes {
@@ -54,6 +75,7 @@ class File extends Model<FileAttributes, FileCreationAttributes> implements File
   public isPublic!: boolean;
   public downloadCount!: number;
   public metadata!: any | null;
+  public category!: FileCategory;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -202,6 +224,10 @@ export const initFile = (sequelize: Sequelize): void => {
       metadata: {
         type: DataTypes.JSON,
         comment: '文件元数据',
+      },
+      category: {
+        type: DataTypes.STRING,
+        comment: '文件分类',
       },
     },
     {

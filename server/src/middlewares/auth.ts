@@ -4,8 +4,8 @@ import { AuthenticationError, AuthorizationError } from './error';
 import { UserRole, UserStatus } from '../types';
 import { Logger } from '../utils/logger';
 import { RedisCache } from '../config/redis';
-import { UserService } from '@/services/user.service';
-import { JWTPayload, AuthenticatedRequest } from '@/interfaces';
+import { UserService } from '../services/user.service';
+import { JWTPayload, AuthenticatedRequest } from '../interfaces';
 
 // 扩展 Request 类型
 declare global {

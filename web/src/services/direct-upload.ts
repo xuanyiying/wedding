@@ -30,9 +30,10 @@ export class DirectUploadService {
   /**
    * 上传单个文件
    */
-  async uploadFile(file: File, fileType: FileType): Promise<DirectUploadResult> {
+  async uploadFile(file: File, fileType: FileType, category?: 'avatar' | 'work' | 'event' | 'other'): Promise<DirectUploadResult> {
     const config: DirectUploadConfig = {
       fileType: this.mapFileType(fileType),
+      category: category || 'other',
       onProgress: this.progressCallback
     };
     const uploader = new DirectUploader(file, config);
@@ -42,11 +43,12 @@ export class DirectUploadService {
   /**
    * 批量上传文件
    */
-  async uploadFiles(files: File[], fileType: FileType): Promise<DirectUploadResult[]> {
+  async uploadFiles(files: File[], fileType: FileType, category?: 'avatar' | 'work' | 'event' | 'other'): Promise<DirectUploadResult[]> {
     const results: DirectUploadResult[] = [];
     for (const file of files) {
       const config: DirectUploadConfig = {
         fileType: this.mapFileType(fileType),
+        category: category || 'other',
         onProgress: this.progressCallback
       };
       const uploader = new DirectUploader(file, config);
@@ -62,6 +64,7 @@ export class DirectUploadService {
   async uploadAvatar(file: File): Promise<DirectUploadResult> {
     const config: DirectUploadConfig = {
       fileType: 'image',
+      category: 'avatar',
       onProgress: this.progressCallback
     };
     const uploader = new DirectUploader(file, config);
@@ -76,6 +79,7 @@ export class DirectUploadService {
     for (const file of files) {
       const config: DirectUploadConfig = {
         fileType: 'image',
+        category: 'work',
         onProgress: this.progressCallback
       };
       const uploader = new DirectUploader(file, config);
@@ -91,6 +95,7 @@ export class DirectUploadService {
   async uploadVideo(file: File): Promise<DirectUploadResult> {
     const config: DirectUploadConfig = {
       fileType: 'video',
+      category: 'work',
       onProgress: this.progressCallback
     };
     const uploader = new DirectUploader(file, config);
@@ -100,12 +105,13 @@ export class DirectUploadService {
   /**
    * 上传通用媒体文件
    */
-  async uploadMedia(files: File[]): Promise<DirectUploadResult[]> {
+  async uploadMedia(files: File[], category?: 'avatar' | 'work' | 'event' | 'other'): Promise<DirectUploadResult[]> {
     const results: DirectUploadResult[] = [];
     for (const file of files) {
       const configFileType = file.type.startsWith('video/') ? 'video' : 'image';
       const config: DirectUploadConfig = {
         fileType: configFileType,
+        category: category || 'other',
         onProgress: this.progressCallback
       };
       const uploader = new DirectUploader(file, config);

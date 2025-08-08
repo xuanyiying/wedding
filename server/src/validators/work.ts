@@ -40,9 +40,6 @@ export const workValidators = {
       type: Joi.string()
         .valid(...Object.values(WorkType))
         .required(),
-      category: Joi.string()
-        .valid(...Object.values(WorkCategory))
-        .required(),
       coverUrl: Joi.string().uri().optional(),
       contentUrls: Joi.array().items(Joi.string().uri()).min(1).max(20).optional(),
       tags: Joi.array().items(Joi.string().trim().max(50)).max(10).optional(),

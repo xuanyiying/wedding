@@ -13,6 +13,8 @@ interface ProfileEditFormProps {
   onCancel: () => void;
   loading?: boolean;
   onUpload?: (file: File) => Promise<string>;
+  avatarUrl?: string;
+  onAvatarChange: (url: string) => void;
 }
 
 const FormContainer = styled.div`
@@ -82,9 +84,10 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
   onSubmit,
   onCancel,
   loading = false,
+  avatarUrl,
+  onAvatarChange,
 }) => {
   const [form] = Form.useForm();
-    const [avatarUrl, setAvatarUrl] = useState<string | undefined>(initialValues?.avatarUrl);
   const [uploading] = useState(false);
   const [specialtyInput, setSpecialtyInput] = useState('');
   const [specialties, setSpecialties] = useState<string[]>([]);
@@ -94,7 +97,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
       form.setFieldsValue(initialValues);
 
       if (initialValues.avatarUrl) {
-        setAvatarUrl(initialValues.avatarUrl);
+        onAvatarChange(initialValues.avatarUrl);
       }
 
       if (initialValues.specialties) {
@@ -144,10 +147,11 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
                 <div className="avatar-upload">
           <AvatarUploader
             value={avatarUrl}
-            onChange={(url) => setAvatarUrl(url)}
+            onChange={onAvatarChange}
             size={120}
             shape="square"
             disabled={uploading}
+            category="avatar"
           />
         </div>
 

@@ -47,17 +47,6 @@ export enum PaymentStatus {
   FAILED = 'failed',
 }
 
-export enum FileCategory {
-  AVATAR = 'avatar',
-  PORTFOLIO = 'portfolio',
-  CASE_IMAGE = 'case_image',
-  CASE_VIDEO = 'case_video',
-  NEWS_IMAGE = 'news_image',
-  SERVICE_IMAGE = 'service_image',
-  OTHER = 'other',
-}
-
-
 export enum ConfigCategory {
   GENERAL = 'general',
   EMAIL = 'email',
@@ -210,4 +199,12 @@ export interface UserProfileWithMedia {
   selectedWorks: any[];
   selectedFiles: any[];
   orderedMedia: Array<{ type: 'work' | 'file'; data: any }>;
+}
+
+export enum FileCategory {
+  AVATAR = 'avatar',
+  WORK = 'work',
+  EVENT = 'event',
+  OTHER = 'other', 
+  PROFILE = 'profile'
 }

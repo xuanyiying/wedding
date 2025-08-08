@@ -2,7 +2,7 @@ import { Team, TeamMember } from '../models/Team';
 import { Op } from 'sequelize';
 import { sequelize } from '../config/database';
 import { logger } from '../utils/logger';
-import { User } from '@/models';
+import { User } from '../models';
 import { TeamMemberRole, TeamMemberStatus, TeamStatus } from '../types';
 
 export class TeamService {
@@ -38,12 +38,14 @@ export class TeamService {
     address?: string;
     serviceAreas?: string[];
     specialties?: string[];
+    establishedYear?: number;
   }) {
     try {
-      const { serviceAreas, specialties, ...otherData } = teamData;
+      const { serviceAreas, specialties, establishedYear, ...otherData } = teamData;
       
       const team = await Team.create({
         ...otherData,
+        ...(establishedYear && { establishedAt: new Date(establishedYear, 0, 1) }),
         serviceAreas: serviceAreas ? JSON.stringify(serviceAreas) : '',
         specialties: specialties ? JSON.stringify(specialties) : '',
         status: TeamStatus.ACTIVE,

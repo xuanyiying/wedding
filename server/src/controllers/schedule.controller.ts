@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { ScheduleService } from '../services/schedule.service';
 import { logger } from '../utils/logger';
 import { ScheduleStatus, EventType, WeddingTime } from '../types';
-import { AuthenticatedRequest } from '@/interfaces';
+import { AuthenticatedRequest } from '../interfaces';
 import { Resp } from '../utils/response';
 
 /**

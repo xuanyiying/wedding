@@ -24,6 +24,7 @@ export interface DirectUploadProgress {
 // 直传上传配置
 export interface DirectUploadConfig {
   fileType: 'video' | 'work' | 'image' | 'avatar';
+  category?: 'avatar' | 'work' | 'event' | 'other';
   maxFileSize?: number;
   expires?: number; // 签名URL过期时间（秒）
   onProgress?: (progress: DirectUploadProgress) => void;
@@ -138,6 +139,7 @@ export class DirectUploader {
       fileSize: this.file.size,
       contentType: this.file.type,
       fileType: this.config.fileType,
+      category: this.config.category,
       expires: this.config.expires || 3600
     });
 

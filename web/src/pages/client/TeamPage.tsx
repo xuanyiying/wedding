@@ -51,6 +51,11 @@ const TeamPage: React.FC = () => {
     }
   };
 
+  const handleMemberClick = (member: ClientTeamMember) => {
+    setSelectedMember(member);
+    setModalVisible(true);
+  };
+
   const handleModalClose = () => {
     setModalVisible(false);
     setSelectedMember(null);
@@ -68,7 +73,8 @@ const TeamPage: React.FC = () => {
           members={teamMembers} 
           loading={membersLoading} 
           onBack={handleBackToTeams} 
-          onViewDetails={handleViewDetails} 
+          onViewDetails={handleViewDetails}
+          onMemberClick={handleMemberClick}
         />
       )}
 

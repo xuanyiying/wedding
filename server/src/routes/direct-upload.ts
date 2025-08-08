@@ -4,7 +4,7 @@ import { authMiddleware } from '../middlewares/auth';
 import { FileService } from '../services/file.service';
 import path from 'path';
 import { generateId } from '../utils/id.generator';
-import { getOssService } from '@/config/oss';
+import { getOssService } from '../config/oss';
 
 // 创建路由实例
 const router = Router();

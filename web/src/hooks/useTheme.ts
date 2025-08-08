@@ -48,31 +48,23 @@ export const useTheme = () => {
       themeManager.setThemeMode(mode);
     }
     themeManager.applyThemeToCSS();
-  }, []);
+  }, [themeMode, clientVariant]);
 
-  useEffect(() => {
-    // 添加主题变化监听器
-    themeManager.addListener(handleThemeChange);
-    
-    // 初始应用主题
-    themeManager.applyThemeToCSS();
+  const applyThemeSettings = (settings: any) => {
+    themeManager.applyCustomSettings(settings);
+  };
 
-    // 清理函数
-    return () => {
-      themeManager.removeListener(handleThemeChange);
-    };
-  }, [handleThemeChange]);
-
-  return {
-    theme,
-    themeType,
-    themeMode,
+  return { 
+    theme, 
+    themeType, 
+    themeMode, 
     clientVariant,
     changeThemeType,
-    changeThemeMode,
+    changeClientVariant, 
+    changeThemeMode, 
     toggleThemeMode,
     initTheme,
-    changeClientVariant,
+    applyThemeSettings,
   };
 };
 

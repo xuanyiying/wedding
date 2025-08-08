@@ -1,285 +1,230 @@
-# 腾讯云服务器部署指南
-
-## 服务器信息
-- **公网IP**: 114.132.225.94
-- **内网IP**: 10.1.12.15
-- **SSH连接**: `ssh root@114.132.225.94`
-- **密码**: lhins-3vhwz99j
-- **访问端口**: 8080 (HTTP)
-
-## 部署架构
-
-```
-用户 → 公网IP:8080 → Nginx → Web服务(5173) + API服务(3000)
-                    ↓
-                MySQL(3306) + Redis(6379) + MinIO(9000/9001)
-```
-
-## 快速部署
-
-### 1. 自动部署（推荐）
-
-```bash
-# 在本地项目根目录执行
-./deploy-tencent.sh
-```
-
-脚本会自动完成：
-- 检查本地依赖
-- 测试服务器连接
-- 安装Docker和Docker Compose
-- 配置防火墙
-- 上传项目文件
-- 构建和启动所有服务
-
-### 2. 手动部署
-
-#### 步骤1: 准备本地环境
-
-```bash
-# 安装sshpass (macOS)
-brew install sshpass
-
-# 或者 (Ubuntu)
-sudo apt-get install sshpass
-```
-
-#### 步骤2: 连接服务器
-
-```bash
-ssh root@114.132.225.94
-# 密码: lhins-3vhwz99j
-```
-
-#### 步骤3: 安装Docker
-
-```bash
-# 更新系统
-apt-get update
-
-# 安装Docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sh get-docker.sh
-systemctl start docker
-systemctl enable docker
-
-# 安装Docker Compose
-curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-chmod +x /usr/local/bin/docker-compose
-```
-
-#### 步骤4: 配置防火墙
-
-```bash
-# 开放必要端口
-ufw allow 22/tcp    # SSH
-ufw allow 8080/tcp  # Web访问
-ufw allow 3000/tcp  # API
-ufw allow 3306/tcp  # MySQL
-ufw allow 6379/tcp  # Redis
-ufw allow 9000/tcp  # MinIO API
-ufw allow 9001/tcp  # MinIO Console
-```
-
-#### 步骤5: 上传项目文件
-
-```bash
-# 在本地执行
-scp -r server root@114.132.225.94:/root/wedding/
-scp -r web root@114.132.225.94:/root/wedding/
-scp deployment/docker-compose-tencent.yml root@114.132.225.94:/root/wedding/docker-compose.yml
-scp deployment/nginx-tencent.conf root@114.132.225.94:/root/wedding/nginx.conf
-scp deployment/.env.tencent root@114.132.225.94:/root/wedding/.env
-```
-
-#### 步骤6: 启动服务
-
-```bash
-# 在服务器上执行
-cd /root/wedding
-
-# 构建和启动
-docker-compose build --no-cache
-docker-compose up -d
-
-# 查看状态
-docker-compose ps
-docker-compose logs -f
-```
-
-## 服务配置
-
-### 端口映射
-- **Nginx**: 8080 → 80
-- **Web**: 5173 (内部)
-- **API**: 3000 (内部)
-- **MySQL**: 3306
-- **Redis**: 6379
-- **MinIO API**: 9000
-- **MinIO Console**: 9001
-
-### 环境变量
-主要配置在 `.env.tencent` 文件中：
-- API地址: `http://114.132.225.94:8080/api`
-- 数据库连接: MySQL
-- 文件存储: MinIO
-- 缓存: Redis
-
-## 访问地址
-
-- **前端应用**: http://114.132.225.94:8080
-- **API接口**: http://114.132.225.94:8080/api
-- **MinIO控制台**: http://114.132.225.94:9001
-- **健康检查**: http://114.132.225.94:8080/health
-
-## 管理命令
-
-### 查看服务状态
-```bash
-ssh root@114.132.225.94 'cd /root/wedding && docker-compose ps'
-```
-
-### 查看日志
-```bash
-# 查看所有服务日志
-ssh root@114.132.225.94 'cd /root/wedding && docker-compose logs -f'
-
-# 查看特定服务日志
-ssh root@114.132.225.94 'cd /root/wedding && docker-compose logs -f nginx'
-ssh root@114.132.225.94 'cd /root/wedding && docker-compose logs -f web'
-ssh root@114.132.225.94 'cd /root/wedding && docker-compose logs -f server'
-```
-
-### 重启服务
-```bash
-# 重启所有服务
-ssh root@114.132.225.94 'cd /root/wedding && docker-compose restart'
-
-# 重启特定服务
-ssh root@114.132.225.94 'cd /root/wedding && docker-compose restart nginx'
-```
-
-### 停止服务
-```bash
-ssh root@114.132.225.94 'cd /root/wedding && docker-compose down'
-```
-
-### 更新部署
-```bash
-# 停止服务
-ssh root@114.132.225.94 'cd /root/wedding && docker-compose down'
-
-# 重新上传文件（在本地执行）
-./deploy-tencent.sh
-```
-
-## 故障排查
-
-### 1. 服务无法启动
-```bash
-# 检查容器状态
-docker-compose ps
-
-# 查看错误日志
-docker-compose logs [service_name]
-
-# 检查资源使用
-docker stats
-```
-
-### 2. 网络连接问题
-```bash
-# 检查端口监听
-netstat -tlnp | grep :8080
-
-# 检查防火墙
-ufw status
-
-# 测试内部连接
-curl http://localhost:8080/health
-```
-
-### 3. 数据库连接问题
-```bash
-# 检查MySQL状态
-docker-compose exec mysql mysqladmin ping
-
-# 连接数据库
-docker-compose exec mysql mysql -u wedding -p wedding_host
-```
-
-### 4. 文件上传问题
-```bash
-# 检查MinIO状态
-curl http://localhost:9000/minio/health/live
-
-# 查看MinIO日志
-docker-compose logs minio
-```
-
-## 性能优化
-
-### 1. 资源限制
-已在docker-compose中配置内存限制：
-- MySQL: 512M
-- Server: 512M
-- MinIO: 256M
-
-### 2. 缓存配置
-- Nginx静态文件缓存: 1年
-- Redis缓存: 用于会话和临时数据
-
-### 3. 数据库优化
-- MySQL配置优化
-- 连接池配置
-- 索引优化
-
-## 安全配置
-
-### 1. 防火墙
-只开放必要端口，其他端口默认关闭
-
-### 2. 密码安全
-- 数据库密码: 生产环境请修改默认密码
-- MinIO密码: 生产环境请修改默认密码
-- JWT密钥: 已配置强密钥
-
-### 3. HTTPS升级（可选）
-如果需要HTTPS，可以：
-1. 申请SSL证书
-2. 修改Nginx配置
-3. 更新防火墙规则
-
-## 备份策略
-
-### 1. 数据备份
-```bash
-# 备份MySQL数据
-docker-compose exec mysql mysqldump -u wedding -p wedding_host > backup.sql
-
-# 备份MinIO数据
-docker-compose exec minio mc mirror /data /backup
-```
-
-### 2. 配置备份
-```bash
-# 备份配置文件
-tar -czf wedding-config-$(date +%Y%m%d).tar.gz docker-compose.yml nginx.conf .env
-```
-
-## 监控建议
-
-1. **服务监控**: 使用健康检查端点监控服务状态
-2. **资源监控**: 监控CPU、内存、磁盘使用情况
-3. **日志监控**: 定期检查应用日志和错误日志
-4. **性能监控**: 监控响应时间和并发数
-
-## 联系信息
-
-如有问题，请检查：
-1. 服务器日志
-2. 网络连接
-3. 防火墙配置
-4. 资源使用情况
-
-部署完成后，访问 http://114.132.225.94:8080 即可使用应用。
+#!/bin/bash
+
+# 本地开发环境启动脚本
+# 作者: Wedding Club Team
+# 版本: 1.0.0
+
+set -e
+
+# 颜色定义
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# 日志函数
+log_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+log_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# 检查Docker是否安装
+check_docker() {
+    if ! command -v docker &> /dev/null; then
+        log_error "Docker 未安装，请先安装 Docker"
+        log_info "安装地址: https://www.docker.com/get-started"
+        exit 1
+    fi
+    
+    if ! command -v docker-compose &> /dev/null; then
+        log_error "Docker Compose 未安装，请先安装 Docker Compose"
+        log_info "安装地址: https://docs.docker.com/compose/install/"
+        exit 1
+    fi
+    
+    log_success "Docker 和 Docker Compose 已安装"
+}
+
+# 检查Docker服务是否运行
+check_docker_service() {
+    if ! docker info &> /dev/null; then
+        log_error "Docker 服务未运行，请启动 Docker"
+        exit 1
+    fi
+    
+    log_success "Docker 服务正在运行"
+}
+
+# 创建环境变量文件
+setup_env() {
+    if [ ! -f ".env" ]; then
+        if [ -f ".env.local" ]; then
+            cp .env.local .env
+            log_success "已创建 .env 文件"
+        else
+            log_warning ".env.local 文件不存在，请手动创建 .env 文件"
+        fi
+    else
+        log_info ".env 文件已存在"
+    fi
+}
+
+# 停止现有服务
+stop_services() {
+    log_info "停止现有服务..."
+    docker-compose down 2>/dev/null || true
+    log_success "服务已停止"
+}
+
+# 构建并启动服务
+start_services() {
+    log_info "构建并启动开发环境..."
+    
+    # 构建镜像
+    log_info "构建 Docker 镜像..."
+    docker-compose build
+    
+    # 启动服务
+    log_info "启动服务..."
+    docker-compose up -d
+    
+    log_success "开发环境已启动"
+}
+
+# 等待服务就绪
+wait_for_services() {
+    log_info "等待服务启动..."
+    
+    # 等待MySQL
+    log_info "等待 MySQL 启动..."
+    timeout 60 bash -c 'until docker-compose exec -T mysql mysqladmin ping -h localhost --silent; do sleep 2; done' || {
+        log_error "MySQL 启动超时"
+        return 1
+    }
+    
+    # 等待Redis
+    log_info "等待 Redis 启动..."
+    timeout 30 bash -c 'until docker-compose exec -T redis redis-cli ping | grep -q PONG; do sleep 2; done' || {
+        log_error "Redis 启动超时"
+        return 1
+    }
+    
+    # 等待MinIO
+    log_info "等待 MinIO 启动..."
+    timeout 30 bash -c 'until curl -f http://localhost:9000/minio/health/live &>/dev/null; do sleep 2; done' || {
+        log_error "MinIO 启动超时"
+        return 1
+    }
+    
+    # 等待后端服务
+    log_info "等待后端服务启动..."
+    timeout 60 bash -c 'until curl -f http://localhost:3000/health &>/dev/null; do sleep 3; done' || {
+        log_warning "后端服务可能需要更多时间启动，请稍后检查"
+    }
+    
+    log_success "所有服务已启动"
+}
+
+# 显示服务状态
+show_status() {
+    echo
+    log_info "=== 服务状态 ==="
+    docker-compose ps
+    
+    echo
+    log_info "=== 访问地址 ==="
+    echo -e "${GREEN}前端应用:${NC}     http://localhost:5173"
+    echo -e "${GREEN}后端API:${NC}      http://localhost:3000"
+    echo -e "${GREEN}MinIO控制台:${NC}  http://localhost:9001 (minioadmin/minioadmin123)"
+    echo -e "${GREEN}MySQL数据库:${NC}  localhost:3306 (wedding/wedding123)"
+    echo -e "${GREEN}Redis缓存:${NC}    localhost:6379"
+    
+    echo
+    log_info "=== 常用命令 ==="
+    echo "查看日志:     docker-compose logs -f"
+    echo "停止服务:     docker-compose down"
+    echo "重启服务:     docker-compose restart"
+    echo "进入容器:     docker-compose exec [service] sh"
+    echo
+}
+
+# 显示帮助信息
+show_help() {
+    echo "Wedding Club 本地开发环境启动脚本"
+    echo
+    echo "用法: $0 [选项]"
+    echo
+    echo "选项:"
+    echo "  start     启动开发环境 (默认)"
+    echo "  stop      停止开发环境"
+    echo "  restart   重启开发环境"
+    echo "  status    查看服务状态"
+    echo "  logs      查看服务日志"
+    echo "  clean     清理所有数据 (谨慎使用)"
+    echo "  help      显示帮助信息"
+    echo
+    echo "示例:"
+    echo "  $0 start    # 启动开发环境"
+    echo "  $0 stop     # 停止开发环境"
+    echo "  $0 logs     # 查看日志"
+    echo
+}
+
+# 主函数
+main() {
+    local command=${1:-start}
+    
+    case $command in
+        start)
+            log_info "启动 Wedding Club 本地开发环境..."
+            check_docker
+            check_docker_service
+            setup_env
+            stop_services
+            start_services
+            wait_for_services
+            show_status
+            ;;
+        stop)
+            log_info "停止开发环境..."
+            docker-compose down
+            log_success "开发环境已停止"
+            ;;
+        restart)
+            log_info "重启开发环境..."
+            docker-compose restart
+            log_success "开发环境已重启"
+            ;;
+        status)
+            show_status
+            ;;
+        logs)
+            docker-compose logs -f
+            ;;
+        clean)
+            log_warning "这将删除所有数据，包括数据库、缓存和文件存储"
+            read -p "确定要继续吗? (y/N): " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                docker-compose down -v
+                docker system prune -f
+                log_success "数据已清理"
+            else
+                log_info "操作已取消"
+            fi
+            ;;
+        help|--help|-h)
+            show_help
+            ;;
+        *)
+            log_error "未知命令: $command"
+            show_help
+            exit 1
+            ;;
+    esac
+}
+
+# 执行主函数
+main "$@"

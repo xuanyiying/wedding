@@ -141,7 +141,7 @@ uploadRequest.interceptors.response.use(
         AuthStorage.clearAll();
         
         // Token过期时自动跳转到登录页面
-        window.location.href = '/admin/login';
+        window.location.replace('/admin/login');
         break;
       case 413:
         safeMessage.error('文件大小超出限制，请选择较小的文件');
@@ -265,7 +265,7 @@ request.interceptors.response.use(
         AuthStorage.clearAll();
         
         // Token过期时自动跳转到登录页面
-        window.location.href = '/admin/login';
+        window.location.replace('/admin/login');
         break;
         
       case 403:

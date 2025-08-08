@@ -13,6 +13,7 @@ interface TeamMemberCardProps {
   specialties: string[];
   experienceYears: number;
   onViewDetails: (id: string) => void;
+  onMemberClick?: () => void;
   loading?: boolean;
 }
 
@@ -26,6 +27,7 @@ const StyledCard = styled(Card)`
     transition: all 0.3s ease;
     box-shadow: var(--client-shadow-sm);
     height: 100%;
+    cursor: pointer;
 
     &:hover {
       border-color: var(--client-primary-color);
@@ -118,6 +120,7 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
   specialties,
   experienceYears,
   onViewDetails,
+  onMemberClick,
   loading = false
 }) => {
   // 获取状态对应的CSS类名
@@ -135,7 +138,7 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
   };
 
   return (
-    <StyledCard loading={loading}>
+    <StyledCard loading={loading} onClick={onMemberClick}>
       <TeamAvatar>{avatar}</TeamAvatar>
       <TeamName level={4}>{name}</TeamName>
       <StatusTag className={getStatusClassName(status)}>

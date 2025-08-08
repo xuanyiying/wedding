@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { Op } from 'sequelize';
 import { ApiResponse } from '../interfaces';
-import { Contact } from '@/models';
+import { Contact } from '../models';
 
 export class ContactController {
   // 提交联系表单

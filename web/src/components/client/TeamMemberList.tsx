@@ -26,9 +26,10 @@ interface TeamMemberListProps {
   loading: boolean;
   onBack: () => void;
   onViewDetails: (userId: string) => void;
+  onMemberClick: (member: ClientTeamMember) => void;
 }
 
-const TeamMemberList: React.FC<TeamMemberListProps> = ({ team, members, loading, onBack, onViewDetails }) => {
+const TeamMemberList: React.FC<TeamMemberListProps> = ({ team, members, loading, onBack, onViewDetails, onMemberClick }) => {
   return (
     <>
       <BackButton 
@@ -54,6 +55,7 @@ const TeamMemberList: React.FC<TeamMemberListProps> = ({ team, members, loading,
               specialties={member.specialties || []}
               experienceYears={member.experienceYears || 0}
               onViewDetails={() => onViewDetails(member.userId)}
+              onMemberClick={() => onMemberClick(member)}
               loading={loading}
             />
           </Col>

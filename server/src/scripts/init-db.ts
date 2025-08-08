@@ -8,7 +8,7 @@ import { User , Work, Schedule } from '../models';
 import { PasswordUtils } from '../utils/helpers';
 import { generateId } from '../utils/id.generator';
 import { UserRole, UserStatus } from '../interfaces';
-import { EventType, ScheduleStatus, WeddingTime } from '../types';
+import { EventType, ScheduleStatus, WeddingTime, WorkType, WorkCategory, WorkStatus } from '../types';
 export class DatabaseInitializer {
   private userIdMap: { [key: string]: string } = {};
 
@@ -46,6 +46,142 @@ export class DatabaseInitializer {
           emailVerifiedAt: new Date(),
           lastLoginAt: new Date('2025-01-15T10:30:00Z'),
         },
+        {
+          id: generateId(),
+          username: 'user',
+          email: 'user@wedding.com',
+          phone: '13800138001',
+          passwordHash: await PasswordUtils.hashPassword('user123'),
+          salt: 'user_salt',
+          role: UserRole.USER,
+          status: UserStatus.ACTIVE,
+          realName: '普通用户',
+          nickname: 'User',
+          bio: '普通用户，负责日常操作和管理',
+          experienceYears: 5,
+          location: '北京市',
+          emailVerifiedAt: new Date(),
+          lastLoginAt: new Date('2025-01-15T10:30:00Z'),
+        },
+        {
+          id: generateId(),
+          username: 'user2',
+          email: 'user2@wedding.com',
+          phone: '13800138002',
+          passwordHash: await PasswordUtils.hashPassword('host123'),
+          salt: 'host_salt',
+          role: UserRole.USER,
+          status: UserStatus.ACTIVE,
+          realName: '婚礼主持人',
+          nickname: 'Host',
+          bio: '婚礼主持人，负责婚礼组织和管理',
+          experienceYears: 8,
+          location: '北京市',
+          emailVerifiedAt: new Date(),
+          lastLoginAt: new Date('2025-01-15T10:30:00Z'),
+        },
+        {
+          id: generateId(),
+          username: 'user3',
+          email: 'user3@wedding.com',
+          phone: '13800138003',
+          passwordHash: await PasswordUtils.hashPassword('host123'),
+          salt: 'host_salt',
+          role: UserRole.USER,
+          status: UserStatus.ACTIVE,
+          realName: '婚礼主持人',
+          nickname: 'Host',
+          bio: '婚礼主持人，负责婚礼组织和管理',
+          experienceYears: 8,
+          location: '北京市',
+          emailVerifiedAt: new Date(),
+          lastLoginAt: new Date('2025-01-15T10:30:00Z'),
+        },
+        {
+          id: generateId(),
+          username: 'user4',
+          email: 'user4@wedding.com',
+          phone: '13800138004',
+          passwordHash: await PasswordUtils.hashPassword('host123'),
+          salt: 'host_salt',
+          role: UserRole.USER,
+          status: UserStatus.ACTIVE,
+          realName: '婚礼主持人',
+          nickname: 'Host',
+          bio: '婚礼主持人，负责婚礼组织和管理',
+          experienceYears: 8,
+          location: '北京市',
+          emailVerifiedAt: new Date(),
+          lastLoginAt: new Date('2025-01-15T10:30:00Z'),
+        },
+        {
+          id: generateId(),
+          username: 'user5',
+          email: 'user5@wedding.com',
+          phone: '13800138005',
+          passwordHash: await PasswordUtils.hashPassword('host123'),
+          salt: 'host_salt',
+          role: UserRole.USER,
+          status: UserStatus.ACTIVE,
+          realName: '婚礼主持人',
+          nickname: 'Host',
+          bio: '婚礼主持人，负责婚礼组织和管理',
+          experienceYears: 8,
+          location: '北京市',
+          emailVerifiedAt: new Date(),
+          lastLoginAt: new Date('2025-01-15T10:30:00Z'),
+        },
+        {
+          id: generateId(),
+          username: 'user6',
+          email: 'user6@wedding.com',
+          phone: '13800138006',
+          passwordHash: await PasswordUtils.hashPassword('host123'),
+          salt: 'host_salt',
+          role: UserRole.USER,
+          status: UserStatus.ACTIVE,
+          realName: '婚礼主持人',
+          nickname: 'Host',
+          bio: '婚礼主持人，负责婚礼组织和管理',
+          experienceYears: 8,
+          location: '北京市',
+          emailVerifiedAt: new Date(),
+          lastLoginAt: new Date('2025-01-15T10:30:00Z'),
+        },
+        {
+          id: generateId(),
+          username: 'user7',
+          email: 'user7@wedding.com',
+          phone: '13800138007',
+          passwordHash: await PasswordUtils.hashPassword('host123'),
+          salt: 'host_salt',
+          role: UserRole.USER,
+          status: UserStatus.ACTIVE,
+          realName: '婚礼主持人',
+          nickname: 'Host',
+          bio: '婚礼主持人，负责婚礼组织和管理',
+          experienceYears: 8,
+          location: '北京市',
+          emailVerifiedAt: new Date(),
+          lastLoginAt: new Date('2025-01-15T10:30:00Z'),
+        },
+        {
+          id: generateId(),
+          username: 'user8@wedding.com',
+          email: 'user8@wedding.com',
+          phone: '13800138008',
+          passwordHash: await PasswordUtils.hashPassword('host123'),
+          salt: 'host_salt',
+          role: UserRole.USER,
+          status: UserStatus.ACTIVE,
+          realName: '婚礼主持人',
+          nickname: 'Host',
+          bio: '婚礼主持人，负责婚礼组织和管理',
+          experienceYears: 8,
+          location: '北京市',
+          emailVerifiedAt: new Date(),
+          lastLoginAt: new Date('2025-01-15T10:30:00Z'),
+        }
       ];
 
       // 批量插入用户数据
@@ -154,7 +290,7 @@ export class DatabaseInitializer {
         endTime.setHours(endHour, 0, 0, 0);
         
         // 随机选择主持人
-         const hostIds = [this.userIdMap.admin].filter(Boolean);
+         const hostIds = Object.values(this.userIdMap).filter(Boolean);
          if (hostIds.length === 0) {
            throw new Error('没有可用的主持人ID');
          }
@@ -177,11 +313,6 @@ export class DatabaseInitializer {
            case EventType.WEDDING:
              title = '婚礼主持服务';
              break;
-           case EventType.CONSULTATION:
-             title = '婚礼咨询服务';
-             break;
-           default:
-             title = '其他服务';
          }
          
          // 随机价格
@@ -202,7 +333,6 @@ export class DatabaseInitializer {
            price,
            deposit: Math.floor(price * 0.3), // 30%定金
            isPaid: false,
-           
            customerName: customerNames[Math.floor(Math.random() * customerNames.length)] as string,
            customerPhone: generatePhone(),
            requirements: `${eventType === EventType.WEDDING ? '婚礼' : eventType === EventType.CONSULTATION ? '咨询' : '其他'}服务需求`,
@@ -227,6 +357,173 @@ export class DatabaseInitializer {
   }
 
   /**
+   * 初始化作品数据
+   */
+  async initializeWorks(): Promise<void> {
+    try {
+      logger.info('开始初始化作品数据...');
+
+      // 清除现有作品数据
+      await Work.destroy({ where: {}, force: true });
+      logger.info('已清除现有作品数据');
+
+      const works = [];
+      const userKeys = Object.keys(this.userIdMap);
+      if (userKeys.length === 0) {
+        throw new Error('没有可用的用户ID');
+      }
+      
+      // 作品标题池
+      const workTitles = [
+        '浪漫海边婚礼', '森林系户外婚礼', '复古宫廷风婚礼', '简约现代婚礼',
+        '中式传统婚礼', '欧式城堡婚礼', '花园派对婚礼', '工业风loft婚礼',
+        '温馨小型婚礼', '豪华酒店婚礼', '乡村田园婚礼', '都市天台婚礼',
+        '梦幻童话婚礼', '艺术画廊婚礼', '海岛度假婚礼', '山顶景观婚礼',
+        '订婚仪式记录', '求婚现场拍摄', '婚纱照拍摄', '结婚周年纪念',
+        '团队建设活动', '企业年会记录', '生日派对拍摄', '毕业典礼记录'
+      ];
+      
+      // 作品描述池
+      const descriptions = [
+        '这是一场充满爱意的婚礼，新人在亲朋好友的见证下许下永恒的誓言。',
+        '完美的婚礼需要完美的记录，每一个瞬间都值得被珍藏。',
+        '用镜头捕捉最真挚的情感，用光影诉说最美的爱情故事。',
+        '专业的婚礼摄影团队，为您记录人生中最重要的时刻。',
+        '从准备到仪式，从交换戒指到第一支舞，完整记录婚礼全程。',
+        '唯美的画面，动人的瞬间，让爱情在镜头中永恒绽放。',
+        '精心策划的婚礼现场，每一个细节都体现着新人的用心。',
+        '温馨浪漫的氛围，见证两个人从此携手走过人生路。'
+      ];
+      
+      // 拍摄地点池
+      const locations = [
+        '上海外滩', '杭州西湖', '苏州园林', '三亚海滩', '丽江古城',
+        '北京故宫', '成都宽窄巷子', '厦门鼓浪屿', '青岛海边', '大理洱海',
+        '西安古城墙', '南京中山陵', '重庆洪崖洞', '天津意式风情区',
+        '深圳世界之窗', '广州珠江夜景', '武汉东湖', '长沙橘子洲',
+        '郑州黄河风景区', '济南大明湖', '太原晋祠', '石家庄赵州桥',
+        '呼和浩特草原', '银川沙湖', '兰州黄河铁桥', '西宁青海湖'
+      ];
+      
+      // 标签池
+      const tagOptions = [
+        '婚礼摄影', '婚礼摄像', '户外婚礼', '室内婚礼', '海边婚礼',
+        '森林婚礼', '城市婚礼', '乡村婚礼', '中式婚礼', '西式婚礼',
+        '小清新', '复古风', '现代简约', '奢华风', '文艺范',
+        '浪漫', '温馨', '唯美', '自然', '时尚', '经典', '创意'
+      ];
+      
+      // 设备信息池
+      const equipmentOptions = [
+        { camera: 'Canon EOS R5', lens: 'RF 24-70mm f/2.8L IS USM', lighting: 'Profoto B10' },
+        { camera: 'Sony A7R IV', lens: 'FE 85mm f/1.4 GM', lighting: 'Godox AD600Pro' },
+        { camera: 'Nikon Z9', lens: 'NIKKOR Z 50mm f/1.2 S', lighting: 'Elinchrom ELB 500' },
+        { camera: 'Canon EOS 5D Mark IV', lens: 'EF 70-200mm f/2.8L IS III USM', lighting: 'Broncolor Siros 800S' }
+      ];
+      
+      // 技术参数池
+      const technicalOptions = [
+        { iso: 400, aperture: 'f/2.8', shutterSpeed: '1/125s', whiteBalance: '5600K' },
+        { iso: 800, aperture: 'f/1.8', shutterSpeed: '1/60s', whiteBalance: '4000K' },
+        { iso: 200, aperture: 'f/4.0', shutterSpeed: '1/250s', whiteBalance: '6500K' },
+        { iso: 1600, aperture: 'f/1.4', shutterSpeed: '1/30s', whiteBalance: '3200K' }
+      ];
+      
+      // 生成50条作品数据
+      for (let i = 0; i < 50; i++) {
+        // 随机选择用户
+        const randomUserKey = userKeys[Math.floor(Math.random() * userKeys.length)];
+        if (!randomUserKey) {
+          continue;
+        }
+        const userId = this.userIdMap[randomUserKey];
+        if (!userId) {
+          continue;
+        }
+        
+        // 随机作品类型和分类
+        const types = Object.values(WorkType);
+        const categories = Object.values(WorkCategory);
+        const statuses = Object.values(WorkStatus);
+        
+        const type = types[Math.floor(Math.random() * types.length)]!;
+        const category = categories[Math.floor(Math.random() * categories.length)]!;
+        const status = statuses[Math.floor(Math.random() * statuses.length)]!;
+        
+        // 随机拍摄日期（过去一年内）
+        const shootDate = new Date();
+        shootDate.setDate(shootDate.getDate() - Math.floor(Math.random() * 365));
+        
+        // 随机选择标签（2-5个）
+         const tagCount = Math.floor(Math.random() * 4) + 2;
+         const selectedTags: string[] = [];
+         for (let j = 0; j < tagCount; j++) {
+           const tag = tagOptions[Math.floor(Math.random() * tagOptions.length)]!;
+           if (!selectedTags.includes(tag)) {
+             selectedTags.push(tag);
+           }
+         }
+        
+        // 生成内容URLs（根据类型）
+        let contentUrls: string[] = [];
+        if (type === WorkType.IMAGE) {
+          const imageCount = Math.floor(Math.random() * 10) + 5; // 5-14张图片
+          for (let k = 0; k < imageCount; k++) {
+            contentUrls.push(`/uploads/images/work_${i}_image_${k + 1}.jpg`);
+          }
+        } else if (type === WorkType.VIDEO) {
+          contentUrls.push(`/uploads/videos/work_${i}_video.mp4`);
+        } else if (type === WorkType.ALBUM) {
+          const albumCount = Math.floor(Math.random() * 20) + 10; // 10-29张图片
+          for (let k = 0; k < albumCount; k++) {
+            contentUrls.push(`/uploads/albums/work_${i}_album_${k + 1}.jpg`);
+          }
+        }
+        
+        const work = {
+          id: generateId(),
+          userId,
+          title: workTitles[Math.floor(Math.random() * workTitles.length)]!,
+          description: descriptions[Math.floor(Math.random() * descriptions.length)]!,
+          type,
+          category,
+          coverUrl: `/uploads/covers/work_${i}_cover.jpg`,
+          contentUrls,
+          tags: selectedTags,
+          location: locations[Math.floor(Math.random() * locations.length)]!,
+          shootDate,
+          equipmentInfo: equipmentOptions[Math.floor(Math.random() * equipmentOptions.length)],
+          technicalInfo: technicalOptions[Math.floor(Math.random() * technicalOptions.length)],
+          status,
+          isFeatured: Math.random() < 0.2, // 20%概率为精选
+          viewCount: Math.floor(Math.random() * 1000),
+          likeCount: Math.floor(Math.random() * 100),
+          shareCount: Math.floor(Math.random() * 50),
+          sortOrder: i,
+          publishedAt: status === WorkStatus.PUBLISHED ? new Date(shootDate.getTime() + 24 * 60 * 60 * 1000) : null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        works.push(work);
+      }
+      
+      // 批量插入作品数据
+      await Work.bulkCreate(works);
+      logger.info(`成功插入 ${works.length} 条作品数据`);
+      
+      logger.info('作品数据初始化完成');
+    } catch (error) {
+      logger.error('作品数据初始化失败:', error);
+      throw error;
+    }
+  }
+
+   async initializeTeams(): Promise<void> { 
+    
+  }
+
+  /**
    * 执行完整的数据库初始化
    */
   async initialize(): Promise<void> {
@@ -239,8 +536,8 @@ export class DatabaseInitializer {
       logger.info('已清除现有数据');
 
       await this.initializeUsers();
-    await this.initializeSchedules();
-
+      await this.initializeSchedules();
+      await this.initializeWorks();
       logger.info('数据库初始化完成');
     } catch (error) {
       logger.error('数据库初始化失败:', error);

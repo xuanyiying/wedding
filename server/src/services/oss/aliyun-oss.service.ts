@@ -15,6 +15,7 @@ export interface OSSConfig {
 }
 
 export class AliyunOssService implements OssService {
+  public bucketName: string;
   private ossClient: OSS;
   private bucket: string;
   private config: OSSConfig;
@@ -22,6 +23,7 @@ export class AliyunOssService implements OssService {
   constructor(config: OSSConfig) {
     this.config = config;
     this.bucket = config.bucket;
+    this.bucketName = config.bucket;
     this.ossClient = new OSS({
       region: config.region,
       accessKeyId: config.accessKeyId,

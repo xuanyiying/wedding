@@ -11,6 +11,8 @@ interface ClientHeaderProps {
   theme: ThemeMode;
   onThemeToggle: () => void;
   activeSection: string;
+  siteName?: string;
+  logoUrl?: string;
 }
 
 const StyledHeader = styled(Header)`
@@ -64,6 +66,13 @@ const LogoIcon = styled.div`
   font-weight: 600;
   font-size: 14px;
   box-shadow: var(--client-shadow-sm);
+`;
+
+const LogoImage = styled.img`
+  width: 32px;
+  height: 32px;
+  margin-right: 12px;
+  border-radius: var(--client-border-radius);
 `;
 
 const NavContainer = styled.div`
@@ -142,7 +151,7 @@ const MobileMenuButton = styled(Button)`
   }
 `;
 
-const ClientHeader: React.FC<ClientHeaderProps> = ({ theme, onThemeToggle, activeSection }) => {
+const ClientHeader: React.FC<ClientHeaderProps> = ({ theme, onThemeToggle, activeSection, siteName, logoUrl }) => {
   const location = useLocation();
   const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
 
@@ -169,8 +178,8 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ theme, onThemeToggle, activ
     <StyledHeader>
       <Link to="/" style={{ textDecoration: 'none' }}>
         <Logo>
-          <LogoIcon>LH</LogoIcon>
-          陆合·合悦Club
+          {logoUrl ? <LogoImage src={logoUrl} alt="site logo" /> : <LogoIcon>LH</LogoIcon>}
+          {siteName || '陆合·合悦Club'}
         </Logo>
       </Link>
       

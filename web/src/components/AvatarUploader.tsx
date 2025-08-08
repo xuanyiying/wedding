@@ -14,6 +14,7 @@ interface AvatarUploaderProps {
   disabled?: boolean;
   className?: string;
   style?: React.CSSProperties;
+  category: 'avatar' | 'work' | 'event' | 'other';
 }
 
 const AvatarUploader: React.FC<AvatarUploaderProps> = ({
@@ -22,6 +23,7 @@ const AvatarUploader: React.FC<AvatarUploaderProps> = ({
   size = 128,
   disabled = false,
   style,
+  category,
 }) => {
   const [loading, setLoading] = useState(false);
   const [imageUrl, setImageUrl] = useState<string>(value || '');
@@ -69,7 +71,7 @@ const AvatarUploader: React.FC<AvatarUploaderProps> = ({
     
     try {
       setLoading(true);
-      const response = await fileService.uploadFile(file, 'image');
+      const response = await fileService.uploadFile(file, { type: 'image', category });
       
       if (response.success && response.data) {
         const url = response.data.fileUrl;

@@ -1,6 +1,6 @@
 import Joi from 'joi';
 import { TeamMemberStatus, TeamMemberRole } from '../types';
-import { updateTeamMember } from '@/controllers/team.controller';
+import { updateTeamMember } from '../controllers/team.controller';
 
 export interface TeamValidators {
   getTeamMembers: any;

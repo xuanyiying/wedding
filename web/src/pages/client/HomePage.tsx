@@ -43,7 +43,7 @@ const HomePage: React.FC = () => {
   });
 
   const { setActiveSection } = useOutletContext<OutletContextType>();
-  const { initTheme } = useTheme();
+  const { initTheme, changeClientVariant } = useTheme();
 
   const handleTeamSelect = (team: Team) => {
     setSelectedTeam(team);
@@ -59,6 +59,11 @@ const HomePage: React.FC = () => {
       setSelectedMember(member);
       setModalVisible(true);
     }
+  };
+
+  const handleMemberClick = (member: ClientTeamMember) => {
+    setSelectedMember(member);
+    setModalVisible(true);
   };
 
   const handleCloseModal = () => {
@@ -81,22 +86,33 @@ const HomePage: React.FC = () => {
 
   // 初始化主题和数据
   useEffect(() => {
-    initTheme('client');
-    fetchPortfolioItems();
-
-    const fetchSettings = async () => {
+    const initializeThemeAndData = async () => {
       try {
+        // 获取设置数据
         const settingsResponse = await settingsService.getSettings();
-        if (settingsResponse.data && settingsResponse.data.site?.homepageBackgroundImage) {
-          setHomepageBackgroundImage(settingsResponse.data.site.homepageBackgroundImage);
+        const data = settingsResponse.data || {};
+        
+        // 设置背景图片
+        if (data.site?.homepageBackgroundImage) {
+          setHomepageBackgroundImage(data.site.homepageBackgroundImage);
         }
+        
+        // 初始化客户端主题，应用服务器端的主题设置
+        const clientThemeVariant = data.theme?.client_theme_variant || 'default';
+        initTheme('client');
+        changeClientVariant(clientThemeVariant);
+        
       } catch (error) {
-        message.error('获取设置失败');
+        console.error('获取设置失败:', error);
+        // 如果获取设置失败，使用默认主题
+        initTheme('client');
+        changeClientVariant('default');
       }
     };
 
-    fetchSettings();
-  }, [initTheme, fetchPortfolioItems]);
+    initializeThemeAndData();
+    fetchPortfolioItems();
+  }, [initTheme, changeClientVariant, fetchPortfolioItems]);
   
   return (
     <div>
@@ -130,7 +146,8 @@ const HomePage: React.FC = () => {
               members={teamMembers}
               loading={membersLoading}
               onBack={handleBackToTeams} 
-              onViewDetails={handleViewDetails} 
+              onViewDetails={handleViewDetails}
+              onMemberClick={handleMemberClick}
             />
           ) : (
             <TeamList onTeamSelect={handleTeamSelect} limit={3} />

@@ -12,23 +12,21 @@ import {
   Row,
   Col,
   InputNumber,
-  ColorPicker,
-  Image
-} from 'antd';
+  ColorPicker} from 'antd';
 import { useTheme } from '../../hooks/useTheme';
 import type { ClientThemeVariant } from '../../styles/themes';
 import {
   SaveOutlined,
   UploadOutlined,
-  SecurityScanOutlined,
   MailOutlined,
   GlobalOutlined,
   BgColorsOutlined} from '@ant-design/icons';
 import type { UploadProps } from 'antd/es/upload/interface';
 
 import styled from 'styled-components';
-import { PageHeader } from '../../components/admin/common';
-import { settingsService } from '../../services';
+import { PageHeader, ImageWithPreview } from '../../components/admin/common';
+import { settingsService, directUploadService } from '../../services';
+import { FileType } from '../../types';
 
 const { TabPane } = Tabs;
 const { TextArea } = Input;
@@ -95,15 +93,7 @@ interface EmailSettings {
   enableSSL: boolean;
 }
 
-interface SecuritySettings {
-  enableTwoFactor: boolean;
-  sessionTimeout: number;
-  maxLoginAttempts: number;
-  passwordMinLength: number;
-  requireSpecialChars: boolean;
-  enableCaptcha: boolean;
-  ipWhitelist: string[];
-}
+
 
 
 interface ThemeSettings {
@@ -120,8 +110,10 @@ const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('site');
   const [siteForm] = Form.useForm();
   const [homepageBackgroundImage, setHomepageBackgroundImage] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string>('');
+  const [faviconUrl, setFaviconUrl] = useState<string>('');
   const [emailForm] = Form.useForm();
-  const [securityForm] = Form.useForm();
+
   const { initTheme, changeClientVariant } = useTheme();
 
   useEffect(() => {
@@ -142,7 +134,7 @@ const SettingsPage: React.FC = () => {
     try {
       const response = await settingsService.getSettings();
       const data = response.data || {};
-      const { site, email, security } = data;
+      const { site, email } = data;
       
       // 填充网站设置表单
       if (site) {
@@ -172,6 +164,12 @@ const SettingsPage: React.FC = () => {
         if (site.homepage_background_image) {
           setHomepageBackgroundImage(site.homepage_background_image);
         }
+        if (site.logo) {
+          setLogoUrl(site.logo);
+        }
+        if (site.favicon) {
+          setFaviconUrl(site.favicon);
+        }
 
         siteForm.setFieldsValue(siteData);
       }
@@ -191,20 +189,7 @@ const SettingsPage: React.FC = () => {
         emailForm.setFieldsValue(emailData);
       }
       
-      // 填充安全设置表单
-      if (security) {
-        const securityData = {
-          enableTwoFactor: security.enable_two_factor,
-          enableCaptcha: security.enable_captcha,
-          sessionTimeout: security.session_timeout,
-          maxLoginAttempts: security.max_login_attempts,
-          passwordMinLength: security.password_min_length,
-          requireSpecialChars: security.require_special_chars,
-          ipWhitelist: security.ip_whitelist || [],
-        };
 
-        securityForm.setFieldsValue(securityData);
-      }
 
       
       // 填充主题设置表单
@@ -286,29 +271,7 @@ const SettingsPage: React.FC = () => {
     }
   };
   
-  // 保存安全设置
-  const saveSecuritySettings = async (values: SecuritySettings) => {
-    try {
-      setLoading(true);
-      const data = {
-        enableTwoFactor: values.enableTwoFactor,
-        enableCaptcha: values.enableCaptcha,
-        sessionTimeout: values.sessionTimeout,
-        maxLoginAttempts: values.maxLoginAttempts,
-        passwordMinLength: values.passwordMinLength,
-        requireSpecialChars: values.requireSpecialChars,
-        ipWhitelist: values.ipWhitelist || [],
-      };
-      await settingsService.updateSecuritySettings(data);
-      
 
-      message.success('安全设置保存成功');
-    } catch (error) {
-      message.error('保存失败，请重试');
-    } finally {
-      setLoading(false);
-    }
-  };
   
   // 测试邮件发送
   const testEmail = async () => {
@@ -399,15 +362,36 @@ const SettingsPage: React.FC = () => {
     }
   };
   
-  const handleHomepageBgChange = (info: any) => {
-    if (info.file.status === 'done') {
-      const fileUrl = info.file.response.data.url;
-      setHomepageBackgroundImage(fileUrl);
-      siteForm.setFieldsValue({ homepageBackgroundImage: fileUrl });
-      message.success(`${info.file.name} 文件上传成功`);
-    } else if (info.file.status === 'error') {
-      message.error(`${info.file.name} 文件上传失败`);
+  const handleUpload = async (file: File, type: 'logo' | 'favicon' | 'homepageBackground') => {
+    try {
+      setLoading(true);
+      const result = await directUploadService.uploadFile(file, FileType.IMAGE, 'other');
+      const fileUrl = result.url;
+
+      if (type === 'logo') {
+        setLogoUrl(fileUrl);
+        siteForm.setFieldsValue({ logo: fileUrl });
+        await settingsService.updateSiteSettings({ logo: fileUrl });
+      } else if (type === 'favicon') {
+        setFaviconUrl(fileUrl);
+        siteForm.setFieldsValue({ favicon: fileUrl });
+        await settingsService.updateSiteSettings({ favicon: fileUrl });
+      } else if (type === 'homepageBackground') {
+        setHomepageBackgroundImage(fileUrl);
+        siteForm.setFieldsValue({ homepageBackgroundImage: fileUrl });
+        await settingsService.updateSiteSettings({ homepageBackgroundImage: fileUrl });
+      }
+      
+      message.success('上传成功');
+    } catch (error) {
+      message.error('上传失败');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const customUploadRequest = (options: any, type: 'logo' | 'favicon' | 'homepageBackground') => {
+    handleUpload(options.file, type);
   };
 
   const beforeUpload = (file: any) => {
@@ -485,14 +469,14 @@ const SettingsPage: React.FC = () => {
                       action={`${import.meta.env.VITE_API_URL}/files/upload`}
                       headers={{ Authorization: `Bearer ${localStorage.getItem('adminToken')}` }}
                       beforeUpload={beforeUpload}
-                      onChange={handleHomepageBgChange}
+                      customRequest={(options) => customUploadRequest(options, 'homepageBackground')}
                       showUploadList={false}
                     >
                       <Button icon={<UploadOutlined />}>点击上传</Button>
                     </Upload>
                     {homepageBackgroundImage && (
                       <div style={{ marginTop: 16 }}>
-                        <Image width={200} src={homepageBackgroundImage} />
+                        <ImageWithPreview width={200} src={homepageBackgroundImage} />
                       </div>
                     )}
                   </Form.Item>
@@ -534,18 +518,42 @@ const SettingsPage: React.FC = () => {
                 
                 <Row gutter={16}>
                   <Col span={12}>
-                    <Form.Item label="网站Logo">
-                      <Upload {...uploadProps}>
+                    <Form.Item name="logo" label="网站Logo">
+                      <Upload
+                        name="file"
+                        action={`${import.meta.env.VITE_API_URL}/files/upload`}
+                        headers={{ Authorization: `Bearer ${localStorage.getItem('adminToken')}` }}
+                        beforeUpload={beforeUpload}
+                        customRequest={(options) => customUploadRequest(options, 'logo')}
+                        showUploadList={false}
+                      >
                         <Button icon={<UploadOutlined />}>上传Logo</Button>
                       </Upload>
+                      {logoUrl && (
+                        <div style={{ marginTop: 16 }}>
+                          <ImageWithPreview width={200} src={logoUrl} />
+                        </div>
+                      )}
                       <div style={{ fontSize: 12, color: 'var(--admin-text-secondary)', marginTop: 4 }}>建议尺寸：200x60px，格式：PNG/JPG</div>
                     </Form.Item>
                   </Col>
                   <Col span={12}>
-                    <Form.Item label="网站图标">
-                      <Upload {...uploadProps}>
+                    <Form.Item name="favicon" label="网站图标">
+                      <Upload
+                        name="file"
+                        action={`${import.meta.env.VITE_API_URL}/files/upload`}
+                        headers={{ Authorization: `Bearer ${localStorage.getItem('adminToken')}` }}
+                        beforeUpload={beforeUpload}
+                        customRequest={(options) => customUploadRequest(options, 'favicon')}
+                        showUploadList={false}
+                      >
                         <Button icon={<UploadOutlined />}>上传图标</Button>
                       </Upload>
+                      {faviconUrl && (
+                        <div style={{ marginTop: 16 }}>
+                          <ImageWithPreview width={32} src={faviconUrl} />
+                        </div>
+                      )}
                       <div style={{ fontSize: 12, color: 'var(--admin-text-secondary)', marginTop: 4 }}>建议尺寸：32x32px，格式：ICO/PNG</div>
                     </Form.Item>
                   </Col>
@@ -689,100 +697,7 @@ const SettingsPage: React.FC = () => {
           </TabCard>
         </TabPane>
         
-        {/* 安全设置 */}
-        <TabPane tab={<span><SecurityScanOutlined />安全设置</span>} key="security">
-          <TabCard>
-            <Form
-              form={securityForm}
-              layout="vertical"
-              onFinish={saveSecuritySettings}
-            >
-              <SettingSection>
-                <div className="section-title">登录安全</div>
-                <div className="section-description">配置用户登录相关的安全策略</div>
-                
-                <Row gutter={16}>
-                  <Col span={12}>
-                    <Form.Item name="enableTwoFactor" valuePropName="checked">
-                      <Space>
-                        <Switch />
-                        <span>启用双因素认证</span>
-                      </Space>
-                    </Form.Item>
-                  </Col>
-                  <Col span={12}>
-                    <Form.Item name="enableCaptcha" valuePropName="checked">
-                      <Space>
-                        <Switch />
-                        <span>启用验证码</span>
-                      </Space>
-                    </Form.Item>
-                  </Col>
-                </Row>
-                
-                <Row gutter={16}>
-                  <Col span={8}>
-                    <Form.Item
-                      name="sessionTimeout"
-                      label="会话超时（分钟）"
-                      rules={[{ required: true, message: '请输入会话超时时间' }]}
-                    >
-                      <InputNumber min={5} max={1440} style={{ width: '100%' }} />
-                    </Form.Item>
-                  </Col>
-                  <Col span={8}>
-                    <Form.Item
-                      name="maxLoginAttempts"
-                      label="最大登录尝试次数"
-                      rules={[{ required: true, message: '请输入最大登录尝试次数' }]}
-                    >
-                      <InputNumber min={3} max={10} style={{ width: '100%' }} />
-                    </Form.Item>
-                  </Col>
-                  <Col span={8}>
-                    <Form.Item
-                      name="passwordMinLength"
-                      label="密码最小长度"
-                      rules={[{ required: true, message: '请输入密码最小长度' }]}
-                    >
-                      <InputNumber min={6} max={20} style={{ width: '100%' }} />
-                    </Form.Item>
-                  </Col>
-                </Row>
-                
-                <Form.Item name="requireSpecialChars" valuePropName="checked">
-                  <Space>
-                    <Switch />
-                    <span>密码必须包含特殊字符</span>
-                  </Space>
-                </Form.Item>
-              </SettingSection>
-              
-              <SettingSection>
-                <div className="section-title">IP白名单</div>
-                <div className="section-description">配置允许访问后台的IP地址范围</div>
-                
-                <Form.Item
-                  name="ipWhitelist"
-                  label="IP白名单"
-                  help="每行一个IP地址或IP段，例如：192.168.1.100 或 192.168.1.0/24"
-                >
-                  <Select
-                    mode="tags"
-                    placeholder="请输入IP地址或IP段"
-                    style={{ width: '100%' }}
-                  />
-                </Form.Item>
-              </SettingSection>
-              
-              <Form.Item>
-                <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading}>
-                  保存设置
-                </Button>
-              </Form.Item>
-            </Form>
-          </TabCard>
-        </TabPane>
+
         
         {/* 主题设置 */}
         <TabPane tab={<span><BgColorsOutlined />主题设置</span>} key="theme">
@@ -816,7 +731,10 @@ const SettingsPage: React.FC = () => {
                         placeholder="请选择主题风格"
                         options={[
                           { value: 'default', label: '默认主题（黑白风格）' },
-                          { value: 'red', label: '红色主题（温暖风格）' }
+                          { value: 'red', label: '红色主题（温暖风格）' },
+                          { value: 'green', label: '绿色主题' },
+                          { value: 'blue', label: '蓝色主题' },
+                          { value: 'purple', label: '紫色主题' }
                         ]}
                         onChange={(value) => {
                           changeClientVariant(value);

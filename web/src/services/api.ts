@@ -3,7 +3,7 @@ import type { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { getToken } from './auth';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -31,7 +31,7 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       // Handle unauthorized access, e.g., redirect to login
       console.error('Unauthorized, redirecting to login...');
-      // window.location.href = '/login';
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }

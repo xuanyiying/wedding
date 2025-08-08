@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { TeamService } from '../services/team.service';
 import { Resp } from '../utils/response';
 import { logger } from '../utils/logger';
-import { AuthenticatedRequest } from '@/interfaces';
+import { AuthenticatedRequest } from '../interfaces';
 
 /**
  * 创建团队

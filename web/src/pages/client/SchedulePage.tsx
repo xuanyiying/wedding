@@ -90,7 +90,7 @@ const SchedulePage: React.FC = () => {
       try {
         const response = await scheduleService.getSchedules({
           page: 1,
-          pageSize: 100, // Fetch enough for calendar view
+          limit: 100, // Fetch enough for calendar view
         });
         if (response.success && response.data) {
           setSchedules(response.data.schedules);

@@ -76,7 +76,6 @@ const FilterBar: React.FC<FilterBarProps> = ({
 }) => {
   const renderFilter = (filter: FilterConfig) => {
     const commonProps = {
-      key: filter.key,
       value: values[filter.key],
       onChange: (value: any) => onChange(filter.key, value),
       placeholder: filter.placeholder,

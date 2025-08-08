@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
-import { Modal, Avatar, Typography, Divider, Tag, Button, Row, Col } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Modal, Avatar, Typography, Divider, Tag, Button, Row, Col, Spin, Empty, Image } from 'antd';
 import styled from 'styled-components';
-import { TeamMemberStatus } from '../../types';
+import { TeamMemberStatus, type Work, type Schedule } from '../../types';
 import { usePageView } from '../../hooks/usePageView';
+import { workService, scheduleService } from '../../services';
 import type { ClientTeamMember } from '../../hooks/useTeamData';
 
 const { Title, Paragraph } = Typography;
@@ -82,6 +83,67 @@ const DetailSection = styled.div`
   }
 `;
 
+const WorksGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+`;
+
+const WorkItem = styled.div`
+  position: relative;
+  border-radius: var(--client-border-radius);
+  overflow: hidden;
+  aspect-ratio: 1;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  
+  &:hover {
+    transform: scale(1.05);
+  }
+  
+  .ant-image {
+    width: 100%;
+    height: 100%;
+    
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+`;
+
+const ScheduleItem = styled.div`
+  padding: 12px;
+  border: 1px solid var(--client-border-color);
+  border-radius: var(--client-border-radius);
+  margin-bottom: 8px;
+  background: var(--client-bg-container);
+  
+  .schedule-title {
+    font-weight: 600;
+    color: var(--client-text-primary);
+    margin-bottom: 4px;
+  }
+  
+  .schedule-date {
+    color: var(--client-text-secondary);
+    font-size: 0.9rem;
+  }
+  
+  .schedule-status {
+    margin-top: 8px;
+  }
+`;
+
+const LoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100px;
+`;
+
 
 const ContactButton = styled(Button)`
   &&& {
@@ -103,13 +165,65 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
   onClose,
   onContact
 }) => {
+  const [memberWorks, setMemberWorks] = useState<Work[]>([]);
+  const [memberSchedules, setMemberSchedules] = useState<Schedule[]>([]);
+  const [worksLoading, setWorksLoading] = useState(false);
+  const [schedulesLoading, setSchedulesLoading] = useState(false);
+
   // 页面访问统计
   const { stats } = usePageView('team_member', member?.userId || '');
 
-  // 记录页面访问（当模态框打开且有成员信息时）
+  // 加载成员作品
+  const loadMemberWorks = async (userId: string) => {
+    try {
+      setWorksLoading(true);
+
+      const response = await workService.getWorks({
+        userId,
+        status: 'published',
+        limit: 6
+      });
+      if (response.success) {
+        setMemberWorks(response.data?.works || []);
+      }
+    } catch (error) {
+      console.error('Failed to load member works:', error);
+    } finally {
+      setWorksLoading(false);
+    }
+  };
+
+  // 加载成员档期
+  const loadMemberSchedules = async (userId: string) => {
+    try {
+      setSchedulesLoading(true);
+      const now = new Date();
+      const endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 未来30天
+      const response = await scheduleService.getSchedules({
+        userId,
+        startDate: now.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
+        limit: 10
+      });
+      if (response.success) {
+        setMemberSchedules(response.data?.schedules || []);
+      }
+    } catch (error) {
+      console.error('加载成员档期失败:', error);
+    } finally {
+      setSchedulesLoading(false);
+    }
+  };
+
+  // 记录页面访问并加载数据
   useEffect(() => {
     if (visible && member?.userId) {
-      // usePageView hook 会自动记录访问
+      loadMemberWorks(member.userId);
+      loadMemberSchedules(member.userId);
+    } else {
+      // 清空数据
+      setMemberWorks([]);
+      setMemberSchedules([]);
     }
   }, [visible, member?.userId]);
 
@@ -187,7 +301,7 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
                 </div>
               </Col>
   
-              <Col span={6}>
+              <Col span={8}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--client-primary-color)' }}>
                     {stats?.totalViews || 0}
@@ -195,7 +309,83 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
                   <div style={{ fontSize: '0.8rem', color: 'var(--client-text-secondary)' }}>浏览量</div>
                 </div>
               </Col>
+              
+              <Col span={8}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--client-primary-color)' }}>
+                    {memberWorks.length}
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--client-text-secondary)' }}>作品数</div>
+                </div>
+              </Col>
             </Row>
+          </DetailSection>
+
+          <DetailSection>
+            <h4>精选作品</h4>
+            {worksLoading ? (
+              <LoadingContainer>
+                <Spin size="small" />
+              </LoadingContainer>
+            ) : memberWorks.length > 0 ? (
+              <WorksGrid>
+                {memberWorks.map((work) => (
+                  <WorkItem key={work.id}>
+                    <Image
+                      src={work.coverUrl || '/placeholder-image.jpg'}
+                      alt={work.title}
+                      preview={{
+                        mask: <div style={{ fontSize: '12px' }}>{work.title}</div>
+                      }}
+                    />
+                  </WorkItem>
+                ))}
+              </WorksGrid>
+            ) : (
+              <Empty 
+                image={Empty.PRESENTED_IMAGE_SIMPLE} 
+                description="暂无公开作品" 
+                style={{ margin: '20px 0' }}
+              />
+            )}
+          </DetailSection>
+
+          <DetailSection>
+            <h4>近期档期</h4>
+            {schedulesLoading ? (
+              <LoadingContainer>
+                <Spin size="small" />
+              </LoadingContainer>
+            ) : memberSchedules.length > 0 ? (
+              <div>
+                {memberSchedules.slice(0, 3).map((schedule) => (
+                  <ScheduleItem key={schedule.id}>
+                    <div className="schedule-title">{schedule.title}</div>
+                    <div className="schedule-date">
+                      {schedule.weddingDate} {schedule.weddingTime === 'lunch' ? '午宴' : '晚宴'}
+                    </div>
+                    <div className="schedule-status">
+                      <Tag color={schedule.status === 'available' ? 'green' : 'orange'}>
+                        {schedule.status === 'available' ? '可预约' : 
+                         schedule.status === 'booked' ? '已预订' : 
+                         schedule.status === 'confirmed' ? '已确认' : '其他'}
+                      </Tag>
+                    </div>
+                  </ScheduleItem>
+                ))}
+                {memberSchedules.length > 3 && (
+                  <div style={{ textAlign: 'center', marginTop: '12px', color: 'var(--client-text-secondary)', fontSize: '0.9rem' }}>
+                    还有 {memberSchedules.length - 3} 个档期...
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Empty 
+                image={Empty.PRESENTED_IMAGE_SIMPLE} 
+                description="暂无档期信息" 
+                style={{ margin: '20px 0' }}
+              />
+            )}
           </DetailSection>
         </div>
       )}

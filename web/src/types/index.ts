@@ -58,8 +58,6 @@ export const WorkCategory = {
 export const FileType = {
   IMAGE: 'image',
   VIDEO: 'video',
-  AUDIO: 'audio',
-  DOCUMENT: 'document',
   OTHER: 'other'
 } as const;
 
@@ -365,7 +363,7 @@ export interface ApiResponse<T = any> {
 // 分页参数类型
 export interface PaginationParams {
   page?: number;
-  pageSize?: number;
+  limit?: number;
   sortBy?: string;
   sortOrder?: SortOrder;
 }

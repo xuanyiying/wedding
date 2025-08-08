@@ -27,6 +27,7 @@ export interface MinIOConfig {
 }
 
 export class MinIOService implements OssService {
+  public bucketName: string;
   private s3Client: S3Client;
   private bucket: string;
   private config: MinIOConfig;
@@ -34,6 +35,7 @@ export class MinIOService implements OssService {
   constructor(config: MinIOConfig) {
     this.config = config;
     this.bucket = config.bucket;
+    this.bucketName = config.bucket;
     this.s3Client = new S3Client({
       endpoint: config.endpoint,
       region: config.region,
@@ -112,7 +114,7 @@ export class MinIOService implements OssService {
         Body: file,
         ContentType: contentType,
         Metadata: {
-          originalName: originalName,
+          originalName: encodeURIComponent(originalName),
           uploadTime: new Date().toISOString()
         }
       });

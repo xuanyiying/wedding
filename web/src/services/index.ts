@@ -139,6 +139,7 @@ export const workService = {
     category?: string;
     status?: string;
     featured?: boolean;
+    userId?: string;
     search?: string;
   }): Promise<ApiResponse<{ works: Work[]; total: number }>> => {
     return http.get('/works', { params });
@@ -518,10 +519,13 @@ export const fileService = {
   },
 
   // 上传单个文件
-  uploadFile: (file: File, type: FileType): Promise<ApiResponse<MediaFile>> => {
+  uploadFile: (file: File, data: { type: FileType; category?: string }): Promise<ApiResponse<MediaFile>> => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('type', type);
+    formData.append('type', data.type);
+    if (data.category) {
+      formData.append('category', data.category);
+    }
     return http.upload('/files/upload', formData);
   },
 

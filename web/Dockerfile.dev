@@ -1,0 +1,17 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# 安装开发依赖
+COPY package*.json ./
+RUN npm config set registry https://registry.npmmirror.com
+RUN npm install
+
+# 复制源代码
+COPY . .
+
+# 暴露端口
+EXPOSE 5173
+
+# 开发模式启动命令 (支持热重载)
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

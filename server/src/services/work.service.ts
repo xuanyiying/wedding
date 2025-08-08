@@ -8,6 +8,7 @@ import {
 } from '../models';
 import { logger } from '../utils/logger';
 import { WorkType, WorkCategory, WorkStatus } from '../types';
+import { FileService } from './file.service';
 
 interface GetWorksParams {
   page: number;
@@ -165,6 +166,27 @@ export class WorkService {
     // 验证内容URL
     if (data.contentUrls && data.contentUrls.length === 0) {
       throw new Error('验证失败：至少需要上传一张作品图片');
+    }
+
+    // 如果是视频作品，且没有提供封面，则自动生成封面
+    if (data.type === WorkType.VIDEO && !data.coverUrl) {
+      if (data.contentUrls && data.contentUrls.length > 0) {
+        const videoUrl = data.contentUrls[0];
+        try {
+          if (!data.userId ) {
+            throw new Error('用户ID不能为空');
+          } 
+          if (!videoUrl) {
+            throw new Error('请上传视频文件');
+          }
+          const coverUrl = await FileService.generateVideoCover(videoUrl, data.userId);
+            data.coverUrl = coverUrl;
+        } catch (error) {
+          logger.error('生成视频封面失败:', error);
+          // 可以选择抛出错误，或者允许在没有封面的情况下创建
+          throw new Error('生成视频封面失败');
+        }
+      }
     }
 
     const work = await Work.create({

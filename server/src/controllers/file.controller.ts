@@ -3,7 +3,7 @@ import { FileService } from '../services/file.service';
 import { Resp } from '../utils/response';
 import { logger } from '../utils/logger';
 import { FileType } from '../types';
-import { AuthenticatedRequest } from '@/interfaces';
+import { AuthenticatedRequest } from '../interfaces';
 
 /**
  * 上传单个文件
@@ -15,7 +15,7 @@ export const uploadFile = async (req: AuthenticatedRequest, res: Response, next:
       return;
     }
 
-    const { type } = req.body;
+    const { type, category } = req.body;
     const userId = req.user!.id;
 
     const fileData = {
@@ -26,6 +26,7 @@ export const uploadFile = async (req: AuthenticatedRequest, res: Response, next:
       path: req.file.path,
       userId: userId,
       type: type as FileType,
+      category: category,
     };
 
     const result = await FileService.uploadFile(fileData);
@@ -46,7 +47,7 @@ export const batchUploadFiles = async (req: AuthenticatedRequest, res: Response,
       return;
     }
 
-    const { type } = req.query;
+    const { type, category } = req.query;
     const userId = req.user!.id;
 
     const filesData = (req.files as Express.Multer.File[]).map(file => ({
@@ -57,6 +58,7 @@ export const batchUploadFiles = async (req: AuthenticatedRequest, res: Response,
       path: file.path,
       userId: userId,
       type: type as FileType,
+      category: category as string,
     }));
 
     const results = await FileService.uploadFiles(filesData);

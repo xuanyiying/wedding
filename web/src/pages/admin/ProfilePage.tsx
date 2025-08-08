@@ -388,7 +388,7 @@ const ProfilePage: React.FC = () => {
   const handleMediaUpload = async (file: File): Promise<string> => {
     try {
       setUploading(true);
-      const response = await fileService.uploadFile(file, file.type.startsWith('video/') ? 'video' : 'image');
+      const response = await fileService.uploadFile(file, { type: file.type.startsWith('video/') ? 'video' : 'image' });
       const newMedia = response.data;
       if (newMedia) {
         const mediaWithOrder = {
@@ -412,7 +412,7 @@ const ProfilePage: React.FC = () => {
   const handleAvatarUpload = async (file: File): Promise<string> => {
     try {
       setUploading(true);
-      const response = await fileService.uploadFile(file, 'image');
+      const response = await fileService.uploadFile(file, { type: 'image', category: 'avatar' });
       const newMedia = response.data;
       if (newMedia && newMedia.fileUrl) {
         // 更新当前用户的头像URL
@@ -501,6 +501,7 @@ const ProfilePage: React.FC = () => {
                 disabled={uploading}
                 size={120}
                 shape="square"
+                category="avatar"
               />
         </div>
         <div className="name">
@@ -675,16 +676,18 @@ const ProfilePage: React.FC = () => {
         <TabPane tab="基本信息" key="basic">
           <Card>
             <ProfileEditForm
-              initialValues={{
-                ...currentUser,
-                createdAt: formatDate(currentUser?.createdAt || new Date()),
-                updatedAt: formatDate(currentUser?.updatedAt || new Date()),
-              }}
-              onSubmit={handleBasicInfoSave}
-              onCancel={() => {}}
-              loading={loading}
-              onUpload={handleAvatarUpload}
-            />
+                initialValues={{
+                  ...currentUser,
+                  createdAt: formatDate(currentUser?.createdAt || new Date()),
+                  updatedAt: formatDate(currentUser?.updatedAt || new Date()),
+                }}
+                onSubmit={handleBasicInfoSave}
+                onCancel={() => {}}
+                loading={loading}
+                onUpload={handleAvatarUpload}
+                avatarUrl={currentUser?.avatarUrl}
+                onAvatarChange={(url) => setCurrentUser((prev) => (prev ? { ...prev, avatarUrl: url } : null))}
+              />
           </Card>
         </TabPane>
         

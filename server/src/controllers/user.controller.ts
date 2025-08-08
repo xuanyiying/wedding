@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { UserService } from '../services/user.service';
 import { Resp } from '../utils/response';
 import { logger } from '../utils/logger';
-import { AuthenticatedRequest } from '@/interfaces';
+import { AuthenticatedRequest } from '../interfaces';
 import { UserRole, UserStatus } from '../types';
 
 /**

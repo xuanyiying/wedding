@@ -1,0 +1,143 @@
+version: '3.8'
+
+services:
+  # MySQL数据库
+  mysql:
+    image: mysql:8.0
+    container_name: wedding_mysql_dev
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: wedding_dev
+      MYSQL_USER: wedding
+      MYSQL_PASSWORD: wedding123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_dev_data:/var/lib/mysql
+      - ./server/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    command: --default-authentication-plugin=mysql_native_password --bind-address=0.0.0.0
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - wedding-dev-net
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: wedding_redis_dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - wedding-dev-net
+
+  # MinIO对象存储
+  minio:
+    image: minio/minio:latest
+    container_name: wedding_minio_dev
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+      MINIO_BROWSER_REDIRECT_URL: http://localhost:9001
+      MINIO_SERVER_URL: http://localhost:9000
+    ports:
+      - "9000:9000"  # S3 API port
+      - "9001:9001"  # Console port
+    volumes:
+      - minio_dev_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - wedding-dev-net
+
+  # 后端API服务 (开发模式)
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    container_name: wedding_server_dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - API_HOST=0.0.0.0
+      - PORT=3000
+      - DATABASE_URL=mysql://wedding:wedding123@mysql:3306/wedding_dev
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=wedding_dev
+      - DB_USERNAME=wedding
+      - DB_PASSWORD=wedding123
+      - DB_DIALECT=mysql
+      - DB_LOGGING=true
+      - REDIS_URL=redis://redis:6379
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - OSS_TYPE=minio
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin123
+      - MINIO_BUCKET=wedding-media
+      - JWT_SECRET=dev-jwt-secret-key-change-in-production
+      - JWT_REFRESH_SECRET=dev-jwt-refresh-secret-key-change-in-production
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+      - /app/dist
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - wedding-dev-net
+    command: npm run dev
+
+  # 前端Web服务 (开发模式)
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile.dev
+    container_name: wedding_web_dev
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:3000/api
+    volumes:
+      - ./web:/app
+      - /app/node_modules
+    depends_on:
+      - server
+    networks:
+      - wedding-dev-net
+    command: npm run dev
+
+networks:
+  wedding-dev-net:
+    driver: bridge
+
+volumes:
+  mysql_dev_data:
+  redis_dev_data:
+  minio_dev_data:

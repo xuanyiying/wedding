@@ -9,6 +9,7 @@ import ffmpeg from 'fluent-ffmpeg';
 import { OssService } from './oss/oss.service';
 import { getOssService } from '../config/oss';
 import { createRetryHandler } from '../middlewares/upload';
+import axios from 'axios';
 import { FileType, StorageType } from '../types';
 
 interface GetFilesParams {
@@ -109,6 +110,47 @@ export class FileService {
     }
 
     return file;
+  }
+
+
+  static async generateVideoCover(videoUrl: string, userId: string): Promise<string> {
+    try {
+      // 1. 下载视频文件
+      const response = await axios.get(videoUrl, { responseType: 'arraybuffer' });
+      const videoBuffer = Buffer.from(response.data, 'binary');
+      const originalName = path.basename(new URL(videoUrl).pathname);
+      const coverFileName = `${path.parse(originalName).name}_cover.jpg`;
+
+      // 2. 生成缩略图
+      const ossService = this.getOssService();
+      const thumbnailUrl = await this.generateVideoThumbnail(
+        videoBuffer,
+        originalName,
+        ossService
+      );
+
+      // 3. 将封面图片作为文件记录保存到数据库
+      await File.create({
+        filename: coverFileName,
+        originalName: coverFileName,
+        mimeType: 'image/jpeg',
+        fileSize: 0, // Placeholder, as we don't have the exact size
+        fileUrl: thumbnailUrl,
+        filePath: this.extractKeyFromUrl(thumbnailUrl) || `thumbnails/${coverFileName}`,
+        hashMd5: crypto.createHash('md5').update(thumbnailUrl).digest('hex'),
+        fileType: FileType.IMAGE,
+        userId: userId,
+        storageType: (process.env.OSS_TYPE as StorageType) || StorageType.MINIO,
+        bucketName: ossService.bucketName,
+        isPublic: true,
+        downloadCount: 0,
+      });
+
+      return thumbnailUrl;
+    } catch (error) {
+      logger.error(`从URL生成视频封面失败: ${videoUrl}`, error);
+      throw new Error('生成视频封面失败');
+    }
   }
 
   /**

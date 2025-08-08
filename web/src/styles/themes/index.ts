@@ -9,11 +9,15 @@ import {
   type ClientRedTheme,
   type ClientRedDarkTheme
 } from './client';
+import { clientGreenTheme, clientGreenDarkTheme } from './green';
+import { clientBlueTheme, clientBlueDarkTheme } from './blue';
+import { clientPurpleTheme, clientPurpleDarkTheme } from './purple';
+
 
 // 主题类型定义
 export type ThemeMode = 'light' | 'dark';
 export type ThemeType = 'admin' | 'client';
-export type ClientThemeVariant = 'default' | 'red';
+export type ClientThemeVariant = 'default' | 'red' | 'green' | 'blue' | 'purple';
 
 // 统一主题接口
 export interface Theme {
@@ -76,6 +80,18 @@ export const themes = {
     red: {
       light: clientRedTheme,
       dark: clientRedDarkTheme,
+    },
+    green: {
+      light: clientGreenTheme,
+      dark: clientGreenDarkTheme,
+    },
+    blue: {
+      light: clientBlueTheme,
+      dark: clientBlueDarkTheme,
+    },
+    purple: {
+      light: clientPurpleTheme,
+      dark: clientPurpleDarkTheme,
     },
   },
 } as const;
@@ -290,6 +306,26 @@ export class ThemeManager {
       root.style.setProperty('--client-primary-color', clientTheme.primary.main);
       root.style.setProperty('--client-primary-light', clientTheme.primary.light);
       root.style.setProperty('--client-primary-dark', clientTheme.primary.dark);
+    }
+  }
+
+  public applyCustomSettings(settings: any) {
+    if (!settings) return;
+
+    const root = document.documentElement;
+
+    if (settings.primary_color) {
+      if (this.currentThemeType === 'admin') {
+        root.style.setProperty('--admin-primary-color', settings.primary_color);
+      } else {
+        root.style.setProperty('--client-primary-color', settings.primary_color);
+      }
+    }
+    if (settings.border_radius) {
+      root.style.setProperty('--border-radius', `${settings.border_radius}px`);
+    }
+    if (settings.font_size) {
+      root.style.setProperty('--font-size-base', `${settings.font_size}px`);
     }
   }
 }

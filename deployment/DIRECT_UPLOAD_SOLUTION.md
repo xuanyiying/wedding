@@ -177,7 +177,7 @@ DIRECT_UPLOAD_MAX_SESSION_TIME=7200  # 上传会话最大时间（秒）
 ### 1. 单文件上传
 
 ```typescript
-import { SingleFileUploadExample } from '@/utils/direct-upload-example';
+import { SingleFileUploadExample } from '../utils/direct-upload-example';
 
 // 创建上传器
 const uploader = new SingleFileUploadExample({
@@ -202,7 +202,7 @@ const result = await uploader.uploadVideo(file);
 ### 2. 批量文件上传
 
 ```typescript
-import { BatchFileUploadExample } from '@/utils/direct-upload-example';
+import { BatchFileUploadExample } from '../utils/direct-upload-example';
 
 // 创建批量上传器
 const batchUploader = new BatchFileUploadExample({

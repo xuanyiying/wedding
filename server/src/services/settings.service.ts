@@ -4,7 +4,7 @@ import { logger } from '../utils/logger';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { ConfigType } from '@/models/SystemConfig';
+import { ConfigType } from '../models/SystemConfig';
 
 
 export class SettingsService {
@@ -26,7 +26,7 @@ export class SettingsService {
       };
 
       configs.forEach((config) => {
-        const category = config.category.toLowerCase();
+        const category = config.category;
         if (settings[category]) {
           let value = config.configValue || config.defaultValue;
           

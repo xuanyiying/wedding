@@ -22,7 +22,7 @@ import {
   validateUpdateUserStatus,
   validateBatchDeleteUsers,
 } from '../validators/user';
-import { getTeamsByUserId } from '@/controllers/team.controller';
+import { getTeamsByUserId } from '../controllers/team.controller';
 
 const router = Router();
 

@@ -42,7 +42,7 @@ export const connectDatabase = async (): Promise<void> => {
 
     // 在开发环境下同步数据库模型
     if (config.nodeEnv === 'development') {
-      await sequelize.sync({ force: true });
+      await sequelize.sync({ alter: true });
       logger.info('Database models synchronized successfully.');
     }
   } catch (error) {

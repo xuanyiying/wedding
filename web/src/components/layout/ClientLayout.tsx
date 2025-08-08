@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Layout } from 'antd';
-import { ThemeMode } from '../../types';
+import { useTheme } from '../../hooks/useTheme';
+import { settingsService } from '../../services/';
 import ClientHeader from './ClientHeader';
 import ClientFooter from './ClientFooter';
 import styled from 'styled-components';
@@ -19,21 +20,56 @@ const StyledContent = styled(Content)`
 `;
 
 const ClientLayout: React.FC = () => {
-  const [theme, setTheme] = useState<ThemeMode>(ThemeMode.LIGHT);
+  const { themeMode, clientVariant, toggleThemeMode, changeClientVariant, initTheme, applyThemeSettings } = useTheme();
   const [activeSection, setActiveSection] = useState('hero');
+  const [siteName, setSiteName] = useState<string | undefined>(undefined);
+  const [logoUrl, setLogoUrl] = useState<string | undefined>(undefined);
   const location = useLocation();
 
+  // 从服务器获取主题设置
+  useEffect(() => {
+    const loadThemeSettings = async () => {
+      try {
+        const response = await settingsService.getSettings();
+        const settings = response.data;
+
+        if (settings) {
+          setSiteName(settings.site?.site_name);
+          setLogoUrl(settings.site?.logo);
+
+          if (settings.theme) {
+            initTheme('client', settings.theme.darkMode ? 'dark' : 'light');
+            changeClientVariant(settings.theme.client_theme_variant || 'default');
+            applyThemeSettings(settings.theme);
+          } else {
+            initTheme('client', 'light');
+          }
+        } else {
+          // 如果没有配置，使用默认主题
+          initTheme('client');
+        }
+      } catch (error) {
+        console.error('Failed to load theme settings:', error);
+        // 出错时使用默认主题
+        initTheme('client');
+      }
+    };
+    
+    loadThemeSettings();
+  }, [changeClientVariant, initTheme]);
+
   const toggleTheme = () => {
-    setTheme(theme === ThemeMode.LIGHT ? ThemeMode.DARK : ThemeMode.LIGHT);
-    document.documentElement.setAttribute('data-theme', theme === ThemeMode.LIGHT ? 'dark' : 'light');
+    toggleThemeMode();
   };
 
   return (
     <StyledLayout>
       <ClientHeader 
-        theme={theme} 
+        theme={themeMode} 
         onThemeToggle={toggleTheme} 
         activeSection={location.pathname === '/' ? activeSection : ''} 
+        siteName={siteName}
+        logoUrl={logoUrl}
       />
       <StyledContent>
         <Outlet context={{ setActiveSection }} />
