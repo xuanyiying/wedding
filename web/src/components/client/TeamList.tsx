@@ -29,9 +29,9 @@ const  TeamList: React.FC<TeamListProps> = ({onTeamSelect, limit }) => {
       />
       
       <Spin spinning={teamsLoading}>
-        <Row gutter={[24, 24]}>
+        <Row gutter={[48, 48]}>
           {displayedTeams.map((team) => (
-          <Col xs={24} sm={12} lg={8} key={team.id}>
+          <Col xs={24} sm={36} lg={12} key={team.id}>
             <TeamCard onClick={() => onTeamSelect(team)} loading={teamsLoading}>
               <div className="team-avatar">
                 <Avatar 
