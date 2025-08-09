@@ -142,7 +142,7 @@ const PublicProfileContainer = styled.div`
           position: relative;
           border-radius: 8px;
           overflow: hidden;
-          aspect-ratio: 16/9;
+          aspect-ratio: 4/3;
           cursor: grab;
           transition: all 0.3s;
           

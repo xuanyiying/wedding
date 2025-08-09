@@ -16,14 +16,35 @@ const FormCard = styled(Card)`
     border: 1px solid var(--border-primary);
     box-shadow: var(--shadow-small);
     width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
 
     .ant-card-body {
       padding: 32px;
     }
 
-    @media (max-width: 768px) {
+    /* 平板设备 */
+    @media (max-width: 992px) {
+      max-width: 90%;
       .ant-card-body {
-        padding: 24px;
+        padding: 28px;
+      }
+    }
+
+    /* 移动设备 */
+    @media (max-width: 768px) {
+      max-width: 95%;
+      margin: 0 auto;
+      .ant-card-body {
+        padding: 20px;
+      }
+    }
+
+    /* 小屏移动设备 */
+    @media (max-width: 480px) {
+      max-width: 98%;
+      .ant-card-body {
+        padding: 16px;
       }
     }
   }
@@ -86,7 +107,7 @@ const ContactForm: React.FC = () => {
   };
 
   return (
-    <FormCard style={{ margin: '0 auto' }}>
+    <FormCard>
       <Title level={3} style={{ textAlign: 'center', marginBottom: 16 }}>
         <CustomerServiceOutlined style={{ marginRight: 8 }} />
         在线咨询
@@ -99,7 +120,7 @@ const ContactForm: React.FC = () => {
         requiredMark={false}
       >
         <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12}>
+          <Col xs={24} sm={24} md={12}>
             <Form.Item
               label="您的姓名"
               name="name"
@@ -108,7 +129,7 @@ const ContactForm: React.FC = () => {
               <Input placeholder="请输入您的姓名" size="large" />
             </Form.Item>
           </Col>
-          <Col xs={24} sm={12}>
+          <Col xs={24} sm={24} md={12}>
             <Form.Item
               label="联系电话"
               name="phone"
@@ -124,7 +145,7 @@ const ContactForm: React.FC = () => {
         
         
         <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12}>
+          <Col xs={24} sm={24} md={12}>
             <Form.Item
               label="婚礼日期"
               name="weddingDate"
@@ -138,7 +159,7 @@ const ContactForm: React.FC = () => {
               />
             </Form.Item>
           </Col>
-          <Col xs={24} sm={12}>
+          <Col xs={24} sm={24} md={12}>
             <Form.Item
               label="婚礼时间"
               name="weddingTime"
@@ -155,7 +176,7 @@ const ContactForm: React.FC = () => {
         </Row>
         
         <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12}>
+          <Col xs={24} sm={24} md={12}>
             <Form.Item
               label="婚礼地点"
               name="location"
@@ -165,7 +186,7 @@ const ContactForm: React.FC = () => {
             </Form.Item>
           </Col>
         
-          <Col xs={24} sm={12}>
+          <Col xs={24} sm={24} md={12}>
             <Form.Item
               label="预算范围"
               name="budget"

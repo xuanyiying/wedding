@@ -157,7 +157,7 @@ const WorkCard: React.FC<WorkCardProps> = ({
       className={className}
       style={style}
       cover={
-        <div style={{ position: 'relative', height: 200 }}>
+        <div style={{ position: 'relative', height: 100 }}>
           <Image
             src={work.coverImage}
             alt={work.title}

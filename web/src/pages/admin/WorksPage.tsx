@@ -51,7 +51,7 @@ const AdminWorkCard = styled.div`
 const WorkMediaContainer = styled.div`
   position: relative;
   width: 100%;
-  aspect-ratio: 9/16;
+  aspect-ratio: 3/4;
   overflow: hidden;
   background: var(--admin-bg-layout);
 `;
