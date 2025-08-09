@@ -19,15 +19,15 @@ const SectionContainer = styled.section`
   padding: 80px 0;
   
   &.team-showcase {
-    background: var(--client-bg-container);
+    background: var(--background-secondary);
   }
   
   &.portfolio-showcase {
-    background: var(--client-bg-layout);
+    background: var(--background-primary);
   }
   
   &.works-showcase {
-    background: var(--client-bg-container);
+    background: var(--background-secondary);
   }
 `;
 
@@ -46,7 +46,7 @@ const SectionTitle = styled(Title)`
     text-align: center;
     font-size: 2.4rem;
     margin-bottom: 48px;
-    color: var(--client-text-primary);
+    color: var(--text-primary);
     font-weight: 300;
     letter-spacing: -0.02em;
     line-height: 1.3;
@@ -58,7 +58,7 @@ const SectionTitle = styled(Title)`
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      color: var(--client-primary-color);
+      color: var(--primary-main);
       font-size: 1.2rem;
       opacity: 0.6;
     }

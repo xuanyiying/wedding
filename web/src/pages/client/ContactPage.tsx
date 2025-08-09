@@ -1,7 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Row, Col, Typography } from 'antd';
 import styled from 'styled-components';
-import { useTheme } from '../../hooks/useTheme';
 import ContactForm from '../../components/client/ContactForm';
 
 const { Title, Paragraph } = Typography;
@@ -50,11 +49,7 @@ const PageTitle = styled(Title)`
 `;
 
 const ContactPage: React.FC = () => {
-  const { initTheme } = useTheme();
-  
-  useEffect(() => {
-    initTheme('client');
-  }, [initTheme]);
+
 
   return (
     <PageContainer>

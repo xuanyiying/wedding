@@ -11,10 +11,10 @@ const { Option } = Select;
 
 const FormCard = styled(Card)`
   &&& {
-    background: var(--client-bg-container);
-    border-radius: var(--client-border-radius-lg);
-    border: 1px solid var(--client-border-color);
-    box-shadow: var(--client-shadow-sm);
+    background: var(--background-secondary);
+    border-radius: var(--border-radius-large);
+    border: 1px solid var(--border-primary);
+    box-shadow: var(--shadow-small);
     width: 100%;
 
     .ant-card-body {
@@ -33,17 +33,17 @@ const SubmitButton = styled(Button)`
   &&& {
     width: 100%;
     height: 48px;
-    background: var(--client-primary-color);
-    border-color: var(--client-primary-color);
+    background: var(--primary-main);
+    border-color: var(--primary-main);
     font-size: 16px;
     font-weight: 500;
-    border-radius: var(--client-border-radius);
-    color: var(--client-text-inverse);
+    border-radius: var(--border-radius-medium);
+    color: var(--state-inverse);
     
     &:hover {
-      background: var(--client-primary-hover) !important;
-      border-color: var(--client-primary-hover) !important;
-      color: var(--client-text-inverse) !important;
+      background: var(--primary-light) !important;
+      border-color: var(--primary-light) !important;
+      color: var(--state-inverse) !important;
     }
   }
 `;

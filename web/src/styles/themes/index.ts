@@ -2,22 +2,14 @@ import { adminTheme, adminDarkTheme, type AdminTheme, type AdminDarkTheme } from
 import { 
   clientTheme, 
   clientDarkTheme, 
-  clientRedTheme, 
-  clientRedDarkTheme,
   type ClientTheme, 
   type ClientDarkTheme,
-  type ClientRedTheme,
-  type ClientRedDarkTheme
 } from './client';
-import { clientGreenTheme, clientGreenDarkTheme } from './green';
-import { clientBlueTheme, clientBlueDarkTheme } from './blue';
-import { clientPurpleTheme, clientPurpleDarkTheme } from './purple';
 
 
 // 主题类型定义
 export type ThemeMode = 'light' | 'dark';
 export type ThemeType = 'admin' | 'client';
-export type ClientThemeVariant = 'default' | 'red' | 'green' | 'blue' | 'purple';
 
 // 统一主题接口
 export interface Theme {
@@ -73,26 +65,8 @@ export const themes = {
     dark: adminDarkTheme,
   },
   client: {
-    default: {
-      light: clientTheme,
-      dark: clientDarkTheme,
-    },
-    red: {
-      light: clientRedTheme,
-      dark: clientRedDarkTheme,
-    },
-    green: {
-      light: clientGreenTheme,
-      dark: clientGreenDarkTheme,
-    },
-    blue: {
-      light: clientBlueTheme,
-      dark: clientBlueDarkTheme,
-    },
-    purple: {
-      light: clientPurpleTheme,
-      dark: clientPurpleDarkTheme,
-    },
+    light: clientTheme,
+    dark: clientDarkTheme,
   },
 } as const;
 
@@ -101,7 +75,6 @@ export class ThemeManager {
   private static instance: ThemeManager;
   private currentThemeType: ThemeType = 'admin';
   private currentThemeMode: ThemeMode = 'light';
-  private currentClientVariant: ClientThemeVariant = 'default';
   private listeners: Array<(theme: Theme) => void> = [];
 
   static getInstance(): ThemeManager {
@@ -116,7 +89,7 @@ export class ThemeManager {
     if (this.currentThemeType === 'admin') {
       return themes.admin[this.currentThemeMode] as Theme;
     }
-    return themes.client[this.currentClientVariant][this.currentThemeMode] as Theme;
+    return themes.client[this.currentThemeMode] as Theme;
   }
 
   // 设置主题类型（admin/client）
@@ -139,17 +112,6 @@ export class ThemeManager {
   // 获取当前主题模式
   getThemeMode(): ThemeMode {
     return this.currentThemeMode;
-  }
-
-  // 设置客户端主题变体
-  setClientVariant(variant: ClientThemeVariant): void {
-    this.currentClientVariant = variant;
-    this.notifyListeners();
-  }
-
-  // 获取当前客户端主题变体
-  getClientVariant(): ClientThemeVariant {
-    return this.currentClientVariant;
   }
 
   // 切换主题模式
@@ -271,41 +233,41 @@ export class ThemeManager {
     }
 
     // 始终应用客户端主题变量（无论当前主题类型如何）
-    const clientTheme = themes.client[this.currentClientVariant][this.currentThemeMode] as ClientTheme;
-    if ('interaction' in clientTheme) {
-      root.style.setProperty('--client-interaction-hover', clientTheme.interaction.hover);
-      root.style.setProperty('--client-interaction-accent', clientTheme.interaction.accent);
+    const clientThemeForCSS = themes.client[this.currentThemeMode] as ClientTheme;
+    if ('interaction' in clientThemeForCSS) {
+      root.style.setProperty('--client-interaction-hover', clientThemeForCSS.interaction.hover);
+      root.style.setProperty('--client-interaction-accent', clientThemeForCSS.interaction.accent);
       
       // Client渐变扩展
-      if ('hero' in clientTheme.gradient) {
-        root.style.setProperty('--client-gradient-hero', clientTheme.gradient.hero);
+      if ('hero' in clientThemeForCSS.gradient) {
+        root.style.setProperty('--client-gradient-hero', clientThemeForCSS.gradient.hero);
       }
-      if ('overlay1' in clientTheme.gradient) {
-        root.style.setProperty('--client-gradient-overlay-1', clientTheme.gradient.overlay1);
-        root.style.setProperty('--client-gradient-overlay-2', clientTheme.gradient.overlay2);
-        root.style.setProperty('--client-gradient-shine', clientTheme.gradient.shine);
-        root.style.setProperty('--client-gradient-primary-hover', clientTheme.gradient.primaryHover);
+      if ('overlay1' in clientThemeForCSS.gradient) {
+        root.style.setProperty('--client-gradient-overlay-1', clientThemeForCSS.gradient.overlay1);
+        root.style.setProperty('--client-gradient-overlay-2', clientThemeForCSS.gradient.overlay2);
+        root.style.setProperty('--client-gradient-shine', clientThemeForCSS.gradient.shine);
+        root.style.setProperty('--client-gradient-primary-hover', clientThemeForCSS.gradient.primaryHover);
       }
       
       // Client布局
-      if ('layout' in clientTheme) {
-        root.style.setProperty('--client-bg-container', clientTheme.layout.container);
-        root.style.setProperty('--client-bg-layout', clientTheme.layout.content);
-        root.style.setProperty('--client-header-bg', clientTheme.layout.header);
-        root.style.setProperty('--client-header-bg-dark', clientTheme.layout.headerDark);
-        root.style.setProperty('--client-footer-bg', clientTheme.layout.footer);
+      if ('layout' in clientThemeForCSS) {
+        root.style.setProperty('--client-bg-container', clientThemeForCSS.layout.container);
+        root.style.setProperty('--client-bg-layout', clientThemeForCSS.layout.content);
+        root.style.setProperty('--client-header-bg', clientThemeForCSS.layout.header);
+        root.style.setProperty('--client-header-bg-dark', clientThemeForCSS.layout.headerDark);
+        root.style.setProperty('--client-footer-bg', clientThemeForCSS.layout.footer);
       }
       
       // Client状态
-      if ('state' in clientTheme) {
-        root.style.setProperty('--client-text-inverse', clientTheme.state.inverse);
-        root.style.setProperty('--client-primary-hover', clientTheme.state.primaryHover);
+      if ('state' in clientThemeForCSS) {
+        root.style.setProperty('--client-text-inverse', clientThemeForCSS.state.inverse);
+        root.style.setProperty('--client-primary-hover', clientThemeForCSS.state.primaryHover);
       }
       
       // Client主色调变量（用于在admin页面预览客户端主题效果）
-      root.style.setProperty('--client-primary-color', clientTheme.primary.main);
-      root.style.setProperty('--client-primary-light', clientTheme.primary.light);
-      root.style.setProperty('--client-primary-dark', clientTheme.primary.dark);
+      root.style.setProperty('--client-primary-color', clientThemeForCSS.primary.main);
+      root.style.setProperty('--client-primary-light', clientThemeForCSS.primary.light);
+      root.style.setProperty('--client-primary-dark', clientThemeForCSS.primary.dark);
     }
   }
 
@@ -339,14 +301,10 @@ export {
   adminDarkTheme, 
   clientTheme, 
   clientDarkTheme, 
-  clientRedTheme, 
-  clientRedDarkTheme 
 };
 export type { 
   AdminTheme, 
   AdminDarkTheme, 
   ClientTheme, 
   ClientDarkTheme,
-  ClientRedTheme,
-  ClientRedDarkTheme
 };

@@ -388,7 +388,7 @@ const ProfilePage: React.FC = () => {
   const handleMediaUpload = async (file: File): Promise<string> => {
     try {
       setUploading(true);
-      const response = await fileService.uploadFile(file, { type: file.type.startsWith('video/') ? 'video' : 'image' });
+      const response = await fileService.uploadFile(file, { type: file.type.startsWith('video/') ? 'video' : 'image',category: 'profile' });
       const newMedia = response.data;
       if (newMedia) {
         const mediaWithOrder = {

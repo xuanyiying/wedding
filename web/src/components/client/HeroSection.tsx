@@ -40,7 +40,7 @@ const HeroContainer = styled.section<{
     left: -50%;
     width: 200%;
     height: 200%;
-    background: var(--client-gradient-overlay-1);
+    background: var(--client-gradient-overlay1);
     animation: float 20s ease-in-out infinite;
   }
 
@@ -51,7 +51,7 @@ const HeroContainer = styled.section<{
     right: -50%;
     width: 200%;
     height: 200%;
-    background: var(--client-gradient-overlay-2);
+    background: var(--client-gradient-overlay2);
     animation: float 25s ease-in-out infinite reverse;
   }
 
@@ -141,10 +141,10 @@ const CTAButton = styled(Button)`
     }
 
     &:hover {
-      background: var(--client-gradient-primary-hover);
-      border-color: var(--client-primary-hover);
+      background: var(--client-gradient-primaryHover);
+      border-color: var(--client-state-primaryHover);
       transform: translateY(-2px);
-      box-shadow: var(--client-shadow-xl);
+      box-shadow: var(--client-shadow-large);
       color: var(--client-text-inverse);
 
       &::before {

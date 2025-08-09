@@ -4,13 +4,14 @@ import { Sequelize } from 'sequelize';
 import { config } from '../config/config';
 import { logger } from '../utils/logger';
 import { initModels } from '../models';
-import { User , Work, Schedule } from '../models';
+import { User , Work, Schedule, Team, TeamMember } from '../models';
 import { PasswordUtils } from '../utils/helpers';
 import { generateId } from '../utils/id.generator';
 import { UserRole, UserStatus } from '../interfaces';
-import { EventType, ScheduleStatus, WeddingTime, WorkType, WorkCategory, WorkStatus } from '../types';
+import { EventType, ScheduleStatus, WeddingTime, WorkType, WorkCategory, WorkStatus, TeamStatus, TeamMemberRole, TeamMemberStatus } from '../types';
 export class DatabaseInitializer {
   private userIdMap: { [key: string]: string } = {};
+  private teamIdMap: { [key: string]: string } = {};
 
   constructor(_sequelize: Sequelize) {
     // sequelize实例通过模型直接使用，不需要存储
@@ -274,9 +275,16 @@ export class DatabaseInitializer {
       
       // 生成100条档期数据
       for (let i = 0; i < 100; i++) {
-        // 随机日期 2025 7 1 到 2026 7 31
-        const randomDate = new Date('2025-07-01');
-        randomDate.setDate(randomDate.getDate() + Math.floor(Math.random() * 365));
+        // 随机日期：当前时间向前推1个月，向后5个月（共6个月范围）
+        const currentDate = new Date();
+        const startDate = new Date(currentDate);
+        startDate.setMonth(startDate.getMonth() - 1); // 向前推1个月
+        const endDate = new Date(currentDate);
+        endDate.setMonth(endDate.getMonth() + 5); // 向后推5个月
+        
+        const timeDiff = endDate.getTime() - startDate.getTime();
+        const randomTime = startDate.getTime() + Math.floor(Math.random() * timeDiff);
+        const randomDate = new Date(randomTime);
         
         // 随机时间
         const startHour = Math.floor(Math.random() * 12) + 8; // 8-19点开始
@@ -413,21 +421,7 @@ export class DatabaseInitializer {
         '浪漫', '温馨', '唯美', '自然', '时尚', '经典', '创意'
       ];
       
-      // 设备信息池
-      const equipmentOptions = [
-        { camera: 'Canon EOS R5', lens: 'RF 24-70mm f/2.8L IS USM', lighting: 'Profoto B10' },
-        { camera: 'Sony A7R IV', lens: 'FE 85mm f/1.4 GM', lighting: 'Godox AD600Pro' },
-        { camera: 'Nikon Z9', lens: 'NIKKOR Z 50mm f/1.2 S', lighting: 'Elinchrom ELB 500' },
-        { camera: 'Canon EOS 5D Mark IV', lens: 'EF 70-200mm f/2.8L IS III USM', lighting: 'Broncolor Siros 800S' }
-      ];
-      
-      // 技术参数池
-      const technicalOptions = [
-        { iso: 400, aperture: 'f/2.8', shutterSpeed: '1/125s', whiteBalance: '5600K' },
-        { iso: 800, aperture: 'f/1.8', shutterSpeed: '1/60s', whiteBalance: '4000K' },
-        { iso: 200, aperture: 'f/4.0', shutterSpeed: '1/250s', whiteBalance: '6500K' },
-        { iso: 1600, aperture: 'f/1.4', shutterSpeed: '1/30s', whiteBalance: '3200K' }
-      ];
+     
       
       // 生成50条作品数据
       for (let i = 0; i < 50; i++) {
@@ -450,9 +444,16 @@ export class DatabaseInitializer {
         const category = categories[Math.floor(Math.random() * categories.length)]!;
         const status = statuses[Math.floor(Math.random() * statuses.length)]!;
         
-        // 随机拍摄日期（过去一年内）
-        const shootDate = new Date();
-        shootDate.setDate(shootDate.getDate() - Math.floor(Math.random() * 365));
+        // 随机拍摄日期：与档期数据保持一致的时间范围
+        const currentDate = new Date();
+        const startDate = new Date(currentDate);
+        startDate.setMonth(startDate.getMonth() - 1);
+        const endDate = new Date(currentDate);
+        endDate.setMonth(endDate.getMonth() + 5);
+        
+        const timeDiff = endDate.getTime() - startDate.getTime();
+        const randomTime = startDate.getTime() + Math.floor(Math.random() * timeDiff);
+        const shootDate = new Date(randomTime);
         
         // 随机选择标签（2-5个）
          const tagCount = Math.floor(Math.random() * 4) + 2;
@@ -466,18 +467,22 @@ export class DatabaseInitializer {
         
         // 生成内容URLs（根据类型）
         let contentUrls: string[] = [];
+        let coverUrl = '';
         if (type === WorkType.IMAGE) {
-          const imageCount = Math.floor(Math.random() * 10) + 5; // 5-14张图片
-          for (let k = 0; k < imageCount; k++) {
-            contentUrls.push(`/uploads/images/work_${i}_image_${k + 1}.jpg`);
+          for (let k = 0; k < 4; k++) {
+            contentUrls.push(`http://localhost:9000/wedding-media/images/1639df43-3cc5-410a-89d9-e799a10d07bd.png`);
           }
+          coverUrl = contentUrls[0] || '';
         } else if (type === WorkType.VIDEO) {
-          contentUrls.push(`/uploads/videos/work_${i}_video.mp4`);
+          // 使用指定的视频URL
+          contentUrls.push('http://localhost:9000/wedding-media/videos/135223ea-3678-4ea9-a9dd-fb11a9d84918.mp4');
+          // 使用图片作为视频封面
+          coverUrl = `http://localhost:9000/wedding-media/images/1639df43-3cc5-410a-89d9-e799a10d07bd.png`;
         } else if (type === WorkType.ALBUM) {
-          const albumCount = Math.floor(Math.random() * 20) + 10; // 10-29张图片
-          for (let k = 0; k < albumCount; k++) {
-            contentUrls.push(`/uploads/albums/work_${i}_album_${k + 1}.jpg`);
+          for (let k = 0; k < 5; k++) {
+            contentUrls.push(`http://localhost:9000/wedding-media/images/1639df43-3cc5-410a-89d9-e799a10d07bd.png`);
           }
+          coverUrl = contentUrls[0] || '';
         }
         
         const work = {
@@ -487,13 +492,11 @@ export class DatabaseInitializer {
           description: descriptions[Math.floor(Math.random() * descriptions.length)]!,
           type,
           category,
-          coverUrl: `/uploads/covers/work_${i}_cover.jpg`,
+          coverUrl: coverUrl,
           contentUrls,
           tags: selectedTags,
           location: locations[Math.floor(Math.random() * locations.length)]!,
           shootDate,
-          equipmentInfo: equipmentOptions[Math.floor(Math.random() * equipmentOptions.length)],
-          technicalInfo: technicalOptions[Math.floor(Math.random() * technicalOptions.length)],
           status,
           isFeatured: Math.random() < 0.2, // 20%概率为精选
           viewCount: Math.floor(Math.random() * 1000),
@@ -519,8 +522,141 @@ export class DatabaseInitializer {
     }
   }
 
-   async initializeTeams(): Promise<void> { 
-    
+  async initializeTeams(): Promise<void> {
+    try {
+      logger.info('开始初始化团队数据...');
+
+      // 清除现有团队数据
+      await TeamMember.destroy({ where: {}, force: true });
+      await Team.destroy({ where: {}, force: true });
+      logger.info('已清除现有团队数据');
+
+      const teams = [];
+      const userIds = Object.values(this.userIdMap).filter(Boolean);
+      if (userIds.length === 0) {
+        throw new Error('没有可用的用户ID');
+      }
+
+      // 团队名称池
+      const teamNames = [
+        '梦幻婚礼团队', '浪漫时光工作室', '完美婚礼策划', '爱情见证者',
+        '幸福时刻团队', '永恒记忆工作室', '甜蜜婚礼坊', '真爱无敌团队',
+        '温馨婚礼屋', '美好时光社', '爱的印记工作室', '幸福密码团队'
+      ];
+
+      // 团队描述池
+      const descriptions = [
+        '专业的婚礼策划和执行团队，致力于为每对新人打造完美的婚礼。',
+        '拥有丰富经验的婚礼服务团队，用心记录每一个美好瞬间。',
+        '创意无限的婚礼设计团队，让您的婚礼独一无二。',
+        '温馨专业的婚礼服务，为您的爱情故事增添完美篇章。'
+      ];
+
+      // 创建陆合团队和合悦团队，以及其他3个团队
+        const teamConfigs = [
+          { name: '陆合团队', memberCount: 3 },
+          { name: '合悦团队', memberCount: 4 }
+        ];
+        
+        for (let i = 0; i < 2; i++) {
+          const teamId = generateId();
+          const ownerId = userIds[Math.floor(Math.random() * userIds.length)]!;
+          
+          let teamName = teamNames[i] || `团队${i + 1}`;
+          if (i < teamConfigs.length) {
+            teamName = teamConfigs[i]!.name;
+          }
+         
+         const team = {
+           id: teamId,
+           name: teamName,
+           description: descriptions[Math.floor(Math.random() * descriptions.length)]!,
+           ownerId,
+           status: TeamStatus.ACTIVE,
+           memberCount: 0, // 初始为0，后续会更新
+           viewCount: 0,
+           rating: 0,
+           ratingCount: 0,
+           isVerified: false,
+           createdAt: new Date(),
+           updatedAt: new Date()
+         };
+        
+        teams.push(team);
+        this.teamIdMap[team.name] = teamId;
+      }
+
+      // 批量插入团队数据
+      const createdTeams = await Team.bulkCreate(teams, { returning: true });
+      logger.info(`成功插入 ${createdTeams.length} 条团队数据`);
+
+      // 为每个团队添加成员
+        const teamMembers = [];
+        
+        for (let index = 0; index < createdTeams.length; index++) {
+          const team = createdTeams[index]!;
+          let targetMemberCount = Math.floor(Math.random() * 4) + 2; // 默认2-5个成员
+          
+          // 为特定团队设置指定的成员数量
+          if (index < teamConfigs.length) {
+            targetMemberCount = teamConfigs[index]!.memberCount;
+          }
+          
+          const selectedUserIds = new Set<string>();
+          selectedUserIds.add(team.ownerId); // 团队所有者必须是成员
+          
+          // 添加团队所有者
+          teamMembers.push({
+            id: generateId(),
+            teamId: team.id,
+            userId: team.ownerId,
+            role: TeamMemberRole.OWNER,
+            status: TeamMemberStatus.ACTIVE,
+            joinedAt: new Date(),
+            inviterId: team.ownerId, // 所有者邀请自己
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+          
+          // 添加其他成员
+          while (selectedUserIds.size < targetMemberCount && selectedUserIds.size < userIds.length) {
+            const randomUserId = userIds[Math.floor(Math.random() * userIds.length)]!;
+            if (!selectedUserIds.has(randomUserId)) {
+              selectedUserIds.add(randomUserId);
+              
+              const roles = [TeamMemberRole.MEMBER, TeamMemberRole.ADMIN];
+              const role = roles[Math.floor(Math.random() * roles.length)]!;
+              
+              teamMembers.push({
+                id: generateId(),
+                teamId: team.id,
+                userId: randomUserId,
+                role,
+                status: TeamMemberStatus.ACTIVE,
+                joinedAt: new Date(),
+                inviterId: team.ownerId, // 由团队所有者邀请
+                createdAt: new Date(),
+                updatedAt: new Date()
+              });
+            }
+          }
+        
+        // 更新团队成员数量
+        await Team.update(
+          { memberCount: selectedUserIds.size },
+          { where: { id: team.id } }
+        );
+      }
+
+      // 批量插入团队成员数据
+      await TeamMember.bulkCreate(teamMembers);
+      logger.info(`成功插入 ${teamMembers.length} 条团队成员数据`);
+      
+      logger.info('团队数据初始化完成');
+    } catch (error) {
+      logger.error('团队数据初始化失败:', error);
+      throw error;
+    }
   }
 
   /**
@@ -536,6 +672,7 @@ export class DatabaseInitializer {
       logger.info('已清除现有数据');
 
       await this.initializeUsers();
+      await this.initializeTeams();
       await this.initializeSchedules();
       await this.initializeWorks();
       logger.info('数据库初始化完成');

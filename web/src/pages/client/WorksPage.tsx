@@ -1,7 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Typography } from 'antd';
 import styled from 'styled-components';
-import { useTheme } from '../../hooks/useTheme';
 import WorksList from '../../components/client/WorksList';
 
 const { Title, Paragraph } = Typography;
@@ -50,11 +49,7 @@ const PageTitle = styled(Title)`
 `;
 
 const WorksPage: React.FC = () => {
-  const { initTheme } = useTheme();
 
-  useEffect(() => {
-    initTheme('client');
-  }, [initTheme]);
 
   return (
     <PageContainer>

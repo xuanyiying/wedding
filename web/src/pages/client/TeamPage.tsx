@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { useTheme } from '../../hooks/useTheme';
 import { useTeamData, type ClientTeamMember } from '../../hooks/useTeamData';
 import { type Team } from '../../types';
 import TeamList from '../../components/client/TeamList';
@@ -29,11 +28,7 @@ const TeamPage: React.FC = () => {
     includeMembers: !!selectedTeam,
   });
 
-  const { initTheme } = useTheme();
 
-  useEffect(() => {
-    initTheme('client');
-  }, [initTheme]);
 
   const handleTeamSelect = (team: Team) => {
     setSelectedTeam(team);

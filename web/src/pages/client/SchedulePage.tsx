@@ -5,7 +5,6 @@ import dayjs from 'dayjs';
 import styled from 'styled-components';
 import { scheduleService } from '../../services';
 import type { Schedule } from '../../types';
-import { useTheme } from '../../hooks/useTheme';
 import { useTeamData } from '../../hooks/useTeamData';
 import ScheduleCalendar from '../../components/client/ScheduleCalendar';
 import ScheduleFilter from '../../components/client/ScheduleFilter';
@@ -57,10 +56,10 @@ const PageTitle = styled(Title)`
 `;
 
 const CalendarContainer = styled.div`
-  background: var(--client-bg-container);
-  border-radius: var(--client-border-radius-lg);
+  background: var(--client-background-secondary);
+  border-radius: var(--client-border-radius-large);
   padding: 24px;
-  border: 1px solid var(--client-border-color);
+  border: 1px solid var(--client-border-primary);
   box-shadow: var(--client-shadow-sm);
 `;
 
@@ -78,11 +77,7 @@ const SchedulePage: React.FC = () => {
     activeOnly: true,
   });
 
-  const { initTheme } = useTheme();
 
-  useEffect(() => {
-    initTheme('client');
-  }, [initTheme]);
 
   useEffect(() => {
     const fetchSchedules = async () => {

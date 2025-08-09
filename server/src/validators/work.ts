@@ -40,7 +40,13 @@ export const workValidators = {
       type: Joi.string()
         .valid(...Object.values(WorkType))
         .required(),
-      coverUrl: Joi.string().uri().optional(),
+      coverUrl: Joi.string().uri().when('type', {
+        is: WorkType.VIDEO,
+        then: Joi.required().messages({
+          'any.required': '视频作品必须上传封面图片'
+        }),
+        otherwise: Joi.optional()
+      }),
       contentUrls: Joi.array().items(Joi.string().uri()).min(1).max(20).optional(),
       tags: Joi.array().items(Joi.string().trim().max(50)).max(10).optional(),
       location: Joi.string().trim().max(200).optional(),
@@ -64,7 +70,13 @@ export const workValidators = {
       category: Joi.string()
         .valid(...Object.values(WorkCategory))
         .optional(),
-      coverUrl: Joi.string().uri().optional(),
+      coverUrl: Joi.string().uri().when('type', {
+        is: WorkType.VIDEO,
+        then: Joi.required().messages({
+          'any.required': '视频作品必须上传封面图片'
+        }),
+        otherwise: Joi.optional()
+      }),
       contentUrls: Joi.array().items(Joi.string().uri()).min(1).max(20).optional(),
       tags: Joi.array().items(Joi.string().trim().max(50)).max(10).optional(),
       location: Joi.string().trim().max(200).optional(),

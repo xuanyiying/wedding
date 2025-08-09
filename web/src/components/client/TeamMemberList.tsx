@@ -10,12 +10,12 @@ import type { ClientTeamMember } from '../../hooks/useTeamData';
 const BackButton = styled(Button)`
   &&& {
     margin-bottom: 24px;
-    border-color: var(--client-primary-color);
-    color: var(--client-primary-color);
+    border-color: var(--client-primary-main);
+    color: var(--client-primary-main);
     
     &:hover {
-      background: var(--client-primary-color);
-      color: white;
+      background: var(--client-primary-main);
+      color: var(--client-state-inverse);
     }
   }
 `;

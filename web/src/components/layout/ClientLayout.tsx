@@ -20,7 +20,7 @@ const StyledContent = styled(Content)`
 `;
 
 const ClientLayout: React.FC = () => {
-  const { themeMode, clientVariant, toggleThemeMode, changeClientVariant, initTheme, applyThemeSettings } = useTheme();
+  const { themeMode, toggleThemeMode, initTheme, applyThemeSettings } = useTheme();
   const [activeSection, setActiveSection] = useState('hero');
   const [siteName, setSiteName] = useState<string | undefined>(undefined);
   const [logoUrl, setLogoUrl] = useState<string | undefined>(undefined);
@@ -39,7 +39,6 @@ const ClientLayout: React.FC = () => {
 
           if (settings.theme) {
             initTheme('client', settings.theme.darkMode ? 'dark' : 'light');
-            changeClientVariant(settings.theme.client_theme_variant || 'default');
             applyThemeSettings(settings.theme);
           } else {
             initTheme('client', 'light');
@@ -56,7 +55,7 @@ const ClientLayout: React.FC = () => {
     };
     
     loadThemeSettings();
-  }, [changeClientVariant, initTheme]);
+  }, [initTheme]);
 
   const toggleTheme = () => {
     toggleThemeMode();

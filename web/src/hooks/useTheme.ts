@@ -1,31 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
-import { themeManager, type Theme, type ThemeType, type ThemeMode, type ClientThemeVariant } from '../styles/themes';
+import { themeManager, type Theme, type ThemeType, type ThemeMode } from '../styles/themes';
 
 // 主题Hook
 export const useTheme = () => {
   const [theme, setTheme] = useState<Theme>(themeManager.getCurrentTheme());
   const [themeType, setThemeType] = useState<ThemeType>(themeManager.getThemeType());
   const [themeMode, setThemeMode] = useState<ThemeMode>(themeManager.getThemeMode());
-  const [clientVariant, setClientVariant] = useState<ClientThemeVariant>(themeManager.getClientVariant());
 
   // 主题变化处理函数
   const handleThemeChange = useCallback((newTheme: Theme) => {
     setTheme(newTheme);
     setThemeType(themeManager.getThemeType());
     setThemeMode(themeManager.getThemeMode());
-    setClientVariant(themeManager.getClientVariant());
   }, []);
 
   // 设置主题类型
   const changeThemeType = useCallback((type: ThemeType) => {
     themeManager.setThemeType(type);
-    themeManager.applyThemeToCSS();
-  }, []);
-
-  // 设置客户端主题变体
-  const changeClientVariant = useCallback((variant: ClientThemeVariant) => {
-    themeManager.setClientVariant(variant);
-    setClientVariant(variant);
     themeManager.applyThemeToCSS();
   }, []);
 
@@ -48,7 +39,7 @@ export const useTheme = () => {
       themeManager.setThemeMode(mode);
     }
     themeManager.applyThemeToCSS();
-  }, [themeMode, clientVariant]);
+  }, [themeMode]);
 
   const applyThemeSettings = (settings: any) => {
     themeManager.applyCustomSettings(settings);
@@ -58,9 +49,7 @@ export const useTheme = () => {
     theme, 
     themeType, 
     themeMode, 
-    clientVariant,
     changeThemeType,
-    changeClientVariant, 
     changeThemeMode, 
     toggleThemeMode,
     initTheme,

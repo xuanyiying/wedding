@@ -1,5 +1,5 @@
 import { message } from 'antd';
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useTheme } from '../../hooks/useTheme';
 import { type Team } from '../../types';
 import HeroSection from '../../components/client/HeroSection';
@@ -12,7 +12,7 @@ import ContactForm from '../../components/client/ContactForm';
 import { ScrollNavigation } from '../../components/client/ScrollNavigation';
 import TeamMemberDetailModal from '../../components/client/TeamMemberDetailModal';
 import ScheduleSection from '../../components/ScheduleSection';
-import { worksService, settingsService } from '../../services';
+import { worksService } from '../../services';
 import { useTeamData, type ClientTeamMember } from '../../hooks/useTeamData';
 import styled from 'styled-components';
 
@@ -43,7 +43,7 @@ const HomePage: React.FC = () => {
   });
 
   const { setActiveSection } = useOutletContext<OutletContextType>();
-  const { initTheme, changeClientVariant } = useTheme();
+  const { } = useTheme();
 
   const handleTeamSelect = (team: Team) => {
     setSelectedTeam(team);
@@ -84,35 +84,7 @@ const HomePage: React.FC = () => {
     }
   }, []);
 
-  // 初始化主题和数据
-  useEffect(() => {
-    const initializeThemeAndData = async () => {
-      try {
-        // 获取设置数据
-        const settingsResponse = await settingsService.getSettings();
-        const data = settingsResponse.data || {};
-        
-        // 设置背景图片
-        if (data.site?.homepageBackgroundImage) {
-          setHomepageBackgroundImage(data.site.homepageBackgroundImage);
-        }
-        
-        // 初始化客户端主题，应用服务器端的主题设置
-        const clientThemeVariant = data.theme?.client_theme_variant || 'default';
-        initTheme('client');
-        changeClientVariant(clientThemeVariant);
-        
-      } catch (error) {
-        console.error('获取设置失败:', error);
-        // 如果获取设置失败，使用默认主题
-        initTheme('client');
-        changeClientVariant('default');
-      }
-    };
 
-    initializeThemeAndData();
-    fetchPortfolioItems();
-  }, [initTheme, changeClientVariant, fetchPortfolioItems]);
   
   return (
     <div>

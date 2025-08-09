@@ -8,6 +8,9 @@ export const fileValidators = {
       type: Joi.string()
         .valid(...Object.values(FileType))
         .required(),
+      category: Joi.string()
+        .valid('avatar', 'cover', 'event', 'work', 'other')
+        .optional(),
       description: Joi.string().trim().max(500).optional(),
     }),
   },
@@ -18,6 +21,9 @@ export const fileValidators = {
       type: Joi.string()
         .valid(...Object.values(FileType))
         .required(),
+      category: Joi.string()
+        .valid('avatar', 'cover', 'event', 'work', 'other')
+        .optional(),
       description: Joi.string().trim().max(500).optional(),
     }),
   },

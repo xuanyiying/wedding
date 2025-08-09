@@ -30,9 +30,11 @@ const WorkForm: React.FC<WorkFormProps> = ({
 }) => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [coverFileList, setCoverFileList] = useState<UploadFile[]>([]);
   const [uploading, setUploading] = useState(false);
   const [customTag, setCustomTag] = useState('');
   const [tags, setTags] = useState<string[]>([]);
+  const [workType, setWorkType] = useState<string>('');
 
   useEffect(() => {
     if (initialValues) {
@@ -46,6 +48,10 @@ const WorkForm: React.FC<WorkFormProps> = ({
         setTags(initialValues.tags);
       }
 
+      if (initialValues.type) {
+        setWorkType(initialValues.type);
+      }
+
       if (initialValues.contentUrls) {
         const files = initialValues.contentUrls.map((url, index) => ({
           uid: `${index}`,
@@ -55,18 +61,47 @@ const WorkForm: React.FC<WorkFormProps> = ({
         }));
         setFileList(files);
       }
+
+      if (initialValues?.coverImage) {
+        const coverFile = {
+          uid: 'cover',
+          name: 'cover-image',
+          status: 'done' as const,
+          url: initialValues.coverImage,
+        };
+        setCoverFileList([coverFile]);
+      }
     }
   }, [initialValues, form]);
 
   const handleSubmit = async () => {
     try {
+      // 视频类型必须有视频文件和封面图片的验证
+      if (workType === 'video') {
+        if (fileList.length === 0) {
+          message.error('视频作品必须上传视频文件');
+          return;
+        }
+        if (coverFileList.length === 0) {
+          message.error('视频作品必须上传封面图片');
+          return;
+        }
+      } else {
+        if (fileList.length === 0) {
+          message.error('请上传作品文件');
+          return;
+        }
+      }
+      
       const values = await form.validateFields();
       const submitData = {
         ...values,
         shootDate: values.shootDate?.format('YYYY-MM-DD'),
         tags,
-        images: fileList.map(file => file.url || file.response?.url).filter(Boolean),
-        coverImage: fileList[0]?.url || fileList[0]?.response?.url || '',
+        contentUrls: fileList.map(file => file.response || file.url).filter(Boolean),
+        coverUrl: workType === 'video' 
+          ? (coverFileList[0]?.response || coverFileList[0]?.url || '')
+          : (fileList[0]?.response || fileList[0]?.url || ''),
       };
       onSubmit(submitData);
     } catch (error) {
@@ -83,10 +118,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
     try {
       setUploading(true);
       const url = await onUpload(file as File);
-      onSuccess?.({
-        url,
-        name: (file as File).name,
-      });
+      onSuccess?.(url);
     } catch (error) {
       onError?.(error as Error);
     } finally {
@@ -98,12 +130,42 @@ const WorkForm: React.FC<WorkFormProps> = ({
     setFileList(newFileList);
   };
 
+  const handleCoverChange: UploadProps['onChange'] = ({ fileList: newFileList }) => {
+    setCoverFileList(newFileList);
+  };
+
   const beforeUpload = (file: File) => {
     const isImage = file.type.startsWith('image/');
     const isVideo = file.type.startsWith('video/');
 
-    if (!isImage && !isVideo) {
-      message.error('只能上传图片或视频文件！');
+    if (workType === 'video') {
+      // 视频类型只允许上传视频文件
+      if (!isVideo) {
+        message.error('视频作品只能上传视频文件！');
+        return false;
+      }
+    } else {
+      // 图片类型允许上传图片和视频
+      if (!isImage && !isVideo) {
+        message.error('只能上传图片或视频文件！');
+        return false;
+      }
+    }
+
+    const isLt10M = file.size / 1024 / 1024 < 10;
+    if (!isLt10M) {
+      message.error('文件大小不能超过 10MB！');
+      return false;
+    }
+
+    return true;
+  };
+
+  const beforeCoverUpload = (file: File) => {
+    const isImage = file.type.startsWith('image/');
+
+    if (!isImage) {
+      message.error('封面只能上传图片文件！');
       return false;
     }
 
@@ -163,7 +225,10 @@ const WorkForm: React.FC<WorkFormProps> = ({
             label="作品类型"
             rules={[{ required: true, message: '请选择作品类型' }]}
           >
-            <Select placeholder="请选择作品类型">
+            <Select 
+              placeholder="请选择作品类型"
+              onChange={(value) => setWorkType(value)}
+            >
               <Option value="photo">图片</Option>
               <Option value="video">视频</Option>
             </Select>
@@ -254,29 +319,80 @@ const WorkForm: React.FC<WorkFormProps> = ({
         </Col>
       </Row>
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={24}>
-          <Form.Item
-            label="作品文件"
-            required
-          >
-            <Upload
-              listType="picture-card"
-              fileList={fileList}
-              onChange={handleChange}
-              customRequest={handleUpload}
-              beforeUpload={beforeUpload}
-              multiple
-              accept="image/*,video/*"
+      {workType === 'video' ? (
+        <>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={24}>
+              <Form.Item
+                label="视频文件"
+                required
+              >
+                <Upload
+                  listType="picture-card"
+                  fileList={fileList}
+                  onChange={handleChange}
+                  customRequest={handleUpload}
+                  beforeUpload={beforeUpload}
+                  multiple={false}
+                  accept="video/*"
+                >
+                  {fileList.length >= 1 ? null : uploadButton}
+                </Upload>
+                <div style={{ color: 'var(--admin-text-secondary)', fontSize: 12, marginTop: 8 }}>
+                  支持视频格式，单个文件不超过10MB
+                </div>
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={24}>
+              <Form.Item
+                label="视频封面图片"
+                required
+              >
+                <Upload
+                  listType="picture-card"
+                  fileList={coverFileList}
+                  onChange={handleCoverChange}
+                  customRequest={handleUpload}
+                  beforeUpload={beforeCoverUpload}
+                  multiple={false}
+                  accept="image/*"
+                >
+                  {coverFileList.length >= 1 ? null : uploadButton}
+                </Upload>
+                <div style={{ color: 'var(--admin-text-secondary)', fontSize: 12, marginTop: 8 }}>
+                  视频作品必须上传封面图片，支持图片格式，单个文件不超过10MB
+                </div>
+              </Form.Item>
+            </Col>
+          </Row>
+        </>
+      ) : (
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={24}>
+            <Form.Item
+              label="作品文件"
+              required
             >
-              {fileList.length >= 10 ? null : uploadButton}
-            </Upload>
-            <div style={{ color: 'var(--admin-text-secondary)', fontSize: 12, marginTop: 8 }}>
-              支持图片和视频格式，单个文件不超过10MB，最多上传10个文件
-            </div>
-          </Form.Item>
-        </Col>
-      </Row>
+              <Upload
+                listType="picture-card"
+                fileList={fileList}
+                onChange={handleChange}
+                customRequest={handleUpload}
+                beforeUpload={beforeUpload}
+                multiple={true}
+                accept="image/*,video/*"
+              >
+                {fileList.length >= 10 ? null : uploadButton}
+              </Upload>
+              <div style={{ color: 'var(--admin-text-secondary)', fontSize: 12, marginTop: 8 }}>
+                支持图片和视频格式，单个文件不超过10MB，最多上传10个文件
+              </div>
+            </Form.Item>
+          </Col>
+        </Row>
+      )}
       <Row gutter={[16, 16]}>
         <Col xs={12} sm={12}>
 
@@ -308,7 +424,11 @@ const WorkForm: React.FC<WorkFormProps> = ({
             type="primary"
             onClick={handleSubmit}
             loading={loading || uploading}
-            disabled={fileList.length === 0}
+            disabled={
+              workType === 'video' 
+                ? (fileList.length === 0 || coverFileList.length === 0)
+                : fileList.length === 0
+            }
           >
             {isEdit ? '更新' : '创建'}
           </Button>

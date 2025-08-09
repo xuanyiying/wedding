@@ -4,7 +4,6 @@ import { Typography, Button, Spin, Space } from 'antd';
 import { ArrowLeftOutlined, PlayCircleOutlined, PauseCircleOutlined, SoundOutlined, AudioMutedOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import { workService } from '../../services';
-import { useTheme } from '../../hooks/useTheme';
 import { usePageView } from '../../hooks/usePageView';
 import type { Work } from '../../types';
 import { WorkType } from '../../types';
@@ -26,7 +25,7 @@ const BackButton = styled(Button)`
 
 const WorkTitle = styled(Title)`
   &&& {
-    color: var(--client-text-primary);
+    color: var(--text-primary);
     margin-bottom: 24px;
   }
 `;
@@ -35,9 +34,9 @@ const MediaContainer = styled.div`
   position: relative;
   width: 100%;
   margin-bottom: 32px;
-  border-radius: var(--client-border-radius-lg);
+  border-radius: var(--border-radius-large);
   overflow: hidden;
-  background: var(--client-bg-layout);
+  background: var(--background-secondary);
 `;
 
 const StyledImage = styled.img`
@@ -68,17 +67,17 @@ const VideoControls = styled.div`
   transform: translateX(-50%);
   display: flex;
   gap: 16px;
-  background: var(--client-overlay-2);
+  background: var(--overlay-light);
   padding: 8px 16px;
-  border-radius: var(--client-border-radius);
+  border-radius: var(--border-radius-medium);
   z-index: 1;
 `;
 
 const ControlButton = styled(Button)`
   &&& {
-    color: var(--client-text-inverse);
+    color: var(--text-inverse);
     &:hover {
-      color: var(--client-primary-color);
+      color: var(--primary-main);
     }
   }
 `;
@@ -92,13 +91,8 @@ const WorkDetailPage: React.FC = () => {
   const [isMuted, setIsMuted] = useState(false);
   const videoRef = React.useRef<HTMLVideoElement>(null);
 
-  const { initTheme } = useTheme();
   // 页面访问统计
   usePageView('work', id || '');
-
-  useEffect(() => {
-    initTheme('client');
-  }, [initTheme]);
 
   useEffect(() => {
     const fetchWorkDetail = async () => {

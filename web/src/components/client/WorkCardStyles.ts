@@ -6,11 +6,11 @@ export const DouyinWorkCard = styled.div`
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--client-shadow-sm);
   
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--client-shadow-lg);
   }
 `;
 
@@ -50,7 +50,7 @@ export const PlayButton = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--client-text-inverse);
   font-size: 20px;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -64,13 +64,13 @@ export const FeaturedBadge = styled.div`
   position: absolute;
   top: 8px;
   right: 8px;
-  background: linear-gradient(45deg, #ff6b6b, #ffa500);
-  color: white;
+  background: var(--client-gradient-accent);
+  color: var(--client-text-inverse);
   padding: 4px 8px;
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--client-shadow-sm);
 `;
 
 export const WorkInfo = styled.div`

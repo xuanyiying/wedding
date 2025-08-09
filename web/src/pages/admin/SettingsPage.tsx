@@ -5,16 +5,13 @@ import {
   Input,
   Button,
   Switch,
-  Select,
   Upload,
   message,
   Space,
   Row,
   Col,
-  InputNumber,
-  ColorPicker} from 'antd';
+  InputNumber} from 'antd';
 import { useTheme } from '../../hooks/useTheme';
-import type { ClientThemeVariant } from '../../styles/themes';
 import {
   SaveOutlined,
   UploadOutlined,
@@ -102,7 +99,6 @@ interface ThemeSettings {
   compactMode: boolean;
   darkMode: boolean;
   fontSize: number;
-  clientThemeVariant: ClientThemeVariant;
 }
 
 const SettingsPage: React.FC = () => {
@@ -114,7 +110,7 @@ const SettingsPage: React.FC = () => {
   const [faviconUrl, setFaviconUrl] = useState<string>('');
   const [emailForm] = Form.useForm();
 
-  const { initTheme, changeClientVariant } = useTheme();
+  const { initTheme } = useTheme();
 
   useEffect(() => {
     initTheme('admin');
@@ -200,15 +196,12 @@ const SettingsPage: React.FC = () => {
           compactMode: data.theme.compact_mode || false,
           darkMode: data.theme.dark_mode || false,
           fontSize: data.theme.font_size || 14,
-          clientThemeVariant: (data.theme.client_theme_variant || 'default') as ClientThemeVariant,
         };
 
         themeForm.setFieldsValue(themeData);
         // 应用客户端主题变体
-        changeClientVariant(themeData.clientThemeVariant);
       } else {
         // 如果没有主题数据，应用默认客户端主题
-        changeClientVariant('default');
       }
     } catch (error) {
       message.error('加载设置失败');
@@ -303,12 +296,10 @@ const SettingsPage: React.FC = () => {
         compactMode: values.compactMode,
         darkMode: values.darkMode,
         fontSize: values.fontSize,
-        clientThemeVariant: values.clientThemeVariant,
       };
       await settingsService.updateSiteSettings(data);
       
-      // 应用客户端主题变体
-      changeClientVariant(values.clientThemeVariant);
+     
       
 
       message.success('主题设置保存成功');
@@ -327,11 +318,9 @@ const SettingsPage: React.FC = () => {
       compactMode: false,
       darkMode: false,
       fontSize: 14,
-      clientThemeVariant: 'default' as ClientThemeVariant
     };
 
     themeForm.setFieldsValue(defaultTheme);
-    changeClientVariant('default');
     message.success('主题已重置为默认设置');
   };
   
@@ -707,43 +696,6 @@ const SettingsPage: React.FC = () => {
               layout="vertical"
               onFinish={saveThemeSettings}
             >
-              <SettingSection>
-                <div className="section-title">颜色配置</div>
-                <div className="section-description">自定义系统主题颜色和客户端主题风格</div>
-                
-                <Row gutter={16}>
-                  <Col span={12}>
-                    <Form.Item
-                      name="primaryColor"
-                      label="主题色"
-                      rules={[{ required: true, message: '请选择主题色' }]}
-                    >
-                      <ColorPicker showText />
-                    </Form.Item>
-                  </Col>
-                  <Col span={12}>
-                    <Form.Item
-                      name="clientThemeVariant"
-                      label="客户端主题风格"
-                      rules={[{ required: true, message: '请选择客户端主题风格' }]}
-                    >
-                      <Select
-                        placeholder="请选择主题风格"
-                        options={[
-                          { value: 'default', label: '默认主题（黑白风格）' },
-                          { value: 'red', label: '红色主题（温暖风格）' },
-                          { value: 'green', label: '绿色主题' },
-                          { value: 'blue', label: '蓝色主题' },
-                          { value: 'purple', label: '紫色主题' }
-                        ]}
-                        onChange={(value) => {
-                          changeClientVariant(value);
-                        }}
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
-              </SettingSection>
               
               <SettingSection>
                 <div className="section-title">布局配置</div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Layout, Menu, Button, Drawer } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
-import { MenuOutlined, BulbOutlined, BulbFilled } from '@ant-design/icons';
+import { MenuOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import { ThemeMode } from '../../types';
 
@@ -114,27 +114,6 @@ const StyledMenu = styled(Menu)`
   }
 `;
 
-const ThemeToggle = styled(Button)`
-  background: var(--client-bg-container);
-  border: 1px solid var(--client-border-color);
-  border-radius: var(--client-border-radius);
-  padding: 8px 12px;
-  color: var(--client-text-primary);
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 80px;
-  height: 36px;
-  
-  &:hover {
-    background: var(--client-primary-color);
-    color: var(--client-text-inverse);
-    border-color: var(--client-primary-color);
-  }
-`;
 
 const MobileMenuButton = styled(Button)`
   display: none;
@@ -151,7 +130,7 @@ const MobileMenuButton = styled(Button)`
   }
 `;
 
-const ClientHeader: React.FC<ClientHeaderProps> = ({ theme, onThemeToggle, activeSection, siteName, logoUrl }) => {
+const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, logoUrl }) => {
   const location = useLocation();
   const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
 
@@ -176,14 +155,13 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ theme, onThemeToggle, activ
 
   return (
     <StyledHeader>
-      <Link to="/" style={{ textDecoration: 'none' }}>
+      <NavContainer>
+        <Link to="/" style={{ textDecoration: 'none' }}>
         <Logo>
-          {logoUrl ? <LogoImage src={logoUrl} alt="site logo" /> : <LogoIcon>LH</LogoIcon>}
-          {siteName || '陆合·合悦Club'}
+          {logoUrl ? <LogoImage src={logoUrl} alt="site logo" /> : <LogoIcon> </LogoIcon>}
+          <span style={{ color: 'rgba(0,0,0,0.88)' }}>{siteName || '陆合·合悦Club'}</span>
         </Logo>
       </Link>
-      
-      <NavContainer>
         <StyledMenu
           mode="horizontal"
           selectedKeys={[selectedKey]}
@@ -221,15 +199,6 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ theme, onThemeToggle, activ
             ),
           }))}
         />
-        <div style={{ marginTop: 24 }}>
-          <ThemeToggle
-            icon={theme === ThemeMode.LIGHT ? <BulbOutlined /> : <BulbFilled />}
-            onClick={onThemeToggle}
-            block
-          >
-            {theme === ThemeMode.LIGHT ? '切换到深色模式' : '切换到浅色模式'}
-          </ThemeToggle>
-        </div>
       </Drawer>
     </StyledHeader>
   );

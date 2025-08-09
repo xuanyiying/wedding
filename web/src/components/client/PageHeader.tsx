@@ -18,7 +18,7 @@ const HeaderContainer = styled.div`
 const PageTitle = styled(Title)`
   &&& {
     font-size: 2.8rem;
-    color: var(--client-text-primary);
+    color: var(--text-primary);
     font-weight: 200;
     letter-spacing: -0.02em;
     position: relative;
@@ -33,8 +33,8 @@ const PageTitle = styled(Title)`
       transform: translateX(-50%);
       width: 80px;
       height: 3px;
-      background: var(--client-gradient-accent);
-      border-radius: var(--client-border-radius);
+      background: var(--gradient-accent);
+      border-radius: var(--border-radius-medium);
     }
 
     @media (max-width: 768px) {
@@ -46,7 +46,7 @@ const PageTitle = styled(Title)`
 const PageDescription = styled(Paragraph)`
   &&& {
     font-size: 1.1rem;
-    color: var(--client-text-secondary);
+    color: var(--text-secondary);
     max-width: 600px;
     margin: 0 auto;
     line-height: 1.6;
