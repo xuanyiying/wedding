@@ -10,7 +10,7 @@ import { AuthenticatedRequest } from '../interfaces';
  */
 export const getWorks = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { page = 1, pageSize = 10, userId, type, category, status, isFeatured, tags } = req.query;
+    const { page = 1, pageSize = 10, userId, teamId, type, category, status, isFeatured, tags, dateFrom, dateTo } = req.query;
 
     const getWorksParams: any = {
       page: Number(page),
@@ -23,6 +23,18 @@ export const getWorks = async (req: Request, res: Response, next: NextFunction):
 
     if (userId) {
       getWorksParams.userId = userId as string;
+    }
+
+    if (teamId) {
+      getWorksParams.teamId = teamId as string;
+    }
+
+    if (dateFrom) {
+      getWorksParams.dateFrom = dateFrom as string;
+    }
+
+    if (dateTo) {
+      getWorksParams.dateTo = dateTo as string;
     }
 
     if (tags) {

@@ -14,12 +14,15 @@ interface GetWorksParams {
   page: number;
   pageSize: number;
   userId?: string;
+  teamId?: string;
   type?: WorkType;
   category?: WorkCategory;
   status?: WorkStatus;
   isFeatured?: boolean;
   keyword?: string;
   tags?: string[];
+  dateFrom?: string;
+  dateTo?: string;
   sortBy?: 'createdAt' | 'viewCount' | 'likeCount' | 'shareCount';
   sortOrder?: 'ASC' | 'DESC';
 }
@@ -45,21 +48,48 @@ export class WorkService {
       page,
       pageSize,
       userId,
+      teamId,
       type,
       category,
       status,
       isFeatured,
       keyword,
       tags,
+      dateFrom,
+      dateTo,
       sortBy = 'createdAt',
       sortOrder = 'DESC',
     } = params;
     const offset = (page - 1) * pageSize;
 
     const where: WhereOptions = {};
+    const include: any[] = [
+      {
+        model: User,
+        as: 'user',
+        attributes: ['id', 'username', 'realName', 'avatarUrl'],
+      },
+    ];
 
     if (userId) {
       where.userId = userId;
+    }
+
+    // 处理teamId过滤 - 通过关联查询团队成员
+    if (teamId) {
+      include.push({
+        model: User,
+        as: 'user',
+        attributes: ['id', 'username', 'realName', 'avatarUrl'],
+        include: [{
+          model: require('../models').TeamMember,
+          as: 'teamMemberships',
+          where: { teamId },
+          required: true,
+          attributes: [],
+        }],
+        required: true,
+      });
     }
 
     if (type) {
@@ -78,6 +108,18 @@ export class WorkService {
       where.isFeatured = isFeatured;
     }
 
+    // 日期范围过滤
+    if (dateFrom || dateTo) {
+      const dateWhere: any = {};
+      if (dateFrom) {
+        dateWhere[Op.gte] = new Date(dateFrom);
+      }
+      if (dateTo) {
+        dateWhere[Op.lte] = new Date(dateTo);
+      }
+      where.weddingDate = dateWhere;
+    }
+
     if (keyword) {
       (where as any)[Op.or] = [
         { title: { [Op.like]: `%${keyword}%` } },
@@ -94,7 +136,7 @@ export class WorkService {
 
     const { count, rows } = await Work.findAndCountAll({
       where,
-      include: [
+      include: teamId ? include : [
         {
           model: User,
           as: 'user',
@@ -104,6 +146,7 @@ export class WorkService {
       order: [[sortBy, sortOrder]],
       limit: pageSize,
       offset,
+      distinct: true, // 避免关联查询时的重复计数
     });
 
     return {

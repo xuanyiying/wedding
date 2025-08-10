@@ -30,6 +30,17 @@ export const updateSiteSettings = async (req: Request, res: Response, next: Next
   }
 };
 
+export const updateHomepageSections = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const settings = req.body;
+    await SettingsService.updateHomepageSections(settings);
+    Resp.success(res, null, '首页配置更新成功');
+  } catch (error) {
+    logger.error('更新首页配置失败:', error);
+    next(error);
+  }
+};
+
 /**
  * 更新邮件设置
  */

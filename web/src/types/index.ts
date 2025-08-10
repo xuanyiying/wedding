@@ -1,6 +1,121 @@
-// 用户角色枚举
+
+export interface SiteSettings {
+  theme?: {
+    darkMode: boolean;
+    colors: {
+      primary: string;
+      secondary: string;
+      background: string;
+      text: string;
+    };
+    fonts: {
+      primary: string;
+      secondary: string;
+    };
+    spacing: {
+      containerPadding: string;
+      sectionPadding: string;
+    };
+  };
+  site?: {
+    name: string;
+    description: string;
+    keywords: string;
+    logo: string;
+    favicon: string;
+  };
+  email?: {
+    smtp_host: string;
+    smtp_port: number;
+    smtp_user: string;
+    smtp_password: string;
+    smtp_secure: boolean;
+    email_from: string;
+    email_from_name: string;
+  };
+  contactEmail?: string;
+  contactPhone?: string;
+  address?: string;
+  workingHours?: string;
+  socialMedia?: {
+    wechat: string;
+    xiaohongshu: string;
+    douyin: string;
+  };
+  seo?: {
+    title: string;
+    description: string;
+    keywords: string;
+  };
+  // 首页section配置
+  homepageSections?: {
+    homepageBackgroundImage: string;
+    hero: {
+      visible: boolean;
+      title: string;
+      description: string;
+      ctaText: string;
+      ctaLink: string;
+    };
+    team: {
+      visible: boolean;
+      title: string;
+      description: string;
+      ctaText: string;
+      ctaLink: string;
+    };
+    teamShowcase: {
+      visible: boolean;
+      title: string;
+      description: string;
+      ctaText: string;
+      ctaLink: string;
+    };
+    portfolio: {
+      visible: boolean;
+      title: string;
+      description: string;
+      ctaText: string;
+      ctaLink: string;
+    };
+    schedule: {
+      visible: boolean;
+      title: string;
+      description: string;
+      ctaText: string;
+      ctaLink: string;
+    };
+    contact: {
+      visible: boolean;
+      title: string;
+      description: string;
+      ctaText: string;
+      ctaLink: string;
+    };
+  };
+}
+
+// 邮件设置接口
+export interface EmailSettings {
+  smtpHost: string;
+  smtpPort: number;
+  smtpUser: string;
+  smtpPassword: string;
+  enableSSL: boolean;
+  fromEmail: string;
+  fromName: string;
+}
+
+// 主题设置接口
+export interface ThemeSettings {
+  primaryColor: string;
+  borderRadius: number;
+  compactMode: boolean;
+  darkMode: boolean;
+  fontSize: number;
+}
+
 export const UserRole = {
-  SUPER_ADMIN: 'super_admin',
   ADMIN: 'admin',
   USER: 'user',
 } as const;
@@ -58,7 +173,6 @@ export const WorkCategory = {
 export const FileType = {
   IMAGE: 'image',
   VIDEO: 'video',
-  OTHER: 'other'
 } as const;
 
 // 支付状态枚举

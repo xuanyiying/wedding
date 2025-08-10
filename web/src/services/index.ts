@@ -16,6 +16,7 @@ import type {
   Team,
   MediaFile,
   FileType,
+  SiteSettings,
 } from '../types';
 
 // 认证相关API
@@ -141,6 +142,9 @@ export const workService = {
     featured?: boolean;
     userId?: string;
     search?: string;
+    teamId?: string;
+    dateFrom?: string;
+    dateTo?: string;
   }): Promise<ApiResponse<{ works: Work[]; total: number }>> => {
     return http.get('/works', { params });
   },
@@ -439,23 +443,22 @@ export const teamService = {
 // 系统设置相关API
 export const settingsService = {
   // 获取系统设置
-  getSettings: (): Promise<ApiResponse<Record<string, any>>> => {
+  getSettings: (): Promise<ApiResponse<SiteSettings>> => {
     return http.get('/settings');
   },
 
   // 更新网站设置
-  updateSiteSettings: (data: Record<string, any>): Promise<ApiResponse<null>> => {
+  updateSiteSettings: (data: Partial<SiteSettings['site']>): Promise<ApiResponse<null>> => {
     return http.put('/settings/site', data);
   },
 
-  // 更新邮件设置
-  updateEmailSettings: (data: Record<string, any>): Promise<ApiResponse<null>> => {
-    return http.put('/settings/email', data);
+  updateHomepageSections: (data: Partial<SiteSettings['homepageSections']>) => {
+    return http.put('/settings/homepage-sections', data);
   },
 
-  // 更新安全设置
-  updateSecuritySettings: (data: Record<string, any>): Promise<ApiResponse<null>> => {
-    return http.put('/settings/security', data);
+  // 更新邮件设置
+  updateEmailSettings: (data: Partial<SiteSettings['email']>): Promise<ApiResponse<null>> => {
+    return http.put('/settings/email', data);
   },
 
   // 测试邮件

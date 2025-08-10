@@ -7,16 +7,41 @@ import { workService, userService } from '../../services';
 import { useDirectUpload } from '../../hooks/useDirectUpload';
 import type { RootState } from '../../store';
 import { useAppSelector } from '../../store';
-import { PageHeader, StatCard, FilterBar } from '../../components/admin/common';
+import { PageHeader, StatCard } from '../../components/admin/common';
+import ConditionalQueryBar from '../../components/common/QueryBar';
 import { WorkForm, WorkPreviewModal, type Work as WorkCardType } from '../../components/admin/work';
 import { isAdmin } from '../../utils/auth';
 import styled from 'styled-components';
 
 const WorksContainer = styled.div`
-  padding: 24px;
+  padding: 16px;
+  
+  @media (max-width: 768px) {
+    padding: 8px;
+  }
   
   .works-grid {
     margin-top: 24px;
+  }
+  
+  /* 移动端筛选栏优化 */
+  .ant-row {
+    @media (max-width: 768px) {
+      gap: 8px !important;
+      margin-bottom: 16px !important;
+    }
+  }
+  
+  .ant-input {
+    @media (max-width: 768px) {
+      width: 100% !important;
+    }
+  }
+  
+  .ant-select {
+    @media (max-width: 768px) {
+      width: 100% !important;
+    }
   }
 `;
 
@@ -158,6 +183,7 @@ const WorkActions = styled.div`
   }
 `;
 
+
 // 格式化数字显示
 const formatCount = (count: number): string => {
   if (count >= 10000) {
@@ -179,7 +205,9 @@ const WorksPage: React.FC = () => {
   const [previewWork, setPreviewWork] = useState<WorkCardType | null>(null);
   const [filters, setFilters] = useState({
     search: '',
-    userId: '',
+    teamId: '',
+    memberId: '',
+    date: '',
     type: '',
   });
   const { uploadWorkImages } = useDirectUpload();
@@ -194,18 +222,24 @@ const WorksPage: React.FC = () => {
   // 加载数据
   useEffect(() => {
     loadWorks();
-    if (userIsAdmin) {
-      loadTeamMembers();
-    }
-  }, [userIsAdmin]);
+    // 所有用户都可以加载团队成员列表来查看其他成员的作品
+    loadTeamMembers();
+  }, []);
 
-  const loadWorks = async () => {
+  const loadWorks = async (queryFilters?: {
+    teamId?: string;
+    memberId?: string;
+    search?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    type?: string;
+  }) => {
     setLoading(true);
     try {
       const response = await workService.getWorks({
         page: 1,
         limit: 100,
-        ...(userIsAdmin ? {} : { userId: user?.id })
+        ...queryFilters
       });
       setWorks(response.data?.works || []);
     } catch (error) {
@@ -228,22 +262,8 @@ const WorksPage: React.FC = () => {
     }
   };
 
-  // 筛选作品
-  const filteredWorks = works.filter(work => {
-    // 权限控制：普通用户只能看到自己的作品
-    if (!userIsAdmin && work.userId !== user?.id) {
-      return false;
-    }
-    
-    const matchesUser = !filters.userId || work.userId === filters.userId;
-    const matchesType = !filters.type || work.type === filters.type;
-    const matchesSearch = !filters.search ||
-      work.title.includes((filters.search || '')) ||
-      work.description?.includes((filters.search || '')) ||
-      work.tags?.some(tag => tag.includes((filters.search || '')));
-
-    return matchesUser && matchesType && matchesSearch;
-  });
+  // 移除客户端过滤逻辑，直接使用服务端返回的数据
+  const filteredWorks = works;
 
   // 统计数据
   const stats = {
@@ -438,45 +458,38 @@ const WorksPage: React.FC = () => {
       </Row>
 
       {/* 筛选栏 */}
-      <FilterBar
-        filters={[
-          {
-            key: 'search',
-            type: 'search',
-            placeholder: '搜索作品标题、描述或标签'
-          },
-          // 仅管理员可以看到用户过滤选项
-          ...(userIsAdmin ? [{
-            key: 'userId',
-            type: 'select' as const,
-            placeholder: '选择团队成员',
-            options: [
-              { label: '全部成员', value: '' },
-              { label: '我的作品', value: user?.id || '' },
-              ...teamMembers
-                .filter(member => member.id !== user?.id)
-                .map(member => ({
-                  label: member.realName || member.username,
-                  value: member.id
-                }))
-            ]
-          }] : []),
-          {
-            key: 'type',
-            type: 'select' as const,
-            placeholder: '选择类型',
-            options: [
-              { label: '全部类型', value: '' },
-              { label: '图片', value: 'image' },
-              { label: '视频', value: 'video' },
-            ]
-          }
-        ]}
-        values={filters}
-        onChange={(key: string, value: any) => {
-          setFilters(prev => ({ ...prev, [key]: value }));
-        }}
-      />
+        <ConditionalQueryBar
+          showMealFilter={false}
+          onQuery={(queryFilters) => {
+            const newFilters = {
+              search: '',
+              teamId: queryFilters.teamId || '',
+              memberId: queryFilters.memberId || '',
+              date: queryFilters.date ? queryFilters.date.format('YYYY-MM-DD') : '',
+              type: '',
+            };
+            setFilters(newFilters);
+            loadWorks({
+              teamId: newFilters.teamId,
+              memberId: newFilters.memberId,
+              dateFrom: newFilters.date,
+              dateTo: newFilters.date,
+              search: newFilters.search,
+              type: newFilters.type
+            });
+          }}
+          onReset={() => {
+            const resetFilters = {
+              search: '',
+              teamId: '',
+              memberId: '',
+              date: '',
+              type: '',
+            };
+            setFilters(resetFilters);
+            loadWorks();
+          }}
+        />
 
       {/* 作品网格 - 抖音风格布局 */}
       <WorksGrid>

@@ -84,7 +84,7 @@ export const useTeamData = (options?: {
     try {
       const response = await teamService.getTeamMembers(teamId, {
         page: 1,
-        pageSize: 50,
+        limit: 50,
         status: activeOnly ? TeamMemberStatus.ACTIVE : undefined,
       });
 

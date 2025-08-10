@@ -10,15 +10,20 @@ import {
   Space,
   Row,
   Col,
-  InputNumber} from 'antd';
+  InputNumber,
+  Card,
+  ColorPicker,
+  Select,
+} from 'antd';
 import { useTheme } from '../../hooks/useTheme';
 import {
   SaveOutlined,
   UploadOutlined,
   MailOutlined,
   GlobalOutlined,
-  BgColorsOutlined} from '@ant-design/icons';
-import type { UploadProps } from 'antd/es/upload/interface';
+  HomeOutlined,
+  BgColorsOutlined,
+} from '@ant-design/icons';
 
 import styled from 'styled-components';
 import { PageHeader, ImageWithPreview } from '../../components/admin/common';
@@ -29,7 +34,11 @@ const { TabPane } = Tabs;
 const { TextArea } = Input;
 
 const SettingsContainer = styled.div`
-  padding: 24px;
+  padding: 12px;
+  
+  @media (max-width: 768px) {
+    padding: 8px;
+  }
 `;
 
 const TabCard = styled.div`
@@ -37,7 +46,11 @@ const TabCard = styled.div`
   border: 1px solid var(--admin-border-color);
   border-radius: var(--admin-border-radius);
   box-shadow: var(--admin-shadow-sm);
-  padding: 24px;
+  padding: 12px;
+  
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
 `;
 
 const SettingSection = styled.div`
@@ -91,24 +104,16 @@ interface EmailSettings {
 }
 
 
-
-
-interface ThemeSettings {
-  primaryColor: string;
-  borderRadius: number;
-  compactMode: boolean;
-  darkMode: boolean;
-  fontSize: number;
-}
-
 const SettingsPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('site');
   const [siteForm] = Form.useForm();
+  const [homepageSectionsForm] = Form.useForm();
   const [homepageBackgroundImage, setHomepageBackgroundImage] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string>('');
   const [faviconUrl, setFaviconUrl] = useState<string>('');
   const [emailForm] = Form.useForm();
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<{[key: string]: string}>({});
 
   const { initTheme } = useTheme();
 
@@ -130,81 +135,136 @@ const SettingsPage: React.FC = () => {
     try {
       const response = await settingsService.getSettings();
       const data = response.data || {};
-      const { site, email } = data;
+      const { site, email, theme } = data;
       
       // 填充网站设置表单
       if (site) {
+        if (site.siteLogo) {
+          setLogoUrl(site.siteLogo);
+        }
+        if (site.siteFavicon) {
+          setFaviconUrl(site.siteFavicon);
+        }
+        if (site.homepageBackgroundImage) {
+          setHomepageBackgroundImage(site.homepageBackgroundImage);
+        }
+        
+        // 映射API数据结构到表单字段
         const siteData = {
-          siteName: site.site_name,
-          siteDescription: site.site_description,
-          contactEmail: site.contact_email,
-          contactPhone: site.contact_phone,
-          workingHours: site.working_hours,
-          address: site.address,
+          siteName: site.siteName,
+          siteDescription: site.siteDescription,
+          contactEmail: site.contactEmail,
+          contactPhone: site.contactPhone,
+          logo: site.siteLogo,
+          favicon: site.siteFavicon,
+          homepageBackgroundImage: site.homepageBackgroundImage,
           socialMedia: {
-            wechat: site.wechat,
-            weibo: site.weibo,
-            instagram: site.instagram,
-          },
-          seo: {
-            title: site.seo_title,
-            description: site.seo_description,
-            keywords: site.seo_keywords,
-          },
-          logo: site.logo,
-          favicon: site.favicon,
-          siteKeywords: site.site_keywords,
-          homepageBackgroundImage: site.homepage_background_image,
+            wechat: site.socialWechat || '',
+            weibo: site.socialWeibo || '',
+            instagram: site.socialInstagram || ''
+          }
         };
-
-        if (site.homepage_background_image) {
-          setHomepageBackgroundImage(site.homepage_background_image);
-        }
-        if (site.logo) {
-          setLogoUrl(site.logo);
-        }
-        if (site.favicon) {
-          setFaviconUrl(site.favicon);
-        }
-
         siteForm.setFieldsValue(siteData);
+      }
+
+      // 填充首页配置表单
+      if (site?.homepageSections) {
+        const sectionsData = {
+          hero: {
+            title: site.homepageSections.hero?.title || '',
+            subtitle: site.homepageSections.hero?.subtitle || '',
+            enabled: site.homepageSections.hero?.enabled || false
+          },
+          services: {
+            title: site.homepageSections.services?.title || '',
+            enabled: site.homepageSections.services?.enabled || false
+          },
+          portfolio: {
+            title: site.homepageSections.portfolio?.title || '',
+            enabled: site.homepageSections.portfolio?.enabled || false
+          },
+          testimonials: {
+            title: site.homepageSections.testimonials?.title || '',
+            enabled: site.homepageSections.testimonials?.enabled || false
+          },
+          contact: {
+            title: site.homepageSections.contact?.title || '',
+            enabled: site.homepageSections.contact?.enabled || false
+          }
+        };
+        homepageSectionsForm.setFieldsValue(sectionsData);
       }
       
       // 填充邮件设置表单
       if (email) {
         const emailData = {
-          smtpHost: email.smtp_host,
-          smtpPort: email.smtp_port,
-          smtpUser: email.smtp_user,
-          smtpPassword: email.smtp_password,
-          enableSSL: email.smtp_secure,
-          fromEmail: email.email_from,
-          fromName: email.email_from_name,
+          smtpHost: email.smtpHost,
+          smtpPort: parseInt(email.smtpPort),
+          smtpUser: email.smtpUser,
+          smtpPassword: email.smtpPassword,
+          enableSSL: email.smtpSecure === 'true',
+          fromEmail: email.emailFrom,
+          fromName: email.emailFromName,
         };
-
         emailForm.setFieldsValue(emailData);
       }
       
-
-
-      
       // 填充主题设置表单
-      if (data.theme) {
+      if (theme) {
         const themeData = {
-          primaryColor: data.theme.primary_color || '#1890ff',
-          borderRadius: data.theme.border_radius || 6,
-          compactMode: data.theme.compact_mode || false,
-          darkMode: data.theme.dark_mode || false,
-          fontSize: data.theme.font_size || 14,
+          primaryColor: theme.primaryColor || '#1890ff',
+          borderRadius: parseInt(theme.borderRadius) || 8,
+          compactMode: theme.compactMode === 'true' || theme.compactMode === true,
+          darkMode: theme.darkMode === 'true' || theme.darkMode === true,
+          fontSize: parseInt(theme.fontSize) || 14,
+          clientThemeVariant: theme.clientThemeVariant || 'default'
         };
-
         themeForm.setFieldsValue(themeData);
-        // 应用客户端主题变体
-      } else {
-        // 如果没有主题数据，应用默认客户端主题
+        
+        // 设置图片预览URL
+        if (site) {
+          setImagePreviewUrls({
+            logo: site.siteLogo || '',
+            favicon: site.siteFavicon || '',
+            homepageBackgroundImage: site.homepageBackgroundImage || ''
+          });
+        }
       }
     } catch (error) {
       message.error('加载设置失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveHomepageSections = async (values: any) => {
+    try {
+      setLoading(true);
+      await settingsService.updateHomepageSections(values);
+      message.success('首页配置保存成功');
+    } catch (error) {
+      message.error('首页配置保存失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 保存主题设置
+  const saveThemeSettings = async (values: any) => {
+    try {
+      setLoading(true);
+      const themeData = {
+        primaryColor: values.primaryColor,
+        borderRadius: values.borderRadius.toString(),
+        compactMode: values.compactMode.toString(),
+        darkMode: values.darkMode.toString(),
+        fontSize: values.fontSize.toString(),
+        clientThemeVariant: values.clientThemeVariant
+      };
+      await settingsService.updateThemeSettings(themeData);
+      message.success('主题设置保存成功');
+    } catch (error) {
+      message.error('主题设置保存失败');
     } finally {
       setLoading(false);
     }
@@ -215,19 +275,11 @@ const SettingsPage: React.FC = () => {
     try {
       setLoading(true);
       const data = {
-        siteName: values.siteName,
-        siteDescription: values.siteDescription,
-        contactEmail: values.contactEmail,
-        contactPhone: values.contactPhone,
-        workingHours: values.workingHours,
-        address: values.address,
-        wechat: values.socialMedia?.wechat,
-        weibo: values.socialMedia?.weibo,
-        instagram: values.socialMedia?.instagram,
-        seoTitle: values.seo?.title,
-        seoDescription: values.seo?.description,
-        seoKeywords: values.seo?.keywords,
-        homepageBackgroundImage: values.homepageBackgroundImage,
+        name: values.siteName,
+        description: values.siteDescription,
+        keywords: values.siteKeywords,
+        logo: values.logo,
+        favicon: values.favicon,
       };
       await settingsService.updateSiteSettings(data);
       
@@ -245,13 +297,13 @@ const SettingsPage: React.FC = () => {
     try {
       setLoading(true);
       const data = {
-        smtpHost: values.smtpHost,
-        smtpPort: values.smtpPort,
-        smtpUser: values.smtpUser,
-        smtpPassword: values.smtpPassword,
-        smtpSecure: values.enableSSL,
-        emailFrom: values.fromEmail,
-        emailFromName: values.fromName,
+        smtp_host: values.smtpHost,
+        smtp_port: values.smtpPort,
+        smtp_user: values.smtpUser,
+        smtp_password: values.smtpPassword,
+        smtp_secure: values.enableSSL,
+        email_from: values.fromEmail,
+        email_from_name: values.fromName,
       };
       await settingsService.updateEmailSettings(data);
       
@@ -285,71 +337,6 @@ const SettingsPage: React.FC = () => {
       setLoading(false);
     }
   };
-
-  // 保存主题设置
-  const saveThemeSettings = async (values: ThemeSettings) => {
-    try {
-      setLoading(true);
-      const data = {
-        primaryColor: values.primaryColor,
-        borderRadius: values.borderRadius,
-        compactMode: values.compactMode,
-        darkMode: values.darkMode,
-        fontSize: values.fontSize,
-      };
-      await settingsService.updateSiteSettings(data);
-      
-     
-      
-
-      message.success('主题设置保存成功');
-    } catch (error) {
-      message.error('保存失败，请重试');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // 重置主题设置
-  const resetTheme = () => {
-    const defaultTheme = {
-      primaryColor: '#1890ff',
-      borderRadius: 6,
-      compactMode: false,
-      darkMode: false,
-      fontSize: 14,
-    };
-
-    themeForm.setFieldsValue(defaultTheme);
-    message.success('主题已重置为默认设置');
-  };
-  
-  // 文件上传配置
-  const uploadProps: UploadProps = {
-    name: 'file',
-    beforeUpload: (file) => {
-      const isImage = file.type.startsWith('image/');
-      if (!isImage) {
-        message.error('只能上传图片文件!');
-        return false;
-      }
-      
-      const isLt2M = file.size / 1024 / 1024 < 2;
-      if (!isLt2M) {
-        message.error('图片大小不能超过2MB!');
-        return false;
-      }
-      
-      return false; // 阻止自动上传
-    },
-    onChange: (info) => {
-      if (info.file.status === 'done') {
-        message.success(`${info.file.name} 上传成功`);
-      } else if (info.file.status === 'error') {
-        message.error(`${info.file.name} 上传失败`);
-      }
-    }
-  };
   
   const handleUpload = async (file: File, type: 'logo' | 'favicon' | 'homepageBackground') => {
     try {
@@ -360,15 +347,18 @@ const SettingsPage: React.FC = () => {
       if (type === 'logo') {
         setLogoUrl(fileUrl);
         siteForm.setFieldsValue({ logo: fileUrl });
+        setImagePreviewUrls(prev => ({ ...prev, logo: fileUrl }));
         await settingsService.updateSiteSettings({ logo: fileUrl });
       } else if (type === 'favicon') {
         setFaviconUrl(fileUrl);
         siteForm.setFieldsValue({ favicon: fileUrl });
+        setImagePreviewUrls(prev => ({ ...prev, favicon: fileUrl }));
         await settingsService.updateSiteSettings({ favicon: fileUrl });
       } else if (type === 'homepageBackground') {
         setHomepageBackgroundImage(fileUrl);
         siteForm.setFieldsValue({ homepageBackgroundImage: fileUrl });
-        await settingsService.updateSiteSettings({ homepageBackgroundImage: fileUrl });
+        setImagePreviewUrls(prev => ({ ...prev, homepageBackgroundImage: fileUrl }));
+        await settingsService.updateHomepageSections({ homepageBackgroundImage: fileUrl });
       }
       
       message.success('上传成功');
@@ -393,6 +383,28 @@ const SettingsPage: React.FC = () => {
       message.error('图片大小不能超过2MB!');
     }
     return isImage && isLt2M;
+  };
+
+  const getImagePreview = (fieldName: string, currentValue?: string) => {
+    const previewUrl = imagePreviewUrls[fieldName] || currentValue;
+    if (previewUrl) {
+      return (
+        <div style={{ marginTop: 8 }}>
+          <img 
+            src={previewUrl} 
+            alt="预览" 
+            style={{ 
+              width: '100px', 
+              height: '100px', 
+              objectFit: 'cover', 
+              border: '1px solid #d9d9d9',
+              borderRadius: '6px'
+            }} 
+          />
+        </div>
+      );
+    }
+    return null;
   };
   
   return (
@@ -454,20 +466,21 @@ const SettingsPage: React.FC = () => {
                   <div className="section-description">上传一张图片作为网站首页的背景。</div>
                   <Form.Item name="homepageBackgroundImage">
                     <Upload
-                      name="file"
-                      action={`${import.meta.env.VITE_API_URL}/files/upload`}
-                      headers={{ Authorization: `Bearer ${localStorage.getItem('adminToken')}` }}
-                      beforeUpload={beforeUpload}
-                      customRequest={(options) => customUploadRequest(options, 'homepageBackground')}
-                      showUploadList={false}
-                    >
-                      <Button icon={<UploadOutlined />}>点击上传</Button>
-                    </Upload>
-                    {homepageBackgroundImage && (
-                      <div style={{ marginTop: 16 }}>
-                        <ImageWithPreview width={200} src={homepageBackgroundImage} />
-                      </div>
-                    )}
+                    name="file"
+                    action={`${import.meta.env.VITE_API_URL}/files/upload`}
+                    headers={{ Authorization: `Bearer ${localStorage.getItem('adminToken')}` }}
+                    beforeUpload={beforeUpload}
+                    customRequest={(options) => customUploadRequest(options, 'homepageBackground')}
+                    showUploadList={false}
+                  >
+                    <Button icon={<UploadOutlined />}>点击上传</Button>
+                  </Upload>
+                  {getImagePreview('homepageBackgroundImage', homepageBackgroundImage)}
+                  {homepageBackgroundImage && (
+                    <div style={{ marginTop: 16 }}>
+                      <ImageWithPreview width={200} src={homepageBackgroundImage} />
+                    </div>
+                  )}
                   </Form.Item>
                 </SettingSection>
                 
@@ -518,6 +531,7 @@ const SettingsPage: React.FC = () => {
                       >
                         <Button icon={<UploadOutlined />}>上传Logo</Button>
                       </Upload>
+                      {getImagePreview('logo', logoUrl)}
                       {logoUrl && (
                         <div style={{ marginTop: 16 }}>
                           <ImageWithPreview width={200} src={logoUrl} />
@@ -538,6 +552,7 @@ const SettingsPage: React.FC = () => {
                       >
                         <Button icon={<UploadOutlined />}>上传图标</Button>
                       </Upload>
+                      {getImagePreview('favicon', faviconUrl)}
                       {faviconUrl && (
                         <div style={{ marginTop: 16 }}>
                           <ImageWithPreview width={32} src={faviconUrl} />
@@ -581,6 +596,61 @@ const SettingsPage: React.FC = () => {
           </TabCard>
         </TabPane>
         
+        <TabPane tab={<span><HomeOutlined />首页配置</span>} key="homepage">
+          <TabCard>
+            <Form
+              form={homepageSectionsForm}
+              layout="vertical"
+              onFinish={saveHomepageSections}
+            >
+              <SettingSection>
+                <div className="section-title">首页配置</div>
+                <div className="section-description">配置首页的内容和显示</div>
+                <Row gutter={16}>
+                  {[
+                    { key: 'hero', title: '首页横幅', hasSubtitle: true },
+                    { key: 'services', title: '服务介绍' },
+                    { key: 'portfolio', title: '作品展示' },
+                    { key: 'testimonials', title: '客户评价' },
+                    { key: 'contact', title: '联系我们' }
+                  ].map(section => (
+                    <Col span={12} key={section.key}>
+                      <Card title={section.title} style={{ marginBottom: 16 }}>
+                        <Form.Item
+                          name={[section.key, 'title']}
+                          label="标题"
+                        >
+                          <Input placeholder={`请输入${section.title}标题`} />
+                        </Form.Item>
+                        {section.hasSubtitle && (
+                          <Form.Item
+                            name={[section.key, 'subtitle']}
+                            label="副标题"
+                          >
+                            <Input placeholder="请输入副标题" />
+                          </Form.Item>
+                        )}
+                        <Form.Item
+                          name={[section.key, 'enabled']}
+                          label="启用"
+                          valuePropName="checked"
+                        >
+                          <Switch />
+                        </Form.Item>
+                      </Card>
+                    </Col>
+                  ))}
+                </Row>
+              </SettingSection>
+              <Form.Item>
+                <Button type="primary" htmlType="submit" loading={loading} icon={<SaveOutlined />}>
+                  保存首页配置
+                </Button>
+              </Form.Item>
+            </Form>
+          </TabCard>
+        </TabPane>
+
         {/* 邮件设置 */}
         <TabPane tab={<span><MailOutlined />邮件设置</span>} key="email">
           <TabCard>
@@ -685,9 +755,7 @@ const SettingsPage: React.FC = () => {
             </Form>
           </TabCard>
         </TabPane>
-        
 
-        
         {/* 主题设置 */}
         <TabPane tab={<span><BgColorsOutlined />主题设置</span>} key="theme">
           <TabCard>
@@ -696,28 +764,55 @@ const SettingsPage: React.FC = () => {
               layout="vertical"
               onFinish={saveThemeSettings}
             >
-              
               <SettingSection>
-                <div className="section-title">布局配置</div>
-                <div className="section-description">调整界面布局和显示效果</div>
+                <div className="section-title">主题配置</div>
+                <div className="section-description">配置网站的主题样式和外观</div>
                 
                 <Row gutter={16}>
-                  <Col span={8}>
+                  <Col span={12}>
                     <Form.Item
-                      name="borderRadius"
-                      label="圆角大小"
-                      rules={[{ required: true, message: '请输入圆角大小' }]}
+                      name="primaryColor"
+                      label="主题色"
+                      rules={[{ required: true, message: '请选择主题色' }]}
                     >
-                      <InputNumber min={0} max={20} addonAfter="px" style={{ width: '100%' }} />
+                      <ColorPicker showText />
                     </Form.Item>
                   </Col>
-                  <Col span={8}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="borderRadius"
+                      label="边框圆角 (px)"
+                      rules={[{ required: true, message: '请输入边框圆角' }]}
+                    >
+                      <InputNumber min={0} max={20} style={{ width: '100%' }} />
+                    </Form.Item>
+                  </Col>
+                </Row>
+                
+                <Row gutter={16}>
+                  <Col span={12}>
                     <Form.Item
                       name="fontSize"
-                      label="字体大小"
+                      label="字体大小 (px)"
                       rules={[{ required: true, message: '请输入字体大小' }]}
                     >
-                      <InputNumber min={12} max={18} addonAfter="px" style={{ width: '100%' }} />
+                      <InputNumber min={12} max={18} style={{ width: '100%' }} />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="clientThemeVariant"
+                      label="客户端主题变体"
+                      rules={[{ required: true, message: '请选择主题变体' }]}
+                    >
+                      <Select
+                        options={[
+                          { value: 'default', label: '默认' },
+                          { value: 'elegant', label: '优雅' },
+                          { value: 'modern', label: '现代' },
+                          { value: 'classic', label: '经典' }
+                        ]}
+                      />
                     </Form.Item>
                   </Col>
                 </Row>
@@ -735,7 +830,7 @@ const SettingsPage: React.FC = () => {
                     <Form.Item name="darkMode" valuePropName="checked">
                       <Space>
                         <Switch />
-                        <span>深色模式</span>
+                        <span>暗黑模式</span>
                       </Space>
                     </Form.Item>
                   </Col>
@@ -743,14 +838,9 @@ const SettingsPage: React.FC = () => {
               </SettingSection>
               
               <Form.Item>
-                <Space>
-                  <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading}>
-                    保存设置
-                  </Button>
-                  <Button onClick={resetTheme}>
-                    重置为默认
-                  </Button>
-                </Space>
+                <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading}>
+                  保存主题设置
+                </Button>
               </Form.Item>
             </Form>
           </TabCard>

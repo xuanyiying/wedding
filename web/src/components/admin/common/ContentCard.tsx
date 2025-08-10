@@ -4,7 +4,6 @@ import styled from 'styled-components';
 const StyledContentCard = styled.div`
   background: var(--admin-card-bg);
   border-radius: var(--admin-border-radius);
-  padding: 24px;
   margin-bottom: 24px;
   box-shadow: var(--admin-card-shadow);
 `;

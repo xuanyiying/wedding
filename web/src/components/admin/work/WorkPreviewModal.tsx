@@ -14,7 +14,7 @@ interface WorkPreviewModalProps {
 
 const PreviewContainer = styled.div`
   .ant-modal-body {
-    padding: 24px;
+    padding: 12px;
   }
 `;
 

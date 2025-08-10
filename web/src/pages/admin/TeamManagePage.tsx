@@ -53,7 +53,11 @@ const { TextArea } = Input;
 
 
 const TeamContainer = styled.div`
-  padding: 24px;
+  padding: 16px;
+  
+  @media (max-width: 768px) {
+    padding: 8px;
+  }
 `;
 
 
@@ -376,7 +380,8 @@ const TeamManagePage: React.FC = () => {
     {
       title: '团队信息',
       key: 'info',
-      width: 400,
+      width: 160,
+      fixed: 'left' as const,
       render: (record: Team) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Avatar
@@ -404,7 +409,7 @@ const TeamManagePage: React.FC = () => {
     {
       title: '联系方式',
       key: 'contact',
-      width: 200,
+      width: 120,
       render: (record: Team) => (
         <div>
           {record.contactPhone && (
@@ -439,7 +444,8 @@ const TeamManagePage: React.FC = () => {
     {
       title: '操作',
       key: 'actions',
-      width: 200,
+      width: 80,
+      fixed: 'right' as const,
       render: (record: Team) => (
         <Space>
           <Tooltip title="邀请成员">
@@ -511,14 +517,14 @@ const TeamManagePage: React.FC = () => {
             prefix={<SearchOutlined />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: 300 }}
+            style={{ width: '100%', maxWidth: 300, minWidth: 200 }}
           />
           <Select
             placeholder="状态筛选"
             value={statusFilter}
             onChange={setStatusFilter}
             allowClear
-            style={{ width: 120 }}
+            style={{ width: '100%', maxWidth: 120, minWidth: 100 }}
           >
             <Option value={TeamStatusEnum.ACTIVE}>正常</Option>
             <Option value={TeamStatusEnum.DISABLED}>禁用</Option>
@@ -534,10 +540,12 @@ const TeamManagePage: React.FC = () => {
           dataSource={teams}
           rowKey="id"
           loading={loading}
+          scroll={{ x: 800 }}
           pagination={{
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total) => `共 ${total} 个团队`,
+            responsive: true,
           }}
         />
       </ContentCard>

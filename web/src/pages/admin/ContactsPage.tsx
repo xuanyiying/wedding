@@ -36,9 +36,20 @@ const { Option } = Select;
 const { TextArea } = Input;
 
 const ContactsContainer = styled.div`
-  padding: 24px;
+  padding: 16px;
+  
+  @media (max-width: 768px) {
+    padding: 8px;
+  }
+  
+  .ant-typography-title {
+    color: var(--admin-text-primary);
+  }
+  
+  .ant-typography {
+    color: var(--admin-text-secondary);
+  }
 `;
-
 
 
 interface ContactsPageState {
@@ -172,6 +183,7 @@ const ContactsPage: React.FC = () => {
       title: '客户信息',
       key: 'customer',
       width: 200,
+      fixed: 'left',
       render: (_, record) => (
         <div>
           <div style={{ fontWeight: 500, marginBottom: 4 }}>{record.name}</div>
@@ -254,6 +266,7 @@ const ContactsPage: React.FC = () => {
       title: '操作',
       key: 'actions',
       width: 150,
+      fixed: 'right',
       render: (_, record) => (
         <Space>
           <Button
@@ -392,7 +405,8 @@ const ContactsPage: React.FC = () => {
               }));
             },
           }}
-          scroll={{ x: 1200 }}
+          scroll={{ x: 1200, y: 600 }}
+          size="small"
         />
       </ContentCard>
       

@@ -9,6 +9,8 @@ import { PasswordUtils } from '../utils/helpers';
 import { generateId } from '../utils/id.generator';
 import { UserRole, UserStatus } from '../interfaces';
 import { EventType, ScheduleStatus, WeddingTime, WorkType, WorkCategory, WorkStatus, TeamStatus, TeamMemberRole, TeamMemberStatus } from '../types';
+import { initializeSystemConfig } from './init-system-config';
+import sequelize from '../config/database';
 export class DatabaseInitializer {
   private userIdMap: { [key: string]: string } = {};
   private teamIdMap: { [key: string]: string } = {};
@@ -675,6 +677,7 @@ export class DatabaseInitializer {
       await this.initializeTeams();
       await this.initializeSchedules();
       await this.initializeWorks();
+      await initializeSystemConfig(sequelize);
       logger.info('数据库初始化完成');
     } catch (error) {
       logger.error('数据库初始化失败:', error);

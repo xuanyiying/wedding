@@ -1,5 +1,5 @@
 import React from 'react';
-import { Row, Col, Typography } from 'antd';
+import { Typography } from 'antd';
 import styled from 'styled-components';
 import ContactForm from '../../components/client/ContactForm';
 
@@ -8,10 +8,9 @@ const { Title, Paragraph } = Typography;
 const PageContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 80px 32px;
-
+  padding: 2rem;
   @media (max-width: 768px) {
-    padding: 60px 16px;
+    padding: 1rem;
   }
 `;
 
@@ -59,12 +58,7 @@ const ContactPage: React.FC = () => {
           我们期待为您的特殊时刻提供专业的主持服务。请通过以下方式联系我们，或填写咨询表单。
         </Paragraph>
       </PageHeader>
-
-      <Row gutter={[24, 24]} justify="center" align="middle">
-        <Col xs={24} sm={22} md={18} lg={14} xl={12} xxl={10}>
-          <ContactForm />
-        </Col>
-      </Row>
+      <ContactForm />
     </PageContainer>
   );
 };

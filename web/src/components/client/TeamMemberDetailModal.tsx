@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Avatar, Typography, Divider, Tag, Button, Row, Col, Spin, Empty, Image } from 'antd';
+import { Modal, Avatar, Typography, Divider, Tag, Button, Row, Col, Spin, Empty, Image, Tabs } from 'antd';
+import { CalendarOutlined, UserOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import { TeamMemberStatus, type Work, type Schedule } from '../../types';
 import { usePageView } from '../../hooks/usePageView';
@@ -159,6 +160,28 @@ const ContactButton = styled(Button)`
   }
 `;
 
+const StyledTabs = styled(Tabs)`
+  &&& {
+    .ant-tabs-nav {
+      margin-bottom: 24px;
+    }
+    
+    .ant-tabs-tab {
+      color: var(--client-text-secondary);
+      
+      &.ant-tabs-tab-active {
+        .ant-tabs-tab-btn {
+          color: var(--client-primary-color);
+        }
+      }
+    }
+    
+    .ant-tabs-ink-bar {
+      background: var(--client-primary-color);
+    }
+  }
+`;
+
 const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
   visible,
   member,
@@ -169,6 +192,7 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
   const [memberSchedules, setMemberSchedules] = useState<Schedule[]>([]);
   const [worksLoading, setWorksLoading] = useState(false);
   const [schedulesLoading, setSchedulesLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('schedule');
 
   // 页面访问统计
   const { stats } = usePageView('team_member', member?.userId || '');
@@ -260,6 +284,7 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
     >
       {member && (
         <div>
+          {/* 头像和基本信息 */}
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
             <TeamAvatar size={100} src={member.avatar} />
             <Title level={3} style={{ marginTop: 16, marginBottom: 8 }}>
@@ -275,118 +300,150 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
 
           <Divider />
 
-          <DetailSection>
-            <h4>个人简介</h4>
-            <Paragraph>{member.bio}</Paragraph>
-          </DetailSection>
-
-          <DetailSection>
-            <h4>专业特长</h4>
-            <div>
-              {member.specialties.map((specialty: string) => (
-                <SpecialtyTag key={specialty}>{specialty}</SpecialtyTag>
-              ))}
-            </div>
-          </DetailSection>
-
-          <DetailSection>
-            <h4>专业数据</h4>
-            <Row gutter={16}>
-              <Col span={8}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--client-primary-color)' }}>
-                    {member.experienceYears}
+          {/* Tab切换 */}
+          <StyledTabs
+            activeKey={activeTab}
+            onChange={setActiveTab}
+            items={[
+              {
+                key: 'schedule',
+                label: (
+                  <span>
+                    <CalendarOutlined />
+                    档期
+                  </span>
+                ),
+                children: (
+                  <div>
+                    <DetailSection>
+                      <h4>近期档期</h4>
+                      {schedulesLoading ? (
+                        <LoadingContainer>
+                          <Spin size="small" />
+                        </LoadingContainer>
+                      ) : memberSchedules.length > 0 ? (
+                        <div>
+                          {memberSchedules.map((schedule) => (
+                            <ScheduleItem key={schedule.id}>
+                              <div className="schedule-title">{schedule.title}</div>
+                              <div className="schedule-date">
+                                {schedule.weddingDate} {schedule.weddingTime === 'lunch' ? '午宴' : '晚宴'}
+                              </div>
+                              <div className="schedule-status">
+                                <Tag color={schedule.status === 'available' ? 'green' : 'orange'}>
+                                  {schedule.status === 'available' ? '可预约' : 
+                                   schedule.status === 'booked' ? '已预订' : 
+                                   schedule.status === 'confirmed' ? '已确认' : '其他'}
+                                </Tag>
+                              </div>
+                            </ScheduleItem>
+                          ))}
+                          {memberSchedules.length > 10 && (
+                            <div style={{ textAlign: 'center', marginTop: '12px', color: 'var(--client-text-secondary)', fontSize: '0.9rem' }}>
+                              显示前10个档期，还有更多档期可预约...
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <Empty 
+                          image={Empty.PRESENTED_IMAGE_SIMPLE} 
+                          description="暂无档期信息" 
+                          style={{ margin: '20px 0' }}
+                        />
+                      )}
+                    </DetailSection>
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--client-text-secondary)' }}>年经验</div>
-                </div>
-              </Col>
-  
-              <Col span={8}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--client-primary-color)' }}>
-                    {stats?.totalViews || 0}
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--client-text-secondary)' }}>浏览量</div>
-                </div>
-              </Col>
-              
-              <Col span={8}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--client-primary-color)' }}>
-                    {memberWorks.length}
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--client-text-secondary)' }}>作品数</div>
-                </div>
-              </Col>
-            </Row>
-          </DetailSection>
+                )
+              },
+              {
+                key: 'profile',
+                label: (
+                  <span>
+                    <UserOutlined />
+                    个人资料
+                  </span>
+                ),
+                children: (
+                  <div>
+                    <DetailSection>
+                      <h4>个人简介</h4>
+                      <Paragraph>{member.bio}</Paragraph>
+                    </DetailSection>
 
-          <DetailSection>
-            <h4>精选作品</h4>
-            {worksLoading ? (
-              <LoadingContainer>
-                <Spin size="small" />
-              </LoadingContainer>
-            ) : memberWorks.length > 0 ? (
-              <WorksGrid>
-                {memberWorks.map((work) => (
-                  <WorkItem key={work.id}>
-                    <Image
-                      src={work.coverUrl || '/placeholder-image.jpg'}
-                      alt={work.title}
-                      preview={{
-                        mask: <div style={{ fontSize: '12px' }}>{work.title}</div>
-                      }}
-                    />
-                  </WorkItem>
-                ))}
-              </WorksGrid>
-            ) : (
-              <Empty 
-                image={Empty.PRESENTED_IMAGE_SIMPLE} 
-                description="暂无公开作品" 
-                style={{ margin: '20px 0' }}
-              />
-            )}
-          </DetailSection>
+                    <DetailSection>
+                      <h4>专业特长</h4>
+                      <div>
+                        {member.specialties.map((specialty: string) => (
+                          <SpecialtyTag key={specialty}>{specialty}</SpecialtyTag>
+                        ))}
+                      </div>
+                    </DetailSection>
 
-          <DetailSection>
-            <h4>近期档期</h4>
-            {schedulesLoading ? (
-              <LoadingContainer>
-                <Spin size="small" />
-              </LoadingContainer>
-            ) : memberSchedules.length > 0 ? (
-              <div>
-                {memberSchedules.slice(0, 3).map((schedule) => (
-                  <ScheduleItem key={schedule.id}>
-                    <div className="schedule-title">{schedule.title}</div>
-                    <div className="schedule-date">
-                      {schedule.weddingDate} {schedule.weddingTime === 'lunch' ? '午宴' : '晚宴'}
-                    </div>
-                    <div className="schedule-status">
-                      <Tag color={schedule.status === 'available' ? 'green' : 'orange'}>
-                        {schedule.status === 'available' ? '可预约' : 
-                         schedule.status === 'booked' ? '已预订' : 
-                         schedule.status === 'confirmed' ? '已确认' : '其他'}
-                      </Tag>
-                    </div>
-                  </ScheduleItem>
-                ))}
-                {memberSchedules.length > 3 && (
-                  <div style={{ textAlign: 'center', marginTop: '12px', color: 'var(--client-text-secondary)', fontSize: '0.9rem' }}>
-                    还有 {memberSchedules.length - 3} 个档期...
+                    <DetailSection>
+                      <h4>专业数据</h4>
+                      <Row gutter={16}>
+                        <Col span={8}>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--client-primary-color)' }}>
+                              {member.experienceYears}
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--client-text-secondary)' }}>年经验</div>
+                          </div>
+                        </Col>
+            
+                        <Col span={8}>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--client-primary-color)' }}>
+                              {stats?.totalViews || 0}
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--client-text-secondary)' }}>浏览量</div>
+                          </div>
+                        </Col>
+                        
+                        <Col span={8}>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--client-primary-color)' }}>
+                              {memberWorks.length}
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--client-text-secondary)' }}>作品数</div>
+                          </div>
+                        </Col>
+                      </Row>
+                    </DetailSection>
+
+                    <DetailSection>
+                      <h4>精选作品</h4>
+                      {worksLoading ? (
+                        <LoadingContainer>
+                          <Spin size="small" />
+                        </LoadingContainer>
+                      ) : memberWorks.length > 0 ? (
+                        <WorksGrid>
+                          {memberWorks.map((work) => (
+                            <WorkItem key={work.id}>
+                              <Image
+                                src={work.coverUrl || '/placeholder-image.jpg'}
+                                alt={work.title}
+                                preview={{
+                                  mask: <div style={{ fontSize: '12px' }}>{work.title}</div>
+                                }}
+                              />
+                            </WorkItem>
+                          ))}
+                        </WorksGrid>
+                      ) : (
+                        <Empty 
+                          image={Empty.PRESENTED_IMAGE_SIMPLE} 
+                          description="暂无公开作品" 
+                          style={{ margin: '20px 0' }}
+                        />
+                      )}
+                    </DetailSection>
                   </div>
-                )}
-              </div>
-            ) : (
-              <Empty 
-                image={Empty.PRESENTED_IMAGE_SIMPLE} 
-                description="暂无档期信息" 
-                style={{ margin: '20px 0' }}
-              />
-            )}
-          </DetailSection>
+                )
+              }
+            ]}
+          />
         </div>
       )}
     </DetailModal>

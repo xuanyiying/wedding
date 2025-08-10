@@ -1,24 +1,24 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Modal, Typography, Tag, Select, Spin, Row, Col } from 'antd';
-import { CalendarOutlined, ClockCircleOutlined, EnvironmentOutlined, UserOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
+import React, { useState } from 'react';
+import { Typography, Empty } from 'antd';
 import styled from 'styled-components';
 import { scheduleService } from '../services';
-import { ScheduleStatus } from '../types';
-import type { Schedule, EventType } from '../types';
 import { useTeamData } from '../hooks/useTeamData';
-import { getEventTypeColor } from '../utils/styleUtils';
-import ScheduleCalendar from './ScheduleCalendar';
+import QueryBar, { type QueryFilters } from './common/QueryBar';
+import TeamMemberCard from './client/TeamMemberCard';
+import TeamMemberDetailModal from './client/TeamMemberDetailModal';
+import type { ClientTeamMember } from '../hooks/useTeamData';
 
-// 扩展Schedule类型以包含hostName及日历所需字段
-interface ScheduleEvent extends Schedule {
-  hostName: string;
-  start: string;
-  end: string;
-  type: EventType;
+// 可用团队成员接口
+interface AvailableMember {
+  userId: string;
+  name: string;
+  avatar: string;
+  status: any;
+  specialties: string[];
+  experienceYears: number;
 }
 
-const { Title, Paragraph } = Typography;
+const { Title } = Typography;
 
 const SectionContainer = styled.div`
   padding: 80px 0;
@@ -68,219 +68,157 @@ const SectionTitle = styled(Title)`
   }
 `;
 
-const CalendarContainer = styled.div`
-  background: var(--client-bg-container);
-  border-radius: var(--client-border-radius-lg);
-  padding: 24px;
-  border: 1px solid var(--client-border-color);
-  box-shadow: var(--client-shadow-sm);
-`;
+const MembersGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  margin-top: 32px;
 
-const FilterBar = styled(Row)`
-  margin-bottom: 24px;
-`;
-
-const DetailModal = styled(Modal)`
-  .ant-modal-content {
-    border-radius: var(--client-border-radius-lg);
-    background: var(--client-bg-container);
-  }
-  
-  .ant-modal-header {
-    border-radius: var(--client-border-radius-lg) var(--client-border-radius-lg) 0 0;
-    background: var(--client-bg-container);
-    border-bottom: 1px solid var(--client-border-color);
-  }
-  
-  .ant-modal-title {
-    color: var(--client-text-primary);
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 `;
 
-const DetailSection = styled.div`
-  margin-bottom: 20px;
-  
-  h4 {
-    color: var(--client-text-primary);
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 8px;
+
+const SectionDescription = styled(Typography.Paragraph)`
+  &&& {
+    font-size: 1.1rem;
+    color: var(--client-text-secondary);
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto 48px;
+    line-height: 1.6;
+
+    @media (max-width: 768px) {
+      font-size: 1rem;
+      margin-bottom: 32px;
+    }
   }
 `;
 
-const ScheduleSection: React.FC = () => {
-  const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedHost, setSelectedHost] = useState<string>('all');
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
-  const [scheduleEvents, setScheduleEvents] = useState<ScheduleEvent[]>([]);
+interface ScheduleSectionProps {
+  title: string;
+  description: string;
+}
+
+const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description }) => {
+  const [availableMembers, setAvailableMembers] = useState<AvailableMember[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<ClientTeamMember | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const { teamMembers } = useTeamData();
 
-  const { teamMembers, loading: teamLoading } = useTeamData({
-    includeMembers: true,
-    activeOnly: true,
-    limit: 100, // 获取所有主持人用于筛选
-  });
+  // 处理查询
+  const handleQuery = async (filters: QueryFilters) => {
+    try {
+      setLoading(true);
+      
+      // 获取指定日期范围内的可用日程
+      const response = await scheduleService.getSchedules({
+        page: 1,
+        limit: 100,
+        startDate: filters.date?.format('YYYY-MM-DD'),
+        endDate: filters.date?.format('YYYY-MM-DD'),
+      });
 
-  useEffect(() => {
-    const fetchSchedules = async () => {
-      try {
-        setLoading(true);
-        const response = await scheduleService.getSchedules({
-          page: 1,
-          pageSize: 100, // 获取足够多的数据
-        });
-        
-        if (response.success && response.data) {
-          const eventsWithHost: ScheduleEvent[] = response.data.schedules.map(schedule => {
-            const weddingDate = dayjs(schedule.weddingDate);
-            let start, end;
-
-            // 根据午宴或晚宴设置大致时间
-            if (schedule.weddingTime === 'lunch') {
-              start = weddingDate.hour(12).minute(0).second(0).toISOString();
-              end = weddingDate.hour(14).minute(0).second(0).toISOString();
-            } else { // dinner
-              start = weddingDate.hour(18).minute(0).second(0).toISOString();
-              end = weddingDate.hour(20).minute(0).second(0).toISOString();
-            }
-
-            return {
-              ...schedule,
-              hostName: teamMembers.find(member => member.id === schedule.userId)?.name || 
-                       schedule.user?.realName || schedule.user?.nickname || '未知主持人',
-              start,
-              end,
-              type: schedule.eventType, // 将eventType映射到type
-            };
-          });
-          setScheduleEvents(eventsWithHost);
+      // 提取有档期的团队成员
+      const memberIds = [...new Set(response.data?.schedules.map(schedule => schedule.userId))];
+      const available = memberIds.map(userId => {
+        const member = teamMembers.find(m => m.userId === userId);
+        if (member) {
+          return {
+            userId: member.userId,
+            name: member.name,
+            avatar: member.avatar,
+            status: member.status,
+            specialties: member.specialties || [],
+            experienceYears: member.experienceYears || 0
+          };
         }
-      } catch (error) {
-        console.error('获取档期数据失败:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+        return null;
+      }).filter(Boolean) as AvailableMember[];
 
-    if (teamMembers.length > 0) {
-      fetchSchedules();
-    }
-  }, [teamMembers]);
-
-  const filteredSchedules = useMemo(() => {
-    return scheduleEvents.filter(event => {
-      const hostMatch = selectedHost === 'all' || event.userId === selectedHost;
-      const statusMatch = selectedStatus === 'all' || event.status === selectedStatus;
-      return hostMatch && statusMatch;
-    });
-  }, [scheduleEvents, selectedHost, selectedStatus]);
-
-  const handleEventClick = (event: ScheduleEvent) => {
-    setSelectedEvent(event);
-    setModalVisible(true);
-  };
-
-  const getStatusText = (status: ScheduleStatus) => {
-    switch (status) {
-      case 'available': return '可预约';
-      case 'booked': return '已预订';
-      case 'confirmed': return '已确认';
-      case 'completed': return '已完成';
-      case 'cancelled': return '已取消';
-      case 'busy': return '忙碌';
-      case 'vacation': return '休假';
-      default: return '未知';
+      setAvailableMembers(available);
+    } catch (error) {
+      console.error('查询可用主持人失败:', error);
+      setAvailableMembers([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getEventTypeTag = (type: EventType) => {
-    const typeMap: { [key in EventType]: string } = {
-      wedding: '婚礼',
-      engagement: '订婚',
-      anniversary: '周年庆',
-      consultation: '咨询',
-      other: '其他',
-    };
-    const text = typeMap[type] || '其他';
-    const color = getEventTypeColor(type);
-    return <Tag color={color}>{text}</Tag>;
+  // 处理团队成员卡片点击
+  const handleMemberClick = (member: AvailableMember) => {
+    const fullMember = teamMembers.find(m => m.userId === member.userId);
+    if (fullMember) {
+      setSelectedMember(fullMember);
+      setModalVisible(true);
+    }
+  };
+
+  // 关闭详情弹窗
+  const handleModalClose = () => {
+    setModalVisible(false);
+    setSelectedMember(null);
   };
 
   return (
     <SectionContainer id="schedule">
       <ContentWrapper>
         <SectionHeader>
-          <SectionTitle>档期查询</SectionTitle>
-          <Paragraph style={{ fontSize: '1.1rem', color: 'var(--client-text-secondary)' }}>
-            查看我们团队的档期安排，计划您的重要日子。
-          </Paragraph>
+          <SectionTitle>{title}</SectionTitle>
+          <SectionDescription>{description}</SectionDescription>
         </SectionHeader>
         
-        <Spin spinning={loading || teamLoading}>
-          <CalendarContainer>
-            <FilterBar gutter={[16, 16]}>
-              <Col>
-                <Select
-                  value={selectedHost}
-                  onChange={setSelectedHost}
-                  style={{ width: 150 }}
-                  placeholder="选择主持人"
-                >
-                  <Select.Option value="all">所有主持人</Select.Option>
-                  {teamMembers.map(member => (
-                    <Select.Option key={member.id} value={member.id}>{member.name}</Select.Option>
-                  ))}
-                </Select>
-              </Col>
-              <Col>
-                <Select
-                  value={selectedStatus}
-                  onChange={setSelectedStatus}
-                  style={{ width: 150 }}
-                  placeholder="筛选状态"
-                >
-                  <Select.Option value="all">所有状态</Select.Option>
-                  {Object.values(ScheduleStatus).map((status: ScheduleStatus) => (
-                    <Select.Option key={status} value={status}>{getStatusText(status)}</Select.Option>
-                  ))}
-                </Select>
-              </Col>
-            </FilterBar>
-            <ScheduleCalendar 
-              schedules={filteredSchedules} 
-              onEventClick={(event) => handleEventClick(event as ScheduleEvent)} 
-            />
-          </CalendarContainer>
-        </Spin>
+        <QueryBar
+          onQuery={handleQuery}
+          onReset={() => setAvailableMembers([])}
+          showMealFilter={true}
+          showMemberFilter={false}
+          loading={loading}
+        />
 
-        {selectedEvent && (
-          <DetailModal
-            title="档期详情"
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '60px 0' }}>
+            <Typography.Text>正在查询可用主持人...</Typography.Text>
+          </div>
+        ) : availableMembers.length > 0 ? (
+          <MembersGrid>
+            {availableMembers.map(member => (
+              <TeamMemberCard
+                key={member.userId}
+                userId={member.userId}
+                name={member.name}
+                avatar={member.avatar}
+                status={member.status}
+                specialties={member.specialties}
+                experienceYears={member.experienceYears}
+                onViewDetails={(id) => {
+                  const selected = availableMembers.find(m => m.userId === id);
+                  if (selected) {
+                    handleMemberClick(selected);
+                  }
+                }}
+                onMemberClick={() => handleMemberClick(member)}
+              />
+            ))}
+          </MembersGrid>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '60px 0' }}>
+            <Empty
+              description="请选择日期范围查询可用的主持人"
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            />
+          </div>
+        )}
+
+        {selectedMember && (
+          <TeamMemberDetailModal
+            member={selectedMember}
             visible={modalVisible}
-            onCancel={() => setModalVisible(false)}
-            footer={null}
-            width={600}
-          >
-            <DetailSection>
-              <h4>{selectedEvent.title}</h4>
-              <Paragraph><UserOutlined style={{ marginRight: 8 }} />主持人: {(selectedEvent as ScheduleEvent).hostName}</Paragraph>
-              <Paragraph><CalendarOutlined style={{ marginRight: 8 }} />日期: {dayjs(selectedEvent.start).format('YYYY-MM-DD')}</Paragraph>
-              <Paragraph><ClockCircleOutlined style={{ marginRight: 8 }} />时间: {dayjs(selectedEvent.start).format('HH:mm')} - {dayjs(selectedEvent.end).format('HH:mm')}</Paragraph>
-              {selectedEvent.location && <Paragraph><EnvironmentOutlined style={{ marginRight: 8 }} />地点: {selectedEvent.location}</Paragraph>}
-            </DetailSection>
-            <DetailSection>
-              <h4>活动信息</h4>
-              <Paragraph>类型: {getEventTypeTag(selectedEvent.type)}</Paragraph>
-              <Paragraph>状态: <Tag>{getStatusText(selectedEvent.status)}</Tag></Paragraph>
-            </DetailSection>
-            {selectedEvent.description && (
-              <DetailSection>
-                <h4>备注</h4>
-                <Paragraph>{selectedEvent.description}</Paragraph>
-              </DetailSection>
-            )}
-          </DetailModal>
+            onClose={handleModalClose}
+          />
         )}
       </ContentWrapper>
     </SectionContainer>

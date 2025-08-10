@@ -11,6 +11,8 @@ const { Title, Text } = Typography;
 interface TeamListProps {
   onTeamSelect: (team: Team) => void;
   limit?: number;
+  title: string;
+  description: string;
 }
 
 const  TeamList: React.FC<TeamListProps> = ({onTeamSelect, limit }) => {

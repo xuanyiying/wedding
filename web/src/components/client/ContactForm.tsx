@@ -94,7 +94,7 @@ const ContactForm: React.FC = () => {
         weddingDate: values.weddingDate ? values.weddingDate.format('YYYY-MM-DD') : '',
         weddingTime: values.weddingTime ? values.weddingTime.format('HH:mm:ss') : ''
       };
-      
+
       await contactService.submitContact(formattedValues);
       message.success('咨询信息已提交成功！我们会在24小时内与您联系。');
       form.resetFields();
@@ -112,7 +112,7 @@ const ContactForm: React.FC = () => {
         <CustomerServiceOutlined style={{ marginRight: 8 }} />
         在线咨询
       </Title>
-      
+
       <Form
         form={form}
         layout="vertical"
@@ -142,8 +142,8 @@ const ContactForm: React.FC = () => {
             </Form.Item>
           </Col>
         </Row>
-        
-        
+
+
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={24} md={12}>
             <Form.Item
@@ -151,9 +151,9 @@ const ContactForm: React.FC = () => {
               name="weddingDate"
               rules={[{ required: true, message: '请选择婚礼日期' }]}
             >
-              <DatePicker 
-                placeholder="请选择婚礼日期" 
-                size="large" 
+              <DatePicker
+                placeholder="请选择婚礼日期"
+                size="large"
                 style={{ width: '100%' }}
                 disabledDate={(current) => current && current.isBefore(new Date(), 'day')}
               />
@@ -165,16 +165,16 @@ const ContactForm: React.FC = () => {
               name="weddingTime"
               rules={[{ required: true, message: '请选择婚礼时间' }]}
             >
-              <TimePicker 
-                placeholder="请选择婚礼时间" 
-                size="large" 
+              <TimePicker
+                placeholder="请选择婚礼时间"
+                size="large"
                 style={{ width: '100%' }}
                 format="HH:mm"
               />
             </Form.Item>
           </Col>
         </Row>
-        
+
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={24} md={12}>
             <Form.Item
@@ -185,7 +185,7 @@ const ContactForm: React.FC = () => {
               <Input placeholder="请输入婚礼地点" size="large" />
             </Form.Item>
           </Col>
-        
+
           <Col xs={24} sm={24} md={12}>
             <Form.Item
               label="预算范围"
@@ -201,35 +201,33 @@ const ContactForm: React.FC = () => {
             </Form.Item>
           </Col>
         </Row>
-        
+
         <Form.Item
           label="特殊要求"
           name="requirements"
         >
-          <TextArea 
-            placeholder="请描述您对婚礼主持的特殊要求或期望..." 
+          <TextArea
+            placeholder="请描述您对婚礼主持的特殊要求或期望..."
             rows={4}
             size="large"
           />
         </Form.Item>
-        
-        <Form.Item>
-          <SubmitButton 
-            type="primary" 
-            htmlType="submit" 
-            loading={loading}
-          >
-            {loading ? '提交中...' : '提交咨询'}
-          </SubmitButton>
-        </Form.Item>
+
+        <SubmitButton
+          type="primary"
+          htmlType="submit"
+          loading={loading}
+        >
+          {loading ? '提交中...' : '提交咨询'}
+        </SubmitButton>
       </Form>
-      
-      <div style={{ 
-        textAlign: 'center', 
-        marginTop: '24px', 
-        padding: '16px', 
-        background: 'var(--client-bg-layout)', 
-        borderRadius: 'var(--client-border-radius)' 
+
+      <div style={{
+        textAlign: 'center',
+        marginTop: '40px',
+        padding: '16px',
+        background: 'var(--client-bg-layout)',
+        borderRadius: 'var(--client-border-radius)'
       }}>
         <Text type="secondary" style={{ fontSize: '14px' }}>
           提交后我们会在24小时内与您联系，为您提供专业的婚礼主持咨询服务。

@@ -91,6 +91,28 @@ export class SettingsService {
     }
   }
 
+  static async updateHomepageSections(homepageSections: any) {
+    try {
+      for (const sectionKey in homepageSections) {
+        const section = homepageSections[sectionKey];
+        const updates = [
+          { key: `${sectionKey}_title`, value: section.title, type: ConfigType.STRING },
+          { key: `${sectionKey}_description`, value: section.description, type: ConfigType.TEXT },
+          { key: `${sectionKey}_visible`, value: section.visible?.toString(), type: ConfigType.BOOLEAN },
+        ];
+
+        for (const update of updates) {
+          if (update.value !== undefined && update.value !== null) {
+            await this.updateOrCreateConfig(update.key, update.value, update.type, 'homepage');
+          }
+        }
+      }
+    } catch (error) {
+      logger.error('更新首页配置失败:', error);
+      throw error;
+    }
+  }
+
   /**
    * 更新邮件设置
    */

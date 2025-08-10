@@ -34,7 +34,7 @@ const ClientLayout: React.FC = () => {
         const settings = response.data;
 
         if (settings) {
-          setSiteName(settings.site?.site_name);
+          setSiteName(settings.site?.name);
           setLogoUrl(settings.site?.logo);
 
           if (settings.theme) {

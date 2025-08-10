@@ -17,7 +17,6 @@ export const ALLOWED_DOCUMENT_TYPES = ['application/pdf', 'application/msword', 
 export const USER_ROLES = {
   ADMIN: 'admin',
   USER: 'user',
-  GUEST: 'guest',
 } as const;
 
 // 预约状态常量

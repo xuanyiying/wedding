@@ -46,6 +46,7 @@ import { scheduleService, teamService, userService } from '../../services';
 import { useTheme } from '../../hooks/useTheme';
 import { useAppSelector } from '../../store';
 import ScheduleCalendar from '../../components/ScheduleCalendar';
+import ConditionalQueryBar from '../../components/common/QueryBar';
 
 // 扩展Schedule类型以包含hostName
 interface ScheduleEvent extends Schedule {
@@ -56,7 +57,11 @@ const { Option } = Select;
 const { Title } = Typography;
 
 const SchedulesContainer = styled.div`
-  padding: 24px;
+  padding: 16px;
+  
+  @media (max-width: 768px) {
+    padding: 8px;
+  }
 `;
 
 
@@ -67,6 +72,7 @@ const TeamSelector = styled.div`
   align-items: center;
   gap: 12px;
   margin-bottom: 16px;
+  flex-wrap: wrap;
   
   .team-label {
     font-weight: 500;
@@ -74,6 +80,17 @@ const TeamSelector = styled.div`
     display: flex;
     align-items: center;
     gap: 6px;
+    white-space: nowrap;
+  }
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    
+    .ant-select {
+      width: 100% !important;
+    }
   }
 `;
 
@@ -101,10 +118,19 @@ const SchedulesPage: React.FC = () => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchModalVisible, setSearchModalVisible] = useState(false);
 
+  // 筛选条件状态
+  const [filters, setFilters] = useState({
+    teamId: '',
+    memberId: '',
+    status: '',
+    date: '',
+    mealType: ''
+  });
+
   // 初始化admin主题和用户认证
   const { initTheme } = useTheme();
   const { user } = useAppSelector((state) => state.auth);
-  const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN;
+  const isAdmin = user?.role === UserRole.ADMIN ;
   const options = [
     { label: '午宴', value: 'lunch' },
     { label: '晚宴', value: 'dinner' },
@@ -116,27 +142,24 @@ const SchedulesPage: React.FC = () => {
   // 加载数据
   useEffect(() => {
     if (!user) return;
-    if (!isAdmin) {
-      setSelectedMember(user);
-    }
     loadTeams(user.id);
-  }, [user, isAdmin]);
+  }, [user]);
 
   useEffect(() => {
-    if (isAdmin && selectedTeam?.id) {
+    if (selectedTeam?.id) {
       loadTeamMembers(selectedTeam.id);
-    } else if (!isAdmin && user) {
-      loadTeamMembers(undefined); // For non-admin, no team members needed
     }
-  }, [selectedTeam, isAdmin, user]);
+  }, [selectedTeam, user]);
 
   useEffect(() => {
-    if (isAdmin) {
-      loadSchedules(selectedMember?.id);
-    } else if (user) {
-      loadSchedules(user.id);
+    if (selectedMember?.id) {
+      loadSchedules(selectedMember.id);
+    } else if (selectedTeam && teamMembers.length > 0) {
+      loadSchedules(); // Load all team members' schedules
+    } else if (user && !selectedTeam) {
+      loadSchedules(user.id); // Default to user's own schedules
     }
-  }, [selectedMember, selectedTeam, teamMembers, user, isAdmin]);
+  }, [selectedMember, selectedTeam, teamMembers, user]);
 
   const loadTeams = async (userId: string) => {
     setLoading(true);
@@ -156,21 +179,15 @@ const SchedulesPage: React.FC = () => {
     try {
       const params: any = { page: 1, pageSize: 100 };
 
-      if (isAdmin) {
-        // 管理员模式下的逻辑
-        if (userId) {
-          // 如果指定了成员ID，只加载该成员的档期
-          params.userId = userId;
-        } else if (selectedTeam && teamMembers.length > 0) {
-          // 如果选择了团队但没有指定成员，加载团队所有成员的档期
-          const teamMemberIds = teamMembers.map(member => member.id);
-          params.userIds = teamMemberIds; // 假设API支持多个hostId查询
-        }
-        // 如果既没有选择团队也没有指定成员，则不加载任何档期
-      } else {
-        // 普通用户只看自己的档期
-        params.userId = user?.id;
+      if (userId) {
+        // 如果指定了成员ID，只加载该成员的档期
+        params.userId = userId;
+      } else if (selectedTeam && teamMembers.length > 0) {
+        // 如果选择了团队但没有指定成员，加载团队所有成员的档期
+        const teamMemberIds = teamMembers.map(member => member.id);
+        params.userIds = teamMemberIds; // 假设API支持多个hostId查询
       }
+      // 如果既没有选择团队也没有指定成员，则不加载任何档期
 
       const response = await scheduleService.getSchedules(params);
       const scheduleData = response.data?.schedules || [];
@@ -588,7 +605,29 @@ const SchedulesPage: React.FC = () => {
   const teamStats = getTeamStats();
 
   // 获取选中日期的档期列表
-  const selectedDateSchedules = getDateSchedules(selectedDate);// 婚礼时间选择处理
+  const selectedDateSchedules = getDateSchedules(selectedDate);
+
+  // 处理查询
+  const handleSearch = (searchFilters: any) => {
+    console.log('搜索条件:', searchFilters);
+    // 这里可以根据搜索条件重新加载数据
+    // loadSchedules();
+  };
+
+  // 处理重置
+  const handleReset = () => {
+    setFilters({
+      teamId: '',
+      memberId: '',
+      status: '',
+      date: '',
+      mealType: ''
+    });
+    // 重新加载所有数据
+    loadSchedules();
+  };
+
+  // 婚礼时间选择处理
   const handleWeddingTimeChange = (e: RadioChangeEvent): void => {
     const newTime = e.target.value;
     setSelectedWeddingTime(newTime);
@@ -672,6 +711,13 @@ const SchedulesPage: React.FC = () => {
         </Col>
       </Row>
 
+      {/* 条件查询栏 */}
+      <ConditionalQueryBar
+        showMealFilter={true}
+        onQuery={handleSearch}
+        onReset={handleReset}
+      />
+
       {/* 团队统计详情 */}
       {showDetailedStats && selectedTeam && teamStats.length > 0 && (
         <Card
@@ -719,49 +765,47 @@ const SchedulesPage: React.FC = () => {
           </Row>
         </Card>
       )}
-      {isAdmin && (
-        <TeamSelector>
-          {/* 团队选择器 - 仅管理员可见 */}
-          <div className="team-label">
-            <TeamOutlined />
-            选择团队：
-          </div>
-          <Select
-            placeholder="请先选择团队"
-            value={selectedTeam?.id}
-            onChange={handleTeamChange}
-            allowClear
-            style={{ width: 200 }}
-          >
-            {teams.map((team) => (
-              <Option key={team.id} value={team.id}>
-                {team.name}
-              </Option>
-            ))}
-          </Select>
+      <TeamSelector>
+        {/* 团队选择器 - 所有用户可见 */}
+        <div className="team-label">
+          <TeamOutlined />
+          选择团队：
+        </div>
+        <Select
+          placeholder="请先选择团队"
+          value={selectedTeam?.id}
+          onChange={handleTeamChange}
+          allowClear
+          style={{ width: 200 }}
+        >
+          {teams.map((team) => (
+            <Option key={team.id} value={team.id}>
+              {team.name}
+            </Option>
+          ))}
+        </Select>
 
-          {/* 团队成员选择器 - 只有选择团队后才可用 */}
-          <div className="team-label">
-            <UserOutlined />
-            团队成员：
-          </div>
-          <Select
-            placeholder={selectedTeam ? "选择团队成员" : "请先选择团队"}
-            value={selectedMember?.id || ''}
-            onChange={handleMemberChange}
-            allowClear
-            disabled={!selectedTeam}
-            style={{ width: 200 }}
-          >
-         
-            {teamMembers.map(member => (
-              <Option key={member.userId} value={member.userId}>
-                {selectedTeam?.name} - {member.user.realName || member.user.nickname}
-              </Option>
-            ))}
-          </Select>
-        </TeamSelector>
-      )}
+        {/* 团队成员选择器 - 只有选择团队后才可用 */}
+        <div className="team-label">
+          <UserOutlined />
+          团队成员：
+        </div>
+        <Select
+          placeholder={selectedTeam ? "选择团队成员" : "请先选择团队"}
+          value={selectedMember?.id || ''}
+          onChange={handleMemberChange}
+          allowClear
+          disabled={!selectedTeam}
+          style={{ width: 200 }}
+        >
+       
+          {teamMembers.map(member => (
+            <Option key={member.userId} value={member.userId}>
+              {selectedTeam?.name} - {member.user.realName || member.user.nickname}
+            </Option>
+          ))}
+        </Select>
+      </TeamSelector>
 
 
 

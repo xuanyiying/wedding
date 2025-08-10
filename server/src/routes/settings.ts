@@ -10,6 +10,7 @@ import {
   getSystemInfo,
   getSiteConfig,
   updateSiteConfig,
+  updateHomepageSections,
 } from '../controllers/settings.controller';
 import { authMiddleware, requireAdmin } from '../middlewares/auth';
 
@@ -28,6 +29,7 @@ router.use(authMiddleware, requireAdmin);
 
 // 更新设置
 router.put('/site', updateSiteSettings);
+router.put('/homepage-sections', updateHomepageSections);
 router.put('/email', updateEmailSettings);
 router.put('/security', updateSecuritySettings);
 router.put('/site-config', updateSiteConfig);

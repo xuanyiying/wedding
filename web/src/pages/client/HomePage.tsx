@@ -1,20 +1,19 @@
-import { message } from 'antd';
-import React, { useState, useCallback } from 'react';
-import { useTheme } from '../../hooks/useTheme';
-import { type Team } from '../../types';
+import React, { useState, useEffect } from 'react';
+import styled from 'styled-components';
+
+import { type SiteSettings, type Team } from '../../types';
 import HeroSection from '../../components/client/HeroSection';
 import ShowcaseSection from '../../components/client/ShowcaseSection';
 import { useOutletContext } from 'react-router-dom';
 import WorksList from '../../components/client/WorksList';
-import TeamList from '../../components/client/TeamList';
-import TeamMemberList from '../../components/client/TeamMemberList';
 import ContactForm from '../../components/client/ContactForm';
 import { ScrollNavigation } from '../../components/client/ScrollNavigation';
 import TeamMemberDetailModal from '../../components/client/TeamMemberDetailModal';
 import ScheduleSection from '../../components/ScheduleSection';
-import { worksService } from '../../services';
 import { useTeamData, type ClientTeamMember } from '../../hooks/useTeamData';
-import styled from 'styled-components';
+import TeamList from '../../components/client/TeamList';
+import TeamShowcaseSection from '../../components/client/TeamShowcaseSection';
+import { settingsService } from '../../services';
 
 interface OutletContextType {
   setActiveSection: (sectionId: string) => void;
@@ -31,129 +30,130 @@ const SectionWrapper = styled.section`
 `;
 
 const HomePage: React.FC = () => {
-  const [homepageBackgroundImage, setHomepageBackgroundImage] = useState<string | undefined>(undefined);
-  
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedMember, setSelectedMember] = useState<ClientTeamMember | null>(null);
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
 
-  const { teamMembers, loading: membersLoading } = useTeamData({
+  useTeamData({
     teamId: selectedTeam?.id,
     includeMembers: !!selectedTeam,
   });
 
   const { setActiveSection } = useOutletContext<OutletContextType>();
-  const { } = useTheme();
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await settingsService.getSettings();
+        if (response.success && response.data) {
+          setSettings(response.data as SiteSettings);
+        }
+      } catch (err) {
+        console.error('获取设置失败:', err);
+      }
+    };
+
+    fetchSettings();
+  }, []);
 
   const handleTeamSelect = (team: Team) => {
     setSelectedTeam(team);
   };
 
-  const handleBackToTeams = () => {
-    setSelectedTeam(null);
-  };
 
-  const handleViewDetails = (userId: string) => {
-    const member = teamMembers.find(m => m.userId === userId);
-    if (member) {
-      setSelectedMember(member);
-      setModalVisible(true);
-    }
-  };
 
-  const handleMemberClick = (member: ClientTeamMember) => {
-    setSelectedMember(member);
-    setModalVisible(true);
-  };
 
   const handleCloseModal = () => {
     setModalVisible(false);
     setSelectedMember(null);
   };
 
-  // 获取作品数据
-  const fetchPortfolioItems = useCallback(async () => {
-    try {
-      
-      await worksService.getWorks();
-    } catch (error) {
-      console.error('Failed to fetch portfolio items:', error);
-      message.error('获取作品信息失败');
-    } finally {
-      
-    }
-  }, []);
+  const heroSectionSettings = settings?.homepageSections?.hero;
+  const portfolioSectionSettings = settings?.homepageSections?.portfolio;
+  const scheduleSectionSettings = settings?.homepageSections?.schedule;
+  const contactSectionSettings = settings?.homepageSections?.contact;
 
-
-  
   return (
     <div>
-      <ScrollNavigation 
+      <ScrollNavigation
         sections={[
-          { id: 'hero', path: '/' }, 
-          { id: 'team', path: '/' }, 
-          { id: 'schedule', path: '/schedule' }, 
-          { id: 'portfolio', path: '/works' }, 
+          { id: 'hero', path: '/' },
+          { id: 'team', path: '/' },
+          { id: 'schedule', path: '/schedule' },
+          { id: 'portfolio', path: '/works' },
           { id: 'contact', path: '/contact' }
-        ]} 
-        onSectionChange={setActiveSection} 
+        ]}
+        onSectionChange={setActiveSection}
       />
-      
+
       {/* Hero Section */}
       <section id="hero">
         <HeroSection
-          title="完美婚礼，从这里开始"
-          description="专业的婚礼策划团队，为您打造独一无二的梦想婚礼"
-          ctaText="开始策划您的婚礼"
-          ctaLink="/contact"
-          backgroundImage={homepageBackgroundImage}
+          title={heroSectionSettings?.title || '完美婚礼，从这里开始'}
+          description={heroSectionSettings?.description || '专业的婚礼策划团队，为您打造独一无二的梦想婚礼'}
+          ctaText={heroSectionSettings?.ctaText || '开始策划您的婚礼'}
+          ctaLink={heroSectionSettings?.ctaLink || '/contact'}
         />
       </section>
 
+      {/* Team Section */}
+      {settings?.homepageSections?.team?.visible && (
+        <SectionWrapper id="team">
+          <TeamList
+            title={settings.homepageSections.team.title}
+            description={settings.homepageSections.team.description}
+            onTeamSelect={handleTeamSelect}
+          />
+        </SectionWrapper>
+      )}
+
       {/* Team Showcase */}
-      <SectionWrapper id="team">
-          {selectedTeam ? (
-            <TeamMemberList 
-              team={selectedTeam} 
-              members={teamMembers}
-              loading={membersLoading}
-              onBack={handleBackToTeams} 
-              onViewDetails={handleViewDetails}
-              onMemberClick={handleMemberClick}
-            />
-          ) : (
-            <TeamList onTeamSelect={handleTeamSelect} limit={3} />
-          )}
-      </SectionWrapper>
+      {settings?.homepageSections?.teamShowcase?.visible && (
+        <TeamShowcaseSection
+          title={settings.homepageSections.teamShowcase.title}
+          description={settings.homepageSections.teamShowcase.description}
+          visible={settings.homepageSections.teamShowcase.visible}
+        />
+      )}
 
       {/* Portfolio Showcase */}
-      <SectionWrapper id="portfolio">
-        <ShowcaseSection
-          title="精选作品"
-          moreText="查看更多作品"
-          moreLink="/works"
-          id="portfolio"
-        >
-          <WorksList showFilters={false} showPagination={false} limit={3} />
-        </ShowcaseSection>
-      </SectionWrapper>
+      {settings?.homepageSections?.portfolio?.visible && (
+        <SectionWrapper id="portfolio">
+          <ShowcaseSection
+            title={portfolioSectionSettings?.title || "精选作品"}
+            moreText="查看更多作品"
+            moreLink="/works"
+            id="portfolio"
+          >
+            <WorksList showFilters={false} showPagination={false} limit={3} />
+          </ShowcaseSection>
+        </SectionWrapper>
+      )}
 
       {/* Schedule Section */}
-      <SectionWrapper id="schedule">
-        <ScheduleSection />
-      </SectionWrapper>
+      {settings?.homepageSections?.schedule?.visible && (
+        <SectionWrapper id="schedule">
+          <ScheduleSection
+            title={scheduleSectionSettings?.title || "我们的档期"}
+            description={scheduleSectionSettings?.description || "查看我们团队的档期安排，计划您的重要日子。"}
+          />
+        </SectionWrapper>
+      )}
 
       {/* Contact Section */}
-      <SectionWrapper id="contact">
-        <ShowcaseSection
-          title="联系我们"
-          moreText="获取详细联系方式"
-          moreLink="/contact"
-          id="contact"
-        >
-          <ContactForm />
-        </ShowcaseSection>
-      </SectionWrapper>
+      {settings?.homepageSections?.contact?.visible && (
+        <SectionWrapper id="contact">
+          <ShowcaseSection
+            title={contactSectionSettings?.title || "联系我们"}
+            moreText="获取详细联系方式"
+            moreLink="/contact"
+            id="contact"
+          >
+            <ContactForm />
+          </ShowcaseSection>
+        </SectionWrapper>
+      )}
 
       {selectedMember && (
         <TeamMemberDetailModal

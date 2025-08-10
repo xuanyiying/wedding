@@ -79,11 +79,15 @@ const HeaderRight = styled.div`
 
 const StyledContent = styled(Content)`
   margin: 0;
-  padding: 24px;
+  padding: 16px;
   background: var(--admin-bg-container);
   min-height: calc(100vh - 64px);
   overflow-x: auto;
   width: 100%;
+  
+  @media (max-width: 768px) {
+    padding: 8px;
+  }
 `;
 
 const UserInfo = styled.div`

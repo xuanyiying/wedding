@@ -1,24 +1,21 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Typography } from 'antd';
-import type { Dayjs } from 'dayjs';
-import dayjs from 'dayjs';
+import React, { useState } from 'react';
+import { Typography, Row, Col, Spin, Empty } from 'antd';
 import styled from 'styled-components';
 import { scheduleService } from '../../services';
-import type { Schedule } from '../../types';
 import { useTeamData } from '../../hooks/useTeamData';
-import ScheduleCalendar from '../../components/client/ScheduleCalendar';
-import ScheduleFilter from '../../components/client/ScheduleFilter';
-import ScheduleDetailModal from '../../components/client/ScheduleDetailModal';
+import QueryBar, { type QueryFilters } from '../../components/common/QueryBar';
+import TeamMemberCard from '../../components/client/TeamMemberCard';
+import TeamMemberDetailModal from '../../components/client/TeamMemberDetailModal';
+import type { ClientTeamMember } from '../../hooks/useTeamData';
 
 const { Title, Paragraph } = Typography;
 
 const PageContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 80px 32px;
-
+  padding: 2rem;
   @media (max-width: 768px) {
-    padding: 60px 16px;
+    padding: 1rem;
   }
 `;
 
@@ -64,12 +61,10 @@ const CalendarContainer = styled.div`
 `;
 
 const SchedulePage: React.FC = () => {
-  const [, setSelectedDate] = useState<Dayjs>(dayjs());
-  const [selectedEvent, setSelectedEvent] = useState<Schedule | null>(null);
+  const [availableMembers, setAvailableMembers] = useState<ClientTeamMember[]>([]);
+  const [selectedMember, setSelectedMember] = useState<ClientTeamMember | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedHost, setSelectedHost] = useState<string>('all');
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
-  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [loading, setLoading] = useState(false);
   
 
   const { teamMembers } = useTeamData({
@@ -77,47 +72,52 @@ const SchedulePage: React.FC = () => {
     activeOnly: true,
   });
 
-
-
-  useEffect(() => {
-    const fetchSchedules = async () => {
+  // 查询有档期的团队成员
+  const handleQuery = async (filters: QueryFilters) => {
+    setLoading(true);
+    try {
+      const response = await scheduleService.getSchedules({
+        userId: filters.memberId,
+        startDate: filters.date?.format('YYYY-MM-DD'),
+        endDate: filters.date?.format('YYYY-MM-DD'),
+        status: 'available',
+        page: 1,
+        limit: 100,
+      });
       
-      try {
-        const response = await scheduleService.getSchedules({
-          page: 1,
-          limit: 100, // Fetch enough for calendar view
-        });
-        if (response.success && response.data) {
-          setSchedules(response.data.schedules);
-        }
-      } catch (error) {
-        console.error('Failed to fetch schedules:', error);
-      } finally {
-        
+      if (response.success && response.data) {
+        // 从档期数据中提取有档期的团队成员
+        const memberIds = [...new Set(response.data.schedules.map(schedule => schedule.userId))];
+        const availableTeamMembers = teamMembers.filter(member => 
+          memberIds.includes(member.userId)
+        );
+        setAvailableMembers(availableTeamMembers);
       }
-    };
+    } catch (error) {
+      console.error('查询档期失败:', error);
+      setAvailableMembers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchSchedules();
-  }, []);
+  // 重置查询
+  const handleReset = () => {
+    setAvailableMembers([]);
+  };
 
-  const filteredSchedules = useMemo(() => {
-    return schedules.filter(event => {
-      const hostName = teamMembers.find(member => member.id === event.userId)?.name || event.user?.realName || event.user?.nickname || '未知主持人';
-      const matchesHost = selectedHost === 'all' || hostName === selectedHost;
-      const matchesStatus = selectedStatus === 'all' || event.status === selectedStatus;
-      return matchesHost && matchesStatus;
-    });
-  }, [schedules, selectedHost, selectedStatus, teamMembers]);
-
-  const handleEventClick = (event: Schedule) => {
-    setSelectedEvent(event);
-    setModalVisible(true);
-
+  // 查看团队成员详情
+  const handleViewDetails = (userId: string) => {
+    const member = teamMembers.find(m => m.userId === userId);
+    if (member) {
+      setSelectedMember(member);
+      setModalVisible(true);
+    }
   };
 
   const handleModalClose = () => {
     setModalVisible(false);
-    setSelectedEvent(null);
+    setSelectedMember(null);
   };
 
   return (
@@ -130,23 +130,50 @@ const SchedulePage: React.FC = () => {
       </PageHeader>
 
       <CalendarContainer>
-        <ScheduleFilter
-          hosts={teamMembers.map(tm => ({ id: tm.userId, realName: tm.name, username: tm.name, email: '', role: 'user', status: 'active', createdAt: new Date(), updatedAt: new Date() }))}
-          selectedHost={selectedHost}
-          onHostChange={setSelectedHost}
-          selectedStatus={selectedStatus}
-          onStatusChange={setSelectedStatus}
+        <QueryBar
+          onQuery={handleQuery}
+          onReset={handleReset}
+          showMealFilter={true}
+          loading={loading}
         />
-        <ScheduleCalendar
-          events={filteredSchedules}
-          onSelectDate={setSelectedDate}
-          onPanelChange={setSelectedDate}
-          onEventClick={handleEventClick}
-        />
+        
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '60px 0' }}>
+            <Spin size="large" />
+            <div style={{ marginTop: 16, color: 'var(--client-text-secondary)' }}>正在查询档期...</div>
+          </div>
+        ) : availableMembers.length > 0 ? (
+          <div style={{ marginTop: 24 }}>
+            <Typography.Title level={4} style={{ marginBottom: 16, color: 'var(--client-text-primary)' }}>
+              查询结果 ({availableMembers.length}位主持人有档期)
+            </Typography.Title>
+            <Row gutter={[24, 24]}>
+              {availableMembers.map((member) => (
+                <Col key={member.userId} xs={24} sm={12} md={8} lg={6}>
+                  <TeamMemberCard
+                    userId={member.userId}
+                    name={member.name}
+                    avatar={member.avatar}
+                    status={member.status}
+                    specialties={member.specialties}
+                    experienceYears={member.experienceYears}
+                    onViewDetails={handleViewDetails}
+                  />
+                </Col>
+              ))}
+            </Row>
+          </div>
+        ) : (
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description="请使用上方查询条件查找有档期的主持人"
+            style={{ margin: '60px 0', color: 'var(--client-text-secondary)' }}
+          />
+        )}
       </CalendarContainer>
 
-      <ScheduleDetailModal
-        event={selectedEvent}
+      <TeamMemberDetailModal
+        member={selectedMember}
         visible={modalVisible}
         onClose={handleModalClose}
       />

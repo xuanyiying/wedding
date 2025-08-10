@@ -10,10 +10,9 @@ import TeamMemberDetailModal from '../../components/client/TeamMemberDetailModal
 const PageContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 80px 32px;
-
+  padding: 2rem;
   @media (max-width: 768px) {
-    padding: 60px 16px;
+    padding: 1rem;
   }
 `;
 

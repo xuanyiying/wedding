@@ -33,7 +33,7 @@ import AvatarUploader from '../../components/AvatarUploader';
 const { TabPane } = Tabs;
 
 const ProfileContainer = styled.div`
-  padding: 24px;
+  padding: 12px;
   max-width: 1200px;
   margin: 0 auto;
 `;

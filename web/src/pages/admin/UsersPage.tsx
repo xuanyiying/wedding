@@ -43,16 +43,29 @@ const { Option } = Select;
 
 const SearchBar = styled.div`
   display: flex;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 12px;
+  margin-bottom: 12px;
   flex-wrap: wrap;
+  
+  @media (max-width: 768px) {
+    gap: 8px;
+    margin-bottom: 8px;
+  }
   
   .ant-input {
     width: 200px;
+    
+    @media (max-width: 768px) {
+      width: 150px;
+    }
   }
   
   .ant-select {
     width: 150px;
+    
+    @media (max-width: 768px) {
+      width: 120px;
+    }
   }
 `;
 
@@ -63,7 +76,11 @@ const UserAvatar = styled(Avatar)`
 const PageContainer = styled.div`
   background: var(--admin-bg-layout);
   min-height: 100vh;
-  padding: 24px;
+  padding: 16px;
+  
+  @media (max-width: 768px) {
+    padding: 8px;
+  }
   
   .ant-typography-title {
     color: var(--admin-text-primary);
@@ -165,7 +182,6 @@ const UsersPage: React.FC = () => {
   // 角色标签
   const getRoleTag = (role: UserRole) => {
     const roleMap = {
-      [UserRole.SUPER_ADMIN]: { color: 'var(--admin-functional-purple)', text: '超级管理员' },
       [UserRole.ADMIN]: { color: 'var(--admin-error-color)', text: '管理员' },
       [UserRole.USER]: { color: 'var(--admin-primary-color)', text: '用户' },
     };
@@ -334,7 +350,8 @@ const UsersPage: React.FC = () => {
     {
       title: '用户信息',
       key: 'userInfo',
-      width: 200,
+      fixed: 'left' as const,
+      width: 150,
       render: (_, record) => (
         <Space>
           <UserAvatar 
@@ -375,9 +392,7 @@ const UsersPage: React.FC = () => {
       width: 100,
       render: (role: UserRole) => getRoleTag(role),
       filters: [
-        { text: '超级管理员', value: UserRole.SUPER_ADMIN },
         { text: '管理员', value: UserRole.ADMIN },
-        { text: '主持人', value: UserRole.USER },
         { text: '用户', value: UserRole.USER },
       ],
     },
@@ -531,7 +546,6 @@ const UsersPage: React.FC = () => {
             onChange={setRoleFilter}
             allowClear
           >
-            <Option value={UserRole.SUPER_ADMIN}>超级管理员</Option>
             <Option value={UserRole.ADMIN}>管理员</Option>
             <Option value={UserRole.USER}>用户</Option>
           </Select>
@@ -561,6 +575,7 @@ const UsersPage: React.FC = () => {
           dataSource={filteredUsers}
           rowKey="id"
           loading={loading}
+          scroll={{ x: 1200 }}
           pagination={{
             total: filteredUsers.length,
             pageSize: 10,
@@ -568,7 +583,6 @@ const UsersPage: React.FC = () => {
             showQuickJumper: true,
             showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
           }}
-          scroll={{ x: 1200 }}
         />
       </ContentCard>
       
@@ -647,7 +661,6 @@ const UsersPage: React.FC = () => {
                 rules={[{ required: true, message: '请选择角色' }]}
               >
                 <Select placeholder="请选择角色">
-                  <Option value={UserRole.SUPER_ADMIN}>超级管理员</Option>
                   <Option value={UserRole.ADMIN}>管理员</Option>
                   <Option value={UserRole.USER}>用户</Option>
                 </Select>

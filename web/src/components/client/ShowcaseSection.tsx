@@ -44,40 +44,28 @@ const Container = styled.div`
 const SectionTitle = styled(Title)`
   &&& {
     text-align: center;
-    font-size: 2.4rem;
-    margin-bottom: 48px;
-    color: var(--text-primary);
-    font-weight: 300;
+    font-size: 2.8rem;
+    color: var(--client-text-primary);
+    font-weight: 200;
     letter-spacing: -0.02em;
-    line-height: 1.3;
     position: relative;
+    line-height: 1.2;
+    margin-bottom: 72px;
 
-    &::before,
     &::after {
-      content: '♦';
+      content: '';
       position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--primary-main);
-      font-size: 1.2rem;
-      opacity: 0.6;
-    }
-
-    &::before {
-      left: calc(50% - 120px);
-    }
-
-    &::after {
-      right: calc(50% - 120px);
+      bottom: -24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 3px;
+      background: var(--client-gradient-accent);
+      border-radius: var(--client-border-radius);
     }
 
     @media (max-width: 768px) {
-      font-size: 2rem;
-      
-      &::before,
-      &::after {
-        display: none;
-      }
+      font-size: 2.2rem;
     }
   }
 `;
