@@ -79,7 +79,7 @@ const useStyle = createStyles(({ token, css, cx }) => {
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      padding: 4px 2px;
+      padding: 4px 0;
     `,
     lunar,
     current: css`
@@ -88,10 +88,11 @@ const useStyle = createStyles(({ token, css, cx }) => {
         background: ${token.colorPrimary};
         width: 40px;
         height: 40px;
-        top: 8px;
+        top: 50%;
         left: 50%;
-        transform: translateX(-50%);
+        transform: translate(-50%, -50%);
         margin: 0;
+        position: absolute;
       }
       &:hover:before {
         background: ${token.colorPrimary};
@@ -232,8 +233,8 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
         children: (
           <div className={styles.text}>
             {/* 阳历和农历日期居中显示 */}
-            <div style={{ 
-              display: 'flex', 
+            <div style={{
+              display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
@@ -246,9 +247,9 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
               zIndex: 2
             }}>
               {/* 阳历日期 */}
-              <div style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
                 width: '100%'
@@ -269,31 +270,32 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                   {date.get('date')}
                 </span>
               </div>
-              
+
               {/* 农历信息 */}
-              <div style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginTop: '2px',
-                color: '#999',
+                color: isToday ? '#ffffff' : undefined,
+                fontWeight: isToday ? 'bold' : 'normal',
                 width: '100%'
               }}>
-                <div className={styles.lunar} style={{ 
+                <div className={styles.lunar} style={{
                   fontSize: '11px',
                   lineHeight: '1.2',
                   textAlign: 'center',
                   width: '100%',
                   wordBreak: 'break-all',
-                  color: '#999',
-                
+                  color: isToday ? '#ffffff' : undefined,
+                  fontWeight: isToday ? 'bold' : 'normal',
                 }}>
                   {displayHoliday || solarTerm || lunar}
                 </div>
               </div>
             </div>
-            
+
             {/* 档期事件 */}
             <div style={{ maxHeight: '80px', overflowY: 'auto' }}>
               {events.map((event, index) => (
@@ -337,9 +339,9 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
           onSelect={handleDateSelect}
         />
       </Spin>
-      
+
     </div>
-    
+
   );
 };
 

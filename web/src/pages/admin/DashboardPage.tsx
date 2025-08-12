@@ -83,7 +83,7 @@ const DashboardPage: React.FC = () => {
   const [viewTrends, setViewTrends] = useState<ViewTrend[]>([]);
   
   // 检查用户是否为管理员
-  const isAdmin = user?.role === UserRole.ADMIN;
+  const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN;
 
   // 初始化admin主题
   const { initTheme } = useTheme();

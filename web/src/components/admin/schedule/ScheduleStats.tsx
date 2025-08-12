@@ -1,6 +1,6 @@
 import React from 'react';
 import { Row, Col, Card, Segmented, DatePicker, Select, List, Avatar, Space, Tag } from 'antd';
-import { BarChartOutlined, TrophyOutlined, DollarOutlined, TeamOutlined, CalendarOutlined, UserOutlined } from '@ant-design/icons';
+import { BarChartOutlined, TrophyOutlined, TeamOutlined, CalendarOutlined, UserOutlined, MoneyCollectOutlined } from '@ant-design/icons';
 import { StatCard } from '../common';
 import { ScheduleStatus, type Schedule, type TeamMember } from '../../../types';
 import type { Dayjs } from 'dayjs';
@@ -172,7 +172,7 @@ const ScheduleStats: React.FC<ScheduleStatsProps> = ({
           <StatCard
             title="总收入"
             value={`¥${statusFilter === 'all' ? stats.revenue : stats.filteredRevenue}`}
-            prefix={<DollarOutlined style={{ color: '#f5222d' }} />}
+            prefix={<MoneyCollectOutlined  style={{ color: '#f5222d' }} />}
           />
         </Col>
       </Row>

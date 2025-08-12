@@ -52,7 +52,7 @@ const SchedulesPage: React.FC = () => {
   // 初始化admin主题和用户认证
   const { initTheme } = useTheme();
   const { user } = useAppSelector((state) => state.auth);
-  const isAdmin = user?.role === UserRole.ADMIN;
+  const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN;
   
   useEffect(() => {
     initTheme('admin');
@@ -215,6 +215,18 @@ const SchedulesPage: React.FC = () => {
         {/* 日历视图 */}
         <Col xs={24} lg={16}>
           <ContentCard>
+            {/* 操作按钮区域 */}
+            <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Space>
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => openModal()}
+                >
+                  添加档期
+                </Button>
+              </Space>
+            </div>
             
             {/* 档期显示组件 */}
              <ScheduleDisplay

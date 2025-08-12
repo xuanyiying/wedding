@@ -135,7 +135,7 @@ const QueryBar: React.FC<QueryBarProps> = ({
   loading = false,
   initialFilters
 }) => {
-  const { user } = useAppSelector(state => state.auth);
+  const user = useAppSelector(state => state.auth.user);
   const [teams, setTeams] = useState<Team[]>([]);
   const [members, setMembers] = useState<(TeamMember & { user: User })[]>([]);
   const [filters, setFilters] = useState<QueryFilters>(initialFilters || {});
