@@ -18,7 +18,7 @@ import {
 import { useTheme } from '../../hooks/useTheme';
 import {
   SaveOutlined,
-  UploadOutlined,
+  PlusOutlined,
   MailOutlined,
   GlobalOutlined,
   HomeOutlined,
@@ -26,7 +26,7 @@ import {
 } from '@ant-design/icons';
 
 import styled from 'styled-components';
-import { PageHeader, ImageWithPreview } from '../../components/admin/common';
+import { PageHeader } from '../../components/admin/common';
 import { settingsService, directUploadService } from '../../services';
 import { FileType } from '../../types';
 
@@ -69,8 +69,7 @@ const SettingSection = styled.div`
   }
 `;
 
-
-interface SiteSettings {
+interface SiteSettingsForm {
   siteName: string;
   siteDescription: string;
   siteKeywords: string;
@@ -93,7 +92,7 @@ interface SiteSettings {
   };
 }
 
-interface EmailSettings {
+interface EmailSettingsForm {
   smtpHost: string;
   smtpPort: number;
   smtpUser: string;
@@ -102,7 +101,6 @@ interface EmailSettings {
   fromName: string;
   enableSSL: boolean;
 }
-
 
 const SettingsPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -113,7 +111,7 @@ const SettingsPage: React.FC = () => {
   const [logoUrl, setLogoUrl] = useState<string>('');
   const [faviconUrl, setFaviconUrl] = useState<string>('');
   const [emailForm] = Form.useForm();
-  const [imagePreviewUrls, setImagePreviewUrls] = useState<{[key: string]: string}>({});
+  const [uploadingStates, setUploadingStates] = useState<{[key: string]: boolean}>({});
 
   const { initTheme } = useTheme();
 
@@ -134,101 +132,107 @@ const SettingsPage: React.FC = () => {
     setLoading(true);
     try {
       const response = await settingsService.getSettings();
-      const data = response.data || {};
-      const { site, email, theme } = data;
+      const settings = response.data || {};
       
       // 填充网站设置表单
-      if (site) {
-        if (site.siteLogo) {
-          setLogoUrl(site.siteLogo);
+      if (settings) {
+        if (settings.site?.logo) {
+          setLogoUrl(settings.site.logo);
         }
-        if (site.siteFavicon) {
-          setFaviconUrl(site.siteFavicon);
+        if (settings.site?.favicon) {
+          setFaviconUrl(settings.site.favicon);
         }
-        if (site.homepageBackgroundImage) {
-          setHomepageBackgroundImage(site.homepageBackgroundImage);
+        if (settings.homepageSections?.hero?.backgroundImage) {
+          setHomepageBackgroundImage(settings.homepageSections.hero.backgroundImage);
         }
         
         // 映射API数据结构到表单字段
         const siteData = {
-          siteName: site.siteName,
-          siteDescription: site.siteDescription,
-          contactEmail: site.contactEmail,
-          contactPhone: site.contactPhone,
-          logo: site.siteLogo,
-          favicon: site.siteFavicon,
-          homepageBackgroundImage: site.homepageBackgroundImage,
-          socialMedia: {
-            wechat: site.socialWechat || '',
-            weibo: site.socialWeibo || '',
-            instagram: site.socialInstagram || ''
+          siteName: settings.site?.name || '',
+          siteDescription: settings.site?.description || '',
+          siteKeywords: settings.site?.keywords || '',
+          logo: settings.site?.logo || '',
+          favicon: settings.site?.favicon || '',
+          contact: {
+            email: settings.homepageSections?.contact?.email || '',
+            phone: settings.homepageSections?.contact?.phone || '',
+            address: settings.homepageSections?.contact?.address || '',
+            wechat: settings.homepageSections?.contact?.wechat || '',
+            xiaohongshu: settings.homepageSections?.contact?.xiaohongshu || '',
+            douyin: settings.homepageSections?.contact?.douyin || '',
+          },
+          seo: {
+            title: settings.seo?.title || '',
+            description: settings.seo?.description || '',
+            keywords: settings.seo?.keywords || ''
           }
         };
         siteForm.setFieldsValue(siteData);
       }
 
       // 填充首页配置表单
-      if (site?.homepageSections) {
+      if (settings?.homepageSections) {
         const sectionsData = {
           hero: {
-            title: site.homepageSections.hero?.title || '',
-            subtitle: site.homepageSections.hero?.subtitle || '',
-            enabled: site.homepageSections.hero?.enabled || false
+            title: settings.homepageSections.hero?.title || '',
+            subtitle: settings.homepageSections.hero?.description || '',
+            enabled: settings.homepageSections.hero?.visible || false
+            ? 'visible'
+            : 'hidden',
           },
-          services: {
-            title: site.homepageSections.services?.title || '',
-            enabled: site.homepageSections.services?.enabled || false
+          team: {
+            title: settings.homepageSections.team?.title || '',
+            description: settings.homepageSections.team?.description || '',
+            visible: settings.homepageSections.team?.visible || false
+          },
+           teamShowcase: {
+            title: settings.homepageSections.teamShowcase?.title || '',
+            description: settings.homepageSections.teamShowcase?.description || '',
+            visible: settings.homepageSections.teamShowcase?.visible || false
           },
           portfolio: {
-            title: site.homepageSections.portfolio?.title || '',
-            enabled: site.homepageSections.portfolio?.enabled || false
+            title: settings.homepageSections.portfolio?.title || '',
+            description: settings.homepageSections.portfolio?.description || '',
+            visible: settings.homepageSections.portfolio?.visible || false
           },
-          testimonials: {
-            title: site.homepageSections.testimonials?.title || '',
-            enabled: site.homepageSections.testimonials?.enabled || false
+          schedule: {
+            title: settings.homepageSections.schedule?.title || '',
+            description: settings.homepageSections.schedule?.description || '',
+            enabled: settings.homepageSections.schedule?.visible || false,
           },
           contact: {
-            title: site.homepageSections.contact?.title || '',
-            enabled: site.homepageSections.contact?.enabled || false
+            title: settings.homepageSections.contact?.title || '',
+            description: settings.homepageSections.contact?.description || '',
+            visible: settings.homepageSections.contact?.visible || false
           }
         };
         homepageSectionsForm.setFieldsValue(sectionsData);
       }
       
       // 填充邮件设置表单
-      if (email) {
+      if (settings.email) {
         const emailData = {
-          smtpHost: email.smtpHost,
-          smtpPort: parseInt(email.smtpPort),
-          smtpUser: email.smtpUser,
-          smtpPassword: email.smtpPassword,
-          enableSSL: email.smtpSecure === 'true',
-          fromEmail: email.emailFrom,
-          fromName: email.emailFromName,
+          smtpHost: settings.email.smtpHost,
+          smtpPort: settings.email.smtpPort,
+          smtpUser: settings.email.smtpUser,
+          smtpPassword: settings.email.smtpPassword,
+          enableSSL: settings.email.smtpSecure,
+          fromEmail: settings.email.emailFrom,
+          fromName: settings.email.emailFromName,
         };
         emailForm.setFieldsValue(emailData);
       }
       
       // 填充主题设置表单
-      if (theme) {
+      if (settings.theme) {
         const themeData = {
-          primaryColor: theme.primaryColor || '#1890ff',
-          borderRadius: parseInt(theme.borderRadius) || 8,
-          compactMode: theme.compactMode === 'true' || theme.compactMode === true,
-          darkMode: theme.darkMode === 'true' || theme.darkMode === true,
-          fontSize: parseInt(theme.fontSize) || 14,
-          clientThemeVariant: theme.clientThemeVariant || 'default'
+          primaryColor: settings.theme.colors?.primary || '#1890ff',
+          spacing: {
+            containerPadding: settings.theme.spacing?.containerPadding || '16px',
+            sectionPadding: settings.theme.spacing?.sectionPadding || '24px'
+          }
         };
         themeForm.setFieldsValue(themeData);
-        
-        // 设置图片预览URL
-        if (site) {
-          setImagePreviewUrls({
-            logo: site.siteLogo || '',
-            favicon: site.siteFavicon || '',
-            homepageBackgroundImage: site.homepageBackgroundImage || ''
-          });
-        }
       }
     } catch (error) {
       message.error('加载设置失败');
@@ -254,14 +258,29 @@ const SettingsPage: React.FC = () => {
     try {
       setLoading(true);
       const themeData = {
-        primaryColor: values.primaryColor,
-        borderRadius: values.borderRadius.toString(),
-        compactMode: values.compactMode.toString(),
-        darkMode: values.darkMode.toString(),
-        fontSize: values.fontSize.toString(),
-        clientThemeVariant: values.clientThemeVariant
+        theme: {
+          colors: {
+            primary: values.primaryColor,
+            secondary: '#52c41a',
+            background: '#ffffff',
+            text: '#000000'
+          },
+          fonts: {
+            primary: 'Arial',
+            secondary: 'Georgia'
+          },
+          spacing: {
+            containerPadding: values.spacing?.containerPadding || '16px',
+            sectionPadding: values.spacing?.sectionPadding || '24px'
+          },
+          borderRadius: values.borderRadius,
+          compactMode: values.compactMode,
+          darkMode: values.darkMode,
+          fontSize: values.fontSize,
+          clientThemeVariant: values.clientThemeVariant
+        }
       };
-      await settingsService.updateThemeSettings(themeData);
+      await settingsService.updateSiteSettings(themeData);
       message.success('主题设置保存成功');
     } catch (error) {
       message.error('主题设置保存失败');
@@ -271,15 +290,17 @@ const SettingsPage: React.FC = () => {
   };
   
   // 保存网站设置
-  const saveSiteSettings = async (values: SiteSettings) => {
+  const saveSiteSettings = async (values: SiteSettingsForm) => {
     try {
       setLoading(true);
       const data = {
-        name: values.siteName,
-        description: values.siteDescription,
-        keywords: values.siteKeywords,
-        logo: values.logo,
-        favicon: values.favicon,
+        site: {
+          name: values.siteName,
+          description: values.siteDescription,
+          keywords: values.siteKeywords,
+          logo: values.logo,
+          favicon: values.favicon,
+        }
       };
       await settingsService.updateSiteSettings(data);
       
@@ -293,19 +314,21 @@ const SettingsPage: React.FC = () => {
   };
   
   // 保存邮件设置
-  const saveEmailSettings = async (values: EmailSettings) => {
+  const saveEmailSettings = async (values: EmailSettingsForm) => {
     try {
       setLoading(true);
       const data = {
-        smtp_host: values.smtpHost,
-        smtp_port: values.smtpPort,
-        smtp_user: values.smtpUser,
-        smtp_password: values.smtpPassword,
-        smtp_secure: values.enableSSL,
-        email_from: values.fromEmail,
-        email_from_name: values.fromName,
+        email: {
+          smtpHost: values.smtpHost,
+          smtpPort: values.smtpPort,
+          smtpUser: values.smtpUser,
+          smtpPassword: values.smtpPassword,
+          smtpSecure: values.enableSSL,
+          emailFrom: values.fromEmail,
+          emailFromName: values.fromName,
+        }
       };
-      await settingsService.updateEmailSettings(data);
+      await settingsService.updateSiteSettings(data);
       
 
       message.success('邮件设置保存成功');
@@ -340,37 +363,37 @@ const SettingsPage: React.FC = () => {
   
   const handleUpload = async (file: File, type: 'logo' | 'favicon' | 'homepageBackground') => {
     try {
-      setLoading(true);
+      setUploadingStates(prev => ({ ...prev, [type]: true }));
       const result = await directUploadService.uploadFile(file, FileType.IMAGE, 'other');
       const fileUrl = result.url;
 
       if (type === 'logo') {
         setLogoUrl(fileUrl);
         siteForm.setFieldsValue({ logo: fileUrl });
-        setImagePreviewUrls(prev => ({ ...prev, logo: fileUrl }));
-        await settingsService.updateSiteSettings({ logo: fileUrl });
       } else if (type === 'favicon') {
         setFaviconUrl(fileUrl);
         siteForm.setFieldsValue({ favicon: fileUrl });
-        setImagePreviewUrls(prev => ({ ...prev, favicon: fileUrl }));
-        await settingsService.updateSiteSettings({ favicon: fileUrl });
       } else if (type === 'homepageBackground') {
         setHomepageBackgroundImage(fileUrl);
         siteForm.setFieldsValue({ homepageBackgroundImage: fileUrl });
-        setImagePreviewUrls(prev => ({ ...prev, homepageBackgroundImage: fileUrl }));
-        await settingsService.updateHomepageSections({ homepageBackgroundImage: fileUrl });
       }
       
       message.success('上传成功');
     } catch (error) {
       message.error('上传失败');
     } finally {
-      setLoading(false);
+      setUploadingStates(prev => ({ ...prev, [type]: false }));
     }
   };
 
   const customUploadRequest = (options: any, type: 'logo' | 'favicon' | 'homepageBackground') => {
-    handleUpload(options.file, type);
+    handleUpload(options.file, type)
+      .then(() => {
+        options.onSuccess?.(options.file);
+      })
+      .catch((error) => {
+        options.onError?.(error);
+      });
   };
 
   const beforeUpload = (file: any) => {
@@ -385,27 +408,7 @@ const SettingsPage: React.FC = () => {
     return isImage && isLt2M;
   };
 
-  const getImagePreview = (fieldName: string, currentValue?: string) => {
-    const previewUrl = imagePreviewUrls[fieldName] || currentValue;
-    if (previewUrl) {
-      return (
-        <div style={{ marginTop: 8 }}>
-          <img 
-            src={previewUrl} 
-            alt="预览" 
-            style={{ 
-              width: '100px', 
-              height: '100px', 
-              objectFit: 'cover', 
-              border: '1px solid #d9d9d9',
-              borderRadius: '6px'
-            }} 
-          />
-        </div>
-      );
-    }
-    return null;
-  };
+
   
   return (
     <SettingsContainer>
@@ -466,21 +469,50 @@ const SettingsPage: React.FC = () => {
                   <div className="section-description">上传一张图片作为网站首页的背景。</div>
                   <Form.Item name="homepageBackgroundImage">
                     <Upload
-                    name="file"
-                    action={`${import.meta.env.VITE_API_URL}/files/upload`}
-                    headers={{ Authorization: `Bearer ${localStorage.getItem('adminToken')}` }}
-                    beforeUpload={beforeUpload}
-                    customRequest={(options) => customUploadRequest(options, 'homepageBackground')}
-                    showUploadList={false}
-                  >
-                    <Button icon={<UploadOutlined />}>点击上传</Button>
-                  </Upload>
-                  {getImagePreview('homepageBackgroundImage', homepageBackgroundImage)}
-                  {homepageBackgroundImage && (
-                    <div style={{ marginTop: 16 }}>
-                      <ImageWithPreview width={200} src={homepageBackgroundImage} />
-                    </div>
-                  )}
+                      name="file"
+                      action={`${import.meta.env.VITE_API_URL}/files/upload`}
+                      headers={{ Authorization: `Bearer ${localStorage.getItem('adminToken')}` }}
+                      beforeUpload={beforeUpload}
+                      customRequest={(options) => customUploadRequest(options, 'homepageBackground')}
+                      showUploadList={false}
+                      listType="picture-card"
+                    >
+                      {homepageBackgroundImage ? (
+                        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                          <img 
+                            src={homepageBackgroundImage} 
+                            alt="背景图" 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                          />
+                          <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            backgroundColor: 'rgba(0,0,0,0.5)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            opacity: 0,
+                            transition: 'opacity 0.3s'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                          onMouseLeave={(e) => e.currentTarget.style.opacity = '0'}
+                          >
+                            {uploadingStates.homepageBackground ? '上传中...' : '重新上传'}
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <PlusOutlined />
+                          <div style={{ marginTop: 8 }}>
+                            {uploadingStates.homepageBackground ? '上传中...' : '上传背景图'}
+                          </div>
+                        </div>
+                      )}
+                    </Upload>
                   </Form.Item>
                 </SettingSection>
                 
@@ -528,15 +560,44 @@ const SettingsPage: React.FC = () => {
                         beforeUpload={beforeUpload}
                         customRequest={(options) => customUploadRequest(options, 'logo')}
                         showUploadList={false}
+                        listType="picture-card"
                       >
-                        <Button icon={<UploadOutlined />}>上传Logo</Button>
+                        {logoUrl ? (
+                          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                            <img 
+                              src={logoUrl} 
+                              alt="Logo" 
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                            />
+                            <div style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              backgroundColor: 'rgba(0,0,0,0.5)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'white',
+                              opacity: 0,
+                              transition: 'opacity 0.3s'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                            onMouseLeave={(e) => e.currentTarget.style.opacity = '0'}
+                            >
+                              {uploadingStates.logo ? '上传中...' : '重新上传'}
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <PlusOutlined />
+                            <div style={{ marginTop: 8 }}>
+                              {uploadingStates.logo ? '上传中...' : '上传Logo'}
+                            </div>
+                          </div>
+                        )}
                       </Upload>
-                      {getImagePreview('logo', logoUrl)}
-                      {logoUrl && (
-                        <div style={{ marginTop: 16 }}>
-                          <ImageWithPreview width={200} src={logoUrl} />
-                        </div>
-                      )}
                       <div style={{ fontSize: 12, color: 'var(--admin-text-secondary)', marginTop: 4 }}>建议尺寸：200x60px，格式：PNG/JPG</div>
                     </Form.Item>
                   </Col>
@@ -549,15 +610,44 @@ const SettingsPage: React.FC = () => {
                         beforeUpload={beforeUpload}
                         customRequest={(options) => customUploadRequest(options, 'favicon')}
                         showUploadList={false}
+                        listType="picture-card"
                       >
-                        <Button icon={<UploadOutlined />}>上传图标</Button>
+                        {faviconUrl ? (
+                          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                            <img 
+                              src={faviconUrl} 
+                              alt="图标" 
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                            />
+                            <div style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              backgroundColor: 'rgba(0,0,0,0.5)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'white',
+                              opacity: 0,
+                              transition: 'opacity 0.3s'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                            onMouseLeave={(e) => e.currentTarget.style.opacity = '0'}
+                            >
+                              {uploadingStates.favicon ? '上传中...' : '重新上传'}
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <PlusOutlined />
+                            <div style={{ marginTop: 8 }}>
+                              {uploadingStates.favicon ? '上传中...' : '上传图标'}
+                            </div>
+                          </div>
+                        )}
                       </Upload>
-                      {getImagePreview('favicon', faviconUrl)}
-                      {faviconUrl && (
-                        <div style={{ marginTop: 16 }}>
-                          <ImageWithPreview width={32} src={faviconUrl} />
-                        </div>
-                      )}
                       <div style={{ fontSize: 12, color: 'var(--admin-text-secondary)', marginTop: 4 }}>建议尺寸：32x32px，格式：ICO/PNG</div>
                     </Form.Item>
                   </Col>

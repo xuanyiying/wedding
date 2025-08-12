@@ -10,11 +10,7 @@ const router = Router();
 router.get('/', validateRequest(workValidators.getWorks), WorkController.getWorks);
 
 // 获取作品详情
-router.get(
-  '/:id',
-  validateRequest(workValidators.getWorkById),
-  WorkController.getWorkById,
-);
+router.get('/:id', validateRequest(workValidators.getWorkById), WorkController.getWorkById);
 
 // 创建作品
 router.post('/', authMiddleware, validateRequest(workValidators.createWork), WorkController.createWork);

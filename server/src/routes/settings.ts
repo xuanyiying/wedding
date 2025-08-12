@@ -25,8 +25,6 @@ router.get('/', getSettings);
 // 需要管理员权限的接口
 router.use(authMiddleware, requireAdmin);
 
-
-
 // 更新设置
 router.put('/site', updateSiteSettings);
 router.put('/homepage-sections', updateHomepageSections);

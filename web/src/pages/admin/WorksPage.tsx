@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Row, Col, Modal, message } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useTheme } from '../../hooks/useTheme';
-import { WorkType, WorkStatus, type Work, type User } from '../../types';
-import { workService, userService } from '../../services';
+import { WorkType, WorkStatus, type Work } from '../../types';
+import { workService } from '../../services';
 import { useDirectUpload } from '../../hooks/useDirectUpload';
 import type { RootState } from '../../store';
 import { useAppSelector } from '../../store';
 import { PageHeader, StatCard } from '../../components/admin/common';
-import ConditionalQueryBar from '../../components/common/QueryBar';
+import ConditionalQueryBar, { type QueryFilters } from '../../components/common/QueryBar';
 import { WorkForm, WorkPreviewModal, type Work as WorkCardType } from '../../components/admin/work';
 import { isAdmin } from '../../utils/auth';
 import styled from 'styled-components';
@@ -197,18 +197,16 @@ const formatCount = (count: number): string => {
 
 const WorksPage: React.FC = () => {
   const [works, setWorks] = useState<Work[]>([]);
-  const [teamMembers, setTeamMembers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [editingWork, setEditingWork] = useState<Work | null>(null);
   const [previewWork, setPreviewWork] = useState<WorkCardType | null>(null);
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<QueryFilters>({
     search: '',
     teamId: '',
-    memberId: '',
-    date: '',
-    type: '',
+    userId: '',
+    date: null,
   });
   const { uploadWorkImages } = useDirectUpload();
   const user = useAppSelector((state: RootState) => state.auth.user);
@@ -219,20 +217,12 @@ const WorksPage: React.FC = () => {
     initTheme('admin');
   }, [initTheme]);
 
-  // 加载数据
-  useEffect(() => {
-    loadWorks();
-    // 所有用户都可以加载团队成员列表来查看其他成员的作品
-    loadTeamMembers();
-  }, []);
-
   const loadWorks = async (queryFilters?: {
     teamId?: string;
-    memberId?: string;
+    userId?: string;
     search?: string;
-    dateFrom?: string;
-    dateTo?: string;
-    type?: string;
+    startDate?: string;
+    endDate?: string;
   }) => {
     setLoading(true);
     try {
@@ -249,21 +239,6 @@ const WorksPage: React.FC = () => {
       setLoading(false);
     }
   };
-
-  const loadTeamMembers = async () => {
-    try {
-      const response = await userService.getUsers({
-        page: 1,
-        limit: 100
-      });
-      setTeamMembers(response.data?.users || []);
-    } catch (error) {
-      console.error('加载团队成员失败:', error);
-    }
-  };
-
-  // 移除客户端过滤逻辑，直接使用服务端返回的数据
-  const filteredWorks = works;
 
   // 统计数据
   const stats = {
@@ -462,38 +437,30 @@ const WorksPage: React.FC = () => {
           showMealFilter={false}
           onQuery={(queryFilters) => {
             const newFilters = {
-              search: '',
               teamId: queryFilters.teamId || '',
-              memberId: queryFilters.memberId || '',
-              date: queryFilters.date ? queryFilters.date.format('YYYY-MM-DD') : '',
-              type: '',
+              userId: queryFilters.userId || '',
+              date: queryFilters.date || null,
+              search: queryFilters.search || '',
             };
             setFilters(newFilters);
-            loadWorks({
-              teamId: newFilters.teamId,
-              memberId: newFilters.memberId,
-              dateFrom: newFilters.date,
-              dateTo: newFilters.date,
-              search: newFilters.search,
-              type: newFilters.type
-            });
+            loadWorks(newFilters);
           }}
           onReset={() => {
             const resetFilters = {
               search: '',
               teamId: '',
-              memberId: '',
-              date: '',
-              type: '',
+              userId: '',
+              date: null,
             };
             setFilters(resetFilters);
-            loadWorks();
+            loadWorks(resetFilters);
           }}
+          initialFilters={filters}
         />
 
       {/* 作品网格 - 抖音风格布局 */}
       <WorksGrid>
-        {filteredWorks.map((work) => (
+        {works.map((work) => (
           <AdminWorkCard key={work.id}>
             <WorkMediaContainer>
               <WorkMedia>

@@ -1,10 +1,10 @@
 
 export interface SiteSettings {
   theme?: {
-    darkMode: boolean;
+    darkMode: any;
     colors: {
-      primary: string;
-      secondary: string;
+      primary: string; // 主题色
+      secondary: string; // 次主题色
       background: string;
       text: string;
     };
@@ -25,99 +25,72 @@ export interface SiteSettings {
     favicon: string;
   };
   email?: {
-    smtp_host: string;
-    smtp_port: number;
-    smtp_user: string;
-    smtp_password: string;
-    smtp_secure: boolean;
-    email_from: string;
-    email_from_name: string;
-  };
-  contactEmail?: string;
-  contactPhone?: string;
-  address?: string;
-  workingHours?: string;
-  socialMedia?: {
-    wechat: string;
-    xiaohongshu: string;
-    douyin: string;
+    smtpHost: string;
+    smtpPort: number;
+    smtpUser: string;
+    smtpPassword: string;
+    smtpSecure: boolean;
+    emailFrom: string;
+    emailFromName: string;
   };
   seo?: {
-    title: string;
-    description: string;
-    keywords: string;
+    title: string; // 标题
+    description: string; // 描述
+    keywords: string; // 关键词
   };
   // 首页section配置
   homepageSections?: {
-    homepageBackgroundImage: string;
     hero: {
+      backgroundImage: string; // 背景图片
       visible: boolean;
-      title: string;
-      description: string;
-      ctaText: string;
-      ctaLink: string;
+      title: string; // 标题
+      description: string; // 描述
+      ctaText: string; // 调用-to-action文本
+      ctaLink: string; // 调用-to-action链接
     };
     team: {
-      visible: boolean;
-      title: string;
-      description: string;
-      ctaText: string;
-      ctaLink: string;
+      visible: boolean; // 是否可见
+      title: string; // 标题
+      subtitle: string; // 副标题
+      description: string; // 描述
     };
     teamShowcase: {
       visible: boolean;
       title: string;
+      subtitle: string;
       description: string;
-      ctaText: string;
-      ctaLink: string;
     };
     portfolio: {
       visible: boolean;
       title: string;
+      subtitle: string;
       description: string;
-      ctaText: string;
-      ctaLink: string;
     };
     schedule: {
       visible: boolean;
       title: string;
+      subtitle: string;
       description: string;
-      ctaText: string;
-      ctaLink: string;
     };
     contact: {
       visible: boolean;
       title: string;
+      subtitle: string;
       description: string;
-      ctaText: string;
-      ctaLink: string;
+      address: string;
+      phone: string;
+      email: string;
+      wechat: string;
+      xiaohongshu: string;
+      douyin: string;
     };
   };
-}
-
-// 邮件设置接口
-export interface EmailSettings {
-  smtpHost: string;
-  smtpPort: number;
-  smtpUser: string;
-  smtpPassword: string;
-  enableSSL: boolean;
-  fromEmail: string;
-  fromName: string;
-}
-
-// 主题设置接口
-export interface ThemeSettings {
-  primaryColor: string;
-  borderRadius: number;
-  compactMode: boolean;
-  darkMode: boolean;
-  fontSize: number;
 }
 
 export const UserRole = {
   ADMIN: 'admin',
   USER: 'user',
+  SUPER_ADMIN: 'super_admin',
 } as const;
 
 export const UserStatus = {
@@ -134,8 +107,6 @@ export const ScheduleStatus = {
   CONFIRMED: 'confirmed', // 已确认
   COMPLETED: 'completed', // 已完成
   CANCELLED: 'cancelled', // 已取消
-  BUSY: 'busy', // 忙碌
-  VACATION: 'vacation' // 休假
 } as const;
 
 // 事件类型枚举

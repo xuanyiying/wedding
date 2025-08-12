@@ -35,13 +35,13 @@ class ViewService {
       pageType: data.pageType,
       visitorIp: data.visitorIp,
     };
-    
+
     if (data.pageId) params.pageId = data.pageId;
     if (data.userAgent) params.userAgent = data.userAgent;
     if (data.referer) params.referer = data.referer;
     if (data.sessionId) params.sessionId = data.sessionId;
     if (data.duration) params.duration = data.duration;
-    
+
     return await ViewStat.recordView(params);
   }
 
@@ -51,27 +51,27 @@ class ViewService {
   async getViewStats(pageType: string, pageId?: string, days: number = 30): Promise<ViewStats> {
     const totalViews = await ViewStat.getViewCount(pageType, pageId);
     const uniqueViews = await ViewStat.getUniqueViewCount(pageType, pageId);
-    
+
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(endDate.getDate() - days);
-    
+
     const params: any = {
       pageType,
       startDate,
       endDate,
     };
-    
+
     if (pageId) params.pageId = pageId;
-    
+
     const dailyStatsRaw = await ViewStat.getDailyStats(params);
-    
+
     const dailyStats = dailyStatsRaw.map((stat: any) => ({
       visitDate: stat.visitDate,
       views: parseInt(stat.totalViews) || 0,
       uniqueViews: parseInt(stat.uniqueViews) || 0,
     }));
-    
+
     return {
       totalViews,
       uniqueViews,
@@ -84,7 +84,7 @@ class ViewService {
    */
   async getBatchViewStats(pageType: string, pageIds: string[]): Promise<BatchViewStats> {
     const stats = await ViewStat.getViewStatistics(pageType, pageIds);
-    
+
     const result: BatchViewStats = {};
     pageIds.forEach(pageId => {
       result[pageId] = {
@@ -92,7 +92,7 @@ class ViewService {
         uniqueViews: 0,
       };
     });
-    
+
     stats.forEach((stat: any) => {
       if (stat.pageId) {
         result[stat.pageId] = {
@@ -101,7 +101,7 @@ class ViewService {
         };
       }
     });
-    
+
     return result;
   }
 
@@ -123,7 +123,10 @@ class ViewService {
         'pageId',
         'pageType',
         [ViewStat.sequelize!.fn('COUNT', '*'), 'totalViews'],
-        [ViewStat.sequelize!.fn('COUNT', ViewStat.sequelize!.fn('DISTINCT', ViewStat.sequelize!.col('visitor_ip'))), 'uniqueViews'],
+        [
+          ViewStat.sequelize!.fn('COUNT', ViewStat.sequelize!.fn('DISTINCT', ViewStat.sequelize!.col('visitor_ip'))),
+          'uniqueViews',
+        ],
       ],
       where: whereClause,
       group: ['pageId', 'pageType'],

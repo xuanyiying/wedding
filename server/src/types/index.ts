@@ -1,4 +1,3 @@
-
 // 事件类型枚举
 export enum EventType {
   WEDDING = 'wedding', // 婚礼
@@ -6,12 +5,9 @@ export enum EventType {
   OTHER = 'other', // 其他
 }
 
-
-
 export enum UserRole {
   SUPER_ADMIN = 'super_admin',
   ADMIN = 'admin',
-  GUEST = 'guest',
   USER = 'user',
 }
 
@@ -27,7 +23,6 @@ export enum Gender {
   FEMALE = 'female',
   OTHER = 'other',
 }
-
 
 export enum ContactStatus {
   NEW = 'new',
@@ -70,7 +65,6 @@ export enum ResourceType {
   TEAM = 'team',
   WORK = 'work',
   VIDEO = 'video',
- 
 }
 
 // Enums defined according to database-design.md
@@ -91,7 +85,6 @@ export enum WeddingTime {
   DINNER = 'dinner', // 晚宴
   FULL_DAY = 'full_day', // 全天
 }
-
 
 // 团队状态枚举
 export enum TeamStatus {
@@ -126,8 +119,6 @@ export enum StorageType {
   S3 = 's3', // AWS S3
   CDN = 'cdn', // CDN
 }
-
-
 
 // Enums defined according to database-design.md
 export enum WorkStatus {
@@ -205,6 +196,6 @@ export enum FileCategory {
   AVATAR = 'avatar',
   WORK = 'work',
   EVENT = 'event',
-  OTHER = 'other', 
-  PROFILE = 'profile'
+  OTHER = 'other',
+  PROFILE = 'profile',
 }

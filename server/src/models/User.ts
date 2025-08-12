@@ -2,7 +2,6 @@ import { Model, DataTypes, Sequelize, Optional } from 'sequelize';
 import { PasswordUtils } from '../utils/helpers';
 import { UserRole, UserStatus } from '../types';
 
-
 // User attributes interface
 export interface UserAttributes {
   id: string;

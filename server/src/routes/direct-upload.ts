@@ -17,17 +17,9 @@ declare global {
 // 支持的文件类型配置
 const ALLOWED_TYPES = {
   video: {
-    mimeTypes: [
-      'video/mp4',
-      'video/avi',
-      'video/mov',
-      'video/wmv',
-      'video/flv',
-      'video/webm',
-      'video/mkv'
-    ],
+    mimeTypes: ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/flv', 'video/webm', 'video/mkv'],
     maxSize: 500 * 1024 * 1024, // 500MB
-    folder: 'videos'
+    folder: 'videos',
   },
   work: {
     mimeTypes: [
@@ -38,35 +30,21 @@ const ALLOWED_TYPES = {
       'image/webp',
       'video/mp4',
       'video/mov',
-      'video/webm'
+      'video/webm',
     ],
     maxSize: 200 * 1024 * 1024, // 200MB
-    folder: 'works'
+    folder: 'works',
   },
   image: {
-    mimeTypes: [
-      'image/jpeg',
-      'image/jpg',
-      'image/png',
-      'image/gif',
-      'image/webp',
-      'image/bmp',
-      'image/tiff'
-    ],
+    mimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff'],
     maxSize: 50 * 1024 * 1024, // 50MB
-    folder: 'images'
+    folder: 'images',
   },
   avatar: {
-    mimeTypes: [
-      'image/jpeg',
-      'image/jpg',
-      'image/png',
-      'image/gif',
-      'image/webp'
-    ],
+    mimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'],
     maxSize: 10 * 1024 * 1024, // 10MB
-    folder: 'avatars'
-  }
+    folder: 'avatars',
+  },
 };
 
 /**
@@ -81,7 +59,7 @@ router.post(
     body('fileSize').isInt({ min: 1 }).withMessage('文件大小必须大于0'),
     body('contentType').notEmpty().withMessage('文件类型不能为空'),
     body('fileType').isIn(['video', 'work', 'image', 'avatar']).withMessage('文件类型必须是video、work、image或avatar'),
-    body('expires').optional().isInt({ min: 300, max: 7200 }).withMessage('过期时间必须在300-7200秒之间')
+    body('expires').optional().isInt({ min: 300, max: 7200 }).withMessage('过期时间必须在300-7200秒之间'),
   ],
   async (req: Request, res: Response) => {
     try {
@@ -90,7 +68,7 @@ router.post(
         return res.status(400).json({
           success: false,
           message: '参数验证失败',
-          errors: errors.array()
+          errors: errors.array(),
         });
       }
 
@@ -102,7 +80,7 @@ router.post(
       if (!typeConfig.mimeTypes.includes(contentType)) {
         return res.status(400).json({
           success: false,
-          message: `不支持的文件类型: ${contentType}`
+          message: `不支持的文件类型: ${contentType}`,
         });
       }
 
@@ -110,7 +88,7 @@ router.post(
       if (fileSize > typeConfig.maxSize) {
         return res.status(400).json({
           success: false,
-          message: `文件大小超过限制: ${typeConfig.maxSize / 1024 / 1024}MB`
+          message: `文件大小超过限制: ${typeConfig.maxSize / 1024 / 1024}MB`,
         });
       }
 
@@ -138,7 +116,7 @@ router.post(
         contentType,
         fileType,
         createdAt: new Date(),
-        expiresAt: new Date(Date.now() + expires * 1000)
+        expiresAt: new Date(Date.now() + expires * 1000),
       });
 
       return res.json({
@@ -148,17 +126,17 @@ router.post(
           uploadSessionId,
           key,
           expires,
-          maxFileSize: typeConfig.maxSize
-        }
+          maxFileSize: typeConfig.maxSize,
+        },
       });
     } catch (error) {
       console.error('生成预签名URL失败:', error);
       return res.status(500).json({
         success: false,
-        message: '生成预签名URL失败'
+        message: '生成预签名URL失败',
       });
     }
-  }
+  },
 );
 
 /**
@@ -170,7 +148,7 @@ router.post(
   authMiddleware,
   [
     body('uploadSessionId').notEmpty().withMessage('上传会话ID不能为空'),
-    body('actualFileSize').optional().isInt({ min: 1 }).withMessage('实际文件大小必须大于0')
+    body('actualFileSize').optional().isInt({ min: 1 }).withMessage('实际文件大小必须大于0'),
   ],
   async (req: Request, res: Response) => {
     try {
@@ -179,7 +157,7 @@ router.post(
         return res.status(400).json({
           success: false,
           message: '参数验证失败',
-          errors: errors.array()
+          errors: errors.array(),
         });
       }
 
@@ -195,14 +173,14 @@ router.post(
       if (!session) {
         return res.status(404).json({
           success: false,
-          message: '上传会话不存在或已过期'
+          message: '上传会话不存在或已过期',
         });
       }
 
       if (session.userId !== userId) {
         return res.status(403).json({
           success: false,
-          message: '无权限访问此上传会话'
+          message: '无权限访问此上传会话',
         });
       }
 
@@ -210,7 +188,7 @@ router.post(
         global.uploadSessions?.delete(uploadSessionId);
         return res.status(410).json({
           success: false,
-          message: '上传会话已过期'
+          message: '上传会话已过期',
         });
       }
 
@@ -219,7 +197,7 @@ router.post(
       if (!fileExists) {
         return res.status(400).json({
           success: false,
-          message: '文件上传未完成或失败'
+          message: '文件上传未完成或失败',
         });
       }
 
@@ -229,24 +207,24 @@ router.post(
 
       // 将字符串fileType转换为枚举值
       const fileTypeMap: { [key: string]: string } = {
-        'video': 'VIDEO',
-        'image': 'IMAGE',
-        'avatar': 'AVATAR'
+        video: 'VIDEO',
+        image: 'IMAGE',
+        avatar: 'AVATAR',
       };
-      
+
       const enumFileType = fileTypeMap[session.fileType] || session.fileType;
 
       // 创建文件记录
-        const fileRecord = await FileService.createFileRecord({
-          originalName: session.fileName,
-          filename: session.fileName,
-          filePath: session.key,
-          fileSize: finalFileSize,
-          mimeType: session.contentType,
-          fileType: enumFileType as any,
-          userId: session.userId,
-          url: ossService.getFileUrl(session.key)
-        });
+      const fileRecord = await FileService.createFileRecord({
+        originalName: session.fileName,
+        filename: session.fileName,
+        filePath: session.key,
+        fileSize: finalFileSize,
+        mimeType: session.contentType,
+        fileType: enumFileType as any,
+        userId: session.userId,
+        url: ossService.getFileUrl(session.key),
+      });
 
       // 清理上传会话
       if (uploadSessionId) {
@@ -262,17 +240,17 @@ router.post(
           fileSize: fileRecord.fileSize,
           url: ossService.getFileUrl(session.key),
           fileType: fileRecord.fileType,
-          uploadedAt: fileRecord.createdAt
-        }
+          uploadedAt: fileRecord.createdAt,
+        },
       });
     } catch (error) {
       console.error('确认上传失败:', error);
       return res.status(500).json({
         success: false,
-        message: '确认上传失败'
+        message: '确认上传失败',
       });
     }
-  }
+  },
 );
 
 /**
@@ -282,9 +260,7 @@ router.post(
 router.delete(
   '/cancel/:uploadSessionId',
   authMiddleware,
-  [
-    param('uploadSessionId').notEmpty().withMessage('上传会话ID不能为空')
-  ],
+  [param('uploadSessionId').notEmpty().withMessage('上传会话ID不能为空')],
   async (req: Request, res: Response) => {
     try {
       const errors = validationResult(req);
@@ -292,7 +268,7 @@ router.delete(
         return res.status(400).json({
           success: false,
           message: '参数验证失败',
-          errors: errors.array()
+          errors: errors.array(),
         });
       }
 
@@ -302,7 +278,7 @@ router.delete(
       if (!uploadSessionId) {
         return res.status(400).json({
           success: false,
-          message: '上传会话ID不能为空'
+          message: '上传会话ID不能为空',
         });
       }
 
@@ -315,14 +291,14 @@ router.delete(
       if (!session) {
         return res.status(404).json({
           success: false,
-          message: '上传会话不存在'
+          message: '上传会话不存在',
         });
       }
 
       if (session.userId !== userId) {
         return res.status(403).json({
           success: false,
-          message: '无权限访问此上传会话'
+          message: '无权限访问此上传会话',
         });
       }
 
@@ -341,16 +317,16 @@ router.delete(
 
       return res.json({
         success: true,
-        message: '上传已取消'
+        message: '上传已取消',
       });
     } catch (error) {
       console.error('取消上传失败:', error);
       return res.status(500).json({
         success: false,
-        message: '取消上传失败'
+        message: '取消上传失败',
       });
     }
-  }
+  },
 );
 
 /**
@@ -360,9 +336,7 @@ router.delete(
 router.get(
   '/progress/:uploadSessionId',
   authMiddleware,
-  [
-    param('uploadSessionId').notEmpty().withMessage('上传会话ID不能为空')
-  ],
+  [param('uploadSessionId').notEmpty().withMessage('上传会话ID不能为空')],
   async (req: Request, res: Response) => {
     try {
       const errors = validationResult(req);
@@ -370,7 +344,7 @@ router.get(
         return res.status(400).json({
           success: false,
           message: '参数验证失败',
-          errors: errors.array()
+          errors: errors.array(),
         });
       }
 
@@ -380,7 +354,7 @@ router.get(
       if (!uploadSessionId) {
         return res.status(400).json({
           success: false,
-          message: '上传会话ID不能为空'
+          message: '上传会话ID不能为空',
         });
       }
 
@@ -393,14 +367,14 @@ router.get(
       if (!session) {
         return res.status(404).json({
           success: false,
-          message: '上传会话不存在'
+          message: '上传会话不存在',
         });
       }
 
       if (session.userId !== userId) {
         return res.status(403).json({
           success: false,
-          message: '无权限访问此上传会话'
+          message: '无权限访问此上传会话',
         });
       }
 
@@ -427,17 +401,17 @@ router.get(
           expectedSize: session.fileSize,
           actualSize,
           isCompleted: progress >= 100,
-          expiresAt: session.expiresAt
-        }
+          expiresAt: session.expiresAt,
+        },
       });
     } catch (error) {
       console.error('获取上传进度失败:', error);
       return res.status(500).json({
         success: false,
-        message: '获取上传进度失败'
+        message: '获取上传进度失败',
       });
     }
-  }
+  },
 );
 
 export default router;

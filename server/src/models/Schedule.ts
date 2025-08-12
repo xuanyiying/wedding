@@ -17,7 +17,7 @@ export interface ScheduleAttributes {
   venueAddress: string | null; // 场馆地址
   eventType: EventType;
   status: ScheduleStatus;
-  price: number | null; 
+  price: number | null;
   deposit: number | null; // 定金
   isPaid: boolean; // 是否已结清
   customerPhone: string | null;
@@ -54,7 +54,6 @@ class Schedule extends Model<ScheduleAttributes, ScheduleCreationAttributes> imp
   public requirements!: string | null;
   public notes!: string | null;
   public tags!: string[] | null;
-  
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -82,7 +81,7 @@ class Schedule extends Model<ScheduleAttributes, ScheduleCreationAttributes> imp
     }
 
     // 同一天. 相同时段冲突
-     const conflictingSchedule = await Schedule.findOne({
+    const conflictingSchedule = await Schedule.findOne({
       where,
     });
 
@@ -212,7 +211,7 @@ export const initSchedule = (sequelize: Sequelize): void => {
         type: DataTypes.DATE,
         field: 'deleted_at',
         comment: '删除时间',
-      }, 
+      },
     },
     {
       tableName: 'schedules',

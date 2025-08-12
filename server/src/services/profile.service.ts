@@ -245,7 +245,17 @@ export class UserProfileService {
         userId,
         isPublic: true,
       },
-      attributes: ['id', 'originalName', 'fileUrl', 'thumbnailUrl', 'fileType', 'width', 'height', 'duration', 'createdAt'],
+      attributes: [
+        'id',
+        'originalName',
+        'fileUrl',
+        'thumbnailUrl',
+        'fileType',
+        'width',
+        'height',
+        'duration',
+        'createdAt',
+      ],
       order: [['createdAt', 'DESC']],
     });
   }
@@ -266,7 +276,10 @@ export class UserProfileService {
   /**
    * 获取公开的用户资料列表（分页）
    */
-  async getPublicUserProfiles(page: number = 1, limit: number = 20): Promise<{ profiles: UserProfile[]; total: number }> {
+  async getPublicUserProfiles(
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<{ profiles: UserProfile[]; total: number }> {
     const offset = (page - 1) * limit;
 
     const { count, rows } = await UserProfile.findAndCountAll({
@@ -283,7 +296,10 @@ export class UserProfileService {
           attributes: ['id', 'fileUrl', 'thumbnailUrl'],
         },
       ],
-      order: [['viewCount', 'DESC'], ['createdAt', 'DESC']],
+      order: [
+        ['viewCount', 'DESC'],
+        ['createdAt', 'DESC'],
+      ],
       limit,
       offset,
     });

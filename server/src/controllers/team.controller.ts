@@ -11,7 +11,7 @@ export const createTeam = async (req: AuthenticatedRequest, res: Response, next:
   try {
     const teamData = req.body;
     const ownerId = req.user?.id || '1'; // 默认管理员ID
-    
+
     const team = await TeamService.createTeam({
       ...teamData,
       ownerId,
@@ -161,7 +161,7 @@ export const getAvailableUsers = async (req: Request, res: Response, next: NextF
   try {
     const { teamId } = req.params;
     const { page = 1, limit = 10, search } = req.query;
-    
+
     if (!teamId) {
       Resp.badRequest(res, '请提供团队ID');
       return;
@@ -188,12 +188,12 @@ export const inviteTeamMember = async (req: AuthenticatedRequest, res: Response)
   try {
     const { userIds, teamId, role } = req.body;
     const inviterId = req.user?.id;
-    
+
     if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
       Resp.badRequest(res, '请提供要邀请的用户ID列表');
       return;
     }
-    
+
     if (!teamId) {
       Resp.badRequest(res, '请提供团队ID');
       return;
@@ -290,15 +290,15 @@ export const updateTeamMemberStatus = async (req: Request, res: Response): Promi
 export const getTeamStats = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { startDate, endDate } = req.query;
-    
+
     // 设置默认日期范围（最近30天）
     const defaultEndDate = new Date();
     const defaultStartDate = new Date();
     defaultStartDate.setDate(defaultStartDate.getDate() - 30);
-    
+
     const validStartDate = startDate ? new Date(startDate as string) : defaultStartDate;
     const validEndDate = endDate ? new Date(endDate as string) : defaultEndDate;
-    
+
     // 验证日期有效性
     if (isNaN(validStartDate.getTime()) || isNaN(validEndDate.getTime())) {
       Resp.badRequest(res, '日期格式无效');

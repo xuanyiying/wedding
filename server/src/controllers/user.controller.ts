@@ -218,7 +218,11 @@ export const getCurrentUser = async (req: AuthenticatedRequest, res: Response, n
 /**
  * 更新当前用户资料
  */
-export const updateCurrentUserProfile = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+export const updateCurrentUserProfile = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -228,7 +232,17 @@ export const updateCurrentUserProfile = async (req: AuthenticatedRequest, res: R
 
     const updateData = req.body;
     // 过滤掉不允许用户自己修改的字段
-    const allowedFields = ['realName', 'nickname', 'bio', 'specialties', 'experienceYears', 'location', 'contactInfo', 'socialLinks', 'avatarUrl'];
+    const allowedFields = [
+      'realName',
+      'nickname',
+      'bio',
+      'specialties',
+      'experienceYears',
+      'location',
+      'contactInfo',
+      'socialLinks',
+      'avatarUrl',
+    ];
     const filteredData = Object.keys(updateData)
       .filter(key => allowedFields.includes(key))
       .reduce((obj: any, key) => {
@@ -247,7 +261,11 @@ export const updateCurrentUserProfile = async (req: AuthenticatedRequest, res: R
 /**
  * 发布/取消发布当前用户资料
  */
-export const toggleCurrentUserProfilePublish = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+export const toggleCurrentUserProfilePublish = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const userId = req.user?.id;
     if (!userId) {

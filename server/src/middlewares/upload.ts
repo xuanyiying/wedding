@@ -125,24 +125,27 @@ export const uploadWithTimeout = (timeoutMs: number = config.upload.timeout) => 
 };
 
 // 重试机制辅助函数
-export const createRetryHandler = (maxAttempts: number = config.upload.retryAttempts, delay: number = config.upload.retryDelay) => {
+export const createRetryHandler = (
+  maxAttempts: number = config.upload.retryAttempts,
+  delay: number = config.upload.retryDelay,
+) => {
   return async (operation: () => Promise<any>, context: string = 'operation'): Promise<any> => {
     let lastError: Error;
-    
+
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         return await operation();
       } catch (error) {
         lastError = error as Error;
         console.warn(`${context} 第 ${attempt} 次尝试失败:`, error);
-        
+
         if (attempt < maxAttempts) {
           console.log(`等待 ${delay}ms 后重试...`);
           await new Promise(resolve => setTimeout(resolve, delay * attempt)); // 指数退避
         }
       }
     }
-    
+
     console.error(`${context} 在 ${maxAttempts} 次尝试后仍然失败`);
     throw lastError!;
   };

@@ -2,7 +2,6 @@ import { Model, DataTypes, Sequelize, Optional } from 'sequelize';
 import User from './User';
 import { WorkType, WorkCategory, WorkStatus } from '../types';
 
-
 // Work attributes interface
 export interface WorkAttributes {
   id: string;

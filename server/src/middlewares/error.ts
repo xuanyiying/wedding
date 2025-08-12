@@ -331,7 +331,7 @@ function buildErrorResponse(appError: AppError): {
 
   // 优化错误消息，提供更友好的提示
   let responseMessage = appError.isOperational ? appError.message : 'Internal server error';
-  
+
   // 针对常见错误提供更友好的消息
   if (responseMessage.includes('无权限操作此作品')) {
     responseMessage = '您没有权限操作此作品，请确认您是作品的创建者或拥有相应权限';

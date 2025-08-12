@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Select, DatePicker, Button } from 'antd';
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
-import { Dayjs } from 'dayjs';
 import { teamService } from '../../services';
 import type { Team, User, TeamMember } from '../../types';
 import { useAppSelector } from '../../store/hooks';
 import styled from 'styled-components';
+import type { Dayjs } from 'dayjs';
 
 const { Option } = Select;
 
@@ -111,9 +111,10 @@ const QueryBarContainer = styled.div`
 `;
 
 export interface QueryFilters {
+  search?: string;
   teamId?: string;
-  memberId?: string;
-  date?: Dayjs;
+  userId?: string;
+  date?: Dayjs | null;
   mealType?: 'lunch' | 'dinner'; // 仅用于档期页面
 }
 
@@ -247,8 +248,8 @@ const QueryBar: React.FC<QueryBarProps> = ({
           <div className="query-item">
           <Select
             placeholder="选择成员"
-            value={filters.memberId}
-            onChange={(value) => handleFilterChange('memberId', value)}
+            value={filters.userId}
+            onChange={(value) => handleFilterChange('userId', value)}
             loading={loadingMembers}
             disabled={!filters.teamId}
             allowClear

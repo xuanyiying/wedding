@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import ContactForm from '../../components/client/ContactForm';
 
 const { Title, Paragraph } = Typography;
-
+import { useSiteSettings } from '../../hooks/useSiteSettings';
 const PageContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
@@ -48,14 +48,14 @@ const PageTitle = styled(Title)`
 `;
 
 const ContactPage: React.FC = () => {
-
+const { settings} = useSiteSettings();
 
   return (
     <PageContainer>
       <PageHeader>
-        <PageTitle level={1}>联系我们</PageTitle>
+        <PageTitle level={1}>{settings?.homepageSections?.contact?.title || '联系我们'}</PageTitle>
         <Paragraph style={{ fontSize: '1.1rem', color: 'var(--client-text-secondary)', maxWidth: 600, margin: '0 auto' }}>
-          我们期待为您的特殊时刻提供专业的主持服务。请通过以下方式联系我们，或填写咨询表单。
+          {settings?.homepageSections?.contact?.description || '我们期待为您的特殊时刻提供专业的主持服务。请通过以下方式联系我们，或填写咨询表单。'}
         </Paragraph>
       </PageHeader>
       <ContactForm />

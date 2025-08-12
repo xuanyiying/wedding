@@ -1,11 +1,5 @@
 import { Op, WhereOptions } from 'sequelize';
-import {
-  Work,
-  WorkAttributes,
-  WorkCreationAttributes,
-  WorkLike,
-  User,
-} from '../models';
+import { Work, WorkAttributes, WorkCreationAttributes, WorkLike, User } from '../models';
 import { logger } from '../utils/logger';
 import { WorkType, WorkCategory, WorkStatus } from '../types';
 import { FileService } from './file.service';
@@ -81,13 +75,15 @@ export class WorkService {
         model: User,
         as: 'user',
         attributes: ['id', 'username', 'realName', 'avatarUrl'],
-        include: [{
-          model: require('../models').TeamMember,
-          as: 'teamMemberships',
-          where: { teamId },
-          required: true,
-          attributes: [],
-        }],
+        include: [
+          {
+            model: require('../models').TeamMember,
+            as: 'teamMemberships',
+            where: { teamId },
+            required: true,
+            attributes: [],
+          },
+        ],
         required: true,
       });
     }
@@ -136,13 +132,15 @@ export class WorkService {
 
     const { count, rows } = await Work.findAndCountAll({
       where,
-      include: teamId ? include : [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'username', 'realName', 'avatarUrl'],
-        },
-      ],
+      include: teamId
+        ? include
+        : [
+            {
+              model: User,
+              as: 'user',
+              attributes: ['id', 'username', 'realName', 'avatarUrl'],
+            },
+          ],
       order: [[sortBy, sortOrder]],
       limit: pageSize,
       offset,
@@ -216,14 +214,14 @@ export class WorkService {
       if (data.contentUrls && data.contentUrls.length > 0) {
         const videoUrl = data.contentUrls[0];
         try {
-          if (!data.userId ) {
+          if (!data.userId) {
             throw new Error('用户ID不能为空');
-          } 
+          }
           if (!videoUrl) {
             throw new Error('请上传视频文件');
           }
           const coverUrl = await FileService.generateVideoCover(videoUrl, data.userId);
-            data.coverUrl = coverUrl;
+          data.coverUrl = coverUrl;
         } catch (error) {
           logger.error('生成视频封面失败:', error);
           // 可以选择抛出错误，或者允许在没有封面的情况下创建
@@ -256,7 +254,7 @@ export class WorkService {
     }
 
     // 检查权限
-    if (work.userId !== currentUserId ) {
+    if (work.userId !== currentUserId) {
       throw new Error('无权限操作此作品');
     }
 
@@ -440,10 +438,10 @@ export class WorkService {
    */
   static async getFeaturedWorks(limit = 10) {
     const works = await Work.findAll({
-        where: {
-          status: WorkStatus.PUBLISHED,
-          isFeatured: true,
-        },
+      where: {
+        status: WorkStatus.PUBLISHED,
+        isFeatured: true,
+      },
       include: [
         {
           model: User,
@@ -528,8 +526,8 @@ export class WorkService {
     const offset = (page - 1) * pageSize;
 
     const where: WhereOptions = {
-        status: WorkStatus.PUBLISHED,
-      };
+      status: WorkStatus.PUBLISHED,
+    };
 
     if (type) {
       where.type = type;

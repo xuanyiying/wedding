@@ -97,27 +97,27 @@ export class JWTUtils {
         tokenLength: token.length,
         tokenPreview: `${token.substring(0, 20)}...`,
         secretExists: !!config.jwt.secret,
-        secretLength: config.jwt.secret ? config.jwt.secret.length : 0
+        secretLength: config.jwt.secret ? config.jwt.secret.length : 0,
       });
-      
+
       const payload = jwt.verify(token, config.jwt.secret, {
         issuer: 'wedding-club',
         audience: 'wedding-club-users',
       }) as object;
-      
+
       console.log('✅ JWT验证成功:', payload);
-      
+
       return payload;
     } catch (error: any) {
       console.error('❌ JWT验证失败:', {
         errorName: error.name,
         errorMessage: error.message,
         tokenLength: token.length,
-        tokenPreview: `${token.substring(0, 20)}...`
+        tokenPreview: `${token.substring(0, 20)}...`,
       });
-      
+
       logger.warn('Invalid access token', { error: (error as Error).message });
-      
+
       // 直接抛出原始的JWT错误，让全局错误处理中间件正确识别错误类型
       throw error;
     }
@@ -132,7 +132,7 @@ export class JWTUtils {
       }) as object;
     } catch (error: any) {
       logger.warn('Invalid refresh token', { error: (error as Error).message });
-      
+
       // 直接抛出原始的JWT错误，让全局错误处理中间件正确识别错误类型
       throw error;
     }

@@ -233,7 +233,7 @@ export const initUserProfile = (sequelize: Sequelize): void => {
           fields: ['created_at'],
         },
       ],
-    }
+    },
   );
 };
 

@@ -7,6 +7,7 @@ import QueryBar, { type QueryFilters } from '../../components/common/QueryBar';
 import TeamMemberCard from '../../components/client/TeamMemberCard';
 import TeamMemberDetailModal from '../../components/client/TeamMemberDetailModal';
 import type { ClientTeamMember } from '../../hooks/useTeamData';
+import { useSiteSettings } from '../../hooks';
 
 const { Title, Paragraph } = Typography;
 
@@ -65,7 +66,7 @@ const SchedulePage: React.FC = () => {
   const [selectedMember, setSelectedMember] = useState<ClientTeamMember | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+  const { settings} = useSiteSettings();
 
   const { teamMembers } = useTeamData({
     includeMembers: true,
@@ -77,9 +78,9 @@ const SchedulePage: React.FC = () => {
     setLoading(true);
     try {
       const response = await scheduleService.getSchedules({
-        userId: filters.memberId,
-        startDate: filters.date?.format('YYYY-MM-DD'),
-        endDate: filters.date?.format('YYYY-MM-DD'),
+        userId: filters.userId,
+        startDate: filters.date?.format('YYYY-MM-DD') || undefined,
+        endDate: filters.date?.format('YYYY-MM-DD') || undefined,
         status: 'available',
         page: 1,
         limit: 100,
@@ -123,9 +124,9 @@ const SchedulePage: React.FC = () => {
   return (
     <PageContainer>
       <PageHeader>
-        <PageTitle level={1}>档期查询</PageTitle>
+        <PageTitle level={1}>{settings?.homepageSections?.schedule?.title || '档期查询'}</PageTitle>
         <Paragraph style={{ fontSize: '1.1rem', color: 'var(--client-text-secondary)', maxWidth: 600, margin: '0 auto' }}>
-          查看我们团队的档期安排，选择合适的时间为您的特殊日子预约专业的主持服务。
+          {settings?.homepageSections?.schedule?.description || '查看我们团队的档期安排，选择合适的时间为您的特殊日子预约专业的主持服务。'}
         </Paragraph>
       </PageHeader>
 

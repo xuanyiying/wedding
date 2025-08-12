@@ -1,4 +1,13 @@
-import { EventType, UserRole, NotificationType, UserStatus, Gender, ContactStatus, FileCategory, ConfigCategory } from "../types";
+import {
+  EventType,
+  UserRole,
+  NotificationType,
+  UserStatus,
+  Gender,
+  ContactStatus,
+  FileCategory,
+  ConfigCategory,
+} from '../types';
 // 统计数据类型
 export interface Statistics {
   totalUsers: number;
@@ -63,7 +72,7 @@ export interface SearchQuery {
 }
 
 import { Request } from 'express';
- // 扩展的 Express Request 类型
+// 扩展的 Express Request 类型
 export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
@@ -174,7 +183,6 @@ export interface Contact {
   updatedAt: Date;
 }
 
-
 // 文件上传类型
 export interface UploadedFile {
   id: string;
@@ -189,7 +197,6 @@ export interface UploadedFile {
   isPublic: boolean;
   createdAt: Date;
 }
-
 
 // 系统配置类型
 export interface SystemConfig {

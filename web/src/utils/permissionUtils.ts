@@ -1,5 +1,5 @@
 import { AuthChecker, PERMISSIONS } from './auth';
-import type { UserRole } from '../types';
+import { UserRole } from '../types';
 
 /**
  * 权限工具函数
@@ -146,10 +146,11 @@ export class PermissionUtils {
     const userRole = AuthChecker.getCurrentUserRole();
     
     switch (userRole) {
-      case 'super_admin':
-      case 'admin':
+      case UserRole.SUPER_ADMIN:
         return '/admin/dashboard';
-      case 'user':
+      case UserRole.ADMIN:
+        return '/admin/dashboard';
+      case UserRole.USER:
         return '/dashboard';
       default:
         return '/works'; // 访客默认查看作品页面
@@ -229,9 +230,9 @@ export class PermissionUtils {
    */
   static getRoleDisplayName(role: UserRole): string {
     const roleNames: Record<UserRole, string> = {
-      super_admin: '超级管理员',
       admin: '管理员',
       user: '普通用户',
+      super_admin: '超级管理员',
     };
     
     return roleNames[role] || '未知角色';

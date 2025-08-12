@@ -6,6 +6,7 @@ import { type Team } from '../../types';
 import TeamList from '../../components/client/TeamList';
 import TeamMemberList from '../../components/client/TeamMemberList';
 import TeamMemberDetailModal from '../../components/client/TeamMemberDetailModal';
+import { useSiteSettings } from '../../hooks';
 
 const PageContainer = styled.div`
   max-width: 1200px;
@@ -21,7 +22,7 @@ const TeamPage: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const navigate = useNavigate();
-
+const { settings} = useSiteSettings();
   const { teamMembers, loading: membersLoading } = useTeamData({
     teamId: selectedTeam?.id,
     includeMembers: !!selectedTeam,
@@ -59,8 +60,9 @@ const TeamPage: React.FC = () => {
     <PageContainer>
       {!selectedTeam ? (
         <TeamList 
-          onTeamSelect={handleTeamSelect} 
-        />
+          onTeamSelect={handleTeamSelect}
+          limit={3} title={settings?.homepageSections?.team?.title || ''} 
+          description={settings?.homepageSections?.team?.description || ''}        />
       ) : (
         <TeamMemberList 
           team={selectedTeam} 

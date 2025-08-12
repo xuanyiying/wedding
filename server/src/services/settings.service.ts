@@ -1,11 +1,10 @@
-import { SystemConfig} from '../models';
+import { SystemConfig } from '../models';
 import { EmailService } from './email.service';
 import { logger } from '../utils/logger';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { ConfigType } from '../models/SystemConfig';
-
 
 export class SettingsService {
   /**
@@ -14,38 +13,62 @@ export class SettingsService {
   static async getSettings() {
     try {
       const configs = await SystemConfig.findAll({
-        order: [['category', 'ASC'], ['sortOrder', 'ASC']],
+        order: [
+          ['category', 'ASC'],
+          ['sortOrder', 'ASC'],
+        ],
       });
 
       const settings: any = {
         site: {},
+        siteTheme: {},
         email: {},
-        security: {},
-        system: {},
-        theme: {},
+        seo: {},
+        homepageSections: {},
+        contactEmail: '',
+        contactPhone: '',
       };
 
-      configs.forEach((config) => {
-        const category = config.category;
-        if (settings[category]) {
-          let value = config.configValue || config.defaultValue;
-          
-          // 根据类型转换值
-          if (config.configType === ConfigType.BOOLEAN) {
-            value = (value === 'true' || value === '1').toString();
-          } else if (config.configType === ConfigType.NUMBER) {
-            value = Number(value).toString();
-          } else if (config.configType === ConfigType.JSON) {
-            try {
-              value = JSON.parse(value || '{}');
-            } catch {
-              value = '{}';
-            }
+      configs.forEach(config => {
+        const configKey = config.configKey;
+        let value: any = config.configValue || config.defaultValue;
+
+        // 对JSON类型的配置进行解析
+        if (config.configType === ConfigType.JSON) {
+          try {
+            value = JSON.parse(value || '{}');
+          } catch {
+            value = {};
           }
-          
-          // 转换配置键为驼峰命名
-          const camelKey = config.configKey.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-          settings[category][camelKey] = value;
+        } else if (config.configType === ConfigType.BOOLEAN) {
+          value = value === 'true' || value === '1';
+        } else if (config.configType === ConfigType.NUMBER) {
+          value = Number(value);
+        }
+
+        // 根据配置键映射到对应的结构
+        switch (configKey) {
+          case 'site':
+            settings.site = value;
+            break;
+          case 'siteTheme':
+            settings.siteTheme = value;
+            break;
+          case 'email':
+            settings.email = value;
+            break;
+          case 'seo':
+            settings.seo = value;
+            break;
+          case 'homepageSections':
+            settings.homepageSections = value;
+            break;
+          case 'contactEmail':
+            settings.contactEmail = value;
+            break;
+          case 'contactPhone':
+            settings.contactPhone = value;
+            break;
         }
       });
 
@@ -61,54 +84,84 @@ export class SettingsService {
    */
   static async updateSiteSettings(siteSettings: any) {
     try {
-      const updates = [
-        { key: 'site_name', value: siteSettings.siteName, type: ConfigType.STRING },
-        { key: 'site_description', value: siteSettings.siteDescription, type: ConfigType.TEXT },
-        { key: 'contact_email', value: siteSettings.contactEmail, type: ConfigType.STRING },
-        { key: 'contact_phone', value: siteSettings.contactPhone, type: ConfigType.STRING },
-        { key: 'site_logo', value: siteSettings.siteLogo, type: ConfigType.STRING },
-        { key: 'site_favicon', value: siteSettings.siteFavicon, type: ConfigType.STRING },
-        { key: 'homepage_background_image', value: siteSettings.homepageBackgroundImage, type: ConfigType.STRING },
-        { key: 'seo_title', value: siteSettings.seoTitle, type: ConfigType.STRING },
-        { key: 'seo_description', value: siteSettings.seoDescription, type: ConfigType.TEXT },
-        { key: 'seo_keywords', value: siteSettings.seoKeywords, type: ConfigType.STRING },
-        { key: 'primary_color', value: siteSettings.primaryColor?.toString() || '', type: ConfigType.STRING },
-        { key: 'border_radius', value: siteSettings.borderRadius?.toString(), type: ConfigType.NUMBER },
-        { key: 'compact_mode', value: siteSettings.compactMode?.toString(), type: ConfigType.BOOLEAN },
-        { key: 'dark_mode', value: siteSettings.darkMode?.toString(), type: ConfigType.BOOLEAN },
-        { key: 'font_size', value: siteSettings.fontSize?.toString(), type: ConfigType.NUMBER },
-        { key: 'client_theme_variant', value: siteSettings.clientThemeVariant, type: ConfigType.STRING },
-      ];
+      const updates = [];
+
+      // 更新site配置
+      if (siteSettings.site) {
+        updates.push({
+          key: 'site',
+          value: JSON.stringify(siteSettings.site),
+          type: ConfigType.JSON,
+          category: 'site',
+        });
+      }
+
+      // 更新siteTheme配置
+      if (siteSettings.siteTheme) {
+        updates.push({
+          key: 'siteTheme',
+          value: JSON.stringify(siteSettings.siteTheme),
+          type: ConfigType.JSON,
+          category: 'site',
+        });
+      }
+
+      // 更新email配置
+      if (siteSettings.email) {
+        updates.push({
+          key: 'email',
+          value: JSON.stringify(siteSettings.email),
+          type: ConfigType.JSON,
+          category: 'email',
+        });
+      }
+
+      // 更新seo配置
+      if (siteSettings.seo) {
+        updates.push({
+          key: 'seo',
+          value: JSON.stringify(siteSettings.seo),
+          type: ConfigType.JSON,
+          category: 'seo',
+        });
+      }
+
+      // 更新homepageSections配置
+      if (siteSettings.homepageSections) {
+        updates.push({
+          key: 'homepageSections',
+          value: JSON.stringify(siteSettings.homepageSections),
+          type: ConfigType.JSON,
+          category: 'site',
+        });
+      }
+
+      // 更新联系信息
+      if (siteSettings.contactEmail) {
+        updates.push({
+          key: 'contactEmail',
+          value: siteSettings.contactEmail,
+          type: ConfigType.STRING,
+          category: 'site',
+        });
+      }
+
+      if (siteSettings.contactPhone) {
+        updates.push({
+          key: 'contactPhone',
+          value: siteSettings.contactPhone,
+          type: ConfigType.STRING,
+          category: 'site',
+        });
+      }
 
       for (const update of updates) {
         if (update.value !== undefined && update.value !== null) {
-          await this.updateOrCreateConfig(update.key, update.value, update.type, 'theme');
+          await this.updateOrCreateConfig(update.key, update.value, update.type, update.category);
         }
       }
     } catch (error) {
       logger.error('更新网站设置失败:', error);
-      throw error;
-    }
-  }
-
-  static async updateHomepageSections(homepageSections: any) {
-    try {
-      for (const sectionKey in homepageSections) {
-        const section = homepageSections[sectionKey];
-        const updates = [
-          { key: `${sectionKey}_title`, value: section.title, type: ConfigType.STRING },
-          { key: `${sectionKey}_description`, value: section.description, type: ConfigType.TEXT },
-          { key: `${sectionKey}_visible`, value: section.visible?.toString(), type: ConfigType.BOOLEAN },
-        ];
-
-        for (const update of updates) {
-          if (update.value !== undefined && update.value !== null) {
-            await this.updateOrCreateConfig(update.key, update.value, update.type, 'homepage');
-          }
-        }
-      }
-    } catch (error) {
-      logger.error('更新首页配置失败:', error);
       throw error;
     }
   }
@@ -118,19 +171,7 @@ export class SettingsService {
    */
   static async updateEmailSettings(emailSettings: any) {
     try {
-      const updates = [
-        { key: 'smtp_host', value: emailSettings.smtpHost, type: ConfigType.STRING },
-        { key: 'smtp_port', value: emailSettings.smtpPort?.toString(), type: ConfigType.NUMBER },
-        { key: 'smtp_user', value: emailSettings.smtpUser, type: ConfigType.STRING },
-        { key: 'smtp_password', value: emailSettings.smtpPassword, type: ConfigType.STRING },
-        { key: 'smtp_secure', value: emailSettings.smtpSecure?.toString(), type: ConfigType.BOOLEAN },
-        { key: 'email_from', value: emailSettings.emailFrom, type: ConfigType.STRING },
-        { key: 'email_from_name', value: emailSettings.emailFromName, type: ConfigType.STRING },
-      ];
-
-      for (const update of updates) {
-        await this.updateOrCreateConfig(update.key, update.value, update.type, 'email');
-      }
+      await this.updateOrCreateConfig('email', JSON.stringify(emailSettings), ConfigType.JSON, 'email');
     } catch (error) {
       logger.error('更新邮件设置失败:', error);
       throw error;
@@ -143,7 +184,11 @@ export class SettingsService {
   static async updateSecuritySettings(securitySettings: any) {
     try {
       const updates = [
-        { key: 'enable_registration', value: securitySettings.enableRegistration?.toString(), type: ConfigType.BOOLEAN },
+        {
+          key: 'enable_registration',
+          value: securitySettings.enableRegistration?.toString(),
+          type: ConfigType.BOOLEAN,
+        },
         { key: 'enable_captcha', value: securitySettings.enableCaptcha?.toString(), type: ConfigType.BOOLEAN },
         { key: 'session_timeout', value: securitySettings.sessionTimeout?.toString(), type: ConfigType.NUMBER },
         { key: 'max_login_attempts', value: securitySettings.maxLoginAttempts?.toString(), type: ConfigType.NUMBER },
@@ -256,9 +301,9 @@ export class SettingsService {
       });
 
       const config: any = {};
-      configs.forEach((item) => {
+      configs.forEach(item => {
         let value = item.configValue || item.defaultValue;
-        
+
         if (item.configType === ConfigType.BOOLEAN) {
           value = (value === 'true' || value === '1').toString();
         } else if (item.configType === ConfigType.NUMBER) {
@@ -270,7 +315,7 @@ export class SettingsService {
             value = '{}';
           }
         }
-        
+
         config[item.configKey] = value;
       });
 
@@ -298,12 +343,7 @@ export class SettingsService {
   /**
    * 更新或创建配置项
    */
-  private static async updateOrCreateConfig(
-    key: string,
-    value: string,
-    type: ConfigType,
-    category: string,
-  ) {
+  private static async updateOrCreateConfig(key: string, value: string, type: ConfigType, category: string) {
     try {
       const [config] = await SystemConfig.findOrCreate({
         where: { configKey: key },

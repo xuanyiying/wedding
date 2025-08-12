@@ -26,18 +26,18 @@ export const recordView = async (req: Request, res: Response): Promise<void> => 
     }
 
     const recordData: any = {
-       pageType: pageType as 'work' | 'team_member',
-       pageId,
-       visitorIp: req.ip || req.connection.remoteAddress || 'unknown',
-     };
-     
-     const userAgent = req.get('User-Agent');
-     const referer = req.get('Referer');
-     
-     if (userAgent) recordData.userAgent = userAgent;
-     if (referer) recordData.referer = referer;
-     
-     const pageView = await viewService.recordView(recordData);
+      pageType: pageType as 'work' | 'team_member',
+      pageId,
+      visitorIp: req.ip || req.connection.remoteAddress || 'unknown',
+    };
+
+    const userAgent = req.get('User-Agent');
+    const referer = req.get('Referer');
+
+    if (userAgent) recordData.userAgent = userAgent;
+    if (referer) recordData.referer = referer;
+
+    const pageView = await viewService.recordView(recordData);
 
     res.json({
       success: true,
@@ -150,7 +150,7 @@ export const getPopularPages = async (req: Request, res: Response): Promise<void
 
     const popularPages = await viewService.getPopularPages(
       pageType as 'team_member' | 'work',
-      parseInt(limit as string) || 10
+      parseInt(limit as string) || 10,
     );
 
     res.json({
@@ -182,11 +182,7 @@ export const getViewTrends = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const trends = await viewService.getViewStats(
-      pageType,
-      pageId as string,
-      parseInt(days as string) || 30
-    );
+    const trends = await viewService.getViewStats(pageType, pageId as string, parseInt(days as string) || 30);
 
     res.json({
       success: true,
@@ -211,13 +207,13 @@ export const getAdminStats = async (req: Request, res: Response): Promise<void> 
 
     // 获取团队成员页面热门排行
     const popularTeamMembers = await viewService.getPopularPages('team_member', 10);
-    
+
     // 获取作品页面热门排行
     const popularWorks = await viewService.getPopularPages('work', 10);
-    
+
     // 获取最近访问趋势
-     const teamMemberTrends = await viewService.getViewStats('team_member', undefined, daysNum);
-     const workTrends = await viewService.getViewStats('work', undefined, daysNum);
+    const teamMemberTrends = await viewService.getViewStats('team_member', undefined, daysNum);
+    const workTrends = await viewService.getViewStats('work', undefined, daysNum);
 
     res.json({
       success: true,

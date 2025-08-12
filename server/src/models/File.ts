@@ -2,7 +2,6 @@ import { Model, DataTypes, Sequelize, Optional } from 'sequelize';
 import User from './User';
 import { FileType, StorageType, FileCategory } from '../types';
 
-
 // File attributes interface
 export interface FileAttributes {
   id: string;
@@ -35,22 +34,21 @@ export interface FileAttributes {
 export interface FileCreationAttributes
   extends Optional<
     FileAttributes,
-    |
-      'id'
-      | 'width'
-      | 'height'
-      | 'duration'
-      | 'thumbnailUrl'
-      | 'hashMd5'
-      | 'hashSha256'
-      | 'bucketName'
-      | 'isPublic'
-      | 'downloadCount'
-      | 'metadata'
-      | 'createdAt'
-      | 'updatedAt'
-      | 'deletedAt'
-      | 'category'
+    | 'id'
+    | 'width'
+    | 'height'
+    | 'duration'
+    | 'thumbnailUrl'
+    | 'hashMd5'
+    | 'hashSha256'
+    | 'bucketName'
+    | 'isPublic'
+    | 'downloadCount'
+    | 'metadata'
+    | 'createdAt'
+    | 'updatedAt'
+    | 'deletedAt'
+    | 'category'
   > {}
 
 // File model class

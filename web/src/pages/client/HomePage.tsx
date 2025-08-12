@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 
-import { type SiteSettings, type Team } from '../../types';
+import { type Team } from '../../types';
 import HeroSection from '../../components/client/HeroSection';
 import ShowcaseSection from '../../components/client/ShowcaseSection';
 import { useOutletContext } from 'react-router-dom';
@@ -13,7 +13,7 @@ import ScheduleSection from '../../components/ScheduleSection';
 import { useTeamData, type ClientTeamMember } from '../../hooks/useTeamData';
 import TeamList from '../../components/client/TeamList';
 import TeamShowcaseSection from '../../components/client/TeamShowcaseSection';
-import { settingsService } from '../../services';
+import { useSiteSettings } from '../../hooks';
 
 interface OutletContextType {
   setActiveSection: (sectionId: string) => void;
@@ -33,29 +33,16 @@ const HomePage: React.FC = () => {
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedMember, setSelectedMember] = useState<ClientTeamMember | null>(null);
-  const [settings, setSettings] = useState<SiteSettings | null>(null);
+  
+  // 使用站点设置钩子
+  const { settings} = useSiteSettings();
 
-  useTeamData({
+  useTeamData({ 
     teamId: selectedTeam?.id,
     includeMembers: !!selectedTeam,
   });
 
   const { setActiveSection } = useOutletContext<OutletContextType>();
-
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const response = await settingsService.getSettings();
-        if (response.success && response.data) {
-          setSettings(response.data as SiteSettings);
-        }
-      } catch (err) {
-        console.error('获取设置失败:', err);
-      }
-    };
-
-    fetchSettings();
-  }, []);
 
   const handleTeamSelect = (team: Team) => {
     setSelectedTeam(team);

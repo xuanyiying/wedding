@@ -2,6 +2,7 @@ import React from 'react';
 import { Typography } from 'antd';
 import styled from 'styled-components';
 import WorksList from '../../components/client/WorksList';
+import { useSiteSettings } from '../../hooks';
 
 const { Title, Paragraph } = Typography;
 
@@ -48,14 +49,14 @@ const PageTitle = styled(Title)`
 `;
 
 const WorksPage: React.FC = () => {
-
+  const { settings } = useSiteSettings();
 
   return (
     <PageContainer>
       <PageHeader>
-        <PageTitle level={1}>作品展示</PageTitle>
+        <PageTitle level={1}>{settings?.homepageSections?.portfolio?.title || '作品展示'}</PageTitle>
         <Paragraph style={{ fontSize: '1.1rem', color: 'var(--client-text-secondary)', maxWidth: 600, margin: '0 auto' }}>
-          精选婚礼作品集，展示我们为每一对新人打造的独特婚礼体验。每一场婚礼都是一个美丽的故事。
+          {settings?.homepageSections?.portfolio?.description || '精选婚礼作品集，展示我们为每一对新人打造的独特婚礼体验。每一场婚礼都是一个美丽的故事。'}
         </Paragraph>
       </PageHeader>
 

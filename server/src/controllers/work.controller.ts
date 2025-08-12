@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { WorkService } from '../services/work.service';
 import { Resp } from '../utils/response';
 import { logger } from '../utils/logger';
-import {  WorkCategory, WorkStatus, WorkType } from '../types';
+import { WorkCategory, WorkStatus, WorkType } from '../types';
 import { AuthenticatedRequest } from '../interfaces';
 
 /**
@@ -10,7 +10,19 @@ import { AuthenticatedRequest } from '../interfaces';
  */
 export const getWorks = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { page = 1, pageSize = 10, userId, teamId, type, category, status, isFeatured, tags, dateFrom, dateTo } = req.query;
+    const {
+      page = 1,
+      pageSize = 10,
+      userId,
+      teamId,
+      type,
+      category,
+      status,
+      isFeatured,
+      tags,
+      dateFrom,
+      dateTo,
+    } = req.query;
 
     const getWorksParams: any = {
       page: Number(page),

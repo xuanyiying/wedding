@@ -11,151 +11,92 @@ import { generateId } from '../utils/id.generator';
  * SystemConfig初始化数据
  */
 const INITIAL_CONFIGS = [
-  // 网站基本设置
+  // 网站基本设置 - 使用site结构
   {
-    configKey: 'site_name',
-    defaultValue: '婚礼服务平台',
-    configType: ConfigType.STRING,
+    configKey: 'site',
+    defaultValue: JSON.stringify({
+      name: '婚礼服务平台',
+      description: '专业的婚礼策划与服务平台，为您打造完美的婚礼体验',
+      keywords: '婚礼策划,婚礼摄影,婚礼主持,婚礼服务,婚庆公司',
+      logo: '/images/logo.png',
+      favicon: '/images/favicon.ico',
+    }),
+    configType: ConfigType.JSON,
     category: 'site',
-    description: '网站名称',
+    description: '网站基本信息配置',
     isPublic: true,
     isEditable: true,
     sortOrder: 1,
   },
   {
-    configKey: 'site_description',
-    defaultValue: '专业的婚礼策划与服务平台，为您打造完美的婚礼体验',
-    configType: ConfigType.TEXT,
-    category: 'site',
-    description: '网站描述',
-    isPublic: true,
-    isEditable: true,
-    sortOrder: 2,
-  },
-  {
-    configKey: 'contact_email',
+    configKey: 'contactEmail',
     defaultValue: 'contact@wedding.com',
     configType: ConfigType.STRING,
     category: 'site',
     description: '联系邮箱',
     isPublic: true,
     isEditable: true,
-    sortOrder: 3,
+    sortOrder: 2,
   },
   {
-    configKey: 'contact_phone',
+    configKey: 'contactPhone',
     defaultValue: '400-123-4567',
     configType: ConfigType.STRING,
     category: 'site',
     description: '联系电话',
     isPublic: true,
     isEditable: true,
-    sortOrder: 4,
+    sortOrder: 3,
   },
-  {
-    configKey: 'site_logo',
-    defaultValue: '/images/logo.png',
-    configType: ConfigType.STRING,
-    category: 'site',
-    description: '网站Logo',
-    isPublic: true,
-    isEditable: true,
-    sortOrder: 5,
-  },
-  {
-    configKey: 'site_favicon',
-    defaultValue: '/images/favicon.ico',
-    configType: ConfigType.STRING,
-    category: 'site',
-    description: '网站图标',
-    isPublic: true,
-    isEditable: true,
-    sortOrder: 6,
-  },
-  {
-    configKey: 'homepage_background_image',
-    defaultValue: '/images/homepage-bg.jpg',
-    configType: ConfigType.STRING,
-    category: 'site',
-    description: '首页背景图',
-    isPublic: true,
-    isEditable: true,
-    sortOrder: 7,
-  },
-  
-  // SEO设置
-  {
-    configKey: 'seo_title',
-    defaultValue: '婚礼服务平台 - 专业婚礼策划与服务',
-    configType: ConfigType.STRING,
-    category: 'site',
-    description: 'SEO标题',
-    isPublic: true,
-    isEditable: true,
-    sortOrder: 8,
-  },
-  {
-    configKey: 'seo_description',
-    defaultValue: '专业的婚礼策划与服务平台，提供婚礼摄影、婚礼主持、婚礼策划等一站式服务',
-    configType: ConfigType.TEXT,
-    category: 'site',
-    description: 'SEO描述',
-    isPublic: true,
-    isEditable: true,
-    sortOrder: 9,
-  },
-  {
-    configKey: 'seo_keywords',
-    defaultValue: '婚礼策划,婚礼摄影,婚礼主持,婚礼服务,婚庆公司',
-    configType: ConfigType.STRING,
-    category: 'site',
-    description: 'SEO关键词',
-    isPublic: true,
-    isEditable: true,
-    sortOrder: 10,
-  },
-  
-  // 社交媒体设置
-  {
-    configKey: 'social_wechat',
-    defaultValue: '',
-    configType: ConfigType.STRING,
-    category: 'site',
-    description: '微信号',
-    isPublic: true,
-    isEditable: true,
-    sortOrder: 11,
-  },
-  {
-    configKey: 'social_weibo',
-    defaultValue: '',
-    configType: ConfigType.STRING,
-    category: 'site',
-    description: '微博地址',
-    isPublic: true,
-    isEditable: true,
-    sortOrder: 12,
-  },
-  {
-    configKey: 'social_instagram',
-    defaultValue: '',
-    configType: ConfigType.STRING,
-    category: 'site',
-    description: 'Instagram地址',
-    isPublic: true,
-    isEditable: true,
-    sortOrder: 13,
-  },
-  
+
   // 首页版块设置
   {
-    configKey: 'homepage_sections',
+    configKey: 'homepageSections',
     defaultValue: JSON.stringify({
-      hero: { enabled: true, title: '完美婚礼，从这里开始', subtitle: '专业团队为您打造梦想中的婚礼' },
-      services: { enabled: true, title: '我们的服务' },
-      portfolio: { enabled: true, title: '精选作品' },
-      testimonials: { enabled: true, title: '客户评价' },
-      contact: { enabled: true, title: '联系我们' }
+      hero: {
+        backgroundImage: '/images/hero-bg.jpg',
+        visible: true,
+        title: '完美婚礼，从这里开始',
+        description: '专业团队为您打造梦想中的婚礼',
+        ctaText: '立即咨询',
+        ctaLink: '/contact',
+      },
+      team: {
+        visible: true,
+        title: '专业团队',
+        subtitle: '经验丰富的婚礼策划师',
+        description: '专业团队为您打造梦想中的婚礼',
+      },
+      teamShowcase: {
+        visible: true,
+        title: '团队风采',
+        subtitle: '展示我们的专业实力',
+        description: '查看我们团队的精彩瞬间',
+      },
+      portfolio: {
+        visible: true,
+        title: '精选作品',
+        subtitle: '见证每一个美好时刻',
+        description: '浏览我们的婚礼摄影作品集',
+      },
+      schedule: {
+        visible: true,
+        title: '档期查询',
+        subtitle: '查询可预约的主持人',
+        description: '查询可预约的主持人',
+      },
+      contact: {
+        visible: true,
+        title: '联系我们',
+        subtitle: '随时为您提供咨询',
+        description: '多种方式联系我们的团队',
+        address: '北京市朝阳区婚礼大厦',
+        phone: '400-123-4567',
+        email: 'contact@wedding.com',
+        wechat: 'wedding_service',
+        xiaohongshu: 'wedding_xiaohongshu',
+        douyin: 'wedding_douyin',
+      },
     }),
     configType: ConfigType.JSON,
     category: 'site',
@@ -164,141 +105,54 @@ const INITIAL_CONFIGS = [
     isEditable: true,
     sortOrder: 14,
   },
-  
-  // 主题设置
+
+  // 主题设置 - 使用siteTheme结构
   {
-    configKey: 'primary_color',
-    defaultValue: '#FFFFFF',
-    configType: ConfigType.STRING,
+    configKey: 'siteTheme',
+    defaultValue: JSON.stringify({
+      colors: {
+        primary: '#1890ff',
+        secondary: '#52c41a',
+        background: '#ffffff',
+        text: '#000000',
+      },
+      fonts: {
+        primary: 'Arial, sans-serif',
+        secondary: 'Georgia, serif',
+      },
+      spacing: {
+        containerPadding: '20px',
+        sectionPadding: '40px',
+      },
+    }),
+    configType: ConfigType.JSON,
     category: 'theme',
-    description: '主色调',
+    description: '网站主题配置',
     isPublic: true,
     isEditable: true,
     sortOrder: 1,
   },
+
+  // 邮件设置 - 使用email结构
   {
-    configKey: 'border_radius',
-    defaultValue: '8',
-    configType: ConfigType.NUMBER,
-    category: 'theme',
-    description: '圆角大小(px)',
-    isPublic: true,
-    isEditable: true,
-    sortOrder: 2,
-  },
-  {
-    configKey: 'compact_mode',
-    defaultValue: 'false',
-    configType: ConfigType.BOOLEAN,
-    category: 'theme',
-    description: '紧凑模式',
-    isPublic: true,
-    isEditable: true,
-    sortOrder: 3,
-  },
-  {
-    configKey: 'dark_mode',
-    defaultValue: 'false',
-    configType: ConfigType.BOOLEAN,
-    category: 'theme',
-    description: '深色模式',
-    isPublic: true,
-    isEditable: true,
-    sortOrder: 4,
-  },
-  {
-    configKey: 'font_size',
-    defaultValue: '14',
-    configType: ConfigType.NUMBER,
-    category: 'theme',
-    description: '字体大小(px)',
-    isPublic: true,
-    isEditable: true,
-    sortOrder: 5,
-  },
-  {
-    configKey: 'client_theme_variant',
-    defaultValue: 'default',
-    configType: ConfigType.STRING,
-    category: 'theme',
-    description: '客户端主题变体',
-    isPublic: true,
-    isEditable: true,
-    sortOrder: 6,
-  },
-  
-  // 邮件设置
-  {
-    configKey: 'smtp_host',
-    defaultValue: 'smtp.gmail.com',
-    configType: ConfigType.STRING,
+    configKey: 'email',
+    defaultValue: JSON.stringify({
+      smtpHost: 'smtp.gmail.com',
+      smtpPort: 587,
+      smtpUser: '',
+      smtpPassword: '',
+      smtpSecure: true,
+      emailFrom: 'noreply@wedding.com',
+      emailFromName: '婚礼服务平台',
+    }),
+    configType: ConfigType.JSON,
     category: 'email',
-    description: 'SMTP服务器地址',
+    description: '邮件服务配置',
     isPublic: false,
     isEditable: true,
     sortOrder: 1,
   },
-  {
-    configKey: 'smtp_port',
-    defaultValue: '587',
-    configType: ConfigType.NUMBER,
-    category: 'email',
-    description: 'SMTP端口',
-    isPublic: false,
-    isEditable: true,
-    sortOrder: 2,
-  },
-  {
-    configKey: 'smtp_user',
-    defaultValue: '',
-    configType: ConfigType.STRING,
-    category: 'email',
-    description: 'SMTP用户名',
-    isPublic: false,
-    isEditable: true,
-    sortOrder: 3,
-  },
-  {
-    configKey: 'smtp_password',
-    defaultValue: '',
-    configType: ConfigType.STRING,
-    category: 'email',
-    description: 'SMTP密码',
-    isPublic: false,
-    isEditable: true,
-    sortOrder: 4,
-  },
-  {
-    configKey: 'smtp_secure',
-    defaultValue: 'true',
-    configType: ConfigType.BOOLEAN,
-    category: 'email',
-    description: '启用SSL/TLS',
-    isPublic: false,
-    isEditable: true,
-    sortOrder: 5,
-  },
-  {
-    configKey: 'email_from',
-    defaultValue: 'noreply@wedding.com',
-    configType: ConfigType.STRING,
-    category: 'email',
-    description: '发件人邮箱',
-    isPublic: false,
-    isEditable: true,
-    sortOrder: 6,
-  },
-  {
-    configKey: 'email_from_name',
-    defaultValue: '婚礼服务平台',
-    configType: ConfigType.STRING,
-    category: 'email',
-    description: '发件人名称',
-    isPublic: false,
-    isEditable: true,
-    sortOrder: 7,
-  },
-  
+
   // 安全设置
   {
     configKey: 'enable_registration',
@@ -357,7 +211,7 @@ const INITIAL_CONFIGS = [
       requireUppercase: true,
       requireLowercase: true,
       requireNumbers: true,
-      requireSpecialChars: false
+      requireSpecialChars: false,
     }),
     configType: ConfigType.JSON,
     category: 'security',
@@ -366,7 +220,7 @@ const INITIAL_CONFIGS = [
     isEditable: true,
     sortOrder: 6,
   },
-  
+
   // 系统设置
   {
     configKey: 'system_version',
@@ -418,14 +272,31 @@ const INITIAL_CONFIGS = [
     isEditable: true,
     sortOrder: 5,
   },
+
+  // SEO设置 - 使用seo结构
+  {
+    configKey: 'seo',
+    defaultValue: JSON.stringify({
+      title: '婚礼服务平台 - 专业婚礼策划与服务',
+      description: '专业的婚礼策划与服务平台，提供婚礼摄影、婚礼主持、婚礼策划等一站式服务',
+      keywords: '婚礼策划,婚礼摄影,婚礼主持,婚礼服务,婚庆公司',
+      ogImage: '/images/og-image.jpg',
+      twitterCard: 'summary_large_image',
+    }),
+    configType: ConfigType.JSON,
+    category: 'seo',
+    description: 'SEO优化配置',
+    isPublic: true,
+    isEditable: true,
+    sortOrder: 1,
+  },
 ];
 
 /**
  * SystemConfig初始化器
  */
 export class SystemConfigInitializer {
-  constructor(_sequelize: Sequelize) {
-  }
+  constructor(_sequelize: Sequelize) {}
 
   /**
    * 初始化SystemConfig数据
@@ -458,7 +329,7 @@ export class SystemConfigInitializer {
       // 批量插入配置数据
       await SystemConfig.bulkCreate(configs);
       logger.info(`成功插入 ${configs.length} 条SystemConfig数据`);
-      
+
       logger.info('SystemConfig数据初始化完成');
     } catch (error) {
       logger.error('SystemConfig数据初始化失败:', error);

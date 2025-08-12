@@ -23,7 +23,7 @@ router.post(
     body('requirements').optional().isString().withMessage('特殊要求必须是字符串'),
   ],
   handleValidationErrors,
-  contactController.submitContact
+  contactController.submitContact,
 );
 
 // 获取联系表单列表（管理员）
@@ -39,16 +39,11 @@ router.get(
     query('endDate').optional().isISO8601().withMessage('结束日期格式不正确'),
   ],
   handleValidationErrors,
-  contactController.getContacts
+  contactController.getContacts,
 );
 
 // 获取单个联系表单详情（管理员）
-router.get(
-  '/:id',
-  authMiddleware,
-  requireAdmin,
-  contactController.getContact
-);
+router.get('/:id', authMiddleware, requireAdmin, contactController.getContact);
 
 // 更新联系表单状态（管理员）
 router.put(
@@ -60,16 +55,11 @@ router.put(
     body('notes').optional().isString().withMessage('备注必须是字符串'),
   ],
   handleValidationErrors,
-  contactController.updateContactStatus
+  contactController.updateContactStatus,
 );
 
 // 删除联系表单（管理员）
-router.delete(
-  '/:id',
-  authMiddleware,
-  requireAdmin,
-  contactController.deleteContact
-);
+router.delete('/:id', authMiddleware, requireAdmin, contactController.deleteContact);
 
 // 批量删除联系表单（管理员）
 router.delete(
@@ -81,7 +71,7 @@ router.delete(
     body('ids.*').isUUID().withMessage('联系表单ID格式不正确'),
   ],
   handleValidationErrors,
-  contactController.batchDeleteContacts
+  contactController.batchDeleteContacts,
 );
 
 // 获取联系表单统计（管理员）
@@ -94,7 +84,7 @@ router.get(
     query('endDate').optional().isISO8601().withMessage('结束日期格式不正确'),
   ],
   handleValidationErrors,
-  contactController.getContactStats
+  contactController.getContactStats,
 );
 
 export default router;

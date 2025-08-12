@@ -68,18 +68,18 @@ export const authMiddleware = async (req: Request, _: Response, next: NextFuncti
       headers: {
         authorization: req.headers.authorization ? `${req.headers.authorization.substring(0, 20)}...` : 'undefined',
         'content-type': req.headers['content-type'],
-        'user-agent': req.headers['user-agent']
-      }
+        'user-agent': req.headers['user-agent'],
+      },
     });
-    
+
     // 提取 token
     const token = extractTokenFromHeader(req);
-    
+
     console.log('🔑 Token提取结果:', {
       hasToken: !!token,
       tokenType: typeof token,
       tokenLength: token ? token.length : 0,
-      tokenPreview: token ? `${token.substring(0, 20)}...` : 'null'
+      tokenPreview: token ? `${token.substring(0, 20)}...` : 'null',
     });
 
     if (!token) {
@@ -90,7 +90,7 @@ export const authMiddleware = async (req: Request, _: Response, next: NextFuncti
     // 检查 token 是否在黑名单中
     const isBlacklisted = await isTokenBlacklisted(token);
     console.log('🚫 黑名单检查:', { isBlacklisted });
-    
+
     if (isBlacklisted) {
       console.error('❌ 认证失败: token已被撤销');
       throw new AuthenticationError('Token has been revoked');
@@ -99,7 +99,7 @@ export const authMiddleware = async (req: Request, _: Response, next: NextFuncti
     // 验证 token
     console.log('🔍 开始验证token...');
     const payload = JWTUtils.verifyAccessToken(token) as JWTPayload;
-    
+
     console.log('📋 Token载荷:', {
       hasPayload: !!payload,
       payloadKeys: payload ? Object.keys(payload) : [],
@@ -107,21 +107,21 @@ export const authMiddleware = async (req: Request, _: Response, next: NextFuncti
       username: payload?.username,
       role: payload?.role,
       exp: payload?.exp,
-      iat: payload?.iat
+      iat: payload?.iat,
     });
 
     // 检查用户是否仍然存在且状态正常
     console.log('👤 查找用户:', payload.id);
     const user = await UserService.getUserById(payload.id);
-    
+
     console.log('👤 用户查找结果:', {
       userFound: !!user,
       userId: user?.id,
       username: user?.username,
       status: user?.status,
-      role: user?.role
+      role: user?.role,
     });
-    
+
     if (!user || user.status !== UserStatus.ACTIVE) {
       console.error('❌ 认证失败: 用户账户未激活', { userExists: !!user, status: user?.status });
       throw new AuthenticationError('User account is not active');
@@ -134,11 +134,11 @@ export const authMiddleware = async (req: Request, _: Response, next: NextFuncti
       email: payload.email,
       role: payload.role,
     };
-    
+
     console.log('✅ 认证成功:', {
       userId: req.user.id,
       username: req.user.username,
-      role: req.user.role
+      role: req.user.role,
     });
 
     // 记录认证日志
@@ -153,20 +153,19 @@ export const authMiddleware = async (req: Request, _: Response, next: NextFuncti
     console.error('💥 认证中间件错误:', {
       errorName: (error as Error).name,
       errorMessage: (error as Error).message,
-      stack: (error as Error).stack
+      stack: (error as Error).stack,
     });
-    
+
     Logger.security('Authentication failed', {
       ip: req.ip,
       userAgent: req.get('User-Agent'),
       endpoint: `${req.method} ${req.path}`,
       error: (error as Error).message,
     });
-    
+
     next(error);
   }
 };
-
 
 // 角色权限检查中间件工厂
 export const requireRole = (...allowedRoles: UserRole[]) => {
@@ -269,7 +268,6 @@ export const requireIPWhitelist = (allowedIPs: string[]) => {
   };
 };
 
-
 // 刷新令牌验证中间件
 export const verifyRefreshToken = (req: Request, _: Response, next: NextFunction): void => {
   try {
@@ -303,18 +301,18 @@ export const checkAccountStatus = async (req: AuthenticatedRequest, _: Response,
 
     // 这里应该查询数据库检查用户状态
     const user = await UserService.getUserById(req.user.id);
-   
-     if (!user) {
+
+    if (!user) {
       throw new AuthenticationError('User not found');
-   }
-    
+    }
+
     if (user.status === UserStatus.SUSPENDED) {
       throw new AuthorizationError('Account has been suspended');
-     }
-    
-     if (user.status === UserStatus.INACTIVE) {
-       throw new AuthorizationError('Account is inactive');
-  }
+    }
+
+    if (user.status === UserStatus.INACTIVE) {
+      throw new AuthorizationError('Account is inactive');
+    }
 
     next();
   } catch (error) {

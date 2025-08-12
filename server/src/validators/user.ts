@@ -42,7 +42,7 @@ export const createUserSchema = Joi.object({
     .messages({
       'any.only': '用户角色无效',
     }),
-  bio: Joi.string().max(500).optional().allow(''),  
+  bio: Joi.string().max(500).optional().allow(''),
   status: Joi.string()
     .valid(...Object.values(UserStatus))
     .optional()

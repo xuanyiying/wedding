@@ -7,7 +7,7 @@ import { AuthenticatedRequest } from '../interfaces';
 export const getDashboardStats = async (
   req: AuthenticatedRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { startDate, endDate } = req.query;
@@ -29,7 +29,7 @@ export const getDashboardStats = async (
 export const getRecentActivities = async (
   req: AuthenticatedRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { startDate, endDate } = req.query;

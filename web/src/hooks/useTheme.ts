@@ -1,18 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { themeManager, type Theme, type ThemeType, type ThemeMode } from '../styles/themes';
 
 // 主题Hook
 export const useTheme = () => {
-  const [theme, setTheme] = useState<Theme>(themeManager.getCurrentTheme());
-  const [themeType, setThemeType] = useState<ThemeType>(themeManager.getThemeType());
-  const [themeMode, setThemeMode] = useState<ThemeMode>(themeManager.getThemeMode());
+  const [theme] = useState<Theme>(themeManager.getCurrentTheme());
+  const [themeType] = useState<ThemeType>(themeManager.getThemeType());
+  const [themeMode] = useState<ThemeMode>(themeManager.getThemeMode());
 
-  // 主题变化处理函数
-  const handleThemeChange = useCallback((newTheme: Theme) => {
-    setTheme(newTheme);
-    setThemeType(themeManager.getThemeType());
-    setThemeMode(themeManager.getThemeMode());
-  }, []);
+
 
   // 设置主题类型
   const changeThemeType = useCallback((type: ThemeType) => {

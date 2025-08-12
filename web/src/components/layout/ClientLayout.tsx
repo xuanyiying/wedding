@@ -37,7 +37,7 @@ const ClientLayout: React.FC = () => {
           setSiteName(settings.site?.name);
           setLogoUrl(settings.site?.logo);
 
-          if (settings.theme) {
+          if (settings.theme?.colors) {
             initTheme('client', settings.theme.darkMode ? 'dark' : 'light');
             applyThemeSettings(settings.theme);
           } else {

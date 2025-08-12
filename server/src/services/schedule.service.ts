@@ -115,7 +115,6 @@ export class ScheduleService {
    * 创建档期
    */
   static async createSchedule(data: ScheduleCreationAttributes) {
-
     // 检查时间冲突
     const hasConflict = await Schedule.hasConflict(data.userId, new Date(data.weddingDate), data.weddingTime);
 
@@ -240,7 +239,10 @@ export class ScheduleService {
         },
       },
       attributes: ['id', 'title', 'weddingDate', 'weddingTime', 'status', 'eventType'],
-      order: [['weddingDate', 'ASC'], ['weddingTime', 'ASC']],
+      order: [
+        ['weddingDate', 'ASC'],
+        ['weddingTime', 'ASC'],
+      ],
     });
 
     // 按日期分组
@@ -372,7 +374,10 @@ export class ScheduleService {
           [Op.in]: [ScheduleStatus.BOOKED, ScheduleStatus.CONFIRMED],
         },
       },
-      order: [['weddingDate', 'ASC'], ['weddingTime', 'ASC']],
+      order: [
+        ['weddingDate', 'ASC'],
+        ['weddingTime', 'ASC'],
+      ],
       limit,
       attributes: ['id', 'title', 'weddingDate', 'weddingTime', 'status', 'eventType', 'location'],
     });
@@ -387,12 +392,9 @@ export class ScheduleService {
    * 获取客户端档期可用性
    * 根据日期分组显示档期状态
    */
-  static async getClientScheduleAvailability(params: {
-    startDate: string;
-    endDate: string;
-  }) {
+  static async getClientScheduleAvailability(params: { startDate: string; endDate: string }) {
     const { startDate, endDate } = params;
-    
+
     // 获取指定日期范围内的所有档期
     const schedules = await Schedule.findAll({
       where: {
@@ -400,8 +402,8 @@ export class ScheduleService {
           [Op.between]: [new Date(startDate), new Date(endDate)],
         },
         status: {
-           [Op.in]: [ScheduleStatus.CONFIRMED, ScheduleStatus.BOOKED],
-         },
+          [Op.in]: [ScheduleStatus.CONFIRMED, ScheduleStatus.BOOKED],
+        },
       },
       include: [
         {
@@ -414,44 +416,45 @@ export class ScheduleService {
     });
 
     // 获取所有可用的主持人
-     const allHosts = await User.findAll({
-       where: {
-         role: UserRole.USER, // 假设团队成员使用USER角色
-         status: UserStatus.ACTIVE,
-       },
-       attributes: ['id', 'username', 'realName'],
-     });
+    const allHosts = await User.findAll({
+      where: {
+        role: UserRole.USER, // 假设团队成员使用USER角色
+        status: UserStatus.ACTIVE,
+      },
+      attributes: ['id', 'username', 'realName'],
+    });
 
     // 按日期分组处理档期数据
     const dateMap = new Map<string, any>();
-    
+
     // 初始化日期范围
     const start = new Date(startDate);
     const end = new Date(endDate);
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       const dateStr = d.toISOString().split('T')[0];
-      if (dateStr) dateMap.set(dateStr, {
-        date: dateStr,
-        lunch: null,
-        dinner: null,
-        availableHosts: allHosts.length,
-        status: 'available', // available, partial, unavailable
-        message: '充足',
-      });
+      if (dateStr)
+        dateMap.set(dateStr, {
+          date: dateStr,
+          lunch: null,
+          dinner: null,
+          availableHosts: allHosts.length,
+          status: 'available', // available, partial, unavailable
+          message: '充足',
+        });
     }
 
     // 填充已有档期数据
     schedules.forEach(schedule => {
       const dateStr = schedule.weddingDate.toISOString().split('T')[0];
       const dayData = dateStr ? dateMap.get(dateStr) : undefined;
-      
+
       if (dayData) {
         if (schedule.weddingTime === 'lunch') {
           dayData.lunch = schedule;
         } else if (schedule.weddingTime === 'dinner') {
           dayData.dinner = schedule;
         }
-        
+
         // 更新状态和消息
         if (dayData.lunch && dayData.dinner) {
           dayData.status = 'unavailable';
@@ -476,22 +479,18 @@ export class ScheduleService {
     };
   }
 
-  static async getAvailableHosts(params: {
-    weddingDate: Date;
-    weddingTime: WeddingTime;
-    eventType?: EventType;
-  }) {
+  static async getAvailableHosts(params: { weddingDate: Date; weddingTime: WeddingTime; eventType?: EventType }) {
     const { weddingDate, weddingTime, eventType } = params;
 
     // 获取所有活跃的用户（可以是主持人的用户）
-     const allHosts = await User.findAll({
-       where: {
-         status: 'active',
-         // 可以根据实际业务需求过滤特定角色的用户
-         // 这里暂时获取所有活跃用户
-       },
-       attributes: ['id', 'username', 'realName', 'avatarUrl', 'phone', 'email'],
-     });
+    const allHosts = await User.findAll({
+      where: {
+        status: 'active',
+        // 可以根据实际业务需求过滤特定角色的用户
+        // 这里暂时获取所有活跃用户
+      },
+      attributes: ['id', 'username', 'realName', 'avatarUrl', 'phone', 'email'],
+    });
 
     // 查找在指定时间段内有冲突的主持人
     const conflictingSchedules = await Schedule.findAll({

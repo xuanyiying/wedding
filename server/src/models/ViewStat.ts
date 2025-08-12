@@ -18,10 +18,7 @@ export interface ViewStatAttributes {
 // Interface for PageViewStat creation attributes
 export interface ViewStatCreationAttributes extends Optional<ViewStatAttributes, 'id'> {}
 
-class ViewStat
-  extends Model<ViewStatAttributes, ViewStatCreationAttributes>
-  implements ViewStatAttributes
-{
+class ViewStat extends Model<ViewStatAttributes, ViewStatCreationAttributes> implements ViewStatAttributes {
   public id!: string;
   public pageType!: 'team_member' | 'work' | 'homepage';
   public pageId!: string | null;
@@ -65,7 +62,7 @@ class ViewStat
     } else {
       where.pageId = null;
     }
-    
+
     return this.count({ where });
   }
 
@@ -108,12 +105,7 @@ class ViewStat
   }
 
   // Static method to get daily statistics
-  public static async getDailyStats(params: {
-    pageType?: string;
-    pageId?: string;
-    startDate?: Date;
-    endDate?: Date;
-  }) {
+  public static async getDailyStats(params: { pageType?: string; pageId?: string; startDate?: Date; endDate?: Date }) {
     const where: any = {};
     if (params.pageType) where.pageType = params.pageType;
     if (params.pageId) where.pageId = params.pageId;
@@ -225,7 +217,7 @@ export const initViewStat = (sequelize: Sequelize): void => {
         field: 'session_id',
         comment: '会话ID',
       },
-      visitDate: {  
+      visitDate: {
         type: DataTypes.DATEONLY,
         allowNull: false,
         comment: '访问日期',
@@ -243,7 +235,7 @@ export const initViewStat = (sequelize: Sequelize): void => {
         field: 'created_at',
         comment: '创建时间',
       },
-        updatedAt: {
+      updatedAt: {
         type: DataTypes.DATE,
         allowNull: false,
         field: 'updated_at',

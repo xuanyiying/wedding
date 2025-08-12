@@ -310,8 +310,8 @@ export class AuthService {
   static async findUserByUsernameOrEmail(identifier: string): Promise<any> {
     return await User.findOne({
       where: {
-          [Op.or]: [{ username: identifier }, { email: identifier }],
-        },
+        [Op.or]: [{ username: identifier }, { email: identifier }],
+      },
     });
   }
 

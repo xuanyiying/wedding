@@ -3,6 +3,9 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { throttle, getDeviceType } from '../utils';
 import { DEBOUNCE_DELAY } from '../constants';
 
+// 导出站点设置钩子
+export { useSiteSettings } from './useSiteSettings';
+
 /**
  * 防抖Hook
  * @param value 要防抖的值

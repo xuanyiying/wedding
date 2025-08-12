@@ -166,10 +166,6 @@ const getStatusBackground = (status: string) => {
       return 'rgba(82, 196, 26, 0.15)'; // 绿色背景
     case ScheduleStatus.CANCELLED:
       return 'rgba(255, 77, 79, 0.15)';
-    case ScheduleStatus.BUSY:
-      return 'rgba(255, 179, 102, 0.15)';
-    case ScheduleStatus.VACATION:
-      return 'rgba(255, 77, 79, 0.15)';
     default:
       return 'rgba(144, 238, 144, 0.15)';
   }
@@ -190,10 +186,6 @@ const getStatusText = (status: string) => {
       return '已完成';
     case ScheduleStatus.CANCELLED:
       return '已取消';
-    case ScheduleStatus.BUSY:
-      return '忙碌';
-    case ScheduleStatus.VACATION:
-      return '休假';
     default:
       return '未知';
   }

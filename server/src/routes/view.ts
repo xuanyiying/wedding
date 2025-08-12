@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import {
- 
   getPopularPages,
   getViewTrends,
   getAdminStats,

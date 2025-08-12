@@ -58,8 +58,8 @@ const SubmitButton = styled(Button)`
     border-color: var(--primary-main);
     font-size: 16px;
     font-weight: 500;
-    border-radius: var(--border-radius-medium);
-    color: var(--state-inverse);
+    border-radius: var(--client-border-radius-md);
+    color: var(--client-text-primary);
     
     &:hover {
       background: var(--primary-light) !important;

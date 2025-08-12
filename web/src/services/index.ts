@@ -448,16 +448,16 @@ export const settingsService = {
   },
 
   // 更新网站设置
-  updateSiteSettings: (data: Partial<SiteSettings['site']>): Promise<ApiResponse<null>> => {
+  updateSiteSettings: (data: Partial<SiteSettings>): Promise<ApiResponse<null>> => {
     return http.put('/settings/site', data);
   },
 
-  updateHomepageSections: (data: Partial<SiteSettings['homepageSections']>) => {
+  updateHomepageSections: (data: Partial<SiteSettings>) => {
     return http.put('/settings/homepage-sections', data);
   },
 
   // 更新邮件设置
-  updateEmailSettings: (data: Partial<SiteSettings['email']>): Promise<ApiResponse<null>> => {
+  updateEmailSettings: (data: Partial<SiteSettings>): Promise<ApiResponse<null>> => {
     return http.put('/settings/email', data);
   },
 

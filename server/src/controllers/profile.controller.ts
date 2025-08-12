@@ -11,7 +11,7 @@ export class ProfileController {
     try {
       const userId = req.user!.id;
       const profile = await userProfileService.getUserProfileWithMedia(userId);
-      
+
       if (!profile) {
         res.status(404).json({ message: '用户公开资料不存在' });
         return;
@@ -37,9 +37,9 @@ export class ProfileController {
         res.status(400).json({ message: '用户ID参数缺失' });
         return;
       }
-      
+
       const profile = await userProfileService.getUserProfileWithMedia(userId);
-      
+
       if (!profile || !profile.isPublic) {
         res.status(404).json({ message: '用户公开资料不存在或未公开' });
         return;
@@ -85,7 +85,7 @@ export class ProfileController {
 
       // 检查是否已存在公开资料
       let profile = await userProfileService.getUserProfileByUserId(userId);
-      
+
       if (profile) {
         // 更新现有资料
         profile = await userProfileService.updateUserProfile(userId, {
@@ -144,7 +144,7 @@ export class ProfileController {
       const { mediaOrder } = req.body;
 
       const profile = await userProfileService.updateMediaOrder(userId, mediaOrder);
-      
+
       if (!profile) {
         res.status(404).json({ message: '用户公开资料不存在' });
         return;
@@ -176,7 +176,7 @@ export class ProfileController {
       const { workId } = req.body;
 
       const profile = await userProfileService.addWorkToProfile(userId, workId);
-      
+
       if (!profile) {
         res.status(404).json({ message: '用户公开资料不存在' });
         return;
@@ -211,7 +211,7 @@ export class ProfileController {
       }
 
       const profile = await userProfileService.removeWorkFromProfile(userId, workId);
-      
+
       if (!profile) {
         res.status(404).json({ message: '用户公开资料不存在' });
         return;
@@ -243,7 +243,7 @@ export class ProfileController {
       const { fileId } = req.body;
 
       const profile = await userProfileService.addFileToProfile(userId, fileId);
-      
+
       if (!profile) {
         res.status(404).json({ message: '用户公开资料不存在' });
         return;
@@ -278,7 +278,7 @@ export class ProfileController {
       }
 
       const profile = await userProfileService.removeFileFromProfile(userId, fileId);
-      
+
       if (!profile) {
         res.status(404).json({ message: '用户公开资料不存在' });
         return;
@@ -364,7 +364,7 @@ export class ProfileController {
     try {
       const userId = req.user!.id;
       const success = await userProfileService.deleteUserProfile(userId);
-      
+
       if (!success) {
         res.status(404).json({ message: '用户公开资料不存在' });
         return;

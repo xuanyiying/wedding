@@ -184,6 +184,7 @@ const UsersPage: React.FC = () => {
     const roleMap = {
       [UserRole.ADMIN]: { color: 'var(--admin-error-color)', text: '管理员' },
       [UserRole.USER]: { color: 'var(--admin-primary-color)', text: '用户' },
+      [UserRole.SUPER_ADMIN]: { color: 'var(--admin-success-color)', text: '超级管理员' },
     };
     
     const config = roleMap[role];
@@ -632,7 +633,7 @@ const UsersPage: React.FC = () => {
                 name="email"
                 label="邮箱"
                 rules={[
-                  { required: true, message: '请输入邮箱' },
+                  { required: false, message: '请输入邮箱' },
                   { type: 'email', message: '请输入有效的邮箱地址' }
                 ]}
               >

@@ -202,7 +202,7 @@ export const updateFile = async (req: AuthenticatedRequest, res: Response, next:
  */
 export const getFileStats = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const userId = req.user?.id 
+    const userId = req.user?.id;
     if (!userId) {
       const error = new Error('无效的用户ID');
       return next(error);
@@ -245,7 +245,11 @@ export const downloadFile = async (req: Request, res: Response, next: NextFuncti
 /**
  * 生成缩略图
  */
-export const generateThumbnail = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+export const generateThumbnail = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const { id } = req.params;
     const { width, height } = req.query;

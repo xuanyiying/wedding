@@ -20,11 +20,7 @@ router.get(
 );
 
 // 获取档期详情
-router.get(
-  '/:id',
-  validateRequest(scheduleValidators.getScheduleById),
-  ScheduleController.getScheduleById,
-);
+router.get('/:id', validateRequest(scheduleValidators.getScheduleById), ScheduleController.getScheduleById);
 
 // 创建档期
 router.post('/', authMiddleware, validateRequest(scheduleValidators.createSchedule), ScheduleController.createSchedule);

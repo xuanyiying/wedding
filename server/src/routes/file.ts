@@ -55,12 +55,7 @@ router.delete('/:id', authMiddleware, validateRequest(fileValidators.deleteFile)
 router.delete('/batch', authMiddleware, validateRequest(fileValidators.deleteFiles), batchDeleteFiles);
 
 // 获取上传令牌
-router.post(
-  '/upload-token',
-  authMiddleware,
-  validateRequest(fileValidators.getUploadToken),
-  getUploadToken,
-);
+router.post('/upload-token', authMiddleware, validateRequest(fileValidators.getUploadToken), getUploadToken);
 
 // 更新文件信息
 router.put('/:id', authMiddleware, validateRequest(fileValidators.updateFile), updateFile);
@@ -72,12 +67,7 @@ router.get('/stats/overview', getFileStats);
 router.get('/:id/download', validateRequest(fileValidators.downloadFile), downloadFile);
 
 // 生成缩略图
-router.post(
-  '/:id/thumbnail',
-  authMiddleware,
-  validateRequest(fileValidators.generateThumbnail),
-  generateThumbnail,
-);
+router.post('/:id/thumbnail', authMiddleware, validateRequest(fileValidators.generateThumbnail), generateThumbnail);
 
 // 获取用户媒体文件
 router.get('/user/:userId/:type', getUserMedia);

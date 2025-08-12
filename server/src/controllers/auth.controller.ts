@@ -50,7 +50,7 @@ export const register = async (req: Request, res: Response, next: NextFunction):
 export const refreshToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { refreshToken } = req.body;
-    
+
     if (!refreshToken) {
       Resp.unauthorized(res, '缺少刷新令牌');
       return;

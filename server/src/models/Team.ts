@@ -46,7 +46,8 @@ export interface TeamAttributes {
 }
 
 // 创建团队时的可选属性
-export interface TeamCreationAttributes extends Optional<TeamAttributes, 'id' | 'createdAt' | 'updatedAt' | 'isVerified'> {}
+export interface TeamCreationAttributes
+  extends Optional<TeamAttributes, 'id' | 'createdAt' | 'updatedAt' | 'isVerified'> {}
 
 // 团队成员属性接口
 export interface TeamMemberAttributes {
@@ -288,10 +289,7 @@ export class Team extends Model<TeamAttributes, TeamCreationAttributes> implemen
 }
 
 // 团队成员模型类
-class TeamMember
-  extends Model<TeamMemberAttributes, TeamMemberCreationAttributes>
-  implements TeamMemberAttributes
-{
+class TeamMember extends Model<TeamMemberAttributes, TeamMemberCreationAttributes> implements TeamMemberAttributes {
   public id!: string;
   public teamId!: string;
   public userId!: string;
@@ -394,7 +392,6 @@ class TeamMember
     return member ? member.role : null;
   }
 }
-
 
 // 导出TeamMember类
 export { TeamMember };

@@ -9,11 +9,9 @@ const router = Router();
 // 公开路由 - 获取用户档案（通过用户ID）
 router.get(
   '/user/:userId',
-  [
-    param('userId').isMongoId().withMessage('Invalid user ID'),
-  ],
+  [param('userId').isMongoId().withMessage('Invalid user ID')],
   handleValidationErrors,
-  profileController.getUserProfileByUserId
+  profileController.getUserProfileByUserId,
 );
 
 // 公开路由 - 获取公开档案列表
@@ -26,7 +24,7 @@ router.get(
     query('sortOrder').optional().isIn(['asc', 'desc']).withMessage('Sort order must be asc or desc'),
   ],
   handleValidationErrors,
-  profileController.getPublicUserProfiles
+  profileController.getPublicUserProfiles,
 );
 
 // 认证路由 - 获取当前用户档案
@@ -60,7 +58,7 @@ router.put(
     body('contactInfo.address').optional().isString().withMessage('Address must be a string'),
   ],
   handleValidationErrors,
-  profileController.createOrUpdateUserProfile
+  profileController.createOrUpdateUserProfile,
 );
 
 // 认证路由 - 更新媒体排序
@@ -73,51 +71,43 @@ router.put(
     body('mediaOrder.*.id').isMongoId().withMessage('Invalid media ID'),
   ],
   handleValidationErrors,
-  profileController.updateMediaOrder
+  profileController.updateMediaOrder,
 );
 
 // 认证路由 - 添加作品到档案
 router.post(
   '/me/works',
   authMiddleware,
-  [
-    body('workId').isMongoId().withMessage('Invalid work ID'),
-  ],
+  [body('workId').isMongoId().withMessage('Invalid work ID')],
   handleValidationErrors,
-  profileController.addWorkToProfile
+  profileController.addWorkToProfile,
 );
 
 // 认证路由 - 从档案移除作品
 router.delete(
   '/me/works/:workId',
   authMiddleware,
-  [
-    param('workId').isMongoId().withMessage('Invalid work ID'),
-  ],
+  [param('workId').isMongoId().withMessage('Invalid work ID')],
   handleValidationErrors,
-  profileController.removeWorkFromProfile
+  profileController.removeWorkFromProfile,
 );
 
 // 认证路由 - 添加文件到档案
 router.post(
   '/me/files',
   authMiddleware,
-  [
-    body('fileId').isMongoId().withMessage('Invalid file ID'),
-  ],
+  [body('fileId').isMongoId().withMessage('Invalid file ID')],
   handleValidationErrors,
-  profileController.addFileToProfile
+  profileController.addFileToProfile,
 );
 
 // 认证路由 - 从档案移除文件
 router.delete(
   '/me/files/:fileId',
   authMiddleware,
-  [
-    param('fileId').isMongoId().withMessage('Invalid file ID'),
-  ],
+  [param('fileId').isMongoId().withMessage('Invalid file ID')],
   handleValidationErrors,
-  profileController.removeFileFromProfile
+  profileController.removeFileFromProfile,
 );
 
 export default router;

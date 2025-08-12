@@ -6,7 +6,7 @@ import { User } from '../models';
 import { TeamMemberRole, TeamMemberStatus, TeamStatus } from '../types';
 
 export class TeamService {
-  static async getTeamsByUserId(userId: string) : Promise<Team[]> {
+  static async getTeamsByUserId(userId: string): Promise<Team[]> {
     return Team.findAll({
       where: await (async () => {
         const teamMemberIds = await TeamMember.findAll({
@@ -18,10 +18,7 @@ export class TeamService {
         }).then(members => members.map(member => member.teamId));
 
         return {
-          [Op.or]: [
-            { ownerId: userId },
-            { id: { [Op.in]: teamMemberIds } }
-          ]
+          [Op.or]: [{ ownerId: userId }, { id: { [Op.in]: teamMemberIds } }],
         };
       })(),
     });
@@ -42,7 +39,7 @@ export class TeamService {
   }) {
     try {
       const { serviceAreas, specialties, establishedYear, ...otherData } = teamData;
-      
+
       const team = await Team.create({
         ...otherData,
         ...(establishedYear && { establishedAt: new Date(establishedYear, 0, 1) }),
@@ -93,10 +90,7 @@ export class TeamService {
 
       // 搜索条件
       if (search) {
-        where[Op.or] = [
-          { name: { [Op.like]: `%${search}%` } },
-          { description: { [Op.like]: `%${search}%` } },
-        ];
+        where[Op.or] = [{ name: { [Op.like]: `%${search}%` } }, { description: { [Op.like]: `%${search}%` } }];
       }
 
       // 状态筛选
@@ -121,15 +115,15 @@ export class TeamService {
       const teamIds = rows.map(team => team.id);
       const memberCounts = await TeamMember.findAll({
         where: {
-          teamId: { [Op.in]: teamIds }
+          teamId: { [Op.in]: teamIds },
         },
         attributes: [
           'teamId',
           [sequelize.fn('COUNT', sequelize.col('id')), 'memberCount'],
-          [sequelize.fn('COUNT', sequelize.literal('CASE WHEN status = "ACTIVE" THEN 1 END')), 'activeMemberCount']
+          [sequelize.fn('COUNT', sequelize.literal('CASE WHEN status = "ACTIVE" THEN 1 END')), 'activeMemberCount'],
         ],
         group: ['teamId'],
-        raw: true
+        raw: true,
       });
 
       // 创建成员数量映射
@@ -137,7 +131,7 @@ export class TeamService {
       memberCounts.forEach((item: any) => {
         memberCountMap.set(item.teamId, {
           memberCount: parseInt(item.memberCount) || 0,
-          activeMemberCount: parseInt(item.activeMemberCount) || 0
+          activeMemberCount: parseInt(item.activeMemberCount) || 0,
         });
       });
 
@@ -195,18 +189,18 @@ export class TeamService {
       team.memberCount = await TeamMember.count({
         where: {
           teamId: id,
-        }
+        },
       });
       team.rating = await TeamMember.count({
         where: {
           teamId: id,
           status: TeamMemberStatus.ACTIVE,
-        }
+        },
       });
       team.ratingCount = await TeamMember.count({
         where: {
           teamId: id,
-        }
+        },
       });
       // 序列化团队数据，转换JSON字段为数组
       const serializedTeam = {
@@ -231,16 +225,19 @@ export class TeamService {
   /**
    * 更新团队信息
    */
-  static async updateTeam(id: string, teamData: Partial<{
-    name: string;
-    description: string;
-    contactPhone: string;
-    contactEmail: string;
-    address: string;
-    serviceAreas: string[];
-    specialties: string[];
-    status: TeamStatus;
-  }>) {
+  static async updateTeam(
+    id: string,
+    teamData: Partial<{
+      name: string;
+      description: string;
+      contactPhone: string;
+      contactEmail: string;
+      address: string;
+      serviceAreas: string[];
+      specialties: string[];
+      status: TeamStatus;
+    }>,
+  ) {
     try {
       const team = await Team.findByPk(id);
       if (!team) {
@@ -249,7 +246,7 @@ export class TeamService {
 
       const { serviceAreas, specialties, ...otherData } = teamData;
       const updateData: any = { ...otherData };
-      
+
       if (serviceAreas) {
         updateData.serviceAreas = JSON.stringify(serviceAreas);
       }
@@ -408,7 +405,7 @@ export class TeamService {
   }) {
     try {
       const offset = (page - 1) * limit;
-      
+
       // 获取已在团队中的用户ID列表
       const existingMemberIds = await TeamMember.findAll({
         where: { teamId },
@@ -454,15 +451,15 @@ export class TeamService {
   /**
    * 邀请团队成员（支持批量邀请）
    */
-  static async inviteTeamMember(memberData: { 
-    userIds: string[]; 
-    teamId: string; 
+  static async inviteTeamMember(memberData: {
+    userIds: string[];
+    teamId: string;
     role?: TeamMemberRole;
     inviterId: string;
   }) {
     try {
       const { userIds, teamId, role = TeamMemberRole.MEMBER, inviterId } = memberData;
-      
+
       // 验证团队是否存在
       const team = await Team.findByPk(teamId);
       if (!team) {
@@ -473,7 +470,7 @@ export class TeamService {
       const users = await User.findAll({
         where: { id: { [Op.in]: userIds } },
       });
-      
+
       if (users.length !== userIds.length) {
         throw new Error('部分用户不存在');
       }
@@ -499,7 +496,7 @@ export class TeamService {
           status: TeamMemberStatus.ACTIVE,
           inviterId,
           joinedAt: new Date(),
-        }))
+        })),
       );
 
       return members;
