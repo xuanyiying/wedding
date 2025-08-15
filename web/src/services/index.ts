@@ -123,13 +123,23 @@ export const scheduleService = {
   // 获取用户日程列表
   // 根据时间查询可用主持人
   getAvailableHosts: (params: {
+    teamId: string;
     weddingDate: string;
     weddingTime: string;
-  }): Promise<ApiResponse<{
-    users: User[];
-    total: number;
-  }>> => {
+  }): Promise<ApiResponse<{ hosts: User[] , total : number}>> => {
     return http.get('/schedules/available-hosts', { params });
+  },
+
+  // 检查档期冲突
+  checkScheduleConflict: (params: {
+    userId: string;
+    weddingDate: string;
+    weddingTime: string;
+    excludeId?: string;
+  }): Promise<ApiResponse<{
+    conflicts: Schedule[];
+  }>> => {
+    return http.get('/schedules/check-conflict', { params });
   },
 };
 
@@ -522,10 +532,10 @@ export const fileService = {
   },
 
   // 上传单个文件
-  uploadFile: (file: File, data: { type: FileType; category?: string }): Promise<ApiResponse<MediaFile>> => {
+  uploadFile: (file: File, data: { fileType: FileType; category?: string }): Promise<ApiResponse<MediaFile>> => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('type', data.type);
+    formData.append('fileType', data.fileType);
     if (data.category) {
       formData.append('category', data.category);
     }
@@ -533,18 +543,22 @@ export const fileService = {
   },
 
   // 上传多个文件
-  uploadFiles: (files: File[], type: 'image' | 'video' | 'document' = 'image'): Promise<ApiResponse<{
+  uploadFiles: (files: File[], fileType: 'image' | 'video' = 'image', category?: string): Promise<ApiResponse<{
     urls: string[];
     files: Array<{
       url: string;
       filename: string;
       size: number;
-      type: string;
+      fileType: string;
+      category?: string;
     }>;
   }>> => {
     const formData = new FormData();
     files.forEach(file => formData.append('files', file));
-    formData.append('type', type);
+    formData.append('fileType', fileType);
+    if (category) {
+      formData.append('category', category);
+    }
     return http.upload('/files/upload/batch', formData);
   },
 
@@ -554,17 +568,41 @@ export const fileService = {
   },
 };
 export const profileService = {
-  getProfile: (userId: string): Promise<ApiResponse<User>> => {
-    return http.get(`/users/${userId}`);
+  // 用户资料相关（包含用户信息和媒体文件）
+  getUserProfile: (userId: string): Promise<ApiResponse<any>> => {
+    return http.get(`/profile/user/${userId}`);
   },
-  updateProfile: (userId: string, data: any): Promise<ApiResponse<User>> => {
-    return http.put(`/users/${userId}`, data);
+  getPublicUserProfiles: (params?: any): Promise<ApiResponse<any>> => {
+    return http.get('/profile/public', { params });
   },
-  deleteProfile: (userId: string): Promise<ApiResponse<null>> => {
-    return http.delete(`/users/${userId}`);
+  getUserAvailableFiles: (): Promise<ApiResponse<MediaFile[]>> => {
+    return http.get('/profile/available-files');
   },
-  updateMediaOrder: (sortData: { id: string; sortOrder: number }[]): Promise<ApiResponse<boolean>> => {
-    return http.put('/profile/me/media-order', { sortData });
+  
+  // 媒体资料CRUD操作
+  getUserMediaProfiles: (): Promise<ApiResponse<MediaFile[]>> => {
+    return http.get('/profile/media-profiles');
+  },
+  createMediaProfile: (data: any): Promise<ApiResponse<any>> => {
+    return http.post('/profile/media-profiles', data);
+  },
+  batchCreateMediaProfiles: (data: { mediaFiles: MediaFile[] }): Promise<ApiResponse<any>> => {
+    return http.post('/profile/media-profiles/batch', data);
+  },
+  updateSingleMediaProfile: (fileId: string, data: any): Promise<ApiResponse<any>> => {
+    return http.put(`/profile/media-profiles/${fileId}`, data);
+  },
+  updateMediaProfilesOrder: (data: { orderData: { fileId: string; mediaOrder: number }[] }): Promise<ApiResponse<any>> => {
+    return http.put('/profile/media-profiles/order', data);
+  },
+  deleteMediaProfile: (fileId: string): Promise<ApiResponse<any>> => {
+    return http.delete(`/profile/media-profiles/${fileId}`);
+  },
+  batchDeleteMediaProfiles: (fileIds: string[]): Promise<ApiResponse<any>> => {
+    return http.delete('/profile/media-profiles/batch', { data: { fileIds } });
+  },
+  getMediaProfileById: (fileId: string): Promise<ApiResponse<any>> => {
+    return http.get(`/profile/media-profiles/${fileId}`);
   },
 }
 // 导出所有服务

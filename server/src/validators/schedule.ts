@@ -136,6 +136,7 @@ export const scheduleValidators = {
   // 根据时间查询可预订的主持人
   getAvailableHosts: {
     query: Joi.object({
+      teamId: Joi.string().optional(),
       weddingDate: Joi.date().iso().required(),
       weddingTime: Joi.string()
         .valid(...Object.values(WeddingTime))

@@ -7,6 +7,8 @@ import {
   ContactStatus,
   FileCategory,
   ConfigCategory,
+  FileType,
+  StorageType,
 } from '../types';
 // 统计数据类型
 export interface Statistics {
@@ -146,13 +148,13 @@ export interface User {
   avatar?: string;
   role: UserRole;
   status: UserStatus;
-  profile?: UserProfile;
+  profile?: Profile;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;
 }
 
-export interface UserProfile {
+export interface Profile {
   realName?: string;
   gender?: Gender;
   birthday?: Date;
@@ -183,21 +185,6 @@ export interface Contact {
   updatedAt: Date;
 }
 
-// 文件上传类型
-export interface UploadedFile {
-  id: string;
-  originalName: string;
-  filename: string;
-  mimetype: string;
-  size: number;
-  path: string;
-  url: string;
-  uploadedBy: string;
-  category: FileCategory;
-  isPublic: boolean;
-  createdAt: Date;
-}
-
 // 系统配置类型
 export interface SystemConfig {
   id: string;
@@ -205,9 +192,40 @@ export interface SystemConfig {
   value: string;
   description?: string;
   category: ConfigCategory;
-  isPublic: boolean;
+  is: boolean;
   updatedAt: Date;
   updatedBy: string;
+}
+
+export interface UserMediaProfile {
+  userId: string;
+  user?: User;
+  files: MediaFile[];
+}
+
+export interface MediaFile {
+  id?: string;
+  userId?: string;
+  fileId: string;
+  mediaOrder?: number;
+  fileType?: FileType;
+  originalName: string;
+  filename: string;
+  filePath: string;
+  fileUrl: string;
+  fileSize: number;
+  mimeType: string;
+  width: number | null;
+  height: number | null;
+  duration: number | null;
+  thumbnailUrl: string | null;
+  hashMd5: string | null;
+  storageType: StorageType;
+  bucketName: string | null;
+  isPublic: boolean;
+  downloadCount: number | null;
+  metadata: any | null;
+  category: FileCategory;
 }
 
 export { UserRole, UserStatus };

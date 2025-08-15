@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   message,
   Tabs,
@@ -6,29 +6,25 @@ import {
   Space,
   Tag,
   Button,
-  Upload,
   Modal,
-  Image,
-  Popconfirm,
   Switch,
 } from 'antd';
 import {
-  PlusOutlined,
   UserOutlined,
   CalendarOutlined,
-  PlayCircleOutlined,
   PictureOutlined,
-  DeleteOutlined,
-  DragOutlined,
   GlobalOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
-import { userService, fileService, profileService } from '../../services';
+import { userService, profileService } from '../../services';
+
 import { useAppSelector } from '../../store/hooks';
-import type { User } from '../../types';
+import type { MediaFile, User } from '../../types';
 import { formatDate } from '../../utils';
 import ProfileEditForm from '../../components/admin/profile/ProfileEditForm';
 import AvatarUploader from '../../components/AvatarUploader';
+import MediaGallery from '../../components/admin/profile/MediaGallery';
+import { fileService } from '../../services';
 
 const { TabPane } = Tabs;
 
@@ -279,16 +275,16 @@ const PublicProfileContainer = styled.div`
 
 
 const ProfilePage: React.FC = () => {
-  const { user } = useAppSelector((state) => state.auth);
+  const  user  = useAppSelector((state) => state.auth.user);
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState('basic');
-  const [mediaFiles, setMediaFiles] = useState<any[]>([]);
+  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
 
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
   const [saving, setSaving] = useState(false);
   const [isPublicProfilePublished, setIsPublicProfilePublished] = useState(false);
 
@@ -303,18 +299,31 @@ const ProfilePage: React.FC = () => {
       const userData = response.data;
       setCurrentUser(userData ?? null);
       setIsPublicProfilePublished(userData?.isPublic || false);
-      
-      // 加载媒体文件
-      try {
-        const mediaResponse = await fileService.getUserMedia(user.id, 'image');
-        const videoResponse = await fileService.getUserMedia(user.id, 'video');
-        const allMedia = [
-          ...(mediaResponse.data?.mediaFiles || []),
-          ...(videoResponse.data?.mediaFiles || [])
-        ].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-        setMediaFiles(allMedia);
-      } catch (error) {
-        console.error('加载媒体文件失败:', error);
+
+      // 加载媒体资料
+      if (userData?.id) {
+        try {
+          const mediaResponse = await profileService.getUserMediaProfiles();
+          if (mediaResponse.success && mediaResponse.data) {
+            // 转换为MediaFile格式以兼容MediaGallery组件
+            const files = mediaResponse.data.map(media => ({
+              id: media.id!,
+              userId: media.userId,
+              fileId: media.fileId,
+              fileUrl: media.fileUrl,
+              thumbnailUrl: media.thumbnailUrl,
+              fileType: media.fileType,
+              fileName: `media_${media.id}`,
+              fileSize: 0,
+              mediaOrder: media.mediaOrder,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            }));
+            setMediaFiles(files);
+          }
+        } catch (error) {
+          console.error('加载媒体文件失败:', error);
+        }
       }
     } catch (error) {
       message.error('加载用户信息失败');
@@ -325,6 +334,11 @@ const ProfilePage: React.FC = () => {
 
   useEffect(() => {
     loadCurrentUser();
+  }, []);
+
+  // 处理头像变更
+  const handleAvatarChange = useCallback((url: string) => {
+    setCurrentUser((prev) => (prev ? { ...prev, avatarUrl: url } : null));
   }, []);
 
   // 处理基本信息保存
@@ -345,36 +359,37 @@ const ProfilePage: React.FC = () => {
   const handleSavePublicProfile = async () => {
     try {
       setSaving(true);
-      
+
       // 保存用户基本信息和发布状态
-       if (currentUser) {
-         await userService.updateCurrentUserProfile({
-           bio: currentUser.bio,
-           specialties: currentUser.specialties,
-           experienceYears: currentUser.experienceYears,
-           location: currentUser.location,
-           contactInfo: currentUser.contactInfo,
-           socialLinks: currentUser.socialLinks,
-         });
-         
-         // 更新发布状态
-         await userService.toggleCurrentUserProfilePublish(isPublicProfilePublished);
-       }
-       
-       // 保存媒体文件排序
-       if (mediaFiles.length > 0) {
-         try {
-           const sortData = mediaFiles.map((media, index) => ({
-             id: media.id,
-             sortOrder: index
-           }));
-           await profileService.updateMediaOrder(sortData);
-         } catch (error) {
-           console.error('保存排序失败:', error);
-         }
-       }
-       
-       message.success('保存成功');
+      if (currentUser) {
+        await userService.updateCurrentUserProfile({
+          bio: currentUser.bio,
+          specialties: currentUser.specialties,
+          experienceYears: currentUser.experienceYears,
+          location: currentUser.location,
+          contactInfo: currentUser.contactInfo,
+          socialLinks: currentUser.socialLinks,
+        });
+
+        // 更新发布状态
+        await userService.toggleCurrentUserProfilePublish(isPublicProfilePublished);
+      }
+
+      // 保存媒体文件排序
+      if (mediaFiles.length > 0 && currentUser?.id) {
+        try {
+          const sortData = mediaFiles.map((media, index) => ({
+            fileId: media.fileId,
+            mediaOrder: index,
+          }));
+
+          await profileService.updateMediaProfilesOrder({ orderData: sortData });
+        } catch (error) {
+          console.error('保存排序失败:', error);
+        }
+      }
+
+      message.success('保存成功');
     } catch (error) {
       console.error('保存失败:', error);
       message.error('保存失败');
@@ -384,42 +399,24 @@ const ProfilePage: React.FC = () => {
   };
 
 
-  // 处理媒体文件上传
-  const handleMediaUpload = async (file: File): Promise<string> => {
-    try {
-      setUploading(true);
-      const response = await fileService.uploadFile(file, { type: file.type.startsWith('video/') ? 'video' : 'image',category: 'profile' });
-      const newMedia = response.data;
-      if (newMedia) {
-        const mediaWithOrder = {
-          ...newMedia,
-          type: file.type.startsWith('video/') ? 'video' : 'image'
-        };
-        setMediaFiles([...mediaFiles, mediaWithOrder]);
-        message.success('上传成功');
-        return newMedia.fileUrl || '';
-      }
-      throw new Error('上传失败：未返回文件信息');
-    } catch (error) {
-      message.error('上传失败');
-      throw error;
-    } finally {
-      setUploading(false);
-    }
-  };
+
 
   // 处理头像上传
   const handleAvatarUpload = async (file: File): Promise<string> => {
     try {
       setUploading(true);
-      const response = await fileService.uploadFile(file, { type: 'image', category: 'avatar' });
-      const newMedia = response.data;
-      if (newMedia && newMedia.fileUrl) {
+      const uploadResults = await fileService.uploadFile(file, {
+        fileType: 'image',
+        category: 'avatar',
+      });
+
+      if (uploadResults.data?.fileUrl) {
+        const newAvatarUrl = uploadResults.data.fileUrl;
         // 更新当前用户的头像URL
-        await userService.updateCurrentUserProfile({ avatarUrl: newMedia.fileUrl });
-        setCurrentUser(prev => prev ? { ...prev, avatarUrl: newMedia.fileUrl } : null);
+        await userService.updateCurrentUserProfile({ avatarUrl: newAvatarUrl });
+        setCurrentUser(prev => prev ? { ...prev, avatarUrl: newAvatarUrl } : null);
         message.success('头像上传成功');
-        return newMedia.fileUrl;
+        return newAvatarUrl;
       }
       throw new Error('上传失败：未返回文件信息');
     } catch (error) {
@@ -430,17 +427,7 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  // 处理媒体文件删除
-  const handleMediaDelete = async (mediaId: string) => {
-    try {
-      await fileService.deleteFile(mediaId);
-      setMediaFiles(prev => prev.filter(media => media.id !== mediaId));
-      message.success('文件删除成功');
-    } catch (error) {
-      console.error('删除文件失败:', error);
-      message.error('删除文件失败');
-    }
-  };
+
 
   // 预览图片
   const handlePreview = (url: string) => {
@@ -448,56 +435,17 @@ const ProfilePage: React.FC = () => {
     setPreviewVisible(true);
   };
 
-  // 处理拖拽开始
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    setDraggedIndex(index);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/html', e.currentTarget.outerHTML);
-  };
 
-  // 处理拖拽结束
-  const handleDragEnd = () => {
-    setDraggedIndex(null);
-  };
-
-  // 处理拖拽悬停
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
-
-  // 处理拖拽放置
-  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
-    e.preventDefault();
-    if (draggedIndex === null || draggedIndex === dropIndex) return;
-
-    const newMediaFiles = [...mediaFiles];
-    const draggedItem = newMediaFiles[draggedIndex];
-    
-    // 移除拖拽的项目
-    newMediaFiles.splice(draggedIndex, 1);
-    // 在新位置插入
-    newMediaFiles.splice(dropIndex, 0, draggedItem);
-    
-    // 更新排序 - 这里可以调用API更新排序，暂时只更新本地状态
-    const updatedMediaFiles = newMediaFiles;
-    
-    setMediaFiles(updatedMediaFiles);
-    setDraggedIndex(null);
-    message.success('排序已更新');
-  };
 
   // 渲染公开资料页面
   const renderPublicProfile = () => (
     <PublicProfileContainer>
       <div className="profile-header">
         <div className="avatar">
-         
+
           <AvatarUploader
                 value={currentUser?.avatarUrl}
-                onChange={(url: string) => {
-              setCurrentUser(prev => prev ? { ...prev, avatarUrl: url } : null);
-                }}
+                onChange={handleAvatarChange}
                 disabled={uploading}
                 size={120}
                 shape="square"
@@ -505,7 +453,7 @@ const ProfilePage: React.FC = () => {
               />
         </div>
         <div className="name">
-          {currentUser?.realName || currentUser?.nickname || currentUser?.username}
+          {currentUser?.realName || currentUser?.nickname}
         </div>
         <div className="title">
           {currentUser?.bio || '暂无个人简介'}
@@ -525,7 +473,7 @@ const ProfilePage: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       <div className="profile-content">
         {/* 个人介绍 */}
         {currentUser?.bio && (
@@ -537,7 +485,7 @@ const ProfilePage: React.FC = () => {
             <p style={{ color: '#666', lineHeight: '1.6' }}>{currentUser.bio}</p>
           </div>
         )}
-        
+
         {/* 专业技能 */}
         {currentUser?.specialties && currentUser.specialties.length > 0 && (
           <div className="section">
@@ -552,119 +500,40 @@ const ProfilePage: React.FC = () => {
             </Space>
           </div>
         )}
-        
+
         {/* 作品展示 */}
         <div className="section">
           <div className="section-title">
-              <PictureOutlined />
-              作品展示
-              <Space style={{ marginLeft: 'auto' }}>
-                <Switch
-                  checkedChildren={<GlobalOutlined />}
-                  unCheckedChildren="私有"
-                  checked={isPublicProfilePublished}
-                  onChange={setIsPublicProfilePublished}
-                />
-                <span style={{ fontSize: '14px', color: '#666' }}>
-                  {isPublicProfilePublished ? '公开展示' : '私有状态'}
-                </span>
+            <PictureOutlined />
+            作品展示
+            <Space style={{ marginLeft: 'auto' }}>
+              <Switch
+                checkedChildren={<GlobalOutlined />}
+                unCheckedChildren="私有"
+                checked={isPublicProfilePublished}
+                onChange={setIsPublicProfilePublished}
+              />
+              <span style={{ fontSize: '14px', color: '#666' }}>
+                {isPublicProfilePublished ? '公开展示' : '私有状态'}
+              </span>
 
-                <Button
-                  type="default"
-                  size="small"
-                  loading={saving}
-                  onClick={handleSavePublicProfile}
-                >
-                  保存排序
-                </Button>
-              </Space>
-            </div>
-          <div className="media-gallery">
-            <div className="media-grid">
-              {mediaFiles.map((media, index) => (
-                <div 
-                  key={media.id || index} 
-                  className={`media-item ${draggedIndex === index ? 'dragging' : ''}`}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, index)}
-                  onDragEnd={handleDragEnd}
-                  onDragOver={handleDragOver}
-                  onDrop={(e) => handleDrop(e, index)}
-                >
-                  {/* 拖拽手柄 */}
-                  <div className="drag-handle">
-                    <DragOutlined />
-                  </div>
-                  
-                  {/* 操作按钮 */}
-                  <div className="media-actions">
-                    <Popconfirm
-                      title="确定要删除这个文件吗？"
-                      onConfirm={() => handleMediaDelete(media.id)}
-                      okText="确定"
-                      cancelText="取消"
-                    >
-                      <button className="action-btn delete-btn">
-                        <DeleteOutlined />
-                      </button>
-                    </Popconfirm>
-                  </div>
-                  
-                  {media.type === 'video' ? (
-                    <>
-                      <div className="video-bg" />
-                      <PlayCircleOutlined className="video-overlay" />
-                      <img
-                        src={media.thumbnailPath || media.fileUrl}
-                        alt={media.filename}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        onClick={() => handlePreview(media.fileUrl)}
-                      />
-                    </>
-                  ) : (
-                    <Image
-                      src={media.fileUrl}
-                      alt={media.filename}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      preview={false}
-                      onClick={() => handlePreview(media.fileUrl)}
-                    />
-                  )}
-                </div>
-              ))}
-              
-              {/* 上传区域 */}
-              <Upload.Dragger
-                multiple
-                accept="image/*,video/*"
-                showUploadList={false}
-                beforeUpload={(file) => {
-                  const isValidType = file.type.startsWith('image/') || file.type.startsWith('video/');
-                  if (!isValidType) {
-                    message.error('只能上传图片或视频文件！');
-                    return false;
-                  }
-                  const isLt10M = file.size / 1024 / 1024 < 10;
-                  if (!isLt10M) {
-                    message.error('文件大小不能超过 10MB！');
-                    return false;
-                  }
-                  handleMediaUpload(file);
-                  return false;
-                }}
-                disabled={uploading}
-                className="upload-area"
+              <Button
+                type="default"
+                size="small"
+                loading={saving}
+                onClick={handleSavePublicProfile}
               >
-                <div className="upload-icon">
-                  <PlusOutlined />
-                </div>
-                <div className="upload-text">
-                  <p>点击或拖拽文件到此区域上传</p>
-                  <p>支持图片和视频格式，单个文件不超过10MB</p>
-                </div>
-              </Upload.Dragger>
-            </div>
+                保存排序
+              </Button>
+            </Space>
           </div>
+          <MediaGallery
+            mediaFiles={mediaFiles}
+            onMediaFilesChange={setMediaFiles}
+            onPreview={handlePreview}
+            uploading={uploading}
+            onUploadingChange={setUploading}
+          />
         </div>
       </div>
     </PublicProfileContainer>
@@ -676,28 +545,28 @@ const ProfilePage: React.FC = () => {
         <TabPane tab="基本信息" key="basic">
           <Card>
             <ProfileEditForm
-                initialValues={{
-                  ...currentUser,
-                  createdAt: formatDate(currentUser?.createdAt || new Date()),
-                  updatedAt: formatDate(currentUser?.updatedAt || new Date()),
-                }}
-                onSubmit={handleBasicInfoSave}
-                onCancel={() => {}}
-                loading={loading}
-                onUpload={handleAvatarUpload}
-                avatarUrl={currentUser?.avatarUrl}
-                onAvatarChange={(url) => setCurrentUser((prev) => (prev ? { ...prev, avatarUrl: url } : null))}
-              />
+              initialValues={{
+                ...currentUser,
+                createdAt: formatDate(currentUser?.createdAt || new Date()),
+                updatedAt: formatDate(currentUser?.updatedAt || new Date()),
+              }}
+              onSubmit={handleBasicInfoSave}
+              onCancel={() => { }}
+              loading={loading}
+              onUpload={handleAvatarUpload}
+              avatarUrl={currentUser?.avatarUrl}
+              onAvatarChange={handleAvatarChange}
+            />
           </Card>
         </TabPane>
-        
+
         <TabPane tab="公开资料" key="public">
           {renderPublicProfile()}
         </TabPane>
       </Tabs>
-      
 
-      
+
+
       {/* 图片预览模态框 */}
       <Modal
         open={previewVisible}

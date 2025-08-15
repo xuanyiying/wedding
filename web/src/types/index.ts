@@ -134,10 +134,7 @@ export const WorkType = {
 // 作品分类枚举
 export const WorkCategory = {
   WEDDING: 'wedding',
-  ENGAGEMENT: 'engagement',
-  ANNIVERSARY: 'anniversary',
-  TEAM_BUILDING: 'team_building',
-  OTHER: 'other'
+  EVENT: 'event',
 } as const;
 
 // 文件类型枚举
@@ -329,24 +326,28 @@ export interface User {
 
 // 媒体文件相关类型
 export interface MediaFile {
-  id: string;
-  userId: string;
-  type: FileType;
-  filename: string;
-  originalName: string;
-  filePath: string;
-  fileUrl: string;
-  fileSize: number;
-  mimeType: string;
-  thumbnailPath?: string;
-  duration?: number;
-  dimensions?: {
-    width: number;
-    height: number;
-  };
-  createdAt: Date;
-  updatedAt: Date;
-  deletedAt?: Date;
+  id?: string;
+  userId?: string;
+  fileId: string;
+  mediaOrder?: number | null;
+  fileType?: FileType;
+  originalName?: string;
+  filename?: string;
+  filePath?: string;
+  fileUrl?: string;
+  fileSize?: number;
+  mimeType?: string;
+  width?: number | null;
+  height?: number | null;
+  duration?: number | null;
+  thumbnailUrl?: string | null;
+  hashMd5?: string | null;
+  storageType?: string;
+  bucketName?: string | null;
+  isPublic?: boolean;
+  downloadCount?: number | null;
+  metadata?: any | null;
+  category?: string;
 }
 
 // 档期相关类型
@@ -384,8 +385,6 @@ export interface Work {
   description?: string | null;
   type: WorkType;
   category: WorkCategory;
-  coverUrl?: string | null;
-  contentUrls?: string[] | null;
   tags?: string[] | null;
   location?: string | null;
   weddingDate?: Date | null;
@@ -406,26 +405,7 @@ export interface Work {
   updatedAt: string;
   deletedAt?: string | null;
   user?: User;
-  files?: FileInfo[];
-}
-
-// 文件相关类型
-export interface FileInfo {
-  id: string;
-  workId?: string;
-  filename: string;
-  originalName: string;
-  filePath: string;
-  fileSize: number;
-  mimeType: string;
-  fileType: FileType;
-  thumbnailPath?: string;
-  duration?: number;
-  dimensions?: {
-    width: number;
-    height: number;
-  };
-  createdAt: string;
+  files?: MediaFile[];
 }
 
 

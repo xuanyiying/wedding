@@ -21,7 +21,9 @@ const CarouselContainer = styled.div<{ height: string }>`
   background: var(--client-bg-layout);
 `;
 
-const ImageContainer = styled.div<{ translateX: number }>`
+const ImageContainer = styled.div.withConfig({
+  shouldForwardProp: (prop) => prop !== 'translateX'
+})<{ translateX: number }>`
   display: flex;
   width: 100%;
   height: 100%;
@@ -80,7 +82,9 @@ const DotsContainer = styled.div`
   z-index: 2;
 `;
 
-const Dot = styled.button<{ active: boolean }>`
+const Dot = styled.button.withConfig({
+  shouldForwardProp: (prop) => prop !== 'active'
+})<{ active: boolean }>`
   width: 8px;
   height: 8px;
   border-radius: 50%;

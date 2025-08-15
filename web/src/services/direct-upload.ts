@@ -30,7 +30,7 @@ export class DirectUploadService {
   /**
    * 上传单个文件
    */
-  async uploadFile(file: File, fileType: FileType, category?: 'avatar' | 'work' | 'event' | 'other'): Promise<DirectUploadResult> {
+  async uploadFile(file: File, fileType: FileType, category?: 'avatar' | 'work' | 'event' | 'profile' | 'other'): Promise<DirectUploadResult> {
     const config: DirectUploadConfig = {
       fileType: this.mapFileType(fileType),
       category: category || 'other',
@@ -43,7 +43,7 @@ export class DirectUploadService {
   /**
    * 批量上传文件
    */
-  async uploadFiles(files: File[], fileType: FileType, category?: 'avatar' | 'work' | 'event' | 'other'): Promise<DirectUploadResult[]> {
+  async uploadFiles(files: File[], fileType: FileType, category?: 'avatar' | 'work' | 'event' | 'profile' | 'other'): Promise<DirectUploadResult[]> {
     const results: DirectUploadResult[] = [];
     for (const file of files) {
       const config: DirectUploadConfig = {
@@ -105,7 +105,7 @@ export class DirectUploadService {
   /**
    * 上传通用媒体文件
    */
-  async uploadMedia(files: File[], category?: 'avatar' | 'work' | 'event' | 'other'): Promise<DirectUploadResult[]> {
+  async uploadMedia(files: File[], category?: 'avatar' | 'work' | 'event' | 'profile' | 'cover' | 'other'): Promise<DirectUploadResult[]> {
     const results: DirectUploadResult[] = [];
     for (const file of files) {
       const configFileType = file.type.startsWith('video/') ? 'video' : 'image';

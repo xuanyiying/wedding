@@ -10,13 +10,13 @@ import { OssService } from './oss/oss.service';
 import { getOssService } from '../config/oss';
 import { createRetryHandler } from '../middlewares/upload';
 import axios from 'axios';
-import { FileType, StorageType } from '../types';
+import { FileCategory, FileType, StorageType } from '../types';
 
 interface GetFilesParams {
   page: number;
   pageSize: number;
   userId?: string | null;
-  type?: FileType | null;
+  fileType?: FileType | null;
   keyword?: string | null;
   sortBy?: 'createdAt' | 'fileSize' | 'filename' | null;
   sortOrder?: 'ASC' | 'DESC' | null;
@@ -30,22 +30,21 @@ interface UploadFileData {
   path?: string;
   buffer?: Buffer;
   userId: string;
-  type: FileType;
+  fileType: FileType;
   description?: string;
+  category?: string;
 }
 
 export class FileService {
-  /**
-   * 获取OSS服务实例
-   */
-  private static getOssService(): OssService {
-    return getOssService();
-  }
+
+  // 获取OSS服务
+  private static ossService: OssService = getOssService();
+
   /**
    * 获取文件列表
    */
   static async getFiles(params: GetFilesParams) {
-    const { page, pageSize, userId, type, keyword, sortBy = 'createdAt', sortOrder = 'DESC' } = params;
+    const { page, pageSize, userId, fileType, keyword, sortBy = 'createdAt', sortOrder = 'DESC' } = params;
     const offset = (page - 1) * pageSize;
 
     const where: WhereOptions = {};
@@ -54,8 +53,8 @@ export class FileService {
       where.userId = userId;
     }
 
-    if (type) {
-      where.fileType = type;
+    if (fileType) {
+      where.fileType = fileType;
     }
 
     if (keyword) {
@@ -112,35 +111,14 @@ export class FileService {
     return file;
   }
 
-  static async generateVideoCover(videoUrl: string, userId: string): Promise<string> {
+  static async generateVideoCover(videoUrl: string): Promise<string> {
     try {
       // 1. 下载视频文件
       const response = await axios.get(videoUrl, { responseType: 'arraybuffer' });
       const videoBuffer = Buffer.from(response.data, 'binary');
       const originalName = path.basename(new URL(videoUrl).pathname);
-      const coverFileName = `${path.parse(originalName).name}_cover.jpg`;
-
       // 2. 生成缩略图
-      const ossService = this.getOssService();
-      const thumbnailUrl = await this.generateVideoThumbnail(videoBuffer, originalName, ossService);
-
-      // 3. 将封面图片作为文件记录保存到数据库
-      await File.create({
-        filename: coverFileName,
-        originalName: coverFileName,
-        mimeType: 'image/jpeg',
-        fileSize: 0, // Placeholder, as we don't have the exact size
-        fileUrl: thumbnailUrl,
-        filePath: this.extractKeyFromUrl(thumbnailUrl) || `thumbnails/${coverFileName}`,
-        hashMd5: crypto.createHash('md5').update(thumbnailUrl).digest('hex'),
-        fileType: FileType.IMAGE,
-        userId: userId,
-        storageType: (process.env.OSS_TYPE as StorageType) || StorageType.MINIO,
-        bucketName: ossService.bucketName,
-        isPublic: true,
-        downloadCount: 0,
-      });
-
+      const thumbnailUrl = await this.generateVideoThumbnail(videoBuffer, originalName);
       return thumbnailUrl;
     } catch (error) {
       logger.error(`从URL生成视频封面失败: ${videoUrl}`, error);
@@ -167,8 +145,8 @@ export class FileService {
       ],
     };
 
-    if (data.type && allowedTypes[data.type]) {
-      if (!allowedTypes[data.type].includes(data.mimetype)) {
+    if (data.fileType && allowedTypes[data.fileType]) {
+      if (!allowedTypes[data.fileType].includes(data.mimetype)) {
         throw new Error(`不支持的文件类型: ${data.mimetype}`);
       }
     }
@@ -194,31 +172,28 @@ export class FileService {
     if (existingFile) {
       // 删除临时文件（如果存在）
       if (data.path) {
-        await fs.unlink(data.path).catch(() => {});
+        await fs.unlink(data.path).catch(() => { });
       }
       return existingFile;
     }
 
-    // 获取OSS服务
-    const ossService = this.getOssService();
-
     // 确定文件夹
-    const folder = this.getFolderByType(data.type);
+    const folder = this.getFolderByType(data.fileType);
 
     // 上传主文件到OSS - 添加重试机制
     const retryHandler = createRetryHandler();
     const uploadResult = await retryHandler(
-      () => ossService.uploadFile(fileBuffer, data.originalName, data.mimetype, folder),
+      () => this.ossService.uploadFile(fileBuffer, data.originalName, data.mimetype, folder),
       `文件上传到OSS: ${data.originalName}`,
     );
 
     let thumbnailUrl: string | undefined;
 
     // 为视频文件生成缩略图 - 添加重试机制
-    if (data.type === FileType.VIDEO) {
+    if (data.fileType === FileType.VIDEO) {
       try {
         thumbnailUrl = await retryHandler(
-          () => this.generateVideoThumbnail(fileBuffer, data.originalName, ossService),
+          () => this.generateVideoThumbnail(fileBuffer, data.originalName),
           `视频缩略图生成: ${data.originalName}`,
         );
       } catch (error) {
@@ -235,17 +210,18 @@ export class FileService {
       fileUrl: uploadResult.url,
       filePath: uploadResult.key, // 存储OSS的key
       hashMd5: hash,
-      fileType: data.type,
+      fileType: data.fileType,
       userId: data.userId,
       storageType: (process.env.OSS_TYPE as StorageType) || StorageType.MINIO,
       isPublic: false,
       downloadCount: 0,
+      category: data.category as FileCategory,
       thumbnailUrl: thumbnailUrl || null, // 如果是视频文件，存储缩略图URL
     });
 
     // 清理临时文件
     if (data.path) {
-      await fs.unlink(data.path).catch(() => {});
+      await fs.unlink(data.path).catch(() => { });
     }
 
     logger.info(`文件上传成功: ${data.filename}, 用户: ${data.userId}, OSS Key: ${uploadResult.key}`);
@@ -275,7 +251,7 @@ export class FileService {
         });
         // 清理失败的文件
         if (fileData.path) {
-          await fs.unlink(fileData.path).catch(() => {});
+          await fs.unlink(fileData.path).catch(() => { });
         }
       }
     }
@@ -396,6 +372,7 @@ export class FileService {
     filePath: string;
     fileSize: number;
     mimeType: string;
+    category?: string;
     fileType: FileType;
     userId: string;
     url: string;
@@ -441,15 +418,8 @@ export class FileService {
         isPublic: false,
         downloadCount: 0,
         thumbnailUrl: null,
+        category: fileData.category as FileCategory,
       });
-
-      // 如果是视频文件，异步生成缩略图
-      if (fileData.fileType === FileType.VIDEO) {
-        this.generateVideoThumbnailAsync(file.id, fileData.filePath).catch(error => {
-          logger.error(`异步生成视频缩略图失败 (文件ID: ${file.id}):`, error);
-        });
-      }
-
       return this.getFileById(file.id);
     } catch (error) {
       logger.error('创建文件记录失败:', error);
@@ -460,18 +430,17 @@ export class FileService {
   /**
    * 异步生成视频缩略图
    */
-  private static async generateVideoThumbnailAsync(fileId: string, filePath: string): Promise<void> {
+  /** private static async generateVideoThumbnailAsync(fileId: string, filePath: string): Promise<void> {
     try {
       const retryHandler = createRetryHandler();
 
       await retryHandler(async () => {
-        const ossService = this.getOssService();
 
         // 从OSS下载视频文件
-        const videoBuffer = await ossService.downloadFile(filePath);
+        const videoBuffer = await this.ossService.downloadFile(filePath);
 
         // 生成缩略图
-        const thumbnailUrl = await this.generateVideoThumbnail(videoBuffer, path.basename(filePath), ossService);
+        const thumbnailUrl = await this.generateVideoThumbnail(videoBuffer, path.basename(filePath));
 
         // 更新文件记录，添加缩略图URL
         await File.update({ thumbnailUrl }, { where: { id: fileId } });
@@ -481,7 +450,7 @@ export class FileService {
       // 不抛出错误，避免影响主流程
     }
   }
-
+*/
   /**
    * 更新文件信息
    */
@@ -512,7 +481,7 @@ export class FileService {
 
     await file.update(updateData);
     return this.getFileById(id);
-  }
+  } 
 
   /**
    * 获取文件统计
@@ -557,14 +526,14 @@ export class FileService {
     // 检查权限（如果需要）
     if (currentUserId && file.userId !== currentUserId) {
       // 这里可以添加更复杂的权限检查逻辑
+      throw new Error('无权限操作此文件');
     }
 
     // 从OSS下载文件
-    const ossService = this.getOssService();
     let fileBuffer: Buffer;
 
     try {
-      fileBuffer = await ossService.downloadFile(file.filePath); // filePath存储的是OSS key
+      fileBuffer = await this.ossService.downloadFile(file.filePath); // filePath存储的是OSS key
     } catch (error) {
       logger.error(`从OSS下载文件失败: ${file.filePath}`, error);
       throw new Error('文件下载失败');
@@ -643,7 +612,6 @@ export class FileService {
   private static async generateVideoThumbnail(
     videoBuffer: Buffer,
     originalName: string,
-    ossService: OssService,
   ): Promise<string> {
     return new Promise((resolve, reject) => {
       // 创建临时文件
@@ -668,7 +636,7 @@ export class FileService {
 
                 // 上传缩略图到OSS
                 const thumbnailName = `${path.parse(originalName).name}_thumbnail.jpg`;
-                const uploadResult = await ossService.uploadFile(
+                const uploadResult = await this.ossService.uploadFile(
                   thumbnailBuffer,
                   thumbnailName,
                   'image/jpeg',
@@ -677,16 +645,16 @@ export class FileService {
 
                 // 清理临时文件
                 await Promise.all([
-                  fs.unlink(tempVideoPath).catch(() => {}),
-                  fs.unlink(tempThumbnailPath).catch(() => {}),
+                  fs.unlink(tempVideoPath).catch(() => { }),
+                  fs.unlink(tempThumbnailPath).catch(() => { }),
                 ]);
 
                 resolve(uploadResult.url);
               } catch (error) {
                 // 清理临时文件
                 await Promise.all([
-                  fs.unlink(tempVideoPath).catch(() => {}),
-                  fs.unlink(tempThumbnailPath).catch(() => {}),
+                  fs.unlink(tempVideoPath).catch(() => { }),
+                  fs.unlink(tempThumbnailPath).catch(() => { }),
                 ]);
                 reject(error);
               }
@@ -694,8 +662,8 @@ export class FileService {
             .on('error', async error => {
               // 清理临时文件
               await Promise.all([
-                fs.unlink(tempVideoPath).catch(() => {}),
-                fs.unlink(tempThumbnailPath).catch(() => {}),
+                fs.unlink(tempVideoPath).catch(() => { }),
+                fs.unlink(tempThumbnailPath).catch(() => { }),
               ]);
               reject(error);
             });
@@ -707,45 +675,22 @@ export class FileService {
   /**
    * 删除OSS文件
    */
-  private static async deleteOssFile(fileKey: string, thumbnailUrl?: string): Promise<void> {
+  private static async deleteOssFile(fileId: string, thumbnailUrl?: string): Promise<void> {
     try {
-      const ossService = this.getOssService();
-
       // 删除主文件
-      await ossService.deleteFile(fileKey);
-
+      const file = await this.getFileById(fileId);
+      await this.ossService.deleteFile(file.fileUrl);
       // 删除缩略图（如果存在）
-      if (thumbnailUrl) {
+      if (file.thumbnailUrl) {
         try {
-          // 从URL中提取缩略图的key
-          const thumbnailKey = this.extractKeyFromUrl(thumbnailUrl);
-          if (thumbnailKey) {
-            await ossService.deleteFile(thumbnailKey);
-          }
+          await this.ossService.deleteFile(file.thumbnailUrl);
         } catch (error) {
           logger.warn(`删除缩略图失败: ${thumbnailUrl}`, error);
         }
       }
     } catch (error) {
-      logger.error(`删除OSS文件失败: ${fileKey}`, error);
+      logger.error(`删除OSS文件失败: ${fileId}`, error);
       throw error;
-    }
-  }
-
-  /**
-   * 从URL中提取OSS key
-   */
-  private static extractKeyFromUrl(url: string): string | null {
-    try {
-      // 假设URL格式为: http://domain/bucket/key
-      const urlParts = url.split('/');
-      // 取最后两部分作为key（folder/filename）
-      if (urlParts.length >= 2) {
-        return urlParts.slice(-2).join('/');
-      }
-      return urlParts[urlParts.length - 1] || null;
-    } catch {
-      return null;
     }
   }
 

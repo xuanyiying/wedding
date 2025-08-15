@@ -157,7 +157,7 @@ const WorksList: React.FC<WorksListProps> = ({ showFilters = true, showPaginatio
         </div>
       ) : (
         <WorksGrid>
-          {works.map(work => (
+          {works && works.length > 0 && works.map(work => (
             <WorkCard key={work.id} work={work} onClick={handleCardClick} />
           ))}
         </WorksGrid>

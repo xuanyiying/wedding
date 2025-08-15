@@ -117,7 +117,6 @@ export const getSystemInfo = async (_req: Request, res: Response, next: NextFunc
     const systemInfo = await SettingsService.getSystemInfo();
     Resp.success(res, systemInfo, '获取系统信息成功');
   } catch (error) {
-    logger.error('获取系统信息失败:', error);
     next(error);
   }
 };

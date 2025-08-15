@@ -235,11 +235,9 @@ const LoginPage: React.FC = () => {
         // 跳转到仪表板
         navigate('/admin/dashboard');
       } else {
-        console.error('❌ 登录响应格式错误:', response);
         throw new Error(response.message || '登录失败');
       }
     } catch (error: any) {
-      console.error('💥 登录错误:', error);
       const errorMessage = error?.data?.message || error?.message || '登录失败，请稍后重试！';
       dispatch(loginFailure(errorMessage));
       message.error(errorMessage);

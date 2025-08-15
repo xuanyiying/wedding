@@ -1,22 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Typography, Empty } from 'antd';
 import styled from 'styled-components';
+import dayjs from 'dayjs';
 import { scheduleService } from '../services';
 import { useTeamData } from '../hooks/useTeamData';
 import QueryBar, { type QueryFilters } from './common/QueryBar';
 import TeamMemberCard from './client/TeamMemberCard';
 import TeamMemberDetailModal from './client/TeamMemberDetailModal';
 import type { ClientTeamMember } from '../hooks/useTeamData';
+import type { Team, User } from '../types';
 
-// 可用团队成员接口
-interface AvailableMember {
-  userId: string;
-  name: string;
-  avatar: string;
-  status: any;
-  specialties: string[];
-  experienceYears: number;
-}
 
 const { Title } = Typography;
 
@@ -100,48 +93,36 @@ const SectionDescription = styled(Typography.Paragraph)`
 interface ScheduleSectionProps {
   title: string;
   description: string;
+  team?: Team;
+
 }
 
-const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description }) => {
-  const [availableMembers, setAvailableMembers] = useState<AvailableMember[]>([]);
+const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, team }) => {
+  const [availableMembers, setAvailableMembers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedMember, setSelectedMember] = useState<ClientTeamMember | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const { teamMembers } = useTeamData();
+  const today = dayjs();
+  // 页面加载时自动查询当天可预约的团队成员
+  useEffect(() => {
+
+    handleQuery({ date: today, mealType: 'lunch' });
+  }, [teamMembers]);
 
   // 处理查询
   const handleQuery = async (filters: QueryFilters) => {
     try {
       setLoading(true);
-      
-      // 获取指定日期范围内的可用日程
-      const response = await scheduleService.getSchedules({
-        page: 1,
-        limit: 100,
-        startDate: filters.date?.format('YYYY-MM-DD'),
-        endDate: filters.date?.format('YYYY-MM-DD'),
+
+      const result = await scheduleService.getAvailableHosts({
+        teamId: team?.id || 'all',
+        weddingDate: filters.date?.format('YYYY-MM-DD') || today.format('YYYY-MM-DD'),
+        weddingTime: filters.mealType as string || '',
       });
-
-      // 提取有档期的团队成员
-      const memberIds = [...new Set(response.data?.schedules.map(schedule => schedule.userId))];
-      const available = memberIds.map(userId => {
-        const member = teamMembers.find(m => m.userId === userId);
-        if (member) {
-          return {
-            userId: member.userId,
-            name: member.name,
-            avatar: member.avatar,
-            status: member.status,
-            specialties: member.specialties || [],
-            experienceYears: member.experienceYears || 0
-          };
-        }
-        return null;
-      }).filter(Boolean) as AvailableMember[];
-
-      setAvailableMembers(available);
+      const available = result.data?.hosts
+      setAvailableMembers(available || []);
     } catch (error) {
-      console.error('查询可用主持人失败:', error);
       setAvailableMembers([]);
     } finally {
       setLoading(false);
@@ -149,8 +130,8 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description })
   };
 
   // 处理团队成员卡片点击
-  const handleMemberClick = (member: AvailableMember) => {
-    const fullMember = teamMembers.find(m => m.userId === member.userId);
+  const handleMemberClick = (member: User) => {
+    const fullMember = teamMembers.find(m => m.id === member.id);
     if (fullMember) {
       setSelectedMember(fullMember);
       setModalVisible(true);
@@ -170,13 +151,18 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description })
           <SectionTitle>{title}</SectionTitle>
           <SectionDescription>{description}</SectionDescription>
         </SectionHeader>
-        
+
         <QueryBar
           onQuery={handleQuery}
           onReset={() => setAvailableMembers([])}
           showMealFilter={true}
           showMemberFilter={false}
           loading={loading}
+          initialFilters={{
+            teamId: 'all', // 全部团队
+            date: dayjs(), // 今天
+            mealType: 'lunch' // 午宴
+          }}
         />
 
         {loading ? (
@@ -187,15 +173,14 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description })
           <MembersGrid>
             {availableMembers.map(member => (
               <TeamMemberCard
-                key={member.userId}
-                userId={member.userId}
-                name={member.name}
-                avatar={member.avatar}
-                status={member.status}
+                key={member.id}
+                userId={member.id}
+                name={member?.realName || member.nickname || `用户${member.id?.slice(-4) || member.id}`}
+                avatar={member?.avatarUrl || ''}
                 specialties={member.specialties}
-                experienceYears={member.experienceYears}
+                experienceYears={member?.experienceYears || 0}
                 onViewDetails={(id) => {
-                  const selected = availableMembers.find(m => m.userId === id);
+                  const selected = availableMembers.find(m => m.id === id);
                   if (selected) {
                     handleMemberClick(selected);
                   }
@@ -207,7 +192,7 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description })
         ) : (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
             <Empty
-              description="请选择日期范围查询可用的主持人"
+              description="当前日期所有团队成员都已有档期安排"
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
           </div>

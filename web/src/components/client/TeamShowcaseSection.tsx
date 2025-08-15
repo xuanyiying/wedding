@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Image, Spin, Typography } from 'antd';
+import { Row, Col, Spin, Typography } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import { workService } from '../../services';
-import type { Work } from '../../types';
+import type { Team, Work } from '../../types';
+import ImageCarousel from './ImageCarousel';
 
 const { Title, Paragraph } = Typography;
 
@@ -11,6 +12,7 @@ interface TeamShowcaseSectionProps {
   title?: string;
   description?: string;
   visible?: boolean;
+  team?: Team
 }
 
 const SectionContainer = styled.section`
@@ -82,7 +84,6 @@ const ImageCard = styled.div`
   box-shadow: var(--client-shadow-sm);
   transition: all 0.3s ease;
   cursor: pointer;
-  height: 300px;
 
   &:hover {
     transform: translateY(-8px);
@@ -132,7 +133,8 @@ const ImageCard = styled.div`
 const TeamShowcaseSection: React.FC<TeamShowcaseSectionProps> = ({
   title = '团队风采',
   description = '记录我们团队的精彩瞬间，展现专业与热情',
-  visible = true
+  visible = true,
+  team
 }) => {
   const [teamImages, setTeamImages] = useState<Work[]>([]);
   const [loading, setLoading] = useState(false);
@@ -143,11 +145,12 @@ const TeamShowcaseSection: React.FC<TeamShowcaseSectionProps> = ({
         setLoading(true);
         // 获取团队建设分类的图片
         const response = await workService.getWorks({
-          category: 'team_building',
-          limit: 6, // 限制显示6张图片
-          page: 1
+          category: 'event',
+          limit: 1, // 限制显示1个作品
+          page: 1,
+          teamId: team?.id
         });
-        
+
         if (response.success && response.data) {
           setTeamImages(response.data.works);
         }
@@ -172,23 +175,39 @@ const TeamShowcaseSection: React.FC<TeamShowcaseSectionProps> = ({
       <Container>
         <SectionTitle level={2}>{title}</SectionTitle>
         <SectionDescription>{description}</SectionDescription>
-        
+
         <Spin spinning={loading}>
           <Row gutter={[24, 24]}>
-            {teamImages.map((image) => (
-              <Col xs={24} sm={12} md={8} key={image.id}>
+            {teamImages && teamImages.length > 0 && teamImages.map((image) => (
+              <Col xs={24} sm={24} md={24} key={image.id}>
                 <ImageCard>
-                  <Image
-                    src={image.contentUrls?.[0]}
-                    alt={image.title}
-                    preview={{
-                      mask: (
-                        <div className="overlay">
-                          <EyeOutlined className="view-icon" />
-                        </div>
-                      )
-                    }}
-                  />
+                  <div style={{
+                    paddingBottom: '56.25%', // 16:9 aspect ratio for better video compatibility
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}>
+                    <div style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <ImageCarousel
+                        images={image.files?.map(f => f.fileUrl).filter(url => url) as string[] || []}
+                        height="100%"
+                        showDots={true}
+                        showArrows={true}
+                        autoPlay={false}
+                      />
+                    </div>
+                  </div>
+                  <div className="overlay">
+                    <EyeOutlined className="view-icon" />
+                  </div>
                 </ImageCard>
               </Col>
             ))}

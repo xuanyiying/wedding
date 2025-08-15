@@ -32,9 +32,7 @@ export class AuthStorage {
    */
   static setAccessToken(token: string): void {
     try {
-      console.log('🔑 设置访问令牌:', { token, type: typeof token });
       localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
-      console.log('✅ 访问令牌设置成功，验证:', localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN));
     } catch (error) {
       console.error('❌ 设置访问令牌失败:', error);
     }
@@ -52,8 +50,6 @@ export class AuthStorage {
       
       return JSON.parse(userStr) as User;
     } catch (error) {
-      console.error('获取用户信息失败:', error);
-      // 清除无效的用户数据
       this.removeUser();
       return null;
     }
@@ -64,10 +60,8 @@ export class AuthStorage {
    */
   static setUser(user: User): void {
     try {
-      console.log('👤 设置用户信息:', { user, type: typeof user });
       const userStr = JSON.stringify(user);
       localStorage.setItem(STORAGE_KEYS.USER, userStr);
-      console.log('✅ 用户信息设置成功，验证:', localStorage.getItem(STORAGE_KEYS.USER));
     } catch (error) {
       console.error('❌ 设置用户信息失败:', error);
     }
@@ -80,25 +74,9 @@ export class AuthStorage {
     user: User;
     accessToken: string;
   }): void {
-    console.log('🎯 AuthStorage.setAuthData 开始执行:', data);
-    console.log('📊 输入数据类型检查:', {
-      userType: typeof data.user,
-      accessTokenType: typeof data.accessToken,
-      accessTokenValue: data.accessToken
-    });
-    
-    console.log('👤 开始设置用户信息...');
     this.setUser(data.user);
-    
-    console.log('🔑 开始设置访问令牌...');
     this.setAccessToken(data.accessToken);
-    
-    console.log('🔍 最终localStorage状态检查:', {
-      accessToken: localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN),
-      user: localStorage.getItem(STORAGE_KEYS.USER)
-    });
-    
-    console.log('✅ AuthStorage.setAuthData 执行完成');
+  
   }
 
   /**

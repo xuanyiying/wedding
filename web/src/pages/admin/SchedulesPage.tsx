@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Button,
   message,
@@ -11,7 +11,7 @@ import {
   PlusOutlined
 } from '@ant-design/icons';
 import { ContentCard } from '../../components/admin/common';
-import { type Schedule, UserRole, type Team, type TeamMember } from '../../types';
+import { type Schedule, UserRole, type Team, type TeamMember, type User } from '../../types';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import styled from 'styled-components';
@@ -37,6 +37,15 @@ const SchedulesPage: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
+  
+  // 模态框相关状态
+  const [form] = Form.useForm();
+  const [weddingDate, setWeddingDate] = useState<Dayjs | null>(null);
+  const [selectedWeddingTime, setSelectedWeddingTime] = useState<string>('lunch');
+  const [availableHosts, setAvailableHosts] = useState<User[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchModalVisible, setSearchModalVisible] = useState(false);
+  const [conflictSchedules, setConflictSchedules] = useState<Schedule[]>([]);
 
   const [teamMembers] = useState<TeamMember[]>([]);
   const [selectedTeam] = useState<Team>();
@@ -67,8 +76,7 @@ const SchedulesPage: React.FC = () => {
   }) => {
     setLoading(true);
     try {
-      const params: any = { page: 1, pageSize: 100 };
-
+      const params: any = { page: 1, limit: 100 };
       // 处理成员ID查询
       if (queryFilters?.userId) {
         params.userId = queryFilters.userId;
@@ -101,20 +109,10 @@ const SchedulesPage: React.FC = () => {
     }
   };
 
-
-
-
-
-
-
-
-
-
-
-
-  // 处理日期选择
+  // 处理日期选择 
   const handleDateSelect = (date: Dayjs) => {
     setSelectedDate(date);
+    loadSchedules({ date: date.format('YYYY-MM-DD') });
   };
 
   // 处理事件点击
@@ -127,11 +125,36 @@ const SchedulesPage: React.FC = () => {
   const openModal = (schedule?: Schedule) => {
     setEditingSchedule(schedule || null);
     setModalVisible(true);
+    
+    // 重置模态框状态
+    if (schedule) {
+      // 编辑模式
+      setWeddingDate(schedule.weddingDate ? dayjs(schedule.weddingDate) : null);
+      setSelectedWeddingTime(schedule.weddingTime || 'lunch');
+      form.setFieldsValue({
+        ...schedule,
+        weddingDate: schedule.weddingDate ? dayjs(schedule.weddingDate) : null,
+      });
+    } else {
+      // 新增模式
+      setWeddingDate(null);
+      setSelectedWeddingTime('lunch');
+      setConflictSchedules([]);
+      form.resetFields();
+    }
+    setAvailableHosts([]);
+    setSearchModalVisible(false);
   };
 
   // 保存档期
   const handleSave = async (values: any) => {
     try {
+      // 非管理员用户检查档期冲突
+      if (!isAdmin && conflictSchedules.length > 0) {
+        message.error('存在档期冲突，请选择其他时间');
+        return;
+      }
+      
       const scheduleData = {
         ...values,
         weddingDate: values.weddingDate.format('YYYY-MM-DD'),
@@ -166,13 +189,76 @@ const SchedulesPage: React.FC = () => {
     }
   };
 
+  // 查询可用主持人（管理员功能）
+  const handleSearchAvailableHosts = useCallback(async () => {
+    if (!weddingDate || !selectedWeddingTime) {
+      message.warning('请先选择婚礼日期和时间');
+      return;
+    }
 
+    setSearchLoading(true);
+    try {
+      const response = await scheduleService.getAvailableHosts({
+        teamId: selectedTeam?.id || 'all',
+        weddingDate: weddingDate.format('YYYY-MM-DD'),
+        weddingTime: selectedWeddingTime
+      });
+      console.log('Available hosts:', response.data);
+      setAvailableHosts(response.data?.hosts || []);
+      setSearchModalVisible(true);
+    } catch (error) {
+      console.error('查询可用主持人失败:', error);
+      message.error('查询可用主持人失败');
+      setAvailableHosts([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  }, [weddingDate, selectedWeddingTime]);
 
+  // 检查档期冲突（非管理员功能）
+  const handleCheckScheduleConflict = useCallback(async () => {
+    if (!weddingDate || !selectedWeddingTime || !user?.id) {
+      setConflictSchedules([]);
+      return;
+    }
 
+    try {
+      const response = await scheduleService.checkScheduleConflict({
+        userId: user.id,
+        weddingDate: weddingDate.format('YYYY-MM-DD'),
+        weddingTime:  selectedWeddingTime,
+        excludeId: editingSchedule?.id // 编辑时排除当前档期
+      });
+      setConflictSchedules(response.data?.conflicts || []);
+    } catch (error) {
+      console.error('检查档期冲突失败:', error);
+      setConflictSchedules([]);
+    }
+  }, [weddingDate, selectedWeddingTime, user, editingSchedule]);
+
+  // 处理婚礼日期变化
+  const handleWeddingDateChange = useCallback((date: Dayjs | null) => {
+    setWeddingDate(date);
+    form.setFieldsValue({ weddingDate: date });
+    if (isAdmin && date && selectedWeddingTime) {
+      handleSearchAvailableHosts();
+    } else if (!isAdmin) {
+      handleCheckScheduleConflict();
+    }
+  }, [isAdmin, selectedWeddingTime, handleSearchAvailableHosts, handleCheckScheduleConflict, form]);
+
+  // 处理婚礼时间变化
+  const handleWeddingTimeChange = useCallback((e: any) => {
+    const time = e.target.value;
+    setSelectedWeddingTime(time);
+    form.setFieldsValue({ weddingTime: time });
+    if (isAdmin && weddingDate && time) {
+      handleSearchAvailableHosts();
+    }
+  }, [isAdmin, weddingDate, handleSearchAvailableHosts, form]);
 
   // 处理查询
   const handleSearch = async (searchFilters: any) => {
-    console.log('搜索条件:', searchFilters);
     setFilters(searchFilters);
     await loadSchedules(searchFilters);
   };
@@ -256,23 +342,27 @@ const SchedulesPage: React.FC = () => {
        <ScheduleEditModal
          visible={modalVisible}
          editingSchedule={editingSchedule}
-         form={Form.useForm()[0]}
+         form={form}
          user={user}
          isAdmin={isAdmin}
-         weddingDate={null}
-         selectedWeddingTime="lunch"
-         availableHosts={[]}
-         searchLoading={false}
-         searchModalVisible={false}
+         weddingDate={weddingDate}
+         selectedWeddingTime={selectedWeddingTime}
+         availableHosts={availableHosts}
+         searchLoading={searchLoading}
+         searchModalVisible={searchModalVisible}
+         conflictSchedules={conflictSchedules}
          onCancel={() => {
            setModalVisible(false);
+           setConflictSchedules([]);
+           setAvailableHosts([]);
          }}
          onSave={handleSave}
          onDelete={handleDelete}
-         onWeddingDateChange={() => {}}
-         onWeddingTimeChange={() => {}}
-         onSearchAvailableHosts={() => {}}
-         setSearchModalVisible={() => {}}
+         onWeddingDateChange={handleWeddingDateChange}
+         onWeddingTimeChange={handleWeddingTimeChange}
+         onSearchAvailableHosts={handleSearchAvailableHosts}
+         onCheckScheduleConflict={handleCheckScheduleConflict}
+         setSearchModalVisible={setSearchModalVisible}
        />
     </SchedulesContainer>
   );

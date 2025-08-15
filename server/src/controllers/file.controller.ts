@@ -25,7 +25,7 @@ export const uploadFile = async (req: AuthenticatedRequest, res: Response, next:
       size: req.file.size,
       path: req.file.path,
       userId: userId,
-      type: type as FileType,
+      fileType: type as FileType,
       category: category,
     };
 
@@ -57,7 +57,7 @@ export const batchUploadFiles = async (req: AuthenticatedRequest, res: Response,
       size: file.size,
       path: file.path,
       userId: userId,
-      type: type as FileType,
+      fileType: type as FileType,
       category: category as string,
     }));
 
@@ -79,7 +79,7 @@ export const getFiles = async (req: Request, res: Response, next: NextFunction):
     const result = await FileService.getFiles({
       page: Number(page),
       pageSize: Number(pageSize),
-      type: type as FileType,
+      fileType: type as FileType,
       ...(userId && { userId: userId as string }),
       sortBy: 'createdAt',
       sortOrder: 'DESC',
@@ -287,7 +287,7 @@ export const getUserMedia = async (req: Request, res: Response, next: NextFuncti
     const result = await FileService.getFiles({
       page: 1,
       pageSize: 100,
-      type: type as FileType,
+      fileType: type as FileType,
       userId: userId,
       sortBy: 'createdAt',
       sortOrder: 'DESC',

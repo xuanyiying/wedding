@@ -10,7 +10,7 @@ import ContactForm from '../../components/client/ContactForm';
 import { ScrollNavigation } from '../../components/client/ScrollNavigation';
 import TeamMemberDetailModal from '../../components/client/TeamMemberDetailModal';
 import ScheduleSection from '../../components/ScheduleSection';
-import { useTeamData, type ClientTeamMember } from '../../hooks/useTeamData';
+import { type ClientTeamMember } from '../../hooks/useTeamData';
 import TeamList from '../../components/client/TeamList';
 import TeamShowcaseSection from '../../components/client/TeamShowcaseSection';
 import { useSiteSettings } from '../../hooks';
@@ -33,14 +33,9 @@ const HomePage: React.FC = () => {
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedMember, setSelectedMember] = useState<ClientTeamMember | null>(null);
-  
-  // 使用站点设置钩子
-  const { settings} = useSiteSettings();
 
-  useTeamData({ 
-    teamId: selectedTeam?.id,
-    includeMembers: !!selectedTeam,
-  });
+  // 使用站点设置钩子
+  const { settings } = useSiteSettings();
 
   const { setActiveSection } = useOutletContext<OutletContextType>();
 
@@ -98,6 +93,7 @@ const HomePage: React.FC = () => {
       {/* Team Showcase */}
       {settings?.homepageSections?.teamShowcase?.visible && (
         <TeamShowcaseSection
+          team={selectedTeam as Team}
           title={settings.homepageSections.teamShowcase.title}
           description={settings.homepageSections.teamShowcase.description}
           visible={settings.homepageSections.teamShowcase.visible}
@@ -122,6 +118,7 @@ const HomePage: React.FC = () => {
       {settings?.homepageSections?.schedule?.visible && (
         <SectionWrapper id="schedule">
           <ScheduleSection
+            team={selectedTeam as Team}
             title={scheduleSectionSettings?.title || "我们的档期"}
             description={scheduleSectionSettings?.description || "查看我们团队的档期安排，计划您的重要日子。"}
           />

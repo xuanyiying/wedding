@@ -5,10 +5,10 @@ export const fileValidators = {
   // 单文件上传
   uploadFile: {
     body: Joi.object({
-      type: Joi.string()
+      fileType: Joi.string()
         .valid(...Object.values(FileType))
         .required(),
-      category: Joi.string().valid('avatar', 'cover', 'event', 'work', 'other').optional(),
+      category: Joi.string().valid('avatar', 'cover', 'event', 'work', 'profile', 'other').optional(),
       description: Joi.string().trim().max(500).optional(),
     }),
   },
@@ -16,10 +16,10 @@ export const fileValidators = {
   // 批量文件上传
   uploadFiles: {
     body: Joi.object({
-      type: Joi.string()
+      fileType: Joi.string()
         .valid(...Object.values(FileType))
         .required(),
-      category: Joi.string().valid('avatar', 'cover', 'event', 'work', 'other').optional(),
+      category: Joi.string().valid('avatar', 'cover', 'event', 'work', 'profile', 'other').optional(),
       description: Joi.string().trim().max(500).optional(),
     }),
   },
@@ -30,9 +30,10 @@ export const fileValidators = {
       page: Joi.number().integer().min(1).default(1),
       pageSize: Joi.number().integer().min(1).max(100).default(20),
       userId: Joi.string().uuid().optional(),
-      type: Joi.string()
+      fileType: Joi.string()
         .valid(...Object.values(FileType))
         .optional(),
+      category: Joi.string().valid('avatar', 'cover', 'event', 'work', 'profile', 'other').optional(),
       // status字段已移除，因为File模型中没有status字段
       keyword: Joi.string().trim().max(100).optional(),
       sortBy: Joi.string().valid('createdAt', 'size', 'filename').default('createdAt'),
@@ -64,7 +65,7 @@ export const fileValidators = {
   // 获取上传令牌
   getUploadToken: {
     body: Joi.object({
-      type: Joi.string()
+      fileType: Joi.string()
         .valid(...Object.values(FileType))
         .required(),
     }),

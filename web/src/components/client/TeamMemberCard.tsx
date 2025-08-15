@@ -9,7 +9,7 @@ interface TeamMemberCardProps {
   userId: string;
   name: string;
   avatar: string;
-  status: TeamMemberStatus;
+  status?: TeamMemberStatus;
   specialties: string[];
   experienceYears: number;
   onViewDetails: (id: string) => void;
@@ -141,15 +141,17 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
     <StyledCard loading={loading} onClick={onMemberClick}>
       <TeamAvatar>{avatar}</TeamAvatar>
       <TeamName level={4}>{name}</TeamName>
-      <StatusTag className={getStatusClassName(status)}>
-        {getStatusText(status)}
-      </StatusTag>
+      {status && (
+        <StatusTag className={getStatusClassName(status)}>
+          {getStatusText(status)}
+        </StatusTag>
+      )}
       <div style={{ marginBottom: 16 }}>
-        {specialties.slice(0, 3).map((specialty) => (
+        {specialties && specialties.length > 0 && specialties.slice(0, 3).map((specialty) => (
           <SpecialtyTag key={specialty}>{specialty}</SpecialtyTag>
         ))}
       </div>
-      {experienceYears > 0 && (
+      {specialties && specialties.length > 0 && experienceYears > 0 && (
         <Paragraph style={{ color: 'var(--client-text-secondary)', fontSize: '0.85rem', marginBottom: 20 }}>
           {experienceYears}年婚礼主持经验
         </Paragraph>

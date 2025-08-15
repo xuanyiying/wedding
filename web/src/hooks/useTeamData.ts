@@ -122,10 +122,27 @@ export const useTeamData = (options?: {
     }
   }, [teamId, fetchTeamMembers]);
 
-  // 初始化数据
+  // 初始化数据 - 移除refetch依赖，直接调用fetchTeams和fetchTeamMembers
   useEffect(() => {
-    refetch();
-  }, [refetch]);
+    const initializeData = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const fetchedTeams = await fetchTeams();
+        if (includeMembers && fetchedTeams.length > 0) {
+          await fetchTeamMembers(fetchedTeams[0].id);
+        }
+      } catch (error) {
+        console.error('Failed to initialize data:', error);
+        setError('数据加载失败');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    initializeData();
+  }, [activeOnly, limit, includeMembers]); // 只依赖于实际的配置参数
 
   // 显示错误消息
   useEffect(() => {

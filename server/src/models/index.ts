@@ -11,6 +11,7 @@ import WorkLike, { initWorkLike } from './WorkLike';
 import { Team, TeamMember, initTeam } from './Team';
 import Contact, { ContactAttributes, initContact } from './Contact';
 import ViewStat, { initViewStat, ViewStatAttributes, ViewStatCreationAttributes } from './ViewStat';
+import { initMediaProfile } from './MediaProfile';
 const models = {
   User,
   Schedule,
@@ -41,6 +42,7 @@ export const initModels = (sequelizeInstance: Sequelize): void => {
   initContact(sequelizeInstance);
 
   initViewStat(sequelizeInstance);
+  initMediaProfile(sequelizeInstance);
   // Define associations that are not defined within the init functions
   // Most associations are already defined in individual model files
 

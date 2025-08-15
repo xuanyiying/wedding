@@ -46,7 +46,7 @@ const createRateLimiter = (options: {
 // 通用速率限制
 export const generalRateLimit = createRateLimiter({
   windowMs: 15 * 60 * 1000, // 15 分钟
-  max: 1000, // 每个 IP 每 15 分钟最多 1000 个请求
+  max: 2000, // 每个 IP 每 15 分钟最多 2000 个请求（增加限制）
   message: 'Too many requests from this IP, please try again later.',
 });
 

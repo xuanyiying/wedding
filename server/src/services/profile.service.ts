@@ -1,324 +1,267 @@
-import UserProfile, { UserProfileAttributes, UserProfileCreationAttributes } from '../models/UserProfile';
-import User from '../models/User';
+import MediaProfile, { MediaProfileAttributes, MediaProfileCreationAttributes } from '../models/MediaProfile';
 import File from '../models/File';
-import Work from '../models/Work';
-import { Op } from 'sequelize';
+import User from '../models/User';
+import { UserMediaProfile } from '@/interfaces';
+import { UserService } from './user.service';
+import { generateId } from '@/utils/id.generator';
+import logger from '@/utils/logger';
+import { FileService } from './file.service';
+import { FileCategory, StorageType } from '@/types';
 
-export class UserProfileService {
+export class MediaProfileService {
+  async getMediaProfileById(id: string) {
+    return await MediaProfile.findByPk(id);
+  }
   /**
    * 创建用户公开资料
    */
-  async createUserProfile(data: UserProfileCreationAttributes): Promise<UserProfile> {
-    return await UserProfile.create(data);
+  async createMediaProfile(data: MediaProfileCreationAttributes): Promise<MediaProfile> {
+    if (!data.id) {
+      data.id = generateId();
+    }
+    return await MediaProfile.create(data);
   }
 
   /**
    * 根据用户ID获取用户公开资料
    */
-  async getUserProfileByUserId(userId: string): Promise<UserProfile | null> {
-    return await UserProfile.findOne({
-      where: { userId },
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'username', 'realName', 'nickname'],
-        },
-        {
-          model: File,
-          as: 'avatarFile',
-          attributes: ['id', 'fileUrl', 'thumbnailUrl'],
-        },
-        {
-          model: File,
-          as: 'coverFile',
-          attributes: ['id', 'fileUrl', 'thumbnailUrl'],
-        },
-      ],
+  async getPublicMediaProfiles(userId: string): Promise<MediaProfile[] | null> {
+    const user = await UserService.getUserById(userId);
+    if (!user) {
+      throw new Error('用户不存在');
+    }
+    return await MediaProfile.findAll({
+      where: {
+        userId,
+      },
     });
   }
 
   /**
-   * 根据ID获取用户公开资料
+   * 获取用户的媒体资料
    */
-  async getUserProfileById(id: string): Promise<UserProfile | null> {
-    return await UserProfile.findByPk(id, {
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'username', 'realName', 'nickname'],
-        },
-        {
-          model: File,
-          as: 'avatarFile',
-          attributes: ['id', 'fileUrl', 'thumbnailUrl'],
-        },
-        {
-          model: File,
-          as: 'coverFile',
-          attributes: ['id', 'fileUrl', 'thumbnailUrl'],
-        },
-      ],
+  async getUserMediaProfile(userId: string): Promise<UserMediaProfile | null> {
+    const user = await User.findByPk(userId, {
+      attributes: ['id', 'username', 'email', 'phone', 'avatarUrl', 'role', 'status', 'createdAt', 'updatedAt'],
     });
-  }
-
-  /**
-   * 获取用户公开资料的完整媒体数据（包含作品和文件）
-   */
-  async getUserProfileWithMedia(userId: string): Promise<any> {
-    const profile = await this.getUserProfileByUserId(userId);
-    if (!profile) {
+    if (!user) {
       return null;
     }
 
-    // 获取选中的作品
-    let selectedWorks: Work[] = [];
-    if (profile.selectedWorkIds && profile.selectedWorkIds.length > 0) {
-      selectedWorks = await Work.findAll({
-        where: {
-          id: { [Op.in]: profile.selectedWorkIds },
-          status: 'published',
-        },
-        attributes: ['id', 'title', 'description', 'type', 'coverUrl', 'contentUrls', 'tags', 'location', 'shootDate'],
-      });
-    }
-
-    // 获取选中的文件
-    let selectedFiles: File[] = [];
-    if (profile.selectedFileIds && profile.selectedFileIds.length > 0) {
-      selectedFiles = await File.findAll({
-        where: {
-          id: { [Op.in]: profile.selectedFileIds },
-          isPublic: true,
-        },
-        attributes: ['id', 'originalName', 'fileUrl', 'thumbnailUrl', 'fileType', 'width', 'height', 'duration'],
-      });
-    }
-
-    // 根据mediaOrder排序媒体数据
-    const orderedMedia: Array<{ type: 'work' | 'file'; data: Work | File }> = [];
-    if (profile.mediaOrder && profile.mediaOrder.length > 0) {
-      for (const mediaId of profile.mediaOrder) {
-        const work = selectedWorks.find(w => w.id === mediaId);
-        const file = selectedFiles.find(f => f.id === mediaId);
-        if (work) {
-          orderedMedia.push({ type: 'work', data: work });
-        } else if (file) {
-          orderedMedia.push({ type: 'file', data: file });
+    const files = await MediaProfile.findAll({
+      where: { userId },
+      include: [
+        {
+          model: File,
+          as: 'file',
+          attributes: ['id', 'originalName', 'filename', 'filePath', 'fileUrl', 'fileSize', 'mimeType', 'width', 'height', 'duration', 'thumbnailUrl', 'hashMd5', 'hashSha256', 'storageType', 'bucketName', 'isPublic', 'downloadCount', 'metadata', 'category', 'createdAt', 'updatedAt', 'deletedAt'],
         }
-      }
-    }
+      ],
+      order: [['mediaOrder', 'ASC']],
+    });
+;
+
+    const userObj = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      phone: user.phone,
+      avatar: user.avatarUrl,
+      role: user.role,
+      status: user.status,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+    } as any; // 临时使用any类型避免严格类型检查
 
     return {
-      ...profile.toJSON(),
-      selectedWorks,
-      selectedFiles,
-      orderedMedia,
+      userId,
+      user: userObj,
+      files: files.map((f) => ({
+        id: f.id,
+        userId: f.userId,
+        fileId: f.fileId,
+        mediaOrder: f.mediaOrder,
+        fileType: f.fileType,
+        originalName: f.file?.originalName || '',
+        filename: f.file?.filename || '',
+        filePath: f.file?.filePath || '',
+        fileUrl: f.file?.fileUrl || '',
+        fileSize: f.file?.fileSize || 0,
+        mimeType: f.file?.mimeType || '',
+        width: f.file?.width || null,
+        height: f.file?.height || null,
+        duration: f.file?.duration || 0,
+        thumbnailUrl: f.file?.thumbnailUrl || '',
+        hashMd5: f.file?.hashMd5 || '',
+        hashSha256: f.file?.hashSha256 || '',
+        storageType: f.file?.storageType || StorageType.MINIO,
+        bucketName: f.file?.bucketName || '',
+        isPublic: f.file?.isPublic || false,
+        downloadCount: f.file?.downloadCount || 0,
+        metadata: f.file?.metadata || {},
+        category: f.file?.category || FileCategory.OTHER,
+      })).filter(f => f.originalName !== ''), // 过滤掉没有关联文件的记录
     };
   }
 
   /**
-   * 更新用户公开资料
+   * 获取用户完整资料（用户信息 + 媒体文件）- 用于profile路由
    */
-  async updateUserProfile(userId: string, data: Partial<UserProfileAttributes>): Promise<UserProfile | null> {
-    const profile = await UserProfile.findOne({ where: { userId } });
-    if (!profile) {
-      return null;
-    }
-
-    await profile.update(data);
-    return profile;
+  async getUserProfile(userId: string): Promise<UserMediaProfile | null> {
+    return this.getUserMediaProfile(userId);
   }
 
   /**
-   * 更新媒体排序
+   * 批量更新用户公开资料
    */
-  async updateMediaOrder(userId: string, mediaOrder: string[]): Promise<UserProfile | null> {
-    const profile = await UserProfile.findOne({ where: { userId } });
-    if (!profile) {
+  async updateMediaProfile(userId: string, data: Partial<MediaProfileAttributes>[]): Promise<MediaProfile[]> {
+    const profiles = await MediaProfile.findAll({ where: { userId } });
+    if (!profiles || profiles.length === 0) {
       throw new Error('用户档案不存在');
     }
-
-    await profile.updateMediaOrder(mediaOrder);
-    return profile;
+    for (const profileData of data) {
+      const profile = profiles.find((p: MediaProfile) => p.id === profileData.id);
+      if (!profile) {
+        throw new Error('用户档案不存在');
+      }
+      await profile.update(profileData);
+    }
+    return profiles;
   }
 
   /**
-   * 添加作品到公开资料
+   * 获取用户媒体资料列表
    */
-  async addWorkToProfile(userId: string, workId: string): Promise<UserProfile | null> {
-    const profile = await UserProfile.findOne({ where: { userId } });
-    if (!profile) {
-      return null;
-    }
-
-    // 验证作品是否属于该用户且已发布
-    const work = await Work.findOne({
-      where: {
-        id: workId,
-        userId,
-        status: 'published',
-      },
-    });
-
-    if (!work) {
-      throw new Error('作品不存在或未发布');
-    }
-
-    await profile.addWork(workId);
-    return profile;
-  }
-
-  /**
-   * 从公开资料移除作品
-   */
-  async removeWorkFromProfile(userId: string, workId: string): Promise<UserProfile | null> {
-    const profile = await UserProfile.findOne({ where: { userId } });
-    if (!profile) {
-      return null;
-    }
-
-    await profile.removeWork(workId);
-    return profile;
-  }
-
-  /**
-   * 添加文件到公开资料
-   */
-  async addFileToProfile(userId: string, fileId: string): Promise<UserProfile | null> {
-    const profile = await UserProfile.findOne({ where: { userId } });
-    if (!profile) {
-      return null;
-    }
-
-    // 验证文件是否属于该用户且公开
-    const file = await File.findOne({
-      where: {
-        id: fileId,
-        userId,
-        isPublic: true,
-      },
-    });
-
-    if (!file) {
-      throw new Error('文件不存在或未公开');
-    }
-
-    await profile.addFile(fileId);
-    return profile;
-  }
-
-  /**
-   * 从公开资料移除文件
-   */
-  async removeFileFromProfile(userId: string, fileId: string): Promise<UserProfile | null> {
-    const profile = await UserProfile.findOne({ where: { userId } });
-    if (!profile) {
-      return null;
-    }
-
-    await profile.removeFile(fileId);
-    return profile;
-  }
-
-  /**
-   * 获取用户可选择的作品列表
-   */
-  async getUserAvailableWorks(userId: string): Promise<Work[]> {
-    return await Work.findAll({
-      where: {
-        userId,
-        status: 'published',
-      },
-      attributes: ['id', 'title', 'description', 'type', 'coverUrl', 'tags', 'location', 'shootDate', 'createdAt'],
-      order: [['createdAt', 'DESC']],
+  async getUserMediaProfiles(userId: string): Promise<MediaProfile[]> {
+    logger.info(`获取用户媒体资料列表，用户ID：${userId}`);
+    return await MediaProfile.findAll({
+      where: { userId },
+      order: [['mediaOrder', 'ASC']]
     });
   }
 
   /**
-   * 获取用户可选择的文件列表
+   * 更新媒体资料排序
    */
-  async getUserAvailableFiles(userId: string): Promise<File[]> {
-    return await File.findAll({
-      where: {
-        userId,
-        isPublic: true,
-      },
-      attributes: [
-        'id',
-        'originalName',
-        'fileUrl',
-        'thumbnailUrl',
-        'fileType',
-        'width',
-        'height',
-        'duration',
-        'createdAt',
-      ],
-      order: [['createdAt', 'DESC']],
-    });
+  async updateMediaProfilesOrder(userId: string, orderData: Array<{ id: string; mediaOrder: number }>): Promise<void> {
+    for (const item of orderData) {
+      await MediaProfile.update(
+        { mediaOrder: item.mediaOrder },
+        { 
+          where: { id: item.id, userId }
+        }
+      );
+    }
+  }
+
+  /**
+   * 批量删除用户公开资料
+   */
+  async deleteMediaProfiles(userId: string, fileIds: string[]): Promise<boolean> {
+    const profiles = await MediaProfile.findAll({ where: { userId, fileId: fileIds } });
+    if (!profiles || profiles.length === 0) {
+      return false;
+    }
+
+    await FileService.deleteFiles(fileIds, userId);
+    await MediaProfile.destroy({ where: { userId, fileId: fileIds } });
+    return true;
   }
 
   /**
    * 删除用户公开资料
    */
-  async deleteUserProfile(userId: string): Promise<boolean> {
-    const profile = await UserProfile.findOne({ where: { userId } });
+  async deleteMediaProfile(userId: string, fileId: string): Promise<boolean> {
+    const profile = await MediaProfile.findOne({ where: { userId, fileId } });
     if (!profile) {
       return false;
     }
-
+    // 删除文件
+    await FileService.deleteFile(fileId, userId);
+    // 删除文件记录
+    await File.destroy({ where: { id: fileId } });
     await profile.destroy();
+   
     return true;
   }
-
-  /**
-   * 获取公开的用户资料列表（分页）
-   */
-  async getPublicUserProfiles(
-    page: number = 1,
-    limit: number = 20,
-  ): Promise<{ profiles: UserProfile[]; total: number }> {
-    const offset = (page - 1) * limit;
-
-    const { count, rows } = await UserProfile.findAndCountAll({
-      where: { isPublic: true },
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'username', 'realName', 'nickname'],
-        },
-        {
-          model: File,
-          as: 'avatarFile',
-          attributes: ['id', 'fileUrl', 'thumbnailUrl'],
-        },
-      ],
-      order: [
-        ['viewCount', 'DESC'],
-        ['createdAt', 'DESC'],
-      ],
-      limit,
-      offset,
-    });
-
-    return {
-      profiles: rows,
-      total: count,
-    };
-  }
-
   /**
    * 增加浏览次数
    */
   async incrementViewCount(userId: string): Promise<void> {
-    const profile = await UserProfile.findOne({ where: { userId } });
-    if (profile) {
-      await profile.incrementViewCount();
-    }
+    // TODO 可以在这里实现查看次数逻辑，比如记录到ViewStat表中
+    console.log(`View count incremented for user: ${userId}`);
+    
   }
+
+
+  /**
+   * 批量创建媒体资料
+   */
+  async batchCreateMediaProfile(userId: string, mediaProfiles: Partial<MediaProfileCreationAttributes>[]): Promise<MediaProfile[]> {
+     const profilesWithIds = mediaProfiles.map((p, index) => {
+       const profile: MediaProfileCreationAttributes = {
+         id: p.id || generateId(),
+         userId,
+         fileId: p.fileId!,
+         fileType: p.fileType!,
+         mediaOrder: p.mediaOrder ?? index,
+       };
+       return profile;
+     });
+     
+     return await MediaProfile.bulkCreate(profilesWithIds);
+   }
+
+  /**
+   * 添加文件到用户资料
+   */
+  async addFileToProfile(userId: string, fileId: string, options?: {
+     mediaOrder?: number;
+     fileType?: string;
+   }): Promise<MediaProfile> {
+     const existingCount = await MediaProfile.count({ where: { userId } });
+     const mediaOrder = options?.mediaOrder ?? existingCount;
+     
+     const profileData: MediaProfileCreationAttributes = {
+       userId,
+       fileId,
+       mediaOrder,
+       fileType: options?.fileType as any || 'image',
+     };
+     
+     return await this.createMediaProfile(profileData);
+   }
+
+  /**
+   * 更新单个媒体资料
+   */
+  async updateSingleMediaProfile(userId: string, fileId: string, updateData: Partial<MediaProfileAttributes>): Promise<MediaProfile> {
+    const profile = await MediaProfile.findOne({ where: { userId, fileId } });
+    if (!profile) {
+      throw new Error('媒体资料不存在');
+    }
+    
+    await profile.update(updateData);
+    return profile;
+  }
+
+  /**
+   * 从用户资料中移除文件
+   */
+  async removeFileFromProfile(userId: string, fileId: string): Promise<boolean> {
+    return await this.deleteMediaProfile(userId, fileId);
+  }
+
+  /**
+   * 获取用户可用的文件列表
+   */
+  async getUserAvailableFiles(userId: string): Promise<File[]> {
+     return await File.findAll({
+       where: { userId: userId },
+       order: [['createdAt', 'DESC']],
+     });
+   }
+
 }
 
-export const userProfileService = new UserProfileService();
+export default new MediaProfileService();

@@ -1,384 +1,292 @@
 import { Request, Response } from 'express';
-import { userProfileService } from '../services/profile.service';
+import ProfileService from '../services/profile.service';
 import { AuthenticatedRequest } from '../interfaces';
-import { validationResult } from 'express-validator';
+import { Resp } from '@/utils/response';
+import { FileType } from '@/types';
 
 export class ProfileController {
-  /**
-   * 获取当前用户的公开资料
-   */
-  async getCurrentUserProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user!.id;
-      const profile = await userProfileService.getUserProfileWithMedia(userId);
-
-      if (!profile) {
-        res.status(404).json({ message: '用户公开资料不存在' });
-        return;
-      }
-
-      res.json({
-        success: true,
-        data: profile,
-      });
-    } catch (error) {
-      console.error('获取用户公开资料失败:', error);
-      res.status(500).json({ message: '服务器内部错误' });
+  async createMediaProfile(req: Request, res: Response): Promise<void> {
+    const userId = req.user?.id;
+    const { fileId, mediaOrder, fileType } = req.body;
+    if (!fileId) {
+      Resp.badRequest(res, '请提供文件ID');
+      return;
     }
+    if (!mediaOrder) {
+      Resp.badRequest(res, '请提供媒体排序序号');
+      return;
+    }
+    if (!userId) {
+      Resp.badRequest(res, '用户ID不存在');
+      return;
+    }
+  
+    const mediaProfiles = await ProfileService.createMediaProfile({
+      mediaOrder,
+      userId,
+      fileId,
+      fileType: fileType as FileType,
+    });
+    Resp.success(res, mediaProfiles);
+  }
+  async updateMediaOrder(req: Request, res: Response): Promise<void> {
+    const userId = req.user?.id;
+    if (!userId) {
+      Resp.badRequest(res, '用户ID不存在');
+      return;
+    }
+    const medias = req.body.mediaOrder;
+    if (!medias || !Array.isArray(medias)) {
+      Resp.badRequest(res, '参数错误');
+      return;
+    }
+    await ProfileService.updateMediaProfilesOrder(userId, medias);
+    Resp.success(res, '更新成功');
+  }
+
+ async updateMediaProfile (req: Request, res: Response): Promise<void> {
+    const userId = req.user?.id;
+    if (!userId) {
+      Resp.badRequest(res, '用户ID不存在');
+      return;
+    }
+    const mediaProfile = req.body.mediaProfile;
+    if (!mediaProfile) {
+      Resp.badRequest(res, '参数错误');
+      return;
+    }
+    await ProfileService.updateMediaProfile(userId, mediaProfile);
+    Resp.success(res, '更新成功');
+  };
+
+  async getUserMediaProfile (req: Request, res: Response): Promise<void> {
+    const userId = req.user?.id;
+    if (!userId) {
+      Resp.badRequest(res, '用户ID不存在');
+      return;
+    }
+    const mediaProfile = await ProfileService.getUserMediaProfile(userId);
+    Resp.success(res, mediaProfile);
+  }
+  async deleteMediaProfile (req: Request, res: Response): Promise<void> {
+    const userId = req.user?.id;
+    if (!userId) {
+      Resp.badRequest(res, '用户ID不存在');
+      return;
+    }
+    const { fileId } = req.params;
+    if (!fileId) {
+      Resp.badRequest(res, '请提供文件ID');
+      return;
+    }
+    await ProfileService.deleteMediaProfile(userId, fileId);
+    Resp.success(res, '删除成功');
+  }
+
+  async getMediaProfileById (req: Request, res: Response): Promise<void> {
+    const { fileId } = req.params;
+    if (!fileId) {
+      Resp.badRequest(res, '请提供文件ID');
+      return;
+    }
+    const mediaProfile = await ProfileService.getMediaProfileById(fileId);
+    Resp.success(res, mediaProfile);
   }
 
   /**
-   * 根据用户ID获取公开资料
+   * 批量 create media profiles
+   * 
    */
-  async getUserProfileByUserId(req: Request, res: Response): Promise<void> {
-    try {
-      const { userId } = req.params;
-      if (!userId) {
-        res.status(400).json({ message: '用户ID参数缺失' });
-        return;
-      }
-
-      const profile = await userProfileService.getUserProfileWithMedia(userId);
-
-      if (!profile || !profile.isPublic) {
-        res.status(404).json({ message: '用户公开资料不存在或未公开' });
-        return;
-      }
-
-      // 增加浏览次数
-      await userProfileService.incrementViewCount(userId);
-
-      res.json({
-        success: true,
-        data: profile,
-      });
-    } catch (error) {
-      console.error('获取用户公开资料失败:', error);
-      res.status(500).json({ message: '服务器内部错误' });
+  async batchCreateMediaProfiles (req: AuthenticatedRequest, res: Response): Promise<void> { 
+    const userId = req.user?.id;
+    if (!userId) {
+      Resp.badRequest(res, '用户ID不存在');
+      return;
     }
+    const { mediaProfiles } = req.body;
+    if (!mediaProfiles || !Array.isArray(mediaProfiles)) {
+      Resp.badRequest(res, '参数错误');
+      return;
+    }
+    const result = await ProfileService.batchCreateMediaProfile(userId, mediaProfiles);
+    
+    Resp.success(res, result);
   }
 
-  /**
-   * 创建或更新用户公开资料
-   */
-  async createOrUpdateUserProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        res.status(400).json({ message: '参数验证失败', errors: errors.array() });
-        return;
-      }
-
-      const userId = req.user!.id;
-      const {
-        displayName,
-        bio,
-        avatarFileId,
-        coverFileId,
-        selectedWorkIds,
-        selectedFileIds,
-        mediaOrder,
-        isPublic,
-        socialLinks,
-        contactInfo,
-      } = req.body;
-
-      // 检查是否已存在公开资料
-      let profile = await userProfileService.getUserProfileByUserId(userId);
-
-      if (profile) {
-        // 更新现有资料
-        profile = await userProfileService.updateUserProfile(userId, {
-          displayName,
-          bio,
-          avatarFileId,
-          coverFileId,
-          selectedWorkIds,
-          selectedFileIds,
-          mediaOrder,
-          isPublic,
-          socialLinks,
-          contactInfo,
-        });
-      } else {
-        // 创建新资料
-        profile = await userProfileService.createUserProfile({
-          userId,
-          displayName,
-          bio,
-          avatarFileId,
-          coverFileId,
-          selectedWorkIds,
-          selectedFileIds,
-          mediaOrder,
-          isPublic: isPublic ?? true,
-          viewCount: 0,
-          socialLinks,
-          contactInfo,
-        });
-      }
-
-      res.json({
-        success: true,
-        data: profile,
-        message: profile ? '用户公开资料更新成功' : '用户公开资料创建成功',
-      });
-    } catch (error) {
-      console.error('创建/更新用户公开资料失败:', error);
-      res.status(500).json({ message: '服务器内部错误' });
+  // 获取用户资料（包含媒体）
+  async getUserProfile(req: Request, res: Response): Promise<void> {
+    const { userId } = req.params;
+    if (!userId) {
+      Resp.badRequest(res, '请提供用户ID');
+      return;
     }
+    
+    const profile = await ProfileService.getUserMediaProfile(userId);
+    
+    if (!profile) {
+      Resp.badRequest(res, '用户资料不存在');
+      return;
+    }
+    
+    Resp.success(res, profile);
   }
 
-  /**
-   * 更新媒体排序
-   */
-  async updateMediaOrder(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        res.status(400).json({ message: '参数验证失败', errors: errors.array() });
-        return;
-      }
-
-      const userId = req.user!.id;
-      const { mediaOrder } = req.body;
-
-      const profile = await userProfileService.updateMediaOrder(userId, mediaOrder);
-
-      if (!profile) {
-        res.status(404).json({ message: '用户公开资料不存在' });
-        return;
-      }
-
-      res.json({
-        success: true,
-        data: profile,
-        message: '媒体排序更新成功',
-      });
-    } catch (error) {
-      console.error('更新媒体排序失败:', error);
-      res.status(500).json({ message: '服务器内部错误' });
+  // 创建用户资料
+  async createUserProfile(req: Request, res: Response): Promise<void> {
+    const { userId } = req.params;
+    const profileData = req.body;
+    
+    if (!userId) {
+      Resp.badRequest(res, '请提供用户ID');
+      return;
     }
+    
+    const profile = await ProfileService.createMediaProfile({
+      ...profileData,
+      userId,
+    });
+    
+    Resp.success(res, profile);
   }
 
-  /**
-   * 添加作品到公开资料
-   */
-  async addWorkToProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        res.status(400).json({ message: '参数验证失败', errors: errors.array() });
-        return;
-      }
-
-      const userId = req.user!.id;
-      const { workId } = req.body;
-
-      const profile = await userProfileService.addWorkToProfile(userId, workId);
-
-      if (!profile) {
-        res.status(404).json({ message: '用户公开资料不存在' });
-        return;
-      }
-
-      res.json({
-        success: true,
-        data: profile,
-        message: '作品添加成功',
-      });
-    } catch (error) {
-      console.error('添加作品失败:', error);
-      if (error instanceof Error && error.message.includes('作品不存在')) {
-        res.status(400).json({ message: error.message });
-      } else {
-        res.status(500).json({ message: '服务器内部错误' });
-      }
-    }
-  }
-
-  /**
-   * 从公开资料移除作品
-   */
-  async removeWorkFromProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user!.id;
-      const { workId } = req.params;
-
-      if (!workId) {
-        res.status(400).json({ message: '作品ID参数缺失' });
-        return;
-      }
-
-      const profile = await userProfileService.removeWorkFromProfile(userId, workId);
-
-      if (!profile) {
-        res.status(404).json({ message: '用户公开资料不存在' });
-        return;
-      }
-
-      res.json({
-        success: true,
-        data: profile,
-        message: '作品移除成功',
-      });
-    } catch (error) {
-      console.error('移除作品失败:', error);
-      res.status(500).json({ message: '服务器内部错误' });
-    }
-  }
-
-  /**
-   * 添加文件到公开资料
-   */
-  async addFileToProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        res.status(400).json({ message: '参数验证失败', errors: errors.array() });
-        return;
-      }
-
-      const userId = req.user!.id;
-      const { fileId } = req.body;
-
-      const profile = await userProfileService.addFileToProfile(userId, fileId);
-
-      if (!profile) {
-        res.status(404).json({ message: '用户公开资料不存在' });
-        return;
-      }
-
-      res.json({
-        success: true,
-        data: profile,
-        message: '文件添加成功',
-      });
-    } catch (error) {
-      console.error('添加文件失败:', error);
-      if (error instanceof Error && error.message.includes('文件不存在')) {
-        res.status(400).json({ message: error.message });
-      } else {
-        res.status(500).json({ message: '服务器内部错误' });
-      }
-    }
-  }
-
-  /**
-   * 从公开资料移除文件
-   */
-  async removeFileFromProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user!.id;
-      const { fileId } = req.params;
-
-      if (!fileId) {
-        res.status(400).json({ message: '文件ID参数缺失' });
-        return;
-      }
-
-      const profile = await userProfileService.removeFileFromProfile(userId, fileId);
-
-      if (!profile) {
-        res.status(404).json({ message: '用户公开资料不存在' });
-        return;
-      }
-
-      res.json({
-        success: true,
-        data: profile,
-        message: '文件移除成功',
-      });
-    } catch (error) {
-      console.error('移除文件失败:', error);
-      res.status(500).json({ message: '服务器内部错误' });
-    }
-  }
-
-  /**
-   * 获取用户可选择的作品列表
-   */
-  async getUserAvailableWorks(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user!.id;
-      const works = await userProfileService.getUserAvailableWorks(userId);
-
-      res.json({
-        success: true,
-        data: works,
-      });
-    } catch (error) {
-      console.error('获取可选作品列表失败:', error);
-      res.status(500).json({ message: '服务器内部错误' });
-    }
-  }
-
-  /**
-   * 获取用户可选择的文件列表
-   */
-  async getUserAvailableFiles(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user!.id;
-      const files = await userProfileService.getUserAvailableFiles(userId);
-
-      res.json({
-        success: true,
-        data: files,
-      });
-    } catch (error) {
-      console.error('获取可选文件列表失败:', error);
-      res.status(500).json({ message: '服务器内部错误' });
-    }
-  }
-
-  /**
-   * 获取公开的用户资料列表
-   */
+  // 获取公开的用户资料
   async getPublicUserProfiles(req: Request, res: Response): Promise<void> {
-    try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 20;
+    const userId = req.user?.id;
+    if (!userId) {
+      Resp.badRequest(res, '用户ID不存在');
+      return;
+    }
+    
+    const profiles = await ProfileService.getPublicMediaProfiles(userId);
+    Resp.success(res, profiles);
+  }
 
-      const result = await userProfileService.getPublicUserProfiles(page, limit);
+  // 添加文件到资料
+  async addFileToProfile(req: Request, res: Response): Promise<void> {
+    const { userId } = req.params;
+    const { fileId, mediaOrder, fileType } = req.body;
+    
+    if (!userId) {
+      Resp.badRequest(res, '请提供用户ID');
+      return;
+    }
+    
+    if (!fileId) {
+      Resp.badRequest(res, '请提供文件ID');
+      return;
+    }
+    
+    const profile = await ProfileService.createMediaProfile({
+      userId,
+      fileId,
+      mediaOrder,
+      fileType: fileType as FileType,
+    });
+    
+    Resp.success(res, profile);
+  }
 
-      res.json({
-        success: true,
-        data: result.profiles,
-        pagination: {
-          page,
-          limit,
-          total: result.total,
-          totalPages: Math.ceil(result.total / limit),
-        },
-      });
-    } catch (error) {
-      console.error('获取公开用户资料列表失败:', error);
-      res.status(500).json({ message: '服务器内部错误' });
+  // 从资料中移除文件
+  async removeFileFromProfile(req: Request, res: Response): Promise<void> {
+    const { userId, fileId } = req.params;
+    
+    if (!userId) {
+      Resp.badRequest(res, '请提供用户ID');
+      return;
+    }
+    
+    if (!fileId) {
+      Resp.badRequest(res, '请提供文件ID');
+      return;
+    }
+    
+    await ProfileService.deleteMediaProfile(userId, fileId);
+    
+    Resp.success(res, '文件移除成功');
+  }
+
+  // 获取用户可用文件
+  async getUserAvailableFiles(req: Request, res: Response): Promise<void> {
+    const userId = req.user?.id;
+    if (!userId) {
+      Resp.badRequest(res, '用户ID不存在');
+      return;
+    }
+    
+    const files = await ProfileService.getUserAvailableFiles(userId);
+    Resp.success(res, files);
+  }
+
+  // 批量删除媒体资料
+  async batchDeleteMediaProfiles(req: Request, res: Response): Promise<void> {
+    const userId = req.user?.id;
+    if (!userId) {
+      Resp.badRequest(res, '用户ID不存在');
+      return;
+    }
+    
+    const { fileIds } = req.body;
+    if (!fileIds || !Array.isArray(fileIds) || fileIds.length === 0) {
+      Resp.badRequest(res, '请提供要删除的文件ID列表');
+      return;
+    }
+    
+    const result = await ProfileService.deleteMediaProfiles(userId, fileIds);
+    if (result) {
+      Resp.success(res, '批量删除成功');
+    } else {
+      Resp.badRequest(res, '删除失败，未找到相关文件');
     }
   }
 
-  /**
-   * 删除用户公开资料
-   */
-  async deleteUserProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user!.id;
-      const success = await userProfileService.deleteUserProfile(userId);
-
-      if (!success) {
-        res.status(404).json({ message: '用户公开资料不存在' });
-        return;
-      }
-
-      res.json({
-        success: true,
-        message: '用户公开资料删除成功',
-      });
-    } catch (error) {
-      console.error('删除用户公开资料失败:', error);
-      res.status(500).json({ message: '服务器内部错误' });
+  // 更新单个媒体资料
+  async updateSingleMediaProfile(req: Request, res: Response): Promise<void> {
+    const userId = req.user?.id;
+    if (!userId) {
+      Resp.badRequest(res, '用户ID不存在');
+      return;
     }
+    
+    const { fileId } = req.params;
+    const updateData = req.body;
+    
+    if (!fileId) {
+      Resp.badRequest(res, '请提供文件ID');
+      return;
+    }
+    
+    const result = await ProfileService.updateSingleMediaProfile(userId, fileId, updateData);
+    Resp.success(res, result);
+  }
+
+  // 获取用户媒体资料列表
+  async getUserMediaProfiles(req: Request, res: Response): Promise<void> {
+    const userId = req.user?.id;
+    if (!userId) {
+      Resp.badRequest(res, '用户ID不存在');
+      return;
+    }
+    
+    const mediaProfiles = await ProfileService.getUserMediaProfiles(userId);
+    Resp.success(res, mediaProfiles);
+  }
+
+  // 更新媒体资料排序
+  async updateMediaProfilesOrder(req: Request, res: Response): Promise<void> {
+    const userId = req.user?.id;
+    if (!userId) {
+      Resp.badRequest(res, '用户ID不存在');
+      return;
+    }
+
+    const { orderData } = req.body;
+    if (!Array.isArray(orderData)) {
+      Resp.badRequest(res, '排序数据格式错误');
+      return;
+    }
+
+    await ProfileService.updateMediaProfilesOrder(userId, orderData);
+    Resp.success(res, '排序更新成功');
   }
 }
-
 export const profileController = new ProfileController();

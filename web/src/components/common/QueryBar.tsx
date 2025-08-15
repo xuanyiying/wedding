@@ -233,8 +233,9 @@ const QueryBar: React.FC<QueryBarProps> = ({
             onChange={(value) => handleFilterChange('teamId', value)}
             loading={loadingTeams}
             allowClear
+            defaultValue={'all'}
           >
-            <Option value="">全部</Option>
+            <Option value="all">全部</Option>
             {teams.map(team => (
               <Option key={team.id} value={team.id}>
                 {team.name}

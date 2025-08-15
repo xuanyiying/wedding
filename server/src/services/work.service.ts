@@ -2,7 +2,7 @@ import { Op, WhereOptions } from 'sequelize';
 import { Work, WorkAttributes, WorkCreationAttributes, WorkLike, User } from '../models';
 import { logger } from '../utils/logger';
 import { WorkType, WorkCategory, WorkStatus } from '../types';
-import { FileService } from './file.service';
+import File from '../models/File';
 
 interface GetWorksParams {
   page: number;
@@ -61,7 +61,7 @@ export class WorkService {
       {
         model: User,
         as: 'user',
-        attributes: ['id', 'username', 'realName', 'avatarUrl'],
+        attributes: ['id', 'nickname', 'realName', 'avatarUrl', 'role', 'phone', 'bio'],
       },
     ];
 
@@ -74,7 +74,7 @@ export class WorkService {
       include.push({
         model: User,
         as: 'user',
-        attributes: ['id', 'username', 'realName', 'avatarUrl'],
+        attributes: ['id', 'nickname', 'realName', 'avatarUrl', 'role', 'phone', 'bio'],
         include: [
           {
             model: require('../models').TeamMember,
@@ -100,7 +100,7 @@ export class WorkService {
       where.status = status;
     }
 
-    if (isFeatured !== undefined) {
+    if (isFeatured !== undefined && isFeatured) {
       where.isFeatured = isFeatured;
     }
 
@@ -135,20 +135,22 @@ export class WorkService {
       include: teamId
         ? include
         : [
-            {
-              model: User,
-              as: 'user',
-              attributes: ['id', 'username', 'realName', 'avatarUrl'],
-            },
-          ],
+          {
+            model: User,
+            as: 'user',
+            attributes: ['id', 'nickname', 'realName', 'avatarUrl', 'role', 'phone', 'bio'],
+          },
+        ],
       order: [[sortBy, sortOrder]],
       limit: pageSize,
       offset,
       distinct: true, // 避免关联查询时的重复计数
     });
-
+    logger.info('获取作品列表成功:', { count, rows });
+    const worksWithFiles = await WorkService.setFiles(rows);
     return {
-      works: rows,
+      count,
+      works: worksWithFiles,
       pagination: {
         page,
         pageSize,
@@ -177,6 +179,20 @@ export class WorkService {
       throw new Error('作品不存在');
     }
 
+    // 手动填充files属性
+    const workJson = work.toJSON();
+    if (workJson.fileIds && workJson.fileIds.length > 0) {
+      const files = await File.findAll({
+        where: {
+          id: workJson.fileIds,
+        },
+        attributes: ['id', 'originalName', 'filename', 'fileUrl', 'fileSize', 'mimeType', 'fileType', 'width', 'height', 'duration', 'thumbnailUrl'],
+      });
+      workJson.files = files;
+    } else {
+      workJson.files = [];
+    }
+
     // 检查是否已点赞（如果用户已登录）
     let isLiked = false;
     if (currentUserId) {
@@ -190,7 +206,7 @@ export class WorkService {
     }
 
     return {
-      ...work.toJSON(),
+      ...workJson,
       isLiked,
     };
   }
@@ -205,29 +221,8 @@ export class WorkService {
     }
 
     // 验证内容URL
-    if (data.contentUrls && data.contentUrls.length === 0) {
+    if (data.fileIds && data.fileIds.length === 0) {
       throw new Error('验证失败：至少需要上传一张作品图片');
-    }
-
-    // 如果是视频作品，且没有提供封面，则自动生成封面
-    if (data.type === WorkType.VIDEO && !data.coverUrl) {
-      if (data.contentUrls && data.contentUrls.length > 0) {
-        const videoUrl = data.contentUrls[0];
-        try {
-          if (!data.userId) {
-            throw new Error('用户ID不能为空');
-          }
-          if (!videoUrl) {
-            throw new Error('请上传视频文件');
-          }
-          const coverUrl = await FileService.generateVideoCover(videoUrl, data.userId);
-          data.coverUrl = coverUrl;
-        } catch (error) {
-          logger.error('生成视频封面失败:', error);
-          // 可以选择抛出错误，或者允许在没有封面的情况下创建
-          throw new Error('生成视频封面失败');
-        }
-      }
     }
 
     const work = await Work.create({
@@ -318,7 +313,7 @@ export class WorkService {
     }
 
     // 验证发布条件
-    if (!work.title || !work.coverUrl || !work.contentUrls || work.contentUrls.length === 0) {
+    if (!work.title || !work.fileIds || work.fileIds.length === 0) {
       throw new Error('发布失败：作品信息不完整（需要标题、封面和内容图片）');
     }
 
@@ -452,8 +447,11 @@ export class WorkService {
       order: [['createdAt', 'DESC']],
       limit,
     });
+    logger.info('featured works:', works);
 
-    return works;
+    const worksWithFiles = await WorkService.setFiles(works);
+    logger.info('Get featured works:', worksWithFiles);
+    return worksWithFiles;
   }
 
   /**
@@ -561,7 +559,7 @@ export class WorkService {
         {
           model: User,
           as: 'user',
-          attributes: ['id', 'username', 'realName', 'avatarUrl'],
+          attributes: ['id', 'nickname', 'realName', 'avatarUrl'],
           where: { status: 'active' },
         },
       ],
@@ -570,8 +568,10 @@ export class WorkService {
       offset,
     });
 
+    const worksWithFiles = await WorkService.setFiles(rows);
+
     return {
-      works: rows,
+      works: worksWithFiles,
       pagination: {
         page,
         pageSize,
@@ -599,7 +599,7 @@ export class WorkService {
         {
           model: User,
           as: 'user',
-          attributes: ['id', 'username', 'realName', 'avatarUrl'],
+          attributes: ['id', 'nickname', 'realName', 'avatarUrl'],
         },
       ],
       order: [
@@ -610,7 +610,8 @@ export class WorkService {
       limit,
     });
 
-    return works;
+    return await WorkService.setFiles(works);
+
   }
 
   /**
@@ -631,15 +632,13 @@ export class WorkService {
     const relatedWorks = await Work.findAll({
       where: {
         ...where,
-        ...({
-          [Op.or]: [{ type: work.type, category: work.category }, { type: work.type }, { category: work.category }],
-        } as any),
+        [Op.or]: [{ type: work.type, category: work.category }, { type: work.type }, { category: work.category }],
       },
       include: [
         {
           model: User,
           as: 'user',
-          attributes: ['id', 'username', 'realName', 'avatarUrl'],
+          attributes: ['id', 'nickname', 'realName', 'avatarUrl', 'role', 'phone', 'bio'],
         },
       ],
       order: [
@@ -649,6 +648,31 @@ export class WorkService {
       limit,
     });
 
-    return relatedWorks;
+    return await WorkService.setFiles(relatedWorks);
   }
+  
+  static async setFiles(works: Work[]) {
+    // 手动填充files属性
+    const worksWithFiles = await Promise.all(
+      works.map(async (work) => {
+        const workJson = work.toJSON();
+        if (workJson.fileIds && workJson.fileIds.length > 0) {
+          const files = await File.findAll({
+            where: {
+              id: workJson.fileIds,
+            },
+            attributes: ['id', 'originalName', 'filename', 'fileUrl', 'fileSize', 'mimeType', 'fileType', 'width', 'height', 'duration', 'thumbnailUrl'],
+          });
+          workJson.files = files;
+        } else {
+          workJson.files = [];
+        }
+        return workJson;
+      })
+    );
+    logger.info('Set files for works' ,worksWithFiles);
+    return worksWithFiles;
+  };
+
 }
+

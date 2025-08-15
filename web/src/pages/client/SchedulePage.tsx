@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Typography, Row, Col, Spin, Empty } from 'antd';
 import styled from 'styled-components';
 import { scheduleService } from '../../services';
@@ -8,6 +8,7 @@ import TeamMemberCard from '../../components/client/TeamMemberCard';
 import TeamMemberDetailModal from '../../components/client/TeamMemberDetailModal';
 import type { ClientTeamMember } from '../../hooks/useTeamData';
 import { useSiteSettings } from '../../hooks';
+import dayjs from 'dayjs';
 
 const { Title, Paragraph } = Typography;
 
@@ -73,7 +74,13 @@ const SchedulePage: React.FC = () => {
     activeOnly: true,
   });
 
-  // 查询有档期的团队成员
+  // 页面加载时自动查询当天档期
+  useEffect(() => {
+    const today = dayjs();
+    handleQuery({ date: today });
+  }, [teamMembers]);
+
+  // 查询没有档期的团队成员
   const handleQuery = async (filters: QueryFilters) => {
     setLoading(true);
     try {
@@ -87,16 +94,20 @@ const SchedulePage: React.FC = () => {
       });
       
       if (response.success && response.data) {
-        // 从档期数据中提取有档期的团队成员
-        const memberIds = [...new Set(response.data.schedules.map(schedule => schedule.userId))];
+        // 从档期数据中提取有档期的团队成员ID
+        const busyMemberIds = [...new Set(response.data.schedules.map(schedule => schedule.userId))];
+        // 筛选出没有档期的团队成员
         const availableTeamMembers = teamMembers.filter(member => 
-          memberIds.includes(member.userId)
+          !busyMemberIds.includes(member.userId)
         );
         setAvailableMembers(availableTeamMembers);
+      } else {
+        // 如果没有档期数据，说明所有成员都可用
+        setAvailableMembers(teamMembers);
       }
     } catch (error) {
-      console.error('查询档期失败:', error);
-      setAvailableMembers([]);
+      // 出错时显示所有成员
+      setAvailableMembers(teamMembers);
     } finally {
       setLoading(false);
     }
@@ -167,7 +178,7 @@ const SchedulePage: React.FC = () => {
         ) : (
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description="请使用上方查询条件查找有档期的主持人"
+            description={loading ? "正在加载..." : "当前日期暂无可预约的主持人"}
             style={{ margin: '60px 0', color: 'var(--client-text-secondary)' }}
           />
         )}

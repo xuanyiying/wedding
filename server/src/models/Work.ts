@@ -1,7 +1,8 @@
 import { Model, DataTypes, Sequelize, Optional } from 'sequelize';
 import User from './User';
-import { WorkType, WorkCategory, WorkStatus } from '../types';
-
+import {WorkCategory, WorkStatus } from '../types';
+import { WorkType } from '../types';
+import File from './File';
 // Work attributes interface
 export interface WorkAttributes {
   id: string;
@@ -10,11 +11,9 @@ export interface WorkAttributes {
   description: string | null;
   type: WorkType;
   category: WorkCategory;
-  coverUrl: string | null;
-  contentUrls: string[] | null;
   tags: string[] | null;
   location: string | null;
-  shootDate: Date | null;
+  weddingDate: Date | null;
   equipmentInfo: any | null;
   technicalInfo: any | null;
   status: WorkStatus;
@@ -27,10 +26,12 @@ export interface WorkAttributes {
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date | null;
+  fileIds: string[];
+  files?: File[]; // 关联的文件列表
 }
 
 // Work creation attributes interface
-export interface WorkCreationAttributes extends Optional<WorkAttributes, 'id'> {}
+export interface WorkCreationAttributes extends Optional<WorkAttributes, 'id'> { }
 
 // Work model class
 class Work extends Model<WorkAttributes, WorkCreationAttributes> implements WorkAttributes {
@@ -40,11 +41,9 @@ class Work extends Model<WorkAttributes, WorkCreationAttributes> implements Work
   public description!: string | null;
   public type!: WorkType;
   public category!: WorkCategory;
-  public coverUrl!: string | null;
-  public contentUrls!: string[] | null;
   public tags!: string[] | null;
   public location!: string | null;
-  public shootDate!: Date | null;
+  public weddingDate!: Date | null;
   public equipmentInfo!: any | null;
   public technicalInfo!: any | null;
   public status!: WorkStatus;
@@ -54,6 +53,8 @@ class Work extends Model<WorkAttributes, WorkCreationAttributes> implements Work
   public shareCount!: number;
   public sortOrder!: number;
   public publishedAt!: Date | null;
+  public fileIds!: string[];
+
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -61,7 +62,7 @@ class Work extends Model<WorkAttributes, WorkCreationAttributes> implements Work
 
   // Associations
   public readonly user?: User;
-
+  public readonly files?: File[];
   // Method to publish a work
   public async publish(): Promise<void> {
     if (this.status === WorkStatus.DRAFT) {
@@ -76,14 +77,6 @@ class Work extends Model<WorkAttributes, WorkCreationAttributes> implements Work
     if (this.status === WorkStatus.PUBLISHED) {
       this.status = WorkStatus.DRAFT;
       this.publishedAt = null;
-      await this.save();
-    }
-  }
-
-  // Method to archive a work
-  public async archive(): Promise<void> {
-    if (this.status === WorkStatus.PUBLISHED) {
-      this.status = WorkStatus.ARCHIVED;
       await this.save();
     }
   }
@@ -125,28 +118,26 @@ export const initWork = (sequelize: Sequelize): void => {
         defaultValue: WorkCategory.WEDDING,
         comment: '作品分类',
       },
-      coverUrl: {
-        type: new DataTypes.STRING(500),
-        field: 'cover_url',
-        comment: '封面图片URL',
-      },
-      contentUrls: {
+      fileIds: {
         type: DataTypes.JSON,
-        field: 'content_urls',
-        comment: '内容文件URLs',
+        comment: '文件ID列表',
+        field: 'file_ids',
+        defaultValue: [],
       },
       tags: {
         type: DataTypes.JSON,
+        field: 'tags',
         comment: '标签',
       },
       location: {
         type: new DataTypes.STRING(255),
+        field: 'location',
         comment: '拍摄地点',
       },
-      shootDate: {
+      weddingDate: {
         type: DataTypes.DATEONLY,
-        field: 'shoot_date',
-        comment: '拍摄日期',
+        field: 'wedding_date',
+        comment: '婚礼日期',
       },
       equipmentInfo: {
         type: DataTypes.JSON,

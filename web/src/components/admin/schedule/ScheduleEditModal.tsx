@@ -5,12 +5,8 @@ import {
   Input,
   Select,
   Button,
-  Space,
-  message,
   Row,
   Col,
-  List,
-  Avatar,
   DatePicker,
   Radio,
   Switch,
@@ -19,7 +15,6 @@ import {
 } from 'antd';
 import {
   UserOutlined,
-  SearchOutlined,
   PhoneOutlined,
   EnvironmentOutlined
 } from '@ant-design/icons';
@@ -41,12 +36,14 @@ interface ScheduleEditModalProps {
   availableHosts: User[];
   searchLoading: boolean;
   searchModalVisible: boolean;
+  conflictSchedules?: Schedule[];
   onCancel: () => void;
   onSave: (values: any) => void;
   onDelete: (scheduleId: string) => void;
   onWeddingDateChange: (date: Dayjs | null) => void;
   onWeddingTimeChange: (e: RadioChangeEvent) => void;
   onSearchAvailableHosts: () => void;
+  onCheckScheduleConflict?: (date: Dayjs | null, time: string) => void;
   setSearchModalVisible: (visible: boolean) => void;
 }
 
@@ -59,16 +56,14 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
   weddingDate,
   selectedWeddingTime,
   availableHosts,
-  searchLoading,
-  searchModalVisible,
+  conflictSchedules = [],
   onCancel,
   onSave,
   onDelete,
   onWeddingDateChange,
   onWeddingTimeChange,
   onSearchAvailableHosts,
-  setSearchModalVisible
-}) => {
+  onCheckScheduleConflict}) => {
   const options = [
     { label: '午宴', value: 'lunch' },
     { label: '晚宴', value: 'dinner' },
@@ -80,6 +75,20 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
       form.setFieldsValue({ hostId: user.id });
     }
   }, [isAdmin, editingSchedule, user?.id, form]);
+
+  // 管理员模式：当婚礼日期或时间变化时自动查询可用主持人
+  useEffect(() => {
+    if (isAdmin && weddingDate && selectedWeddingTime && !editingSchedule) {
+      onSearchAvailableHosts();
+    }
+  }, [isAdmin, weddingDate, selectedWeddingTime, editingSchedule, onSearchAvailableHosts]);
+
+  // 非管理员模式：当婚礼日期或时间变化时检查档期冲突
+  useEffect(() => {
+    if (!isAdmin && weddingDate && selectedWeddingTime && onCheckScheduleConflict) {
+      onCheckScheduleConflict(weddingDate, selectedWeddingTime);
+    }
+  }, [isAdmin, weddingDate, selectedWeddingTime, onCheckScheduleConflict]);
 
   return (
     <>
@@ -172,6 +181,8 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                 name="weddingDate"
                 label="婚礼日期"
                 rules={[{ required: true, message: '请选择婚礼日期' }]}
+                validateStatus={!isAdmin && conflictSchedules.length > 0 ? 'error' : ''}
+                help={!isAdmin && conflictSchedules.length > 0 ? '该日期时间段已有档期安排，存在冲突' : ''}
               >
                 <DatePicker
                   style={{ width: '100%' }}
@@ -185,6 +196,8 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                 name="weddingTime"
                 label="婚礼时间"
                 rules={[{ required: true, message: '请选择婚礼时间' }]}
+                validateStatus={!isAdmin && conflictSchedules.length > 0 ? 'error' : ''}
+                help={!isAdmin && conflictSchedules.length > 0 ? `冲突档期：${conflictSchedules.map(s => s.title).join('、')}` : ''}
               >
                 <Radio.Group
                   options={options}
@@ -216,7 +229,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                         .includes(input.toLowerCase())
                     }
                   >
-                    {availableHosts.map(host => (
+                    {(availableHosts || []).map(host => (
                       <Option key={host.id} value={host.id}>
                         {host.realName || host.nickname}
                       </Option>
@@ -224,26 +237,15 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                   </Select>
                 </Form.Item>
               </Col>
-              <Col span={6}>
-                <Form.Item label=" ">
-                  <Button
-                    icon={<SearchOutlined />}
-                    onClick={() => setSearchModalVisible(true)}
-                    loading={searchLoading}
-                  >
-                    查询可用
-                  </Button>
-                </Form.Item>
-              </Col>
             </Row>
           ) : (
             // 非管理员用户的隐藏hostId字段
             <Form.Item
               name="hostId"
-              hidden
+              label="主持人"
               rules={[{ required: true, message: '主持人ID不能为空' }]}
             >
-              <Input />
+              <Input value={user?.id} name='hostId' />
             </Form.Item>
           )}
 
@@ -352,76 +354,6 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
             />
           </Form.Item>
         </Form>
-      </Modal>
-
-      {/* 查询可用主持人模态框 */}
-      <Modal
-        title="查询可用主持人"
-        open={searchModalVisible}
-        onCancel={() => setSearchModalVisible(false)}
-        footer={[
-          <Button key="close" onClick={() => setSearchModalVisible(false)}>
-            关闭
-          </Button>
-        ]}
-        width={600}
-      >
-        <div style={{ marginBottom: 16 }}>
-          <Space>
-            <span>婚礼日期：</span>
-            <DatePicker
-              value={weddingDate}
-              onChange={onWeddingDateChange}
-              placeholder="请选择婚礼日期"
-            />
-            <span>婚礼时间：</span>
-            <Radio.Group
-              options={options}
-              onChange={onWeddingTimeChange}
-              value={selectedWeddingTime}
-              optionType="button"
-            />
-            <Button
-              type="primary"
-              icon={<SearchOutlined />}
-              onClick={onSearchAvailableHosts}
-              loading={searchLoading}
-            >
-              查询
-            </Button>
-          </Space>
-        </div>
-
-        {availableHosts.length > 0 ? (
-          <List
-            dataSource={availableHosts}
-            renderItem={host => (
-              <List.Item
-                actions={[
-                  <Button
-                    type="link"
-                    onClick={() => {
-                      form.setFieldsValue({ hostId: host.id });
-                      setSearchModalVisible(false);
-                      message.success(`已选择主持人：${host.realName || host.nickname}`);
-                    }}
-                  >
-                    选择
-                  </Button>
-                ]}
-              >
-                <List.Item.Meta
-                  avatar={<Avatar src={host.avatarUrl} icon={<UserOutlined />} />}
-                  title={host.realName || host.nickname}
-                />
-              </List.Item>
-            )}
-          />
-        ) : (
-          <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
-            {weddingDate ? '暂无可用主持人' : '请先选择婚礼日期和时间'}
-          </div>
-        )}
       </Modal>
     </>
   );

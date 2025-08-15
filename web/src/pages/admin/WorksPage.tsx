@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Row, Col, Modal, message } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useTheme } from '../../hooks/useTheme';
-import { WorkType, WorkStatus, type Work } from '../../types';
+import { WorkType, WorkStatus, type Work, FileType } from '../../types';
 import { workService } from '../../services';
 import { useDirectUpload } from '../../hooks/useDirectUpload';
 import type { RootState } from '../../store';
@@ -265,14 +265,27 @@ const WorksPage: React.FC = () => {
 
   // 预览作品
   const handlePreviewWork = (work: Work) => {
+    let coverUrl = '';
+    let contentUrls: string[] = [];
+    work.files?.forEach(file => {
+      if ( file.fileUrl) {
+         contentUrls.push(file.fileUrl);
+      }
+      if (file.fileType === FileType.VIDEO && file.thumbnailUrl) {
+        coverUrl = file.thumbnailUrl || '';
+      }
+      if (file.fileType === FileType.IMAGE && file.fileUrl) {
+        coverUrl = file.fileUrl || '';
+      }
+    })
     const workCardData: WorkCardType = {
       id: work.id,
       title: work.title,
       description: work.description || '',
       category: work.category,
       type: work.type === 'image' ? 'photo' : 'video',
-      coverImage: work.coverUrl || '',
-      contentUrls: work.contentUrls || [],
+      coverImage: coverUrl || '',
+      contentUrls: contentUrls || [],
       tags: work.tags || [],
       author: work.author || '',
       customer: work.customer || undefined,
@@ -283,7 +296,8 @@ const WorksPage: React.FC = () => {
       likes: work.likeCount || 0,
       downloads: work.downloads || 0,
       createdAt: work.createdAt,
-      updatedAt: work.updatedAt
+      updatedAt: work.updatedAt,
+      files : work.files || []
     };
     setPreviewWork(workCardData);
     setPreviewVisible(true);
@@ -308,8 +322,6 @@ const WorksPage: React.FC = () => {
         description: values.description || null,
         type: values.type as WorkType,
         category: values.category,
-        coverUrl: values.coverImage || null,
-        contentUrls: values.contentUrls || null,
         tags: values.tags || null,
         weddingDate: values.weddingDate || null,
         author: values.author || user?.username || null,
@@ -325,7 +337,8 @@ const WorksPage: React.FC = () => {
         shareCount: 0,
         sortOrder: 0,
         publishedAt: new Date().toISOString(),
-        deletedAt: null
+        deletedAt: null,
+        files: values.files || []
       };
 
       if (editingWork) {
@@ -464,7 +477,7 @@ const WorksPage: React.FC = () => {
           <AdminWorkCard key={work.id}>
             <WorkMediaContainer>
               <WorkMedia>
-                <img src={work.coverUrl || ''} alt={work.title} />
+                <img src={work.files?.[0]?.fileUrl || ''} alt={work.title} />
                 <WorkStatusBadge status={work.isPublic ? 'published' : 'private'}>
                   {work.isPublic ? '已发布' : '私有'}
                 </WorkStatusBadge>
@@ -545,14 +558,13 @@ const WorksPage: React.FC = () => {
              description: editingWork.description || '',
              category: editingWork.category,
              type: editingWork.type === 'image' ? 'photo' : 'video',
-             coverImage: editingWork.coverUrl || '',
-             contentUrls: editingWork.contentUrls || [],
+             files: editingWork.files || [],
              tags: editingWork.tags || [],
              author: editingWork.author || '',
              customer: editingWork.customer || '',
              weddingDate: editingWork.weddingDate ? new Date(editingWork.weddingDate) : undefined,
              isPublic: editingWork.isPublic ?? false,
-             isFeatured: editingWork.isFeatured ?? false
+             isFeatured: editingWork.isFeatured ?? false,
            } : undefined}
            onSubmit={handleSave}
            onCancel={() => setModalVisible(false)}

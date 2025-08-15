@@ -1,3 +1,4 @@
+
 // 事件类型枚举
 export enum EventType {
   WEDDING = 'wedding', // 婚礼
@@ -131,69 +132,16 @@ export enum WorkStatus {
 export enum WorkType {
   IMAGE = 'image', // 图片
   VIDEO = 'video', // 视频
-  ALBUM = 'album', // 相册
 }
 
 export enum WorkCategory {
   WEDDING = 'wedding', // 婚礼
-  ENGAGEMENT = 'engagement', // 订婚
-  ANNIVERSARY = 'anniversary', // 周年纪念
-  TEAM_BUILDING = 'team_building', // 团建
-  OTHER = 'other', // 其他
-}
-
-// UserProfile 相关类型定义
-export interface UserProfileData {
-  userId: string;
-  displayName?: string;
-  bio?: string;
-  avatarFileId?: string;
-  coverFileId?: string;
-  selectedWorkIds?: string[];
-  selectedFileIds?: string[];
-  mediaOrder?: Array<{ type: 'work' | 'file'; id: string }>;
-  isPublic?: boolean;
-  viewCount?: number;
-  socialLinks?: Record<string, string>;
-  contactInfo?: Record<string, string>;
-}
-
-export interface UserProfileUpdateData {
-  displayName?: string;
-  bio?: string;
-  avatarFileId?: string;
-  coverFileId?: string;
-  selectedWorkIds?: string[];
-  selectedFileIds?: string[];
-  mediaOrder?: Array<{ type: 'work' | 'file'; id: string }>;
-  isPublic?: boolean;
-  socialLinks?: Record<string, string>;
-  contactInfo?: Record<string, string>;
-}
-
-export interface UserProfileWithMedia {
-  id: string;
-  userId: string;
-  displayName?: string;
-  bio?: string;
-  avatarFileId?: string;
-  coverFileId?: string;
-  selectedWorkIds: string[];
-  selectedFileIds: string[];
-  mediaOrder: Array<{ type: 'work' | 'file'; id: string }>;
-  isPublic: boolean;
-  viewCount: number;
-  socialLinks?: Record<string, string>;
-  contactInfo?: Record<string, string>;
-  createdAt: Date;
-  updatedAt: Date;
-  selectedWorks: any[];
-  selectedFiles: any[];
-  orderedMedia: Array<{ type: 'work' | 'file'; data: any }>;
+  EVENT = 'event', // 团建
 }
 
 export enum FileCategory {
   AVATAR = 'avatar',
+  COVER = 'cover',
   WORK = 'work',
   EVENT = 'event',
   OTHER = 'other',

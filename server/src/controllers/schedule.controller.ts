@@ -240,7 +240,7 @@ export const getPublicSchedules = async (req: Request, res: Response, next: Next
  */
 export const getAvailableHosts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { weddingDate, weddingTime } = req.query;
+    const { teamId, weddingDate, weddingTime } = req.query;
 
     if (!weddingDate || !weddingTime) {
       Resp.badRequest(res, '请选择婚礼日期和婚礼时间');
@@ -248,6 +248,7 @@ export const getAvailableHosts = async (req: Request, res: Response, next: NextF
     }
 
     const result = await ScheduleService.getAvailableHosts({
+      teamId: teamId as string,
       weddingDate: new Date(weddingDate as string),
       weddingTime: weddingTime as WeddingTime,
     });

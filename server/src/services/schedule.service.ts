@@ -1,7 +1,7 @@
 import { Op, WhereOptions } from 'sequelize';
-import { Schedule, ScheduleAttributes, ScheduleCreationAttributes, User } from '../models';
+import { Schedule, ScheduleAttributes, ScheduleCreationAttributes, TeamMember, User } from '../models';
 import { logger } from '../utils/logger';
-import { ScheduleStatus, EventType, WeddingTime, UserRole, UserStatus } from '../types';
+import { ScheduleStatus, EventType, WeddingTime, UserRole, UserStatus, TeamMemberStatus } from '../types';
 interface GetSchedulesParams {
   page: number;
   pageSize: number;
@@ -479,69 +479,127 @@ export class ScheduleService {
     };
   }
 
-  static async getAvailableHosts(params: { weddingDate: Date; weddingTime: WeddingTime; eventType?: EventType }) {
-    const { weddingDate, weddingTime, eventType } = params;
-
-    // 获取所有活跃的用户（可以是主持人的用户）
-    const allHosts = await User.findAll({
-      where: {
-        status: 'active',
-        // 可以根据实际业务需求过滤特定角色的用户
-        // 这里暂时获取所有活跃用户
-      },
-      attributes: ['id', 'username', 'realName', 'avatarUrl', 'phone', 'email'],
-    });
-
-    // 查找在指定时间段内有冲突的主持人
+  /**
+   * 获取指定时间段内有冲突的主持人ID列表
+   */
+  private static async getConflictingUserIds(weddingDate: Date, weddingTime: WeddingTime): Promise<string[]> {
     const conflictingSchedules = await Schedule.findAll({
       where: {
-        [Op.and]: [
-          {
-            [Op.and]: [
-              {
-                weddingDate: {
-                  [Op.lte]: weddingDate,
-                },
-              },
-              {
-                weddingTime: {
-                  [Op.eq]: weddingTime, // 婚礼时间不能早于当前时间
-                },
-              },
-            ],
-          },
-          {
-            status: {
-              [Op.in]: [ScheduleStatus.BOOKED, ScheduleStatus.CONFIRMED],
-            },
-          },
-        ],
+        weddingDate: { [Op.eq]: weddingDate },
+        weddingTime: { [Op.eq]: weddingTime },
       },
       attributes: ['userId'],
     });
+    
+    return conflictingSchedules.map(schedule => schedule.userId);
+  }
 
-    // 获取有冲突的主持人ID列表
-    const conflictingUserIds = conflictingSchedules.map(schedule => schedule.userId);
-
-    // 过滤出可用的主持人
-    const availableHosts = allHosts.filter(host => !conflictingUserIds.includes(host.id));
-
-    // 如果指定了活动类型，可以进一步过滤（这里可以根据业务需求扩展）
-    let filteredHosts = availableHosts;
-    if (eventType) {
-      // 可以根据主持人的专长或经验过滤
-      // 这里暂时返回所有可用主持人
-      filteredHosts = availableHosts;
-    }
-
-    return {
-      hosts: filteredHosts,
-      total: filteredHosts.length,
-      searchParams: {
-        weddingDate: weddingDate.toISOString(),
-        weddingTime,
-        eventType,
+  /**
+   * 获取团队成员的用户ID列表
+   */
+  private static async getTeamMemberIds(teamId: string): Promise<string[]> {
+    const members = await TeamMember.findAll({
+      where: {
+        teamId,
+        status: TeamMemberStatus.ACTIVE,
       },
+    });
+    
+    return members.map(member => member.userId);
+  }
+
+  /**
+   * 构建用户查询的基础条件
+   */
+  private static buildBaseUserConditions(): any {
+    return {
+      status: 'active',
+      role: { [Op.or]: [UserRole.USER, UserRole.ADMIN] },
+    };
+  }
+
+  /**
+   * 应用团队过滤条件
+   */
+  private static applyTeamFilter(conditions: any, teamUserIds: string[]): void {
+    if (teamUserIds.length > 0) {
+      conditions.id = { [Op.in]: teamUserIds };
+    }
+  }
+
+  /**
+   * 应用冲突排除条件
+   */
+  private static applyConflictFilter(conditions: any, conflictingUserIds: string[]): void {
+    if (conflictingUserIds.length === 0) return;
+    
+    conditions.id = conditions.id 
+      ? { [Op.and]: [conditions.id, { [Op.notIn]: conflictingUserIds }] }
+      : { [Op.notIn]: conflictingUserIds };
+  }
+
+  /**
+   * 创建搜索参数对象
+   */
+  private static createSearchParams(params: { teamId?: string; weddingDate: Date; weddingTime: WeddingTime; eventType?: EventType }) {
+    const { teamId, weddingDate, weddingTime, eventType } = params;
+    return {
+      weddingDate: weddingDate.toISOString(),
+      weddingTime,
+      eventType,
+      teamId,
+    };
+  }
+
+  /**
+   * 创建空结果对象
+   */
+  private static createEmptyResult(searchParams: any) {
+    return {
+      hosts: [],
+      total: 0,
+      searchParams,
+    };
+  }
+
+  /**
+   * 查询可用主持人
+   */
+  static async getAvailableHosts(params: { teamId?: string; weddingDate: Date; weddingTime: WeddingTime; eventType?: EventType }) {
+    const { teamId, weddingDate, weddingTime } = params;
+    const searchParams = this.createSearchParams(params);
+    
+    // 获取冲突的主持人ID列表
+    const conflictingUserIds = await this.getConflictingUserIds(weddingDate, weddingTime);
+    
+    // 构建基础查询条件
+    const baseWhereConditions = this.buildBaseUserConditions();
+    
+    // 处理团队过滤
+    if (teamId && teamId !== 'all') {
+      const teamUserIds = await this.getTeamMemberIds(teamId);
+      
+      if (teamUserIds.length === 0) {
+        return this.createEmptyResult(searchParams);
+      }
+      
+      this.applyTeamFilter(baseWhereConditions, teamUserIds);
+    }
+    
+    // 排除有冲突的主持人
+    this.applyConflictFilter(baseWhereConditions, conflictingUserIds);
+    
+    // 查询可用主持人
+    const availableHosts = await User.findAll({
+      where: baseWhereConditions,
+      attributes: ['id', 'nickname', 'realName', 'avatarUrl', 'phone', 'email'],
+      order: [['nickname', 'ASC']],
+    });
+    
+    return {
+      hosts: availableHosts,
+      total: availableHosts.length,
+      searchParams,
     };
   }
 }

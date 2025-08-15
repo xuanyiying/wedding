@@ -27,20 +27,27 @@ const DetailModal = styled(Modal)`
 
 const DetailImage = styled.div`
   width: 100%;
-  height: 400px;
   background: var(--client-bg-layout);
   border-radius: var(--client-border-radius);
   overflow: hidden;
   margin-bottom: 24px;
   position: relative;
+  padding-bottom: 75%; /* 4:3 aspect ratio */
+  height: 0;
 
   img {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
 
   video {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -108,25 +115,25 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, visible, onClos
   if (!work) return null;
 
   // 判断是否为视频类型
-  const isVideo = work.type === 'video' || (work.contentUrls && work.contentUrls.some(url => {
-    const extension = url.split('.').pop()?.toLowerCase();
+  const isVideo = work.type === 'video' || (work.files && work.files.some(f => {
+    const extension = f.fileUrl?.split('.').pop()?.toLowerCase();
     return ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(extension || '');
   }));
 
   // 获取图片URLs
-  const imageUrls = work.contentUrls?.filter(url => {
-    const extension = url.split('.').pop()?.toLowerCase();
+  const imageUrls = work.files?.filter(f => {
+    const extension = f.fileUrl?.split('.').pop()?.toLowerCase();
     return !['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(extension || '');
-  }) || [];
+  }).map(f => f.fileUrl).filter(url => url) as string[] || [];
 
   // 获取视频URLs
-  const videoUrls = work.contentUrls?.filter(url => {
-    const extension = url.split('.').pop()?.toLowerCase();
+  const videoUrls = work.files?.filter(f => {
+    const extension = f.fileUrl?.split('.').pop()?.toLowerCase();
     return ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(extension || '');
-  }) || [];
+  }).map(f => f.fileUrl).filter(url => url) as string[] || [];
 
-  // 如果没有contentUrls，使用coverUrl作为fallback
-  const displayImages = imageUrls.length > 0 ? imageUrls : (work.coverUrl ? [work.coverUrl] : []);
+  // 如果没有files，使用第一个文件的URL作为fallback
+  const displayImages = imageUrls.length > 0 ? imageUrls : (work.files?.[0]?.fileUrl ? [work.files[0].fileUrl] : []);
 
   const handleVideoPlay = (videoUrl: string) => {
     // 可以在这里添加视频播放逻辑，比如打开视频播放器
@@ -145,20 +152,22 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, visible, onClos
         {isVideo ? (
           // 视频类型：显示封面图和播放按钮
           <>
-            <img src={work.coverUrl ?? ''} alt={work.title} />
+            <img src={work.files?.[0]?.thumbnailUrl ?? ''} alt={work.title} />
             <VideoOverlay onClick={() => videoUrls[0] && handleVideoPlay(videoUrls[0])}>
               <PlayCircleOutlined className="play-icon" />
             </VideoOverlay>
           </>
         ) : (
           // 图片类型：使用轮播组件
-          <ImageCarousel 
-            images={displayImages}
-            height="400px"
-            showDots={displayImages.length > 1}
-            showArrows={displayImages.length > 1}
-            autoPlay={false}
-          />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+            <ImageCarousel 
+              images={displayImages}
+              height="100%"
+              showDots={displayImages.length > 1}
+              showArrows={displayImages.length > 1}
+              autoPlay={false}
+            />
+          </div>
         )}
       </DetailImage>
 

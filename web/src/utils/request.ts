@@ -46,7 +46,7 @@ const safeMessage = {
 // 创建axios实例
 const request: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000, // 增加到30秒
+  timeout: 300000, // 增加到300秒
   headers: {
     'Content-Type': 'application/json',
   },
@@ -149,6 +149,9 @@ uploadRequest.interceptors.response.use(
       case 415:
         safeMessage.error('不支持的文件类型');
         break;
+      case 429:
+        safeMessage.error('上传请求过于频繁，请稍后重试');
+        break;
       default:
         safeMessage.error(errorMessage || '文件上传失败，请稍后重试');
         break;
@@ -161,29 +164,12 @@ uploadRequest.interceptors.response.use(
 // 请求拦截器
 request.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    console.log('🚀 发送请求:', {
-      method: config.method?.toUpperCase(),
-      url: config.url,
-      baseURL: config.baseURL,
-      fullURL: `${config.baseURL}${config.url}`
-    });
     
     // 使用统一的认证工具获取token
-    const token = AuthStorage.getAccessToken();
-    
-    console.log('🔑 Token检查:', {
-      hasToken: !!token,
-      tokenType: typeof token,
-      tokenLength: token ? token.length : 0,
-      tokenPreview: token ? `${token.substring(0, 20)}...` : 'null',
-      hasHeaders: !!config.headers
-    });
+    const token = AuthStorage.getAccessToken()
     
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('✅ Authorization头已设置:', config.headers.Authorization.substring(0, 30) + '...');
-    } else {
-      console.log('❌ 未设置Authorization头:', { hasToken: !!token, hasHeaders: !!config.headers });
     }
     
     // 添加时间戳防止缓存
@@ -207,13 +193,6 @@ request.interceptors.response.use(
   (response: AxiosResponse<ApiResponse<any>>) => {
     const { data } = response;
     
-    console.log('📥 收到响应:', {
-      status: response.status,
-      url: response.config.url,
-      method: response.config.method?.toUpperCase(),
-      success: data.success,
-      message: data.message
-    });
     
     // 检查业务状态码
     if (data.success) {
@@ -227,16 +206,6 @@ request.interceptors.response.use(
   },
   async (error: AxiosError) => {
     const { response, code, message: errorMessage } = error;
-    
-    console.error('💥 响应错误:', {
-      status: response?.status,
-      statusText: response?.statusText,
-      url: error.config?.url,
-      method: error.config?.method?.toUpperCase(),
-      code,
-      message: errorMessage,
-      responseData: response?.data
-    });
     
     // 网络错误
     if (code === 'ECONNABORTED' || errorMessage.includes('timeout')) {
@@ -279,6 +248,11 @@ request.interceptors.response.use(
       case 422:
         // 表单验证错误
         safeMessage.error(ERROR_MESSAGES.VALIDATION_ERROR);
+        break;
+        
+      case 429:
+        // 请求过多错误
+        safeMessage.error('请求过于频繁，请稍后重试');
         break;
         
       case 500:
@@ -463,13 +437,15 @@ export interface RetryConfig {
 // 默认重试配置
 const defaultRetryConfig: Required<RetryConfig> = {
   maxAttempts: 3,
-  delay: 1000,
+  delay: 2000, // 增加基础延迟到2秒
   backoff: true,
   retryCondition: (error: any) => {
     // 只对网络错误、超时和5xx服务器错误进行重试
     if (!error.response) return true; // 网络错误
     if (error.code === 'ECONNABORTED') return true; // 超时
     if (error.response.status >= 500) return true; // 服务器错误
+    if (error.response.status === 408) return true; // 请求超时
+    if (error.response.status === 429) return true; // 请求过多
     return false;
   },
 };
@@ -495,9 +471,14 @@ export const withRetry = async <T>(
       }
       
       // 计算延迟时间（指数退避）
-      const delay = finalConfig.backoff 
+      let delay = finalConfig.backoff 
         ? finalConfig.delay * Math.pow(2, attempt - 1)
         : finalConfig.delay;
+      
+      // 对429错误使用更长的延迟
+      if ((error as any).response?.status === 429) {
+        delay = Math.max(delay, 5000); // 至少5秒延迟
+      }
       
       console.warn(`${context} 第 ${attempt} 次尝试失败，${delay}ms 后重试:`, error);
       

@@ -23,8 +23,8 @@ export interface DirectUploadProgress {
 
 // 直传上传配置
 export interface DirectUploadConfig {
-  fileType: 'video' | 'work' | 'image' | 'avatar';
-  category?: 'avatar' | 'work' | 'event' | 'other';
+  fileType: 'video' | 'image';
+  category?: 'avatar' | 'work' | 'event' | 'profile'| 'cover' | 'other';
   maxFileSize?: number;
   expires?: number; // 签名URL过期时间（秒）
   onProgress?: (progress: DirectUploadProgress) => void;
@@ -42,6 +42,7 @@ export interface DirectUploadResult {
   url: string;
   fileType: string;
   uploadedAt: string;
+  category: string;
 }
 
 // 预签名URL响应
@@ -116,7 +117,9 @@ export class DirectUploader {
 
       // 通知后端取消上传
       if (this.uploadSessionId) {
-        await uploadRequest.delete(`/direct-upload/cancel/${this.uploadSessionId}`);
+        await uploadRequest.post(`/direct-upload/cancel`, {
+          uploadSessionId: this.uploadSessionId
+        });
       }
     } catch (error) {
       console.warn('取消上传时发生错误:', error);
@@ -215,9 +218,11 @@ export class DirectUploader {
       body: stream,
       headers: {
         'Content-Type': this.file.type,
+        'Content-Length': this.file.size.toString(),
       },
       signal: this.abortController.signal,
-    });
+      duplex: 'half',
+    } as RequestInit);
 
     if (!response.ok) {
       throw new Error(`上传失败: ${response.status} ${response.statusText}`);

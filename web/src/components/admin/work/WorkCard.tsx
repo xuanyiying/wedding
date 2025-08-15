@@ -3,6 +3,7 @@ import { Card, Tag, Space, Button, Typography, Switch, Image, Tooltip } from 'an
 import { EyeOutlined, EditOutlined, DeleteOutlined, HeartOutlined, DownloadOutlined, StarOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import dayjs from 'dayjs';
+import type { MediaFile } from '../../../types';
 
 const { Text, Paragraph } = Typography;
 const { Meta } = Card;
@@ -107,6 +108,7 @@ export interface Work {
   downloads: number;
   createdAt: string;
   updatedAt: string;
+  files: MediaFile[];
 }
 
 interface WorkCardProps {

@@ -4,7 +4,7 @@ import { Sequelize } from 'sequelize';
 import { config } from '../config/config';
 import { logger } from '../utils/logger';
 import { initModels } from '../models';
-import { User, Work, Schedule, Team, TeamMember } from '../models';
+import { User, Work, Schedule, Team, TeamMember, File } from '../models';
 import { PasswordUtils } from '../utils/helpers';
 import { generateId } from '../utils/id.generator';
 import { UserRole, UserStatus } from '../interfaces';
@@ -18,6 +18,9 @@ import {
   TeamStatus,
   TeamMemberRole,
   TeamMemberStatus,
+  FileCategory,
+  FileType,
+  StorageType,
 } from '../types';
 import { initializeSystemConfig } from './init-system-config';
 import sequelize from '../config/database';
@@ -532,7 +535,7 @@ export class DatabaseInitializer {
       // 清除现有作品数据
       await Work.destroy({ where: {}, force: true });
       logger.info('已清除现有作品数据');
-
+      await File.destroy({ where: {}, force: true });
       const works = [];
       const userKeys = Object.keys(this.userIdMap);
       if (userKeys.length === 0) {
@@ -665,7 +668,7 @@ export class DatabaseInitializer {
 
         const timeDiff = endDate.getTime() - startDate.getTime();
         const randomTime = startDate.getTime() + Math.floor(Math.random() * timeDiff);
-        const shootDate = new Date(randomTime);
+        const weddingDate = new Date(randomTime);
 
         // 随机选择标签（2-5个）
         const tagCount = Math.floor(Math.random() * 4) + 2;
@@ -678,25 +681,47 @@ export class DatabaseInitializer {
         }
 
         // 生成内容URLs（根据类型）
-        let contentUrls: string[] = [];
-        let coverUrl = '';
+        let fileIds: string[] = [];
         if (type === WorkType.IMAGE) {
+          // 创建多个图片文件
+          const filePromises = [];
           for (let k = 0; k < 4; k++) {
-            contentUrls.push(`http://localhost:9000/wedding-media/images/1639df43-3cc5-410a-89d9-e799a10d07bd.png`);
+            filePromises.push(File.create({
+              id: generateId(),
+              filePath: `/wedding-media/images/${generateId()}.png`,
+              fileType: FileType.IMAGE,
+              originalName: `${generateId()}.png`,
+              filename: `${generateId()}.png`,
+              fileUrl: 'http://localhost:9000/wedding-media/images/1639df43-3cc5-410a-89d9-e799a10d07bd.png',
+              fileSize: 1024,
+              mimeType: 'image/png',
+              category: FileCategory.WORK,
+              storageType: StorageType.MINIO,
+              userId: userId,
+              thumbnailUrl: 'http://localhost:9000/wedding-media/images/1639df43-3cc5-410a-89d9-e799a10d07bd.png',
+            }));
           }
-          coverUrl = contentUrls[0] || '';
+          const files = await Promise.all(filePromises);
+          fileIds = files.map(file => file.id);
         } else if (type === WorkType.VIDEO) {
-          // 使用指定的视频URL
-          contentUrls.push('http://localhost:9000/wedding-media/videos/135223ea-3678-4ea9-a9dd-fb11a9d84918.mp4');
-          // 使用图片作为视频封面
-          coverUrl = `http://localhost:9000/wedding-media/images/1639df43-3cc5-410a-89d9-e799a10d07bd.png`;
-        } else if (type === WorkType.ALBUM) {
-          for (let k = 0; k < 5; k++) {
-            contentUrls.push(`http://localhost:9000/wedding-media/images/1639df43-3cc5-410a-89d9-e799a10d07bd.png`);
-          }
-          coverUrl = contentUrls[0] || '';
+          const file = await File.create({
+            id: generateId(),
+            filePath: '/wedding-media/videos/135223ea-3678-4ea9-a9dd-fb11a9d84918.mp4',
+            fileType: FileType.VIDEO,
+            originalName: '135223ea-3678-4ea9-a9dd-fb11a9d84918.mp4',
+            filename: '135223ea-3678-4ea9-a9dd-fb11a9d84918.mp4',
+            fileUrl: 'http://localhost:9000/wedding-media/videos/135223ea-3678-4ea9-a9dd-fb11a9d84918.mp4',
+            fileSize: 1024 * 1024 * 100,
+            mimeType: 'video/mp4',
+            category: FileCategory.WORK,
+            storageType: StorageType.MINIO,
+            userId: userId,
+            thumbnailUrl: 'http://localhost:9000/wedding-media/images/1639df43-3cc5-410a-89d9-e799a10d07bd.png',
+          });
+          fileIds.push(file.id);
         }
 
+        // build fileIds
         const work = {
           id: generateId(),
           userId,
@@ -704,20 +729,19 @@ export class DatabaseInitializer {
           description: descriptions[Math.floor(Math.random() * descriptions.length)]!,
           type,
           category,
-          coverUrl: coverUrl,
-          contentUrls,
           tags: selectedTags,
           location: locations[Math.floor(Math.random() * locations.length)]!,
-          shootDate,
+          weddingDate,
           status,
           isFeatured: Math.random() < 0.2, // 20%概率为精选
           viewCount: Math.floor(Math.random() * 1000),
           likeCount: Math.floor(Math.random() * 100),
           shareCount: Math.floor(Math.random() * 50),
           sortOrder: i,
-          publishedAt: status === WorkStatus.PUBLISHED ? new Date(shootDate.getTime() + 24 * 60 * 60 * 1000) : null,
+          publishedAt: status === WorkStatus.PUBLISHED ? new Date(weddingDate.getTime() + 24 * 60 * 60 * 1000) : null,
           createdAt: new Date(),
           updatedAt: new Date(),
+          fileIds: fileIds,
         };
 
         works.push(work);
