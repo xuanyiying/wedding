@@ -184,14 +184,6 @@ export class MediaProfileService {
    
     return true;
   }
-  /**
-   * 增加浏览次数
-   */
-  async incrementViewCount(userId: string): Promise<void> {
-    // TODO 可以在这里实现查看次数逻辑，比如记录到ViewStat表中
-    console.log(`View count incremented for user: ${userId}`);
-    
-  }
 
 
   /**

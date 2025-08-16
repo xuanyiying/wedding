@@ -146,4 +146,6 @@ export enum FileCategory {
   EVENT = 'event',
   OTHER = 'other',
   PROFILE = 'profile',
+  FAVICON = 'favicon',
+  LOGO = 'logo',
 }

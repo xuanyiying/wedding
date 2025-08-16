@@ -5,7 +5,7 @@ import type { PageViewStats } from '../services/pageViewService';
 /**
  * 页面访问统计Hook
  */
-export const usePageView = (pageType: 'team_member' | 'work', pageId: string) => {
+export const usePageView = (pageType: 'team_member' | 'work' | 'team' | 'team_page', pageId: string) => {
   const [stats, setStats] = useState<PageViewStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +50,7 @@ export const usePageView = (pageType: 'team_member' | 'work', pageId: string) =>
 /**
  * 批量页面访问统计Hook
  */
-export const useBatchPageView = (pageType: 'team_member' | 'work', pageIds: string[]) => {
+export const useBatchPageView = (pageType: 'team_member' | 'work' | 'team' | 'team_page', pageIds: string[]) => {
   const [statsMap, setStatsMap] = useState<Record<string, PageViewStats>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

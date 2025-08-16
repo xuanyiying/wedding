@@ -138,7 +138,6 @@ const PublicProfileContainer = styled.div`
           position: relative;
           border-radius: 8px;
           overflow: hidden;
-          aspect-ratio: 4/3;
           cursor: grab;
           transition: all 0.3s;
           
@@ -337,19 +336,46 @@ const ProfilePage: React.FC = () => {
   }, []);
 
   // 处理头像变更
-  const handleAvatarChange = useCallback((url: string) => {
-    setCurrentUser((prev) => (prev ? { ...prev, avatarUrl: url } : null));
-  }, []);
+  const handleAvatarChange = useCallback(async (url: string) => {
+    try {
+      setCurrentUser((prev) => (prev ? { ...prev, avatarUrl: url } : null));
+      
+      // 立即更新用户信息到后端
+      await userService.updateCurrentUserProfile({ avatarUrl: url });
+      message.success('头像更新成功');
+    } catch (error: any) {
+      console.error('Avatar update error:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || '头像更新失败，请重试';
+      message.error(errorMessage);
+      
+      // 回滚头像更改
+      setCurrentUser((prev) => (prev ? { ...prev, avatarUrl: user?.avatarUrl || '' } : null));
+    }
+  }, [user?.avatarUrl]);
 
   // 处理基本信息保存
   const handleBasicInfoSave = async (values: any) => {
     try {
       setLoading(true);
+      
+      // 验证必填字段
+      if (!values.realName?.trim() && !values.nickname?.trim()) {
+        message.error('请输入真实姓名或昵称');
+        return;
+      }
+      
+      if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
+        message.error('请输入有效的邮箱地址');
+        return;
+      }
+      
       await userService.updateCurrentUserProfile(values);
       message.success('基本信息保存成功');
       await loadCurrentUser();
-    } catch (error) {
-      message.error('保存失败');
+    } catch (error: any) {
+      console.error('Profile update error:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || '保存失败，请检查网络连接后重试';
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -446,7 +472,7 @@ const ProfilePage: React.FC = () => {
           <AvatarUploader
                 value={currentUser?.avatarUrl}
                 onChange={handleAvatarChange}
-                disabled={uploading}
+                disabled={uploading || loading}
                 size={120}
                 shape="square"
                 category="avatar"

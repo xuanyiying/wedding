@@ -248,7 +248,7 @@ export const incrementViewCount = async (req: Request, res: Response, next: Next
     }
 
     const result = await WorkService.incrementViewCount(workId);
-    Resp.success(res, result, '浏览量增加成功');
+    Resp.success(res, result, '增加浏览量成功');
   } catch (error) {
     logger.error('增加浏览量失败:', error);
     next(error);

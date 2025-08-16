@@ -133,7 +133,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
     setSpecialties(specialties.filter(specialty => specialty !== specialtyToRemove));
   };
 
-  
+
 
 
   return (
@@ -144,7 +144,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         requiredMark={false}
         autoComplete="off"
       >
-                <div className="avatar-upload">
+        <div className="avatar-upload">
           <AvatarUploader
             value={avatarUrl}
             onChange={onAvatarChange}

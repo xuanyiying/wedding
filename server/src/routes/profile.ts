@@ -13,7 +13,7 @@ router.post('/media-profiles', authMiddleware, profileController.createMediaProf
 router.post('/media-profiles/batch', authMiddleware, profileController.batchCreateMediaProfiles.bind(profileController));
 
 // 获取用户媒体资料列表
-router.get('/media-profiles', authMiddleware, profileController.getUserMediaProfiles.bind(profileController));
+router.get('/media-profiles', profileController.getUserMediaProfiles.bind(profileController));
 
 // 更新媒体资料排序
 router.put('/media-profiles/order', authMiddleware, profileController.updateMediaProfilesOrder.bind(profileController));
@@ -28,7 +28,7 @@ router.delete('/media-profiles/:fileId', authMiddleware, profileController.delet
 router.put('/media-profiles/:fileId', authMiddleware, profileController.updateSingleMediaProfile.bind(profileController));
 
 // 获取单个媒体资料详情
-router.get('/media-profiles/:fileId', authMiddleware, profileController.getMediaProfileById.bind(profileController));
+router.get('/media-profiles/:fileId', profileController.getMediaProfileById.bind(profileController));
 
 // 用户资料相关（包含用户信息和媒体文件）
 // 获取用户完整资料（用户信息 + 媒体文件）
@@ -38,6 +38,6 @@ router.get('/user/:userId', profileController.getUserProfile.bind(profileControl
 router.get('/public', profileController.getPublicUserProfiles.bind(profileController));
 
 // 获取用户可用文件
-router.get('/available-files', authMiddleware, profileController.getUserAvailableFiles.bind(profileController));
+router.get('/available-files', profileController.getUserAvailableFiles.bind(profileController));
 
 export default router;

@@ -40,8 +40,11 @@ const WorkForm: React.FC<WorkFormProps> = ({
   const [coverSelectionVisible, setCoverSelectionVisible] = useState(false);
   const [videoFrames, setVideoFrames] = useState<string[]>([]);
   const [extractingFrames, setExtractingFrames] = useState(false);
+  const [uploadQueue, setUploadQueue] = useState<Array<{file: File, onSuccess?: (response: any) => void, onError?: (error: Error) => void}>>([]);
+  const [activeUploads, setActiveUploads] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const maxConcurrentUploads = 2; // 限制并发上传数量
 
   useEffect(() => {
     if (initialValues) {
@@ -116,21 +119,51 @@ const WorkForm: React.FC<WorkFormProps> = ({
     }
   };
 
-  const handleUpload: UploadProps['customRequest'] = async ({ file, onSuccess, onError }) => {
-    if (!onUpload) {
-      onError?.(new Error('上传功能未配置'));
+  // 处理上传队列
+  const processUploadQueue = async () => {
+    if (activeUploads >= maxConcurrentUploads || uploadQueue.length === 0) {
       return;
     }
 
+    const uploadItem = uploadQueue[0];
+    setUploadQueue(prev => prev.slice(1));
+    setActiveUploads(prev => prev + 1);
+
     try {
-      setUploading(true);
-      const url = await onUpload(file as File);
-      onSuccess?.(url);
+      if (!onUpload) {
+        throw new Error('上传功能未配置');
+      }
+
+      const url = await onUpload(uploadItem.file);
+      uploadItem.onSuccess?.(url);
     } catch (error) {
-      onError?.(error as Error);
+      uploadItem.onError?.(error as Error);
     } finally {
-      setUploading(false);
+      setActiveUploads(prev => prev - 1);
+      // 继续处理队列中的下一个文件
+      setTimeout(processUploadQueue, 100);
     }
+  };
+
+  // 监听上传队列变化
+  useEffect(() => {
+    if (uploadQueue.length > 0 && activeUploads < maxConcurrentUploads) {
+      processUploadQueue();
+    }
+  }, [uploadQueue, activeUploads]);
+
+  // 监听活跃上传数量变化，更新上传状态
+  useEffect(() => {
+    setUploading(activeUploads > 0 || uploadQueue.length > 0);
+  }, [activeUploads, uploadQueue.length]);
+
+  const handleUpload: UploadProps['customRequest'] = ({ file, onSuccess, onError }) => {
+    // 添加到上传队列
+    setUploadQueue(prev => [...prev, {
+      file: file as File,
+      onSuccess,
+      onError
+    }]);
   };
 
   const handleChange: UploadProps['onChange'] = ({ fileList: newFileList }) => {
@@ -187,45 +220,90 @@ const WorkForm: React.FC<WorkFormProps> = ({
 
   // 从视频中提取帧
   const extractVideoFrames = async (videoFile: File) => {
-    return new Promise<string[]>((resolve) => {
+    return new Promise<string[]>((resolve, reject) => {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       if (!video || !canvas) {
-        resolve([]);
+        reject(new Error('视频或画布元素未找到'));
         return;
       }
 
       const ctx = canvas.getContext('2d');
       if (!ctx) {
-        resolve([]);
+        reject(new Error('无法获取画布上下文'));
         return;
       }
 
       const url = URL.createObjectURL(videoFile);
       video.src = url;
       
+      // 设置超时机制
+      const timeout = setTimeout(() => {
+        URL.revokeObjectURL(url);
+        reject(new Error('视频加载超时'));
+      }, 30000); // 30秒超时
+
+      // 错误处理
+      video.onerror = () => {
+        clearTimeout(timeout);
+        URL.revokeObjectURL(url);
+        reject(new Error('视频加载失败'));
+      };
+      
       video.onloadedmetadata = () => {
         const duration = video.duration;
+        if (!duration || duration <= 0) {
+          clearTimeout(timeout);
+          URL.revokeObjectURL(url);
+          reject(new Error('无效的视频文件'));
+          return;
+        }
+
         const frames: string[] = [];
-        let currentTime = 0;
-        const interval = duration / 6; // 提取6帧
+        let frameIndex = 0;
+        const totalFrames = 6;
+        const interval = duration / (totalFrames + 1); // 避免提取第一帧和最后一帧
 
         const captureFrame = () => {
-          if (currentTime >= duration) {
+          if (frameIndex >= totalFrames) {
+            clearTimeout(timeout);
             URL.revokeObjectURL(url);
             resolve(frames);
             return;
           }
 
-          video.currentTime = currentTime;
-          video.onseeked = () => {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            ctx.drawImage(video, 0, 0);
-            frames.push(canvas.toDataURL('image/jpeg', 0.8));
-            currentTime += interval;
-            setTimeout(captureFrame, 100);
+          const currentTime = interval * (frameIndex + 1);
+          video.currentTime = Math.min(currentTime, duration - 0.1); // 确保不超过视频长度
+          
+          const onSeeked = () => {
+            try {
+              // 设置合适的画布尺寸
+              const maxWidth = 800;
+              const maxHeight = 600;
+              let { videoWidth, videoHeight } = video;
+              
+              if (videoWidth > maxWidth || videoHeight > maxHeight) {
+                const ratio = Math.min(maxWidth / videoWidth, maxHeight / videoHeight);
+                videoWidth *= ratio;
+                videoHeight *= ratio;
+              }
+              
+              canvas.width = videoWidth;
+              canvas.height = videoHeight;
+              ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
+              frames.push(canvas.toDataURL('image/jpeg', 0.8));
+              
+              frameIndex++;
+              video.removeEventListener('seeked', onSeeked);
+              setTimeout(captureFrame, 200); // 增加间隔确保稳定性
+            } catch (error) {
+              clearTimeout(timeout);
+              URL.revokeObjectURL(url);
+              reject(new Error('帧提取失败: ' + (error as Error).message));
+            }
           };
+
+          video.addEventListener('seeked', onSeeked);
         };
 
         captureFrame();

@@ -42,7 +42,7 @@ const SchedulesPage: React.FC = () => {
   const [form] = Form.useForm();
   const [weddingDate, setWeddingDate] = useState<Dayjs | null>(null);
   const [selectedWeddingTime, setSelectedWeddingTime] = useState<string>('lunch');
-  const [availableHosts, setAvailableHosts] = useState<User[]>([]);
+  const [availableHosts, setAvailableHosts] = useState<TeamMember[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchModalVisible, setSearchModalVisible] = useState(false);
   const [conflictSchedules, setConflictSchedules] = useState<Schedule[]>([]);
@@ -60,7 +60,7 @@ const SchedulesPage: React.FC = () => {
   });
   // 初始化admin主题和用户认证
   const { initTheme } = useTheme();
-  const { user } = useAppSelector((state) => state.auth);
+  const user = useAppSelector((state) => state.auth.user);
   const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN;
   
   useEffect(() => {

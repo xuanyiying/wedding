@@ -126,7 +126,7 @@ export const scheduleService = {
     teamId: string;
     weddingDate: string;
     weddingTime: string;
-  }): Promise<ApiResponse<{ hosts: User[] , total : number}>> => {
+  }): Promise<ApiResponse<{ hosts: TeamMember[] , total : number}>> => {
     return http.get('/schedules/available-hosts', { params });
   },
 
@@ -575,8 +575,8 @@ export const profileService = {
   getPublicUserProfiles: (params?: any): Promise<ApiResponse<any>> => {
     return http.get('/profile/public', { params });
   },
-  getUserAvailableFiles: (): Promise<ApiResponse<MediaFile[]>> => {
-    return http.get('/profile/available-files');
+  getUserAvailableFiles: (userId :string): Promise<ApiResponse<MediaFile[]>> => {
+    return http.get('/profile/available-files', { params: { userId } });
   },
   
   // 媒体资料CRUD操作

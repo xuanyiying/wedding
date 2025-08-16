@@ -7,6 +7,7 @@ import TeamList from '../../components/client/TeamList';
 import TeamMemberList from '../../components/client/TeamMemberList';
 import TeamMemberDetailModal from '../../components/client/TeamMemberDetailModal';
 import { useSiteSettings } from '../../hooks';
+import { usePageView } from '../../hooks/usePageView';
 
 const PageContainer = styled.div`
   max-width: 1200px;
@@ -22,7 +23,19 @@ const TeamPage: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const navigate = useNavigate();
-const { settings} = useSiteSettings();
+  const { settings } = useSiteSettings();
+  
+  // 团队页面整体访问统计
+  usePageView('team_page', 'main');
+  
+  // 选中团队的访问统计
+  React.useEffect(() => {
+    if (selectedTeam) {
+      import('../../services/pageViewService').then(({ PageViewService }) => {
+        PageViewService.recordPageView('team', selectedTeam.id);
+      });
+    }
+  }, [selectedTeam?.id]);
   const { teamMembers, loading: membersLoading } = useTeamData({
     teamId: selectedTeam?.id,
     includeMembers: !!selectedTeam,

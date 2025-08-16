@@ -18,7 +18,7 @@ import {
   PhoneOutlined,
   EnvironmentOutlined
 } from '@ant-design/icons';
-import { ScheduleStatus, type Schedule, type User } from '../../../types';
+import { ScheduleStatus, type Schedule, type TeamMember, type User } from '../../../types';
 import type { Dayjs } from 'dayjs';
 
 
@@ -29,11 +29,11 @@ interface ScheduleEditModalProps {
   visible: boolean;
   editingSchedule: Schedule | null;
   form: any;
-  user: any;
+  user: User | null;
   isAdmin: boolean;
   weddingDate: Dayjs | null;
   selectedWeddingTime: string;
-  availableHosts: User[];
+  availableHosts: TeamMember[];
   searchLoading: boolean;
   searchModalVisible: boolean;
   conflictSchedules?: Schedule[];
@@ -230,8 +230,8 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                     }
                   >
                     {(availableHosts || []).map(host => (
-                      <Option key={host.id} value={host.id}>
-                        {host.realName || host.nickname}
+                      <Option key={host.userId} value={host.userId}>
+                        {host.user?.realName || host.user?.nickname}
                       </Option>
                     ))}
                   </Select>

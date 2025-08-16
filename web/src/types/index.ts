@@ -655,3 +655,16 @@ export interface AppState {
   loading: boolean;
   error: AppError | null;
 }
+
+//   category?: 'avatar' | 'work' | 'event' | 'profile' | 'cover' | 'favicon'|'logo' | 'other';
+
+export const FileCategory = {
+  AVATAR: 'avatar',
+  WORK: 'work',
+  EVENT: 'event',
+  PROFILE: 'profile',
+  COVER: 'cover',
+  FAVICON: 'favicon',
+  LOGO: 'logo',
+  OTHER: 'other',
+} as const;

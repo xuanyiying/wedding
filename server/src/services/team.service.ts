@@ -1,4 +1,4 @@
-import { Team, TeamMember } from '../models/Team';
+import { Team, TeamMember } from '../models';
 import { Op } from 'sequelize';
 import { sequelize } from '../config/database';
 import { logger } from '../utils/logger';
@@ -15,7 +15,7 @@ export class TeamService {
             role: TeamMemberRole.OWNER,
           },
           attributes: ['teamId'],
-        }).then(members => members.map(member => member.teamId));
+        }).then((members: TeamMember[]) => members.map(member => member.teamId));
 
         return {
           [Op.or]: [{ ownerId: userId }, { id: { [Op.in]: teamMemberIds } }],
@@ -112,7 +112,7 @@ export class TeamService {
         ],
       });
       // 批量获取团队成员数量，避免N+1查询问题
-      const teamIds = rows.map(team => team.id);
+      const teamIds = rows.map((team: Team) => team.id);
       const memberCounts = await TeamMember.findAll({
         where: {
           teamId: { [Op.in]: teamIds },
@@ -136,7 +136,7 @@ export class TeamService {
       });
 
       // 为每个团队设置成员数量
-      rows.forEach(team => {
+      rows.forEach((team: Team) => {
         const counts = memberCountMap.get(team.id) || { memberCount: 0, activeMemberCount: 0 };
         team.memberCount = counts.memberCount;
         team.rating = 0; // 暂时设为0，后续可以实现真实的评分逻辑
@@ -144,7 +144,7 @@ export class TeamService {
         team.viewCount = 0; // 暂时设为0，后续可以实现浏览量统计
       });
       // 序列化团队数据，转换JSON字段为数组
-      const serializedTeams = rows.map(team => ({
+      const serializedTeams = rows.map((team: Team) => ({
         ...team.toJSON(),
         serviceAreas: team.getServiceAreas(),
         specialties: team.getSpecialties(),
@@ -411,7 +411,7 @@ export class TeamService {
         where: { teamId },
         attributes: ['userId'],
         raw: true,
-      }).then(members => members.map(m => m.userId));
+      }).then((members: TeamMember[]) => members.map(m => m.userId));
 
       logger.info('已存在团队成员ID列表:', existingMemberIds);
       const where: any = {

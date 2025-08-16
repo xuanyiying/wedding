@@ -24,13 +24,19 @@ export interface DirectUploadProgress {
 // 直传上传配置
 export interface DirectUploadConfig {
   fileType: 'video' | 'image';
-  category?: 'avatar' | 'work' | 'event' | 'profile'| 'cover' | 'other';
+  category?: 'avatar' | 'work' | 'event' | 'profile'| 'cover' | 'favicon'|'logo' | 'other';
   maxFileSize?: number;
   expires?: number; // 签名URL过期时间（秒）
+  retryCount?: number; // 重试次数，默认3次
+  retryDelay?: number; // 重试延迟（毫秒），默认1000ms
+  enableCompression?: boolean; // 是否启用图片压缩，默认true
+  compressionQuality?: number; // 压缩质量 0-1，默认0.8
+  progressUpdateInterval?: number; // 进度更新间隔（毫秒），默认500ms
   onProgress?: (progress: DirectUploadProgress) => void;
   onStatusChange?: (status: DirectUploadStatusType) => void;
   onError?: (error: Error) => void;
   onSuccess?: (result: DirectUploadResult) => void;
+  onRetry?: (attempt: number, error: Error) => void;
 }
 
 // 直传上传结果
@@ -66,10 +72,18 @@ export class DirectUploader {
   private abortController: AbortController | null = null;
   private status: DirectUploadStatusType = DirectUploadStatus.PENDING;
   private startTime: number = 0;
+  private processedFile: File | null = null;
 
   constructor(file: File, config: DirectUploadConfig) {
     this.file = file;
-    this.config = config;
+    this.config = {
+      retryCount: 3,
+      retryDelay: 1000,
+      enableCompression: true,
+      compressionQuality: 0.8,
+      progressUpdateInterval: 500,
+      ...config
+    };
   }
 
   /**
@@ -79,16 +93,19 @@ export class DirectUploader {
     try {
       this.updateStatus(DirectUploadStatus.PENDING);
       
-      // 1. 获取预签名URL
+      // 1. 预处理文件（压缩等）
+      await this.preprocessFile();
+      
+      // 2. 获取预签名URL
       const presignedData = await this.getPresignedUrl();
       this.uploadSessionId = presignedData.uploadSessionId;
       this.uploadUrl = presignedData.uploadUrl;
 
-      // 2. 直接上传到OSS
+      // 3. 直接上传到OSS（带重试机制）
       this.updateStatus(DirectUploadStatus.UPLOADING);
-      await this.uploadToOss();
+      await this.uploadToOssWithRetry();
 
-      // 3. 确认上传完成
+      // 4. 确认上传完成
       const result = await this.confirmUpload();
       
       this.updateStatus(DirectUploadStatus.COMPLETED);
@@ -136,11 +153,102 @@ export class DirectUploader {
   /**
    * 获取预签名URL
    */
+  /**
+   * 预处理文件（压缩等）
+   */
+  private async preprocessFile(): Promise<void> {
+    if (this.config.fileType === 'image' && this.config.enableCompression) {
+      this.processedFile = await this.compressImage(this.file);
+    } else {
+      this.processedFile = this.file;
+    }
+  }
+
+  /**
+   * 压缩图片
+   */
+  private async compressImage(file: File): Promise<File> {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        // 计算压缩后的尺寸
+        const maxWidth = 1920;
+        const maxHeight = 1080;
+        let { width, height } = img;
+        
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width *= ratio;
+          height *= ratio;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // 绘制并压缩
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const compressedFile = new File([blob], file.name, {
+                type: file.type,
+                lastModified: Date.now()
+              });
+              resolve(compressedFile);
+            } else {
+              reject(new Error('图片压缩失败'));
+            }
+          },
+          file.type,
+          this.config.compressionQuality
+        );
+      };
+      
+      img.onerror = () => reject(new Error('图片加载失败'));
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
+  /**
+   * 带重试机制的上传到OSS
+   */
+  private async uploadToOssWithRetry(): Promise<void> {
+    let lastError: Error;
+    
+    for (let attempt = 0; attempt <= (this.config.retryCount || 3); attempt++) {
+      try {
+        await this.uploadToOss();
+        return; // 成功则返回
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error('上传失败');
+        
+        if (attempt < (this.config.retryCount || 3)) {
+          this.config.onRetry?.(attempt + 1, lastError);
+          await this.delay(this.config.retryDelay || 1000);
+        }
+      }
+    }
+    
+    throw lastError!;
+  }
+
+  /**
+   * 延迟函数
+   */
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
   private async getPresignedUrl(): Promise<PresignedUrlResponse> {
+    const fileToUpload = this.processedFile || this.file;
     const response = await uploadRequest.post('/direct-upload/presigned-url', {
-      fileName: this.file.name,
-      fileSize: this.file.size,
-      contentType: this.file.type,
+      fileName: fileToUpload.name,
+      fileSize: fileToUpload.size,
+      contentType: fileToUpload.type,
       fileType: this.config.fileType,
       category: this.config.category,
       expires: this.config.expires || 3600
@@ -161,17 +269,19 @@ export class DirectUploader {
       throw new Error('上传URL不存在');
     }
 
+    const fileToUpload = this.processedFile || this.file;
     this.abortController = new AbortController();
     this.startTime = Date.now();
 
-    const total = this.file.size;
+    const total = fileToUpload.size;
     let loaded = 0;
     let lastTime = this.startTime;
     let lastLoaded = 0;
+    const updateInterval = this.config.progressUpdateInterval || 500;
 
     const stream = new ReadableStream({
       start: (controller) => {
-        const reader = this.file.stream().getReader();
+        const reader = fileToUpload.stream().getReader();
         const pump = () => {
           reader.read().then(({ done, value }) => {
             if (done) {
@@ -183,7 +293,7 @@ export class DirectUploader {
             const timeDiff = (now - lastTime) / 1000; // in seconds
             const loadedDiff = loaded - lastLoaded;
 
-            if (timeDiff > 0.5 || loaded === total) { // 更新频率
+            if (timeDiff > updateInterval / 1000 || loaded === total) { // 可配置的更新频率
               const speed = loadedDiff / timeDiff; // bytes per second
               const remainingTime = speed > 0 ? (total - loaded) / speed : Infinity;
               const percentage = Math.round((loaded / total) * 100);
@@ -217,8 +327,8 @@ export class DirectUploader {
       method: 'PUT',
       body: stream,
       headers: {
-        'Content-Type': this.file.type,
-        'Content-Length': this.file.size.toString(),
+        'Content-Type': fileToUpload.type,
+        'Content-Length': fileToUpload.size.toString(),
       },
       signal: this.abortController.signal,
       duplex: 'half',
@@ -237,9 +347,10 @@ export class DirectUploader {
       throw new Error('上传会话ID不存在');
     }
 
+    const fileToUpload = this.processedFile || this.file;
     const response = await uploadRequest.post('/direct-upload/confirm', {
       uploadSessionId: this.uploadSessionId,
-      actualFileSize: this.file.size
+      actualFileSize: fileToUpload.size
     });
 
     if (!response.data.success) {

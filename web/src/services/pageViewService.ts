@@ -3,7 +3,7 @@ import { http } from '../utils/request';
 export interface PageViewStats {
   totalViews: number;
   uniqueViews: number;
-  pageType: 'team_member' | 'work';
+  pageType: 'team_member' | 'work' | 'team' | 'team_page';
   pageId: string;
 }
 
@@ -33,7 +33,7 @@ export class PageViewService {
   /**
    * 记录页面访问
    */
-  static async recordPageView(pageType: 'team_member' | 'work', pageId: string): Promise<void> {
+  static async recordPageView(pageType: 'team_member' | 'work' | 'team' | 'team_page', pageId: string): Promise<void> {
     try {
       await http.post('/page-views/record', {
         pageType,
@@ -48,7 +48,7 @@ export class PageViewService {
   /**
    * 获取页面访问统计
    */
-  static async getPageViewStats(pageType: 'team_member' | 'work', pageId: string): Promise<PageViewStats> {
+  static async getPageViewStats(pageType: 'team_member' | 'work' | 'team' | 'team_page', pageId: string): Promise<PageViewStats> {
     const response = await http.get(`/page-views/stats/${pageType}/${pageId}`);
     return response.data.data;
   }
@@ -57,7 +57,7 @@ export class PageViewService {
    * 批量获取页面访问统计
    */
   static async getBatchPageViewStats(
-    pageType: 'team_member' | 'work',
+    pageType: 'team_member' | 'work' | 'team' | 'team_page',
     pageIds: string[]
   ): Promise<Record<string, PageViewStats>> {
     const response = await http.post(`/page-views/stats/${pageType}/batch`, {
@@ -70,7 +70,7 @@ export class PageViewService {
    * 获取热门页面排行
    */
   static async getPopularPages(
-    pageType: 'team_member' | 'work',
+    pageType: 'team_member' | 'work' | 'team' | 'team_page',
     limit: number = 10,
     timeRange?: { start: Date; end: Date }
   ): Promise<PopularPage[]> {
@@ -88,7 +88,7 @@ export class PageViewService {
    * 获取访问趋势数据
    */
   static async getViewTrends(
-    pageType: 'team_member' | 'work',
+    pageType: 'team_member' | 'work' | 'team' | 'team_page',
     pageId?: string,
     days: number = 30
   ): Promise<ViewTrend[]> {

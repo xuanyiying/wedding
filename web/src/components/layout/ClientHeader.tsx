@@ -159,7 +159,7 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
         <Link to="/" style={{ textDecoration: 'none' }}>
         <Logo>
           {logoUrl ? <LogoImage src={logoUrl} alt="site logo" /> : <LogoIcon> </LogoIcon>}
-          <span style={{ color: 'rgba(0,0,0,0.88)' }}>{siteName || '陆合·合悦Club'}</span>
+          <span>{siteName || '陆合·合悦Club'}</span>
         </Logo>
       </Link>
         <StyledMenu

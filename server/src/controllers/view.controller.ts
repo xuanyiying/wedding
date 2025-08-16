@@ -17,7 +17,7 @@ export const recordView = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    if (!['team_member', 'work'].includes(pageType)) {
+    if (!['team_member', 'work', 'team', 'team_page'].includes(pageType)) {
       res.status(400).json({
         success: false,
         message: '无效的页面类型',

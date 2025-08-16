@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Avatar, Typography, Divider, Tag, Button, Row, Col, Spin, Empty, Image, Tabs } from 'antd';
-import { CalendarOutlined, UserOutlined } from '@ant-design/icons';
+import { Modal, Avatar, Typography, Divider, Tag, Button, Spin, Empty, Image, Tabs } from 'antd';
+import { CalendarOutlined, PlayCircleOutlined, UserOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
-import { TeamMemberStatus, type Work, type Schedule } from '../../types';
+import { type Schedule, type MediaFile, FileType } from '../../types';
 import { usePageView } from '../../hooks/usePageView';
-import { workService, scheduleService } from '../../services';
+import { scheduleService, profileService } from '../../services';
 import type { ClientTeamMember } from '../../hooks/useTeamData';
+import { PlayButton } from './WorkCardStyles';
+import ScheduleCalendar from '../ScheduleCalendar';
 
-const { Title, Paragraph } = Typography;
+const { Title } = Typography;
 
 interface TeamMemberDetailModalProps {
   visible: boolean;
@@ -40,38 +42,7 @@ const TeamAvatar = styled(Avatar)`
   }
 `;
 
-const StatusTag = styled(Tag)`
-  &&& {
-    padding: 6px 12px;
-    border-radius: var(--client-border-radius);
-    font-size: 0.8rem;
-    font-weight: 400;
-    border: 1px solid;
 
-    &.available {
-      background: var(--client-bg-container);
-      color: var(--client-functional-success);
-      border-color: var(--client-functional-success);
-    }
-
-    &.busy {
-      background: var(--client-bg-container);
-      color: var(--client-functional-error);
-      border-color: var(--client-functional-error);
-    }
-  }
-`;
-
-const SpecialtyTag = styled(Tag)`
-  &&& {
-    margin: 2px;
-    border-radius: var(--client-border-radius);
-    font-size: 0.75rem;
-    background: var(--client-bg-layout);
-    border: 1px solid var(--client-border-color);
-    color: var(--client-text-secondary);
-  }
-`;
 
 const DetailSection = styled.div`
   margin-bottom: 24px;
@@ -188,7 +159,7 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
   onClose,
   onContact
 }) => {
-  const [memberWorks, setMemberWorks] = useState<Work[]>([]);
+  const [mediaProfiles, setMediaProfiles] = useState<MediaFile[]>([]);
   const [memberSchedules, setMemberSchedules] = useState<Schedule[]>([]);
   const [worksLoading, setWorksLoading] = useState(false);
   const [schedulesLoading, setSchedulesLoading] = useState(false);
@@ -198,17 +169,15 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
   const { stats } = usePageView('team_member', member?.userId || '');
 
   // 加载成员作品
-  const loadMemberWorks = async (userId: string) => {
+  const loadMediaProfile = async (userId: string) => {
     try {
       setWorksLoading(true);
 
-      const response = await workService.getWorks({
-        userId,
-        status: 'published',
-        limit: 6
-      });
+      const response = await profileService.getUserAvailableFiles(
+        userId
+      );
       if (response.success) {
-        setMemberWorks(response.data?.works || []);
+        setMediaProfiles(response.data || []);
       }
     } catch (error) {
       console.error('Failed to load member works:', error);
@@ -242,24 +211,14 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
   // 记录页面访问并加载数据
   useEffect(() => {
     if (visible && member?.userId) {
-      loadMemberWorks(member.userId);
+      loadMediaProfile(member.userId);
       loadMemberSchedules(member.userId);
     } else {
       // 清空数据
-      setMemberWorks([]);
+      setMediaProfiles([]);
       setMemberSchedules([]);
     }
   }, [visible, member?.userId]);
-
-  // 获取状态对应的CSS类名
-  const getStatusClassName = (status: TeamMemberStatus): string => {
-    return status === TeamMemberStatus.ACTIVE ? 'available' : 'busy';
-  };
-
-  // 获取状态显示文本
-  const getStatusText = (status: TeamMemberStatus): string => {
-    return status === TeamMemberStatus.ACTIVE ? '档期充足' : '档期紧张';
-  };
 
   const handleContact = () => {
     if (onContact) {
@@ -289,13 +248,7 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
             <TeamAvatar size={100} src={member.avatar} />
             <Title level={3} style={{ marginTop: 16, marginBottom: 8 }}>
               {member.name}
-            </Title>
-         
-            <div style={{ marginTop: 12 }}>
-              <StatusTag className={getStatusClassName(member.status)}>
-                {getStatusText(member.status)}
-              </StatusTag>
-            </div>
+            </Title> 
           </div>
 
           <Divider />
@@ -321,34 +274,16 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
                         <LoadingContainer>
                           <Spin size="small" />
                         </LoadingContainer>
-                      ) : memberSchedules.length > 0 ? (
-                        <div>
-                          {memberSchedules.map((schedule) => (
-                            <ScheduleItem key={schedule.id}>
-                              <div className="schedule-title">{schedule.title}</div>
-                              <div className="schedule-date">
-                                {schedule.weddingDate} {schedule.weddingTime === 'lunch' ? '午宴' : '晚宴'}
-                              </div>
-                              <div className="schedule-status">
-                                <Tag color={schedule.status === 'available' ? 'green' : 'orange'}>
-                                  {schedule.status === 'available' ? '可预约' : 
-                                   schedule.status === 'booked' ? '已预订' : 
-                                   schedule.status === 'confirmed' ? '已确认' : '其他'}
-                                </Tag>
-                              </div>
-                            </ScheduleItem>
-                          ))}
-                          {memberSchedules.length > 10 && (
-                            <div style={{ textAlign: 'center', marginTop: '12px', color: 'var(--client-text-secondary)', fontSize: '0.9rem' }}>
-                              显示前10个档期，还有更多档期可预约...
-                            </div>
-                          )}
-                        </div>
                       ) : (
-                        <Empty 
-                          image={Empty.PRESENTED_IMAGE_SIMPLE} 
-                          description="暂无档期信息" 
-                          style={{ margin: '20px 0' }}
+                        <ScheduleCalendar
+                          schedules={memberSchedules.map(schedule => ({
+                            ...schedule,
+                            hostName: member?.name || '未知'
+                          }))}
+                          loading={schedulesLoading}
+                          theme="client"
+                          showLegend={false}
+                          fullscreen={false}
                         />
                       )}
                     </DetailSection>
@@ -365,76 +300,43 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
                 ),
                 children: (
                   <div>
-                    <DetailSection>
-                      <h4>个人简介</h4>
-                      <Paragraph>{member.bio}</Paragraph>
-                    </DetailSection>
 
                     <DetailSection>
-                      <h4>专业特长</h4>
-                      <div>
-                        {member.specialties.map((specialty: string) => (
-                          <SpecialtyTag key={specialty}>{specialty}</SpecialtyTag>
-                        ))}
-                      </div>
-                    </DetailSection>
-
-                    <DetailSection>
-                      <h4>专业数据</h4>
-                      <Row gutter={16}>
-                        <Col span={8}>
-                          <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--client-primary-color)' }}>
-                              {member.experienceYears}
-                            </div>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--client-text-secondary)' }}>年经验</div>
-                          </div>
-                        </Col>
-            
-                        <Col span={8}>
-                          <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--client-primary-color)' }}>
-                              {stats?.totalViews || 0}
-                            </div>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--client-text-secondary)' }}>浏览量</div>
-                          </div>
-                        </Col>
-                        
-                        <Col span={8}>
-                          <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--client-primary-color)' }}>
-                              {memberWorks.length}
-                            </div>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--client-text-secondary)' }}>作品数</div>
-                          </div>
-                        </Col>
-                      </Row>
-                    </DetailSection>
-
-                    <DetailSection>
-                      <h4>精选作品</h4>
                       {worksLoading ? (
                         <LoadingContainer>
                           <Spin size="small" />
                         </LoadingContainer>
-                      ) : memberWorks.length > 0 ? (
+                      ) : mediaProfiles.length > 0 ? (
                         <WorksGrid>
-                          {memberWorks.map((work) => (
-                            <WorkItem key={work.id}>
-                              <Image
-                                src={work.coverUrl || '/placeholder-image.jpg'}
-                                alt={work.title}
-                                preview={{
-                                  mask: <div style={{ fontSize: '12px' }}>{work.title}</div>
-                                }}
-                              />
+                          {mediaProfiles.map((m) => (
+                            <WorkItem key={m.id}>
+                              {m.fileType === FileType.VIDEO && m.thumbnailUrl && m.fileUrl ?
+                                <div style={{ paddingBottom: '75%', position: 'relative', height: 0 }}>
+                                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+                                    <img
+                                      src={m.thumbnailUrl}
+                                      alt={m.filename}
+                                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    />
+                                    <PlayButton>
+                                      <PlayCircleOutlined />
+                                    </PlayButton>
+                                  </div>
+                                </div> :
+                                <Image
+                                  src={m.fileUrl}
+                                  alt={m.filename}
+                                  preview={{
+                                    mask: <div style={{ fontSize: '12px' }}>{m.filename}</div>
+                                  }}
+                                />}
                             </WorkItem>
                           ))}
                         </WorksGrid>
                       ) : (
-                        <Empty 
-                          image={Empty.PRESENTED_IMAGE_SIMPLE} 
-                          description="暂无公开作品" 
+                        <Empty
+                          image={Empty.PRESENTED_IMAGE_SIMPLE}
+                          description="暂无公开作品"
                           style={{ margin: '20px 0' }}
                         />
                       )}

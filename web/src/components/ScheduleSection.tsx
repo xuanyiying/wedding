@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Empty } from 'antd';
+import { Typography, Empty, Col, Row } from 'antd';
 import styled from 'styled-components';
 import dayjs from 'dayjs';
 import { scheduleService } from '../services';
@@ -8,7 +8,8 @@ import QueryBar, { type QueryFilters } from './common/QueryBar';
 import TeamMemberCard from './client/TeamMemberCard';
 import TeamMemberDetailModal from './client/TeamMemberDetailModal';
 import type { ClientTeamMember } from '../hooks/useTeamData';
-import type { Team, User } from '../types';
+import type { Team } from '../types';
+import { transformTeamMember } from '../utils/team';
 
 
 const { Title } = Typography;
@@ -61,19 +62,6 @@ const SectionTitle = styled(Title)`
   }
 `;
 
-const MembersGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 24px;
-  margin-top: 32px;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-`;
-
-
 const SectionDescription = styled(Typography.Paragraph)`
   &&& {
     font-size: 1.1rem;
@@ -98,7 +86,7 @@ interface ScheduleSectionProps {
 }
 
 const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, team }) => {
-  const [availableMembers, setAvailableMembers] = useState<User[]>([]);
+  const [availableMembers, setAvailableMembers] = useState<ClientTeamMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedMember, setSelectedMember] = useState<ClientTeamMember | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -120,8 +108,8 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, t
         weddingDate: filters.date?.format('YYYY-MM-DD') || today.format('YYYY-MM-DD'),
         weddingTime: filters.mealType as string || '',
       });
-      const available = result.data?.hosts
-      setAvailableMembers(available || []);
+      const available = result.data?.hosts.map(m => transformTeamMember(m)) || [];
+      setAvailableMembers(available);
     } catch (error) {
       setAvailableMembers([]);
     } finally {
@@ -130,8 +118,8 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, t
   };
 
   // 处理团队成员卡片点击
-  const handleMemberClick = (member: User) => {
-    const fullMember = teamMembers.find(m => m.id === member.id);
+  const handleMemberClick = (member: ClientTeamMember) => {
+    const fullMember = teamMembers.find(m => m.userId === member.userId);
     if (fullMember) {
       setSelectedMember(fullMember);
       setModalVisible(true);
@@ -143,7 +131,13 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, t
     setModalVisible(false);
     setSelectedMember(null);
   };
-
+  const handleViewDetails = (userId: string) => {
+    const member = teamMembers.find(m => m.userId === userId);
+    if (member) {
+      setSelectedMember(member);
+      setModalVisible(true);
+    }
+  };
   return (
     <SectionContainer id="schedule">
       <ContentWrapper>
@@ -170,25 +164,23 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, t
             <Typography.Text>正在查询可用主持人...</Typography.Text>
           </div>
         ) : availableMembers.length > 0 ? (
-          <MembersGrid>
-            {availableMembers.map(member => (
-              <TeamMemberCard
-                key={member.id}
-                userId={member.id}
-                name={member?.realName || member.nickname || `用户${member.id?.slice(-4) || member.id}`}
-                avatar={member?.avatarUrl || ''}
-                specialties={member.specialties}
-                experienceYears={member?.experienceYears || 0}
-                onViewDetails={(id) => {
-                  const selected = availableMembers.find(m => m.id === id);
-                  if (selected) {
-                    handleMemberClick(selected);
-                  }
-                }}
-                onMemberClick={() => handleMemberClick(member)}
-              />
+          <Row gutter={[30, 30]}>
+            {availableMembers.map((member) => (
+              <Col xs={24} sm={12} lg={8} key={member.id}>
+                <TeamMemberCard
+                  userId={member.userId}
+                  name={member?.name || '匿名'}
+                  avatar={member.avatar || ''}
+                  status={member.status}
+                  specialties={member.specialties || []}
+                  experienceYears={member.experienceYears || 0}
+                  onViewDetails={() => handleViewDetails(member.userId)}
+                  onMemberClick={() => handleMemberClick(member)}
+                  loading={loading}
+                />
+              </Col>
             ))}
-          </MembersGrid>
+          </Row>
         ) : (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
             <Empty

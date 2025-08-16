@@ -17,7 +17,6 @@ export const DouyinWorkCard = styled.div`
 export const WorkMediaContainer = styled.div`
   position: relative;
   width: 100%;
-  aspect-ratio: 3/4;
   overflow: hidden;
 `;
 

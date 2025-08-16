@@ -5,7 +5,6 @@ import {
   Input,
   Button,
   Switch,
-  Upload,
   message,
   Space,
   Row,
@@ -18,7 +17,6 @@ import {
 import { useTheme } from '../../hooks/useTheme';
 import {
   SaveOutlined,
-  PlusOutlined,
   MailOutlined,
   GlobalOutlined,
   HomeOutlined,
@@ -27,8 +25,8 @@ import {
 
 import styled from 'styled-components';
 import { PageHeader } from '../../components/admin/common';
-import { settingsService, directUploadService } from '../../services';
-import { FileType } from '../../types';
+import { settingsService } from '../../services';
+import { EnhancedUploader } from '../../components/common/EnhancedUploader';
 
 const { TabPane } = Tabs;
 const { TextArea } = Input;
@@ -111,7 +109,7 @@ const SettingsPage: React.FC = () => {
   const [logoUrl, setLogoUrl] = useState<string>('');
   const [faviconUrl, setFaviconUrl] = useState<string>('');
   const [emailForm] = Form.useForm();
-  const [uploadingStates, setUploadingStates] = useState<{[key: string]: boolean}>({});
+
 
   const { initTheme } = useTheme();
 
@@ -361,12 +359,10 @@ const SettingsPage: React.FC = () => {
     }
   };
   
-  const handleUpload = async (file: File, type: 'logo' | 'favicon' | 'homepageBackground') => {
-    try {
-      setUploadingStates(prev => ({ ...prev, [type]: true }));
-      const result = await directUploadService.uploadFile(file, FileType.IMAGE, 'other');
-      const fileUrl = result.url;
-
+  const handleUploadSuccess = (results: any[], type: 'logo' | 'favicon' | 'homepageBackground') => {
+    if (results && results.length > 0) {
+      const fileUrl = results[0].url;
+      
       if (type === 'logo') {
         setLogoUrl(fileUrl);
         siteForm.setFieldsValue({ logo: fileUrl });
@@ -379,34 +375,14 @@ const SettingsPage: React.FC = () => {
       }
       
       message.success('上传成功');
-    } catch (error) {
-      message.error('上传失败');
-    } finally {
-      setUploadingStates(prev => ({ ...prev, [type]: false }));
     }
   };
 
-  const customUploadRequest = (options: any, type: 'logo' | 'favicon' | 'homepageBackground') => {
-    handleUpload(options.file, type)
-      .then(() => {
-        options.onSuccess?.(options.file);
-      })
-      .catch((error) => {
-        options.onError?.(error);
-      });
+  const handleUploadError = (error: Error) => {
+    message.error(`上传失败: ${error.message}`);
   };
 
-  const beforeUpload = (file: any) => {
-    const isImage = file.type.startsWith('image/');
-    if (!isImage) {
-      message.error('只能上传图片文件!');
-    }
-    const isLt2M = file.size / 1024 / 1024 < 2;
-    if (!isLt2M) {
-      message.error('图片大小不能超过2MB!');
-    }
-    return isImage && isLt2M;
-  };
+
 
 
   
@@ -468,51 +444,36 @@ const SettingsPage: React.FC = () => {
                   <div className="section-title">首页背景图片</div>
                   <div className="section-description">上传一张图片作为网站首页的背景。</div>
                   <Form.Item name="homepageBackgroundImage">
-                    <Upload
-                      name="file"
-                      action={`${import.meta.env.VITE_API_URL}/files/upload`}
-                      headers={{ Authorization: `Bearer ${localStorage.getItem('adminToken')}` }}
-                      beforeUpload={beforeUpload}
-                      customRequest={(options) => customUploadRequest(options, 'homepageBackground')}
-                      showUploadList={false}
-                      listType="picture-card"
+                    <EnhancedUploader
+                      fileType="image"
+                      category="cover"
+                      maxFileSize={5 * 1024 * 1024} // 5MB
+                      accept="image/*"
+                      enableCompression={true}
+                      compressionQuality={0.8}
+                      onUploadSuccess={(results) => handleUploadSuccess(results, 'homepageBackground')}
+                      onUploadError={handleUploadError}
+                      className="mb-4"
                     >
                       {homepageBackgroundImage ? (
-                        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                        <div className="relative w-full h-32">
                           <img 
                             src={homepageBackgroundImage} 
                             alt="背景图" 
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                            className="w-full h-full object-cover rounded" 
                           />
-                          <div style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            backgroundColor: 'rgba(0,0,0,0.5)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'white',
-                            opacity: 0,
-                            transition: 'opacity 0.3s'
-                          }}
-                          onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-                          onMouseLeave={(e) => e.currentTarget.style.opacity = '0'}
-                          >
-                            {uploadingStates.homepageBackground ? '上传中...' : '重新上传'}
+                          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center text-white opacity-0 hover:opacity-100 transition-opacity rounded">
+                            重新上传背景图
                           </div>
                         </div>
                       ) : (
-                        <div>
-                          <PlusOutlined />
-                          <div style={{ marginTop: 8 }}>
-                            {uploadingStates.homepageBackground ? '上传中...' : '上传背景图'}
-                          </div>
+                        <div className="text-center py-8">
+                          <div className="text-4xl mb-2">🖼️</div>
+                          <div>点击或拖拽上传背景图片</div>
+                          <div className="text-sm text-gray-500 mt-1">建议尺寸：1920x1080px，最大5MB</div>
                         </div>
                       )}
-                    </Upload>
+                    </EnhancedUploader>
                   </Form.Item>
                 </SettingSection>
                 
@@ -553,102 +514,70 @@ const SettingsPage: React.FC = () => {
                 <Row gutter={16}>
                   <Col span={12}>
                     <Form.Item name="logo" label="网站Logo">
-                      <Upload
-                        name="file"
-                        action={`${import.meta.env.VITE_API_URL}/files/upload`}
-                        headers={{ Authorization: `Bearer ${localStorage.getItem('adminToken')}` }}
-                        beforeUpload={beforeUpload}
-                        customRequest={(options) => customUploadRequest(options, 'logo')}
-                        showUploadList={false}
-                        listType="picture-card"
+                      <EnhancedUploader
+                        fileType="image"
+                        category="logo"
+                        maxFileSize={2 * 1024 * 1024} // 2MB
+                        accept="image/*"
+                        enableCompression={true}
+                        compressionQuality={0.9}
+                        onUploadSuccess={(results) => handleUploadSuccess(results, 'logo')}
+                        onUploadError={handleUploadError}
+                        className="mb-4"
                       >
                         {logoUrl ? (
-                          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                          <div className="relative w-full h-32">
                             <img 
                               src={logoUrl} 
                               alt="Logo" 
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                              className="w-full h-full object-contain rounded" 
                             />
-                            <div style={{
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              backgroundColor: 'rgba(0,0,0,0.5)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              color: 'white',
-                              opacity: 0,
-                              transition: 'opacity 0.3s'
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-                            onMouseLeave={(e) => e.currentTarget.style.opacity = '0'}
-                            >
-                              {uploadingStates.logo ? '上传中...' : '重新上传'}
+                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center text-white opacity-0 hover:opacity-100 transition-opacity rounded">
+                              重新上传Logo
                             </div>
                           </div>
                         ) : (
-                          <div>
-                            <PlusOutlined />
-                            <div style={{ marginTop: 8 }}>
-                              {uploadingStates.logo ? '上传中...' : '上传Logo'}
-                            </div>
+                          <div className="text-center py-8">
+                            <div className="text-4xl mb-2">🏷️</div>
+                            <div>点击或拖拽上传Logo</div>
+                            <div className="text-sm text-gray-500 mt-1">建议尺寸：200x60px，格式：PNG/JPG，最大2MB</div>
                           </div>
                         )}
-                      </Upload>
-                      <div style={{ fontSize: 12, color: 'var(--admin-text-secondary)', marginTop: 4 }}>建议尺寸：200x60px，格式：PNG/JPG</div>
+                      </EnhancedUploader>
                     </Form.Item>
                   </Col>
                   <Col span={12}>
                     <Form.Item name="favicon" label="网站图标">
-                      <Upload
-                        name="file"
-                        action={`${import.meta.env.VITE_API_URL}/files/upload`}
-                        headers={{ Authorization: `Bearer ${localStorage.getItem('adminToken')}` }}
-                        beforeUpload={beforeUpload}
-                        customRequest={(options) => customUploadRequest(options, 'favicon')}
-                        showUploadList={false}
-                        listType="picture-card"
+                      <EnhancedUploader
+                        fileType="image"
+                        category="favicon"
+                        maxFileSize={2 * 1024 * 1024} // 2MB
+                        accept="image/*"
+                        enableCompression={true}
+                        compressionQuality={0.9}
+                        onUploadSuccess={(results) => handleUploadSuccess(results, 'favicon')}
+                        onUploadError={handleUploadError}
+                        className="mb-4"
                       >
                         {faviconUrl ? (
-                          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                          <div className="relative w-full h-32">
                             <img 
                               src={faviconUrl} 
                               alt="图标" 
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                              className="w-full h-full object-contain rounded" 
                             />
-                            <div style={{
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              backgroundColor: 'rgba(0,0,0,0.5)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              color: 'white',
-                              opacity: 0,
-                              transition: 'opacity 0.3s'
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-                            onMouseLeave={(e) => e.currentTarget.style.opacity = '0'}
-                            >
-                              {uploadingStates.favicon ? '上传中...' : '重新上传'}
+                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center text-white opacity-0 hover:opacity-100 transition-opacity rounded">
+                              重新上传图标
                             </div>
                           </div>
                         ) : (
-                          <div>
-                            <PlusOutlined />
-                            <div style={{ marginTop: 8 }}>
-                              {uploadingStates.favicon ? '上传中...' : '上传图标'}
-                            </div>
+                          <div className="text-center py-8">
+                            <div className="text-4xl mb-2">🏷️</div>
+                            <div>点击或拖拽上传图标</div>
+                            <div className="text-sm text-gray-500 mt-1">建议尺寸：32x32px，格式：ICO/PNG，最大2MB</div>
                           </div>
                         )}
-                      </Upload>
-                      <div style={{ fontSize: 12, color: 'var(--admin-text-secondary)', marginTop: 4 }}>建议尺寸：32x32px，格式：ICO/PNG</div>
+                      </EnhancedUploader>
                     </Form.Item>
                   </Col>
                 </Row>
