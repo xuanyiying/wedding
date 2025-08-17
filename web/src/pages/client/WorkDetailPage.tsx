@@ -4,7 +4,7 @@ import { Typography, Button, Spin, Space } from 'antd';
 import { ArrowLeftOutlined, PlayCircleOutlined, PauseCircleOutlined, SoundOutlined, AudioMutedOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import { workService } from '../../services';
-import { usePageView } from '../../hooks/usePageView';
+import { usePageView, usePlayStats } from '../../hooks/usePageView';
 import type { Work } from '../../types';
 import { WorkType } from '../../types';
 const { Title, Paragraph } = Typography;
@@ -92,6 +92,8 @@ const WorkDetailPage: React.FC = () => {
 
   // 页面访问统计
   usePageView('work', id || '');
+  // 播放统计
+  const { recordPlay, playStats } = usePlayStats(id || '');
 
   useEffect(() => {
     const fetchWorkDetail = async () => {
@@ -120,6 +122,8 @@ const WorkDetailPage: React.FC = () => {
     if (isPlaying) {
       videoRef.current.pause();
     } else {
+      // 记录播放行为
+      recordPlay();
       videoRef.current.play();
     }
     setIsPlaying(!isPlaying);
@@ -163,13 +167,13 @@ const WorkDetailPage: React.FC = () => {
       <WorkTitle level={2}>{work.title}</WorkTitle>
 
       <MediaContainer>
-        {work.type === WorkType.VIDEO && work.contentUrls?.[0] ? (
+        {work.type === WorkType.VIDEO && work.files?.[0]?.fileUrl ? (
           <>
             <VideoContainer>
               <StyledVideo
                 ref={videoRef}
-                src={work.contentUrls[0]}
-                poster={work.coverUrl || ''}
+                src={work.files[0].fileUrl}
+                poster={work.files[0]?.thumbnailUrl || ''}
                 controls={false}
                 onPlay={() => setIsPlaying(true)}
                 onPause={() => setIsPlaying(false)}
@@ -189,7 +193,7 @@ const WorkDetailPage: React.FC = () => {
             </VideoControls>
           </>
         ) : (
-          <StyledImage src={work.coverUrl || ''} alt={work.title} />
+          <StyledImage src={work.files?.[0]?.fileUrl || work.files?.[0]?.thumbnailUrl || ''} alt={work.title} />
         )}
       </MediaContainer>
 
@@ -222,7 +226,14 @@ const WorkDetailPage: React.FC = () => {
         {work.weddingDate && (
           <div>
             <Title level={4}>婚礼日期</Title>
-            {new Date(work.weddingDate).toLocaleDateString()}
+            <Paragraph>{new Date(work.weddingDate).toLocaleDateString()}</Paragraph>
+          </div>
+        )}
+
+        {work.type === WorkType.VIDEO && playStats && (
+          <div>
+            <Title level={4}>播放统计</Title>
+            <Paragraph>播放次数: {playStats.totalPlays}</Paragraph>
           </div>
         )}
       </Space>

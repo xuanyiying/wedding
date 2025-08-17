@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import viewService from '../services/view.service';
 import { logger } from '../utils/logger';
+import { ActionType } from '../models/ViewStat';
 
 /**
  * 记录页面访问
@@ -17,7 +18,19 @@ export const recordView = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    if (!['team_member', 'work', 'team', 'team_page'].includes(pageType)) {
+    // 将传入的pageType转换为数据库支持的类型
+    let dbPageType: 'work' | 'team_member' | 'homepage';
+    
+    if (pageType === 'work') {
+      dbPageType = 'work';
+    } else if (pageType === 'team_member') {
+      dbPageType = 'team_member';
+    } else if (pageType === 'team' || pageType === 'team_page') {
+      // 将team和team_page都映射为team_member
+      dbPageType = 'team_member';
+    } else if (pageType === 'homepage') {
+      dbPageType = 'homepage';
+    } else {
       res.status(400).json({
         success: false,
         message: '无效的页面类型',
@@ -26,9 +39,10 @@ export const recordView = async (req: Request, res: Response): Promise<void> => 
     }
 
     const recordData: any = {
-      pageType: pageType as 'work' | 'team_member',
+      pageType: dbPageType,
       pageId,
       visitorIp: req.ip || req.connection.remoteAddress || 'unknown',
+      actionType: ActionType.VIEW,
     };
 
     const userAgent = req.get('User-Agent');
@@ -193,6 +207,109 @@ export const getViewTrends = async (req: Request, res: Response): Promise<void> 
     res.status(500).json({
       success: false,
       message: '获取访问趋势数据失败',
+    });
+  }
+};
+
+/**
+ * 记录作品播放
+ */
+export const recordPlay = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { pageId } = req.body;
+
+    if (!pageId) {
+      res.status(400).json({
+        success: false,
+        message: '页面ID不能为空',
+      });
+      return;
+    }
+
+    const recordData: any = {
+      pageType: 'work',
+      pageId,
+      visitorIp: req.ip || req.connection.remoteAddress || 'unknown',
+      actionType: ActionType.PLAY,
+    };
+
+    const userAgent = req.get('User-Agent');
+    const referer = req.get('Referer');
+
+    if (userAgent) recordData.userAgent = userAgent;
+    if (referer) recordData.referer = referer;
+
+    const playRecord = await viewService.recordPlay(recordData);
+
+    res.json({
+      success: true,
+      data: playRecord,
+    });
+  } catch (error) {
+    logger.error('记录作品播放失败:', error);
+    res.status(500).json({
+      success: false,
+      message: '记录作品播放失败',
+    });
+  }
+};
+
+/**
+ * 获取作品播放统计
+ */
+export const getPlayStats = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { pageId } = req.params;
+
+    if (!pageId) {
+      res.status(400).json({
+        success: false,
+        message: '页面ID不能为空',
+      });
+      return;
+    }
+
+    const stats = await viewService.getPlayStats(pageId);
+
+    res.json({
+      success: true,
+      data: stats,
+    });
+  } catch (error) {
+    logger.error('获取作品播放统计失败:', error);
+    res.status(500).json({
+      success: false,
+      message: '获取作品播放统计失败',
+    });
+  }
+};
+
+/**
+ * 批量获取作品播放统计
+ */
+export const getBatchPlayStats = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { pageIds } = req.body;
+
+    if (!Array.isArray(pageIds) || pageIds.length === 0) {
+      res.status(400).json({
+        success: false,
+        message: '页面ID列表不能为空',
+      });
+      return;
+    }
+
+    const stats = await viewService.getBatchPlayStats(pageIds);
+
+    res.json({
+      success: true,
+      data: stats,
+    });
+  } catch (error) {
+    logger.error('批量获取作品播放统计失败:', error);
+    res.status(500).json({
+      success: false,
+      message: '批量获取作品播放统计失败',
     });
   }
 };

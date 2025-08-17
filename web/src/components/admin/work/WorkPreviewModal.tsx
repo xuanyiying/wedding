@@ -3,6 +3,7 @@ import { Modal, Row, Col, Tag, Space, Image, Typography, Divider, Button } from 
 import { EyeOutlined, HeartOutlined, DownloadOutlined, PlayCircleOutlined, PauseOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import type { Work } from './WorkCard';
+import { usePlayStats } from '../../../hooks/usePageView';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -178,6 +179,7 @@ const WorkPreviewModal: React.FC<WorkPreviewModalProps> = ({
   const [playingVideos, setPlayingVideos] = useState<Set<number>>(new Set());
   const [videoDurations, setVideoDurations] = useState<Map<number, number>>(new Map());
   const [videoCurrentTimes, setVideoCurrentTimes] = useState<Map<number, number>>(new Map());
+  const { recordPlay, playStats } = usePlayStats(work?.id || '');
 
   if (!work) return null;
 
@@ -203,6 +205,8 @@ const WorkPreviewModal: React.FC<WorkPreviewModalProps> = ({
           return newSet;
         });
       } else {
+        // 记录播放行为
+        recordPlay();
         video.play();
         setPlayingVideos(prev => new Set(prev).add(index));
       }
@@ -346,6 +350,12 @@ const WorkPreviewModal: React.FC<WorkPreviewModalProps> = ({
                 <DownloadOutlined />
                 <span>{work.downloads || 0} 下载</span>
               </div>
+              {work.type === 'video' && (
+                <div className="stat-item">
+                  <PlayCircleOutlined />
+                  <span>{playStats?.totalPlays || 0} 播放</span>
+                </div>
+              )}
             </StatsContainer>
             
             <Divider />

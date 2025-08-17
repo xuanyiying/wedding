@@ -20,7 +20,7 @@ export class ProfileController {
       Resp.badRequest(res, '用户ID不存在');
       return;
     }
-  
+
     const mediaProfiles = await ProfileService.createMediaProfile({
       mediaOrder,
       userId,
@@ -208,6 +208,11 @@ export class ProfileController {
   // 获取用户可用文件
   async getUserAvailableFiles(req: Request, res: Response): Promise<void> {
     let { userId } = req.params;
+    // 如果路径参数中没有userId，尝试从查询参数获取
+    if (!userId) {
+      userId = req.query.userId as string;
+    }
+    // 如果还是没有，尝试从认证用户获取
     if (!userId) {
       userId = req.user?.id;
     }
@@ -263,7 +268,7 @@ export class ProfileController {
 
   // 获取用户媒体资料列表
   async getUserMediaProfiles(req: Request, res: Response): Promise<void> {
-    const userId = req.user?.id;
+    const { userId } = req.params
     if (!userId) {
       Resp.badRequest(res, '用户ID不存在');
       return;

@@ -4,10 +4,14 @@ import { Op } from 'sequelize';
 export interface ViewStats {
   totalViews: number;
   uniqueViews: number;
+  totalPlays?: number;
+  uniquePlays?: number;
   dailyStats: {
     visitDate: string;
     views: number;
     uniqueViews: number;
+    plays?: number;
+    uniquePlays?: number;
   }[];
 }
 
@@ -15,6 +19,8 @@ export interface BatchViewStats {
   [pageId: string]: {
     totalViews: number;
     uniqueViews: number;
+    totalPlays?: number;
+    uniquePlays?: number;
   };
 }
 
@@ -30,10 +36,12 @@ class ViewService {
     referer?: string;
     sessionId?: string;
     duration?: number;
+    actionType?: 'view' | 'play';
   }): Promise<ViewStat> {
     const params: any = {
       pageType: data.pageType,
       visitorIp: data.visitorIp,
+      actionType: data.actionType || 'view',
     };
 
     if (data.pageId) params.pageId = data.pageId;
@@ -46,11 +54,37 @@ class ViewService {
   }
 
   /**
+   * 记录作品播放
+   */
+  async recordPlay(data: {
+    pageId: string;
+    pageType: 'work';
+    visitorIp: string;
+    userAgent?: string;
+    referer?: string;
+    sessionId?: string;
+    duration?: number;
+  }): Promise<ViewStat> {
+    return this.recordView({
+      ...data,
+      actionType: 'play',
+    });
+  }
+
+  /**
    * 获取页面访问统计
    */
   async getViewStats(pageType: string, pageId?: string, days: number = 30): Promise<ViewStats> {
-    const totalViews = await ViewStat.getViewCount(pageType, pageId);
-    const uniqueViews = await ViewStat.getUniqueViewCount(pageType, pageId);
+    const totalViews = await ViewStat.getViewCount(pageType, pageId, 'view');
+    const uniqueViews = await ViewStat.getUniqueViewCount(pageType, pageId, 'view');
+    
+    // 获取播放统计（仅对作品类型）
+    let totalPlays: number | undefined;
+    let uniquePlays: number | undefined;
+    if (pageType === 'work') {
+      totalPlays = await ViewStat.getViewCount(pageType, pageId, 'play');
+      uniquePlays = await ViewStat.getUniqueViewCount(pageType, pageId, 'play');
+    }
 
     const endDate = new Date();
     const startDate = new Date();
@@ -66,17 +100,36 @@ class ViewService {
 
     const dailyStatsRaw = await ViewStat.getDailyStats(params);
 
-    const dailyStats = dailyStatsRaw.map((stat: any) => ({
-      visitDate: stat.visitDate,
-      views: parseInt(stat.totalViews) || 0,
-      uniqueViews: parseInt(stat.uniqueViews) || 0,
-    }));
+    const dailyStats = dailyStatsRaw.map((stat: any) => {
+      const baseStats = {
+        visitDate: stat.visitDate,
+        views: parseInt(stat.totalViews) || 0,
+        uniqueViews: parseInt(stat.uniqueViews) || 0,
+      };
+      
+      if (pageType === 'work') {
+        return {
+          ...baseStats,
+          plays: parseInt(stat.totalPlays) || 0,
+          uniquePlays: parseInt(stat.uniquePlays) || 0,
+        };
+      }
+      
+      return baseStats;
+    });
 
-    return {
+    const result: ViewStats = {
       totalViews,
       uniqueViews,
       dailyStats,
     };
+
+    if (pageType === 'work' && totalPlays !== undefined && uniquePlays !== undefined) {
+      result.totalPlays = totalPlays;
+      result.uniquePlays = uniquePlays;
+    }
+
+    return result;
   }
 
   /**
@@ -87,10 +140,20 @@ class ViewService {
 
     const result: BatchViewStats = {};
     pageIds.forEach(pageId => {
-      result[pageId] = {
+      const baseStats = {
         totalViews: 0,
         uniqueViews: 0,
       };
+      
+      if (pageType === 'work') {
+        result[pageId] = {
+          ...baseStats,
+          totalPlays: 0,
+          uniquePlays: 0,
+        };
+      } else {
+        result[pageId] = baseStats;
+      }
     });
 
     stats.forEach((stat: any) => {
@@ -99,6 +162,14 @@ class ViewService {
           totalViews: parseInt(stat.totalViews) || 0,
           uniqueViews: parseInt(stat.uniqueViews) || 0,
         };
+        
+        if (pageType === 'work') {
+          const pageStats = result[stat.pageId] as BatchViewStats[string] & { totalPlays: number; uniquePlays: number };
+          if (pageStats.totalPlays !== undefined && pageStats.uniquePlays !== undefined) {
+            pageStats.totalPlays = parseInt(stat.totalPlays) || 0;
+            pageStats.uniquePlays = parseInt(stat.uniquePlays) || 0;
+          }
+        }
       }
     });
 
@@ -164,6 +235,20 @@ class ViewService {
    */
   async getAdminOverviewStats(days: number = 7) {
     return await ViewStat.getAdminStats(days);
+  }
+
+  /**
+   * 获取作品播放统计
+   */
+  async getPlayStats(pageId: string, days: number = 30): Promise<ViewStats> {
+    return this.getViewStats('work', pageId, days);
+  }
+
+  /**
+   * 批量获取作品播放统计
+   */
+  async getBatchPlayStats(pageIds: string[]): Promise<BatchViewStats> {
+    return this.getBatchViewStats('work', pageIds);
   }
 }
 

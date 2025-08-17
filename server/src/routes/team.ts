@@ -32,11 +32,11 @@ router.get('/stats', getTeamStats);
 // 获取可邀请的用户列表 - 需要放在 /:id 之前
 router.get('/:teamId/available-users', getAvailableUsers);
 
-// 获取团队详情
-router.get('/:teamId/members', getTeamMembers);
-
 // 批量删除团队成员 - 需要放在 /members/:id 之前
 router.delete('/members/batch', authMiddleware, batchDeleteTeamMembers);
+
+// 获取团队成员列表 - 使用查询参数
+router.get('/members', getTeamMembers);
 
 // 获取团队成员详情
 router.get('/members/:id', getTeamMemberById);
@@ -52,6 +52,9 @@ router.delete('/members/:id', authMiddleware, deleteTeamMember);
 
 // 更新团队成员状态
 router.put('/members/:id/status', authMiddleware, updateTeamMemberStatus);
+
+// 获取指定团队的成员列表
+router.get('/:teamId/members', getTeamMembers)
 
 // 团队详情路由 - 需要放在最后
 // 获取团队详情

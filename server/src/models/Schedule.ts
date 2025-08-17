@@ -222,9 +222,8 @@ export const initSchedule = (sequelize: Sequelize): void => {
       indexes: [
         { name: 'idx_schedules_user_id_wedding_date', fields: ['user_id', 'wedding_date'] },
         { name: 'idx_schedules_customer_id', fields: ['customer_id'] },
-        { name: 'idx_schedules_status', fields: ['status'] },
-        { name: 'idx_schedules_event_type', fields: ['event_type'] },
-        { name: 'idx_schedules_created_at', fields: ['created_at'] },
+        { name: 'idx_schedules_status_event_type', fields: ['status', 'event_type'] },
+        { name: 'idx_schedules_wedding_date_time', fields: ['wedding_date', 'wedding_time'] },
         { name: 'idx_schedules_deleted_at', fields: ['deleted_at'] },
       ],
     },

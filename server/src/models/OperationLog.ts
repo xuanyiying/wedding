@@ -171,11 +171,7 @@ export const initOperationLog = (sequelize: Sequelize): void => {
       comment: '操作日志表',
       indexes: [
         { name: 'idx_operation_logs_user_id', fields: ['user_id'] },
-        { name: 'idx_operation_logs_module', fields: ['module'] },
-        { name: 'idx_operation_logs_action', fields: ['action'] },
-        { name: 'idx_operation_logs_level', fields: ['level'] },
         { name: 'idx_operation_logs_resource', fields: ['resource_type', 'resource_id'] },
-        { name: 'idx_operation_logs_ip', fields: ['ip_address'] },
         { name: 'idx_operation_logs_created_at', fields: ['created_at'] },
       ],
     },

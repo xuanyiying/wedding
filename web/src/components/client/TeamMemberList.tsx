@@ -46,7 +46,7 @@ const TeamMemberList: React.FC<TeamMemberListProps> = ({ team, members, loading,
       
       <Row gutter={[30, 30]}>
         {members.map((member) => (
-          <Col xs={24} sm={12} lg={8} key={member.userId}>
+          <Col xs={24} sm={12} lg={8} key={member.id}>
             <TeamMemberCard
               userId={member.userId}
               name={member.name}

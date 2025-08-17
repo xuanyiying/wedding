@@ -142,6 +142,18 @@ const AvatarUploader: React.FC<AvatarUploaderProps> = ({
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
           }
+          .avatar-uploader .ant-upload {
+            border-radius: 50% !important;
+            border: 3px solid #f0f0f0 !important;
+            transition: all 0.3s ease !important;
+          }
+          .avatar-uploader .ant-upload:hover {
+            border-color: #1890ff !important;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+          }
+          .avatar-uploader .ant-upload-select {
+            border-radius: 50% !important;
+          }
         `}
       </style>
       <Upload
@@ -161,7 +173,7 @@ const AvatarUploader: React.FC<AvatarUploaderProps> = ({
         }}
       >
         {imageUrl ? (
-          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+          <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden' }}>
             <img 
               src={imageUrl} 
               alt="avatar" 
@@ -170,7 +182,8 @@ const AvatarUploader: React.FC<AvatarUploaderProps> = ({
                 height: '100%', 
                 objectFit: 'cover',
                 opacity: loading ? 0.6 : 1,
-                transition: 'opacity 0.3s'
+                transition: 'opacity 0.3s',
+                borderRadius: '50%'
               }} 
             />
             {loading && (

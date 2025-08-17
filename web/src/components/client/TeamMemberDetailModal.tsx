@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Avatar, Typography, Divider, Tag, Button, Spin, Empty, Image, Tabs } from 'antd';
+import { Modal, Avatar, Typography, Divider, Button, Spin, Empty, Image, Tabs } from 'antd';
 import { CalendarOutlined, PlayCircleOutlined, UserOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import { type Schedule, type MediaFile, FileType } from '../../types';
-import { usePageView } from '../../hooks/usePageView';
 import { scheduleService, profileService } from '../../services';
 import type { ClientTeamMember } from '../../hooks/useTeamData';
 import { PlayButton } from './WorkCardStyles';
@@ -55,24 +54,12 @@ const DetailSection = styled.div`
   }
 `;
 
-const WorksGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 12px;
-  margin-top: 12px;
-`;
 
 const WorkItem = styled.div`
   position: relative;
-  border-radius: var(--client-border-radius);
   overflow: hidden;
   aspect-ratio: 1;
   cursor: pointer;
-  transition: transform 0.2s ease;
-  
-  &:hover {
-    transform: scale(1.05);
-  }
   
   .ant-image {
     width: 100%;
@@ -86,28 +73,6 @@ const WorkItem = styled.div`
   }
 `;
 
-const ScheduleItem = styled.div`
-  padding: 12px;
-  border: 1px solid var(--client-border-color);
-  border-radius: var(--client-border-radius);
-  margin-bottom: 8px;
-  background: var(--client-bg-container);
-  
-  .schedule-title {
-    font-weight: 600;
-    color: var(--client-text-primary);
-    margin-bottom: 4px;
-  }
-  
-  .schedule-date {
-    color: var(--client-text-secondary);
-    font-size: 0.9rem;
-  }
-  
-  .schedule-status {
-    margin-top: 8px;
-  }
-`;
 
 const LoadingContainer = styled.div`
   display: flex;
@@ -165,8 +130,6 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
   const [schedulesLoading, setSchedulesLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('schedule');
 
-  // 页面访问统计
-  const { stats } = usePageView('team_member', member?.userId || '');
 
   // 加载成员作品
   const loadMediaProfile = async (userId: string) => {
@@ -196,7 +159,7 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
         userId,
         startDate: now.toISOString().split('T')[0],
         endDate: endDate.toISOString().split('T')[0],
-        limit: 10
+        limit: 100
       });
       if (response.success) {
         setMemberSchedules(response.data?.schedules || []);
@@ -248,7 +211,7 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
             <TeamAvatar size={100} src={member.avatar} />
             <Title level={3} style={{ marginTop: 16, marginBottom: 8 }}>
               {member.name}
-            </Title> 
+            </Title>
           </div>
 
           <Divider />
@@ -306,40 +269,30 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
                         <LoadingContainer>
                           <Spin size="small" />
                         </LoadingContainer>
-                      ) : mediaProfiles.length > 0 ? (
-                        <WorksGrid>
-                          {mediaProfiles.map((m) => (
-                            <WorkItem key={m.id}>
-                              {m.fileType === FileType.VIDEO && m.thumbnailUrl && m.fileUrl ?
-                                <div style={{ paddingBottom: '75%', position: 'relative', height: 0 }}>
-                                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-                                    <img
-                                      src={m.thumbnailUrl}
-                                      alt={m.filename}
-                                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                    />
-                                    <PlayButton>
-                                      <PlayCircleOutlined />
-                                    </PlayButton>
-                                  </div>
-                                </div> :
-                                <Image
-                                  src={m.fileUrl}
-                                  alt={m.filename}
-                                  preview={{
-                                    mask: <div style={{ fontSize: '12px' }}>{m.filename}</div>
-                                  }}
-                                />}
-                            </WorkItem>
-                          ))}
-                        </WorksGrid>
-                      ) : (
-                        <Empty
-                          image={Empty.PRESENTED_IMAGE_SIMPLE}
-                          description="暂无公开作品"
-                          style={{ margin: '20px 0' }}
-                        />
-                      )}
+                      ) : mediaProfiles.length > 0 ?
+                        mediaProfiles.map((m) => (
+                          <WorkItem key={m.id}>
+                            {m.fileType === FileType.VIDEO && m.thumbnailUrl && m.fileUrl ?
+                                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+                                  <img
+                                    src={m.thumbnailUrl}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                  />
+                                  <PlayButton>
+                                    <PlayCircleOutlined />
+                                  </PlayButton>
+                              </div> :
+                              <Image preview={false}
+                                src={m.fileUrl}
+                              />}
+                          </WorkItem>
+                        )) : (
+                          <Empty
+                            image={Empty.PRESENTED_IMAGE_SIMPLE}
+                            description="暂无公开作品"
+                            style={{ margin: '20px 0' }}
+                          />
+                        )}
                     </DetailSection>
                   </div>
                 )

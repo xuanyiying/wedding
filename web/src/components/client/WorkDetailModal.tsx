@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import { type Work } from '../../types';
 import { formatDate } from '../../utils';
 import ImageCarousel from './ImageCarousel';
+import { usePlayStats } from '../../hooks/usePageView';
 
 const { Paragraph, Text } = Typography;
 
@@ -112,6 +113,8 @@ interface WorkDetailModalProps {
 }
 
 const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, visible, onClose }) => {
+  const { recordPlay, playStats } = usePlayStats(work?.id || '');
+  
   if (!work) return null;
 
   // 判断是否为视频类型
@@ -136,7 +139,9 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, visible, onClos
   const displayImages = imageUrls.length > 0 ? imageUrls : (work.files?.[0]?.fileUrl ? [work.files[0].fileUrl] : []);
 
   const handleVideoPlay = (videoUrl: string) => {
-    // 可以在这里添加视频播放逻辑，比如打开视频播放器
+    // 记录播放行为
+    recordPlay();
+    // 打开视频播放器
     window.open(videoUrl, '_blank');
   };
 
@@ -183,6 +188,11 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, visible, onClos
         <MetaItem>
           <EyeOutlined /> {work.viewCount}
         </MetaItem>
+        {isVideo && (
+          <MetaItem>
+            <PlayCircleOutlined /> {playStats?.totalPlays || 0}
+          </MetaItem>
+        )}
         {work.weddingDate && (
           <MetaItem>
             <CalendarOutlined /> {formatDate(work.weddingDate)}

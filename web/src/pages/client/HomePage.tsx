@@ -42,10 +42,7 @@ const HomePage: React.FC = () => {
   const handleTeamSelect = (team: Team) => {
     setSelectedTeam(team);
   };
-
-
-
-
+  
   const handleCloseModal = () => {
     setModalVisible(false);
     setSelectedMember(null);

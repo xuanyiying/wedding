@@ -24,9 +24,7 @@ const baseQueryWithReauth = async (args: any, api: any, extraOptions: any) => {
   const result = await baseQuery(args, api, extraOptions);
   
   if (result.error && result.error.status === 401) {
-    // Token过期，清除认证信息并跳转登录页面
-    console.error('🔐 RTK Query 401错误 - Token过期');
-    
+  
     // 清除认证状态
     api.dispatch({ type: 'auth/logout' });
     AuthStorage.clearAll();

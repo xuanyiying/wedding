@@ -89,13 +89,11 @@ export const initUser = (sequelize: Sequelize): void => {
       username: {
         type: new DataTypes.STRING(50),
         allowNull: false,
-        unique: true,
         comment: '用户名',
       },
       email: {
         type: new DataTypes.STRING(100),
         allowNull: false,
-        unique: true,
         validate: {
           isEmail: true,
         },
@@ -217,13 +215,9 @@ export const initUser = (sequelize: Sequelize): void => {
       paranoid: true,
       comment: '用户表',
       indexes: [
-        { name: 'idx_users_username', fields: ['username'] },
-        { name: 'idx_users_email', fields: ['email'] },
+        { name: 'idx_users_username', fields: ['username'], unique: true },
+        { name: 'idx_users_email', fields: ['email'], unique: true },
         { name: 'idx_users_phone', fields: ['phone'] },
-        { name: 'idx_users_role', fields: ['role'] },
-        { name: 'idx_users_status', fields: ['status'] },
-        { name: 'idx_users_created_at', fields: ['created_at'] },
-        { name: 'idx_users_deleted_at', fields: ['deleted_at'] },
       ],
     },
   );

@@ -742,21 +742,11 @@ export const initTeam = (sequelizeInstance: Sequelize): void => {
       timestamps: true,
       paranoid: true,
       indexes: [
-        {
-          fields: ['owner_id'],
-        },
-        {
-          fields: ['status'],
-        },
-        {
-          fields: ['rating'],
-        },
-        {
-          fields: ['view_count'],
-        },
-        {
-          fields: ['created_at'],
-        },
+        { name: 'idx_teams_owner_id', fields: ['owner_id'] },
+        { name: 'idx_teams_status', fields: ['status'] },
+        { name: 'idx_teams_rating', fields: ['rating'] },
+        { name: 'idx_teams_view_count', fields: ['view_count'] },
+        { name: 'idx_teams_created_at', fields: ['created_at'] },
       ],
     },
   );

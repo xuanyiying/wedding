@@ -219,15 +219,10 @@ export const initWork = (sequelize: Sequelize): void => {
       comment: '作品表',
       indexes: [
         { name: 'idx_works_user_id', fields: ['user_id'] },
-        { name: 'idx_works_type', fields: ['type'] },
         { name: 'idx_works_category', fields: ['category'] },
         { name: 'idx_works_status', fields: ['status'] },
-        { name: 'idx_works_featured', fields: ['is_featured'] },
-        { name: 'idx_works_published_at', fields: ['published_at'] },
-        { name: 'idx_works_view_count', fields: ['view_count'] },
-        { name: 'idx_works_sort_order', fields: ['sort_order'] },
-        { name: 'idx_works_created_at', fields: ['created_at'] },
-        { name: 'idx_works_deleted_at', fields: ['deleted_at'] },
+        { name: 'idx_works_user_category_status', fields: ['user_id', 'category', 'status'] },
+        { name: 'idx_works_featured_sort', fields: ['is_featured', 'sort_order'] },
       ],
     },
   );

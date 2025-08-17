@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { PageViewService } from '../services/pageViewService';
-import type { PageViewStats } from '../services/pageViewService';
+import type { PageViewStats, PlayStats } from '../services/pageViewService';
 
 /**
  * 页面访问统计Hook
@@ -44,6 +44,54 @@ export const usePageView = (pageType: 'team_member' | 'work' | 'team' | 'team_pa
     loading,
     error,
     refreshStats,
+  };
+};
+
+/**
+ * 作品播放统计Hook
+ */
+export const usePlayStats = (pageId: string) => {
+  const [playStats, setPlayStats] = useState<PlayStats | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // 记录播放
+  const recordPlay = async () => {
+    if (pageId) {
+      await PageViewService.recordPlay(pageId);
+      // 记录播放后刷新统计数据
+      fetchPlayStats();
+    }
+  };
+
+  // 获取播放统计
+  const fetchPlayStats = async () => {
+    if (!pageId) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const data = await PageViewService.getPlayStats(pageId);
+      setPlayStats(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '获取播放统计失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 刷新播放统计数据
+  const refreshPlayStats = () => {
+    fetchPlayStats();
+  };
+
+  return {
+    playStats,
+    loading,
+    error,
+    recordPlay,
+    refreshPlayStats,
   };
 };
 

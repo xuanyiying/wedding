@@ -133,7 +133,8 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
     return status === TeamMemberStatus.ACTIVE ? '档期充足' : '档期紧张';
   };
 
-  const handleViewDetails = () => {
+  const handleViewDetails = (e: React.MouseEvent) => {
+    e.stopPropagation(); // 阻止事件冒泡
     onViewDetails(userId);
   };
 

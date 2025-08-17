@@ -11,7 +11,7 @@ import {
   PlusOutlined
 } from '@ant-design/icons';
 import { ContentCard } from '../../components/admin/common';
-import { type Schedule, UserRole, type Team, type TeamMember, type User } from '../../types';
+import { type Schedule, UserRole, type Team, type TeamMember } from '../../types';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import styled from 'styled-components';

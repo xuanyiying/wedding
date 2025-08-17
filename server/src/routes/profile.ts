@@ -13,7 +13,7 @@ router.post('/media-profiles', authMiddleware, profileController.createMediaProf
 router.post('/media-profiles/batch', authMiddleware, profileController.batchCreateMediaProfiles.bind(profileController));
 
 // 获取用户媒体资料列表
-router.get('/media-profiles', profileController.getUserMediaProfiles.bind(profileController));
+router.get('/media-profiles/:userId', profileController.getUserMediaProfiles.bind(profileController));
 
 // 更新媒体资料排序
 router.put('/media-profiles/order', authMiddleware, profileController.updateMediaProfilesOrder.bind(profileController));

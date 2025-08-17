@@ -580,29 +580,29 @@ export const profileService = {
   },
   
   // 媒体资料CRUD操作
-  getUserMediaProfiles: (): Promise<ApiResponse<MediaFile[]>> => {
-    return http.get('/profile/media-profiles');
+  getUserMediaProfiles: (userId:string): Promise<ApiResponse<MediaFile[]>> => {
+    return http.get(`/profile/media-profiles/${userId}`);
   },
-  createMediaProfile: (data: any): Promise<ApiResponse<any>> => {
-    return http.post('/profile/media-profiles', data);
+  createMediaProfile: (userId: string, data: any): Promise<ApiResponse<any>> => {
+    return http.post(`/profile/media-profiles/${userId}`, data);
   },
-  batchCreateMediaProfiles: (data: { mediaFiles: MediaFile[] }): Promise<ApiResponse<any>> => {
-    return http.post('/profile/media-profiles/batch', data);
+  batchCreateMediaProfiles: (userId: string, data: { mediaFiles: MediaFile[] }): Promise<ApiResponse<any>> => {
+    return http.post(`/profile/media-profiles/batch/${userId}`, data);
   },
-  updateSingleMediaProfile: (fileId: string, data: any): Promise<ApiResponse<any>> => {
-    return http.put(`/profile/media-profiles/${fileId}`, data);
+  updateSingleMediaProfile: (userId: string, fileId: string, data: any): Promise<ApiResponse<any>> => {
+    return http.put(`/profile/media-profiles/${userId}/${fileId}`, data);
   },
-  updateMediaProfilesOrder: (data: { orderData: { fileId: string; mediaOrder: number }[] }): Promise<ApiResponse<any>> => {
-    return http.put('/profile/media-profiles/order', data);
+  updateMediaProfilesOrder: (userId: string, data: { orderData: { fileId: string; mediaOrder: number }[] }): Promise<ApiResponse<any>> => {
+    return http.put(`/profile/media-profiles/order/${userId}`, data);
   },
-  deleteMediaProfile: (fileId: string): Promise<ApiResponse<any>> => {
-    return http.delete(`/profile/media-profiles/${fileId}`);
+  deleteMediaProfile: (userId: string, fileId: string): Promise<ApiResponse<any>> => {
+    return http.delete(`/profile/media-profiles/${userId}/${fileId}`);
   },
-  batchDeleteMediaProfiles: (fileIds: string[]): Promise<ApiResponse<any>> => {
-    return http.delete('/profile/media-profiles/batch', { data: { fileIds } });
+  batchDeleteMediaProfiles: (userId: string, fileIds: string[]): Promise<ApiResponse<any>> => {
+    return http.delete(`/profile/media-profiles/batch/${userId}`, { data: { fileIds } });
   },
-  getMediaProfileById: (fileId: string): Promise<ApiResponse<any>> => {
-    return http.get(`/profile/media-profiles/${fileId}`);
+  getMediaProfileById: (userId: string, fileId: string): Promise<ApiResponse<any>> => {
+    return http.get(`/profile/media-profiles/${userId}/${fileId}`);
   },
 }
 // 导出所有服务

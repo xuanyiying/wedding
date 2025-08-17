@@ -84,8 +84,6 @@ export const initWorkLike = (sequelize: Sequelize): void => {
         { name: 'uk_work_likes_user', unique: true, fields: ['work_id', 'user_id'] },
         { name: 'uk_work_likes_ip', unique: true, fields: ['work_id', 'ip_address'] },
         { name: 'idx_work_likes_work_id', fields: ['work_id'] },
-        { name: 'idx_work_likes_user_id', fields: ['user_id'] },
-        { name: 'idx_work_likes_created_at', fields: ['created_at'] },
       ],
     },
   );

@@ -150,21 +150,8 @@ export const initContact = (sequelize: Sequelize): void => {
       timestamps: true,
       paranoid: false, // 不启用软删除
       indexes: [
-        {
-          fields: ['status'],
-        },
-        {
-          fields: ['created_at'],
-        },
-        {
-          fields: ['phone'],
-        },
-        {
-          fields: ['email'],
-        },
-        {
-          fields: ['wedding_date'],
-        },
+        { name: 'idx_contacts_phone', fields: ['phone'] },
+        { name: 'idx_contacts_email', fields: ['email'] },
       ],
       comment: '联系表单表',
     },

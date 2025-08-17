@@ -3,7 +3,15 @@ import { http } from '../utils/request';
 export interface PageViewStats {
   totalViews: number;
   uniqueViews: number;
+  totalPlays?: number;
+  uniquePlays?: number;
   pageType: 'team_member' | 'work' | 'team' | 'team_page';
+  pageId: string;
+}
+
+export interface PlayStats {
+  totalPlays: number;
+  uniquePlays: number;
   pageId: string;
 }
 
@@ -61,6 +69,38 @@ export class PageViewService {
     pageIds: string[]
   ): Promise<Record<string, PageViewStats>> {
     const response = await http.post(`/page-views/stats/${pageType}/batch`, {
+      pageIds,
+    });
+    return response.data.data;
+  }
+
+  /**
+   * 记录作品播放
+   */
+  static async recordPlay(pageId: string): Promise<void> {
+    try {
+      await http.post('/page-views/play/record', {
+        pageId,
+      });
+    } catch (error) {
+      // 静默处理错误，不影响用户体验
+      console.warn('Failed to record play:', error);
+    }
+  }
+
+  /**
+   * 获取作品播放统计
+   */
+  static async getPlayStats(pageId: string): Promise<PlayStats> {
+    const response = await http.get(`/page-views/play/stats/${pageId}`);
+    return response.data.data;
+  }
+
+  /**
+   * 批量获取作品播放统计
+   */
+  static async getBatchPlayStats(pageIds: string[]): Promise<Record<string, PlayStats>> {
+    const response = await http.post('/page-views/play/stats/batch', {
       pageIds,
     });
     return response.data.data;

@@ -218,7 +218,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
     return true;
   };
 
-  // 从视频中提取帧
+  // 从视频中提取帧（优化版本）
   const extractVideoFrames = async (videoFile: File) => {
     return new Promise<string[]>((resolve, reject) => {
       const video = videoRef.current;
@@ -237,11 +237,11 @@ const WorkForm: React.FC<WorkFormProps> = ({
       const url = URL.createObjectURL(videoFile);
       video.src = url;
       
-      // 设置超时机制
+      // 减少超时时间以提高响应速度
       const timeout = setTimeout(() => {
         URL.revokeObjectURL(url);
         reject(new Error('视频加载超时'));
-      }, 30000); // 30秒超时
+      }, 15000); // 15秒超时
 
       // 错误处理
       video.onerror = () => {
@@ -261,8 +261,24 @@ const WorkForm: React.FC<WorkFormProps> = ({
 
         const frames: string[] = [];
         let frameIndex = 0;
-        const totalFrames = 6;
-        const interval = duration / (totalFrames + 1); // 避免提取第一帧和最后一帧
+        const totalFrames = 8; // 增加帧数以提供更多选择
+        const interval = duration / (totalFrames + 1);
+        
+        // 预计算画布尺寸以避免重复计算
+        const maxWidth = 600; // 减小尺寸以提高性能
+        const maxHeight = 400;
+        let canvasWidth = video.videoWidth;
+        let canvasHeight = video.videoHeight;
+        
+        if (canvasWidth > maxWidth || canvasHeight > maxHeight) {
+          const ratio = Math.min(maxWidth / canvasWidth, maxHeight / canvasHeight);
+          canvasWidth = Math.floor(canvasWidth * ratio);
+          canvasHeight = Math.floor(canvasHeight * ratio);
+        }
+        
+        // 设置画布尺寸一次
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
 
         const captureFrame = () => {
           if (frameIndex >= totalFrames) {
@@ -273,29 +289,19 @@ const WorkForm: React.FC<WorkFormProps> = ({
           }
 
           const currentTime = interval * (frameIndex + 1);
-          video.currentTime = Math.min(currentTime, duration - 0.1); // 确保不超过视频长度
+          video.currentTime = Math.min(currentTime, duration - 0.1);
           
           const onSeeked = () => {
             try {
-              // 设置合适的画布尺寸
-              const maxWidth = 800;
-              const maxHeight = 600;
-              let { videoWidth, videoHeight } = video;
-              
-              if (videoWidth > maxWidth || videoHeight > maxHeight) {
-                const ratio = Math.min(maxWidth / videoWidth, maxHeight / videoHeight);
-                videoWidth *= ratio;
-                videoHeight *= ratio;
-              }
-              
-              canvas.width = videoWidth;
-              canvas.height = videoHeight;
-              ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
-              frames.push(canvas.toDataURL('image/jpeg', 0.8));
+              // 使用预计算的尺寸，避免重复计算
+              ctx.drawImage(video, 0, 0, canvasWidth, canvasHeight);
+              frames.push(canvas.toDataURL('image/jpeg', 0.7)); // 稍微降低质量以提高速度
               
               frameIndex++;
               video.removeEventListener('seeked', onSeeked);
-              setTimeout(captureFrame, 200); // 增加间隔确保稳定性
+              
+              // 移除延迟，使用requestAnimationFrame优化性能
+              requestAnimationFrame(captureFrame);
             } catch (error) {
               clearTimeout(timeout);
               URL.revokeObjectURL(url);
@@ -303,7 +309,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
             }
           };
 
-          video.addEventListener('seeked', onSeeked);
+          video.addEventListener('seeked', onSeeked, { once: true }); // 使用once选项自动移除监听器
         };
 
         captureFrame();
@@ -357,8 +363,9 @@ const WorkForm: React.FC<WorkFormProps> = ({
           response: url,
         };
         setCoverFileList([coverFile]);
-        setCoverSelectionVisible(false);
-        message.success('视频帧封面设置成功');
+        // 不自动关闭模态框，让用户可以继续选择其他帧
+        // setCoverSelectionVisible(false);
+        message.success('视频帧封面设置成功，可继续选择其他帧或手动关闭');
       }
     } catch (error) {
       message.error('设置封面失败');

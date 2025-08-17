@@ -236,13 +236,8 @@ export const initFile = (sequelize: Sequelize): void => {
       comment: '文件表',
       indexes: [
         { name: 'idx_files_user_id', fields: ['user_id'] },
-        { name: 'idx_files_filename', fields: ['filename'] },
-        { name: 'idx_files_file_type', fields: ['file_type'] },
-        { name: 'idx_files_mime_type', fields: ['mime_type'] },
+        { name: 'idx_files_type_category', fields: ['file_type', 'category'] },
         { name: 'idx_files_hash_md5', fields: ['hash_md5'] },
-        { name: 'idx_files_storage_type', fields: ['storage_type'] },
-        { name: 'idx_files_created_at', fields: ['created_at'] },
-        { name: 'idx_files_deleted_at', fields: ['deleted_at'] },
       ],
     },
   );

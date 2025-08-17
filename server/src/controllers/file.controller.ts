@@ -15,9 +15,8 @@ export const uploadFile = async (req: AuthenticatedRequest, res: Response, next:
       return;
     }
 
-    const { type, category } = req.body;
+    const { fileType, category } = req.body;
     const userId = req.user!.id;
-
     const fileData = {
       filename: req.file.filename,
       originalName: req.file.originalname,
@@ -25,7 +24,7 @@ export const uploadFile = async (req: AuthenticatedRequest, res: Response, next:
       size: req.file.size,
       path: req.file.path,
       userId: userId,
-      fileType: type as FileType,
+      fileType: fileType as FileType,
       category: category,
     };
 
@@ -47,9 +46,8 @@ export const batchUploadFiles = async (req: AuthenticatedRequest, res: Response,
       return;
     }
 
-    const { type, category } = req.query;
+    const { fileType, category } = req.query;
     const userId = req.user!.id;
-
     const filesData = (req.files as Express.Multer.File[]).map(file => ({
       filename: file.filename,
       originalName: file.originalname,
@@ -57,7 +55,7 @@ export const batchUploadFiles = async (req: AuthenticatedRequest, res: Response,
       size: file.size,
       path: file.path,
       userId: userId,
-      fileType: type as FileType,
+      fileType: fileType as FileType,
       category: category as string,
     }));
 

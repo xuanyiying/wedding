@@ -1,10 +1,22 @@
 import { Model, DataTypes, Sequelize, Optional, Op } from 'sequelize';
 
+export enum PageType {
+  HOME = 'homepage',
+  TEAM_MEMBER = 'team_member',
+  WORK = 'work',
+}
+
+export enum ActionType {
+  VIEW = 'view',
+  PLAY = 'play',
+}
+
 // Interface for PageViewStat attributes
 export interface ViewStatAttributes {
   id: string;
   pageType: 'team_member' | 'work' | 'homepage';
   pageId: string | null; // team member id, work id, or null for homepage
+  actionType: 'view' | 'play';
   visitorIp: string;
   userAgent: string | null;
   referer: string | null;
@@ -22,6 +34,7 @@ class ViewStat extends Model<ViewStatAttributes, ViewStatCreationAttributes> imp
   public id!: string;
   public pageType!: 'team_member' | 'work' | 'homepage';
   public pageId!: string | null;
+  public actionType!: 'view' | 'play';
   public visitorIp!: string;
   public userAgent!: string | null;
   public referer!: string | null;
@@ -36,6 +49,7 @@ class ViewStat extends Model<ViewStatAttributes, ViewStatCreationAttributes> imp
   public static async recordView(data: {
     pageType: 'team_member' | 'work' | 'homepage';
     pageId?: string;
+    actionType?: 'view' | 'play';
     visitorIp: string;
     userAgent?: string;
     referer?: string;
@@ -45,6 +59,7 @@ class ViewStat extends Model<ViewStatAttributes, ViewStatCreationAttributes> imp
     return this.create({
       pageType: data.pageType,
       pageId: data.pageId || null,
+      actionType: data.actionType || 'view',
       visitorIp: data.visitorIp,
       userAgent: data.userAgent || null,
       referer: data.referer || null,
@@ -55,24 +70,30 @@ class ViewStat extends Model<ViewStatAttributes, ViewStatCreationAttributes> imp
   }
 
   // Static method to get view count for a specific page
-  public static async getViewCount(pageType: string, pageId?: string): Promise<number> {
+  public static async getViewCount(pageType: string, pageId?: string, actionType?: string): Promise<number> {
     const where: any = { pageType };
     if (pageId) {
       where.pageId = pageId;
     } else {
       where.pageId = null;
     }
+    if (actionType) {
+      where.actionType = actionType;
+    }
 
     return this.count({ where });
   }
 
   // Static method to get unique view count (by IP) for a specific page
-  public static async getUniqueViewCount(pageType: string, pageId?: string): Promise<number> {
+  public static async getUniqueViewCount(pageType: string, pageId?: string, actionType?: string): Promise<number> {
     const where: any = { pageType };
     if (pageId) {
       where.pageId = pageId;
     } else {
       where.pageId = null;
+    }
+    if (actionType) {
+      where.actionType = actionType;
     }
 
     const result = await this.findAll({
@@ -191,6 +212,13 @@ export const initViewStat = (sequelize: Sequelize): void => {
         allowNull: false,
         field: 'page_type',
         comment: '页面类型',
+      },
+      actionType: {
+        type: DataTypes.ENUM('view', 'play'),
+        allowNull: false,
+        defaultValue: 'view',
+        field: 'action_type',
+        comment: '行为类型：浏览或播放',
       },
       pageId: {
         type: DataTypes.UUID,

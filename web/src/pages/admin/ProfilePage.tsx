@@ -24,7 +24,6 @@ import { formatDate } from '../../utils';
 import ProfileEditForm from '../../components/admin/profile/ProfileEditForm';
 import AvatarUploader from '../../components/AvatarUploader';
 import MediaGallery from '../../components/admin/profile/MediaGallery';
-import { fileService } from '../../services';
 
 const { TabPane } = Tabs;
 
@@ -302,7 +301,7 @@ const ProfilePage: React.FC = () => {
       // 加载媒体资料
       if (userData?.id) {
         try {
-          const mediaResponse = await profileService.getUserMediaProfiles();
+          const mediaResponse = await profileService.getUserMediaProfiles(userData.id);
           if (mediaResponse.success && mediaResponse.data) {
             // 转换为MediaFile格式以兼容MediaGallery组件
             const files = mediaResponse.data.map(media => ({
@@ -335,23 +334,11 @@ const ProfilePage: React.FC = () => {
     loadCurrentUser();
   }, []);
 
-  // 处理头像变更
-  const handleAvatarChange = useCallback(async (url: string) => {
-    try {
-      setCurrentUser((prev) => (prev ? { ...prev, avatarUrl: url } : null));
-      
-      // 立即更新用户信息到后端
-      await userService.updateCurrentUserProfile({ avatarUrl: url });
-      message.success('头像更新成功');
-    } catch (error: any) {
-      console.error('Avatar update error:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || '头像更新失败，请重试';
-      message.error(errorMessage);
-      
-      // 回滚头像更改
-      setCurrentUser((prev) => (prev ? { ...prev, avatarUrl: user?.avatarUrl || '' } : null));
-    }
-  }, [user?.avatarUrl]);
+  // 处理头像变更（仅更新本地状态，上传由AvatarUploader内部处理）
+  const handleAvatarChange = useCallback((url: string) => {
+    // 只更新本地状态，避免重复API调用
+    setCurrentUser((prev) => (prev ? { ...prev, avatarUrl: url } : null));
+  }, []);
 
   // 处理基本信息保存
   const handleBasicInfoSave = async (values: any) => {
@@ -409,7 +396,7 @@ const ProfilePage: React.FC = () => {
             mediaOrder: index,
           }));
 
-          await profileService.updateMediaProfilesOrder({ orderData: sortData });
+          await profileService.updateMediaProfilesOrder(currentUser.id, { orderData: sortData });
         } catch (error) {
           console.error('保存排序失败:', error);
         }
@@ -427,31 +414,8 @@ const ProfilePage: React.FC = () => {
 
 
 
-  // 处理头像上传
-  const handleAvatarUpload = async (file: File): Promise<string> => {
-    try {
-      setUploading(true);
-      const uploadResults = await fileService.uploadFile(file, {
-        fileType: 'image',
-        category: 'avatar',
-      });
-
-      if (uploadResults.data?.fileUrl) {
-        const newAvatarUrl = uploadResults.data.fileUrl;
-        // 更新当前用户的头像URL
-        await userService.updateCurrentUserProfile({ avatarUrl: newAvatarUrl });
-        setCurrentUser(prev => prev ? { ...prev, avatarUrl: newAvatarUrl } : null);
-        message.success('头像上传成功');
-        return newAvatarUrl;
-      }
-      throw new Error('上传失败：未返回文件信息');
-    } catch (error) {
-      message.error('头像上传失败');
-      throw error;
-    } finally {
-      setUploading(false);
-    }
-  };
+  // 头像上传完成后的处理逻辑已集成到 AvatarUploader 组件的 customRequest 中
+  // 不再需要单独的 handleAvatarUpload 函数
 
 
 
@@ -474,8 +438,13 @@ const ProfilePage: React.FC = () => {
                 onChange={handleAvatarChange}
                 disabled={uploading || loading}
                 size={120}
-                shape="square"
                 category="avatar"
+                style={{
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  border: '3px solid #f0f0f0',
+                  transition: 'all 0.3s ease'
+                }}
               />
         </div>
         <div className="name">
@@ -579,7 +548,6 @@ const ProfilePage: React.FC = () => {
               onSubmit={handleBasicInfoSave}
               onCancel={() => { }}
               loading={loading}
-              onUpload={handleAvatarUpload}
               avatarUrl={currentUser?.avatarUrl}
               onAvatarChange={handleAvatarChange}
             />
