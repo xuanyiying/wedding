@@ -18,9 +18,10 @@ import {
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { directUploadService, profileService } from '../../../services';
-import type { MediaFile } from '../../../types';
+import type { MediaFile, User } from '../../../types';
 
 interface MediaGalleryProps {
+  user:User;
   mediaFiles: MediaFile[];
   onMediaFilesChange: (files: MediaFile[]) => void;
   onPreview: (url: string) => void;
@@ -220,7 +221,8 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
   onMediaFilesChange,
   onPreview,
   uploading,
-  onUploadingChange
+  onUploadingChange,
+  user
 }) => {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [videoCoverModalVisible, setVideoCoverModalVisible] = useState(false);
@@ -285,13 +287,6 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
       
       // 上传视频文件
       const videoUploadResult = await directUploadService.uploadMedia([videoFile], 'profile');
-      
-      let coverUrl = '';
-      if (coverFile) {
-        // 上传封面文件
-        const coverUploadResult = await directUploadService.uploadMedia([coverFile], 'profile');
-        coverUrl = coverUploadResult[0].url;
-      }
       
       // 创建媒体文件数据
       const newMediaFile: MediaFile = {
@@ -436,7 +431,7 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
   // 处理媒体文件删除
   const handleDelete = useCallback(async (mediaFile: MediaFile) => {
     try {
-      await profileService.deleteMediaProfile(mediaFile.fileId);
+      await profileService.deleteMediaProfile(user.id, mediaFile.fileId);
       const updatedFiles = mediaFiles.filter(file => file.fileId !== mediaFile.fileId);
       onMediaFilesChange(updatedFiles);
       message.success('删除成功');

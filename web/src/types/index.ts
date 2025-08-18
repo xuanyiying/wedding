@@ -668,3 +668,10 @@ export const FileCategory = {
   LOGO: 'logo',
   OTHER: 'other',
 } as const;
+
+
+// 上传文件类型
+export interface UploadFile extends File {
+  category?: string;
+  fileType?: 'video' | 'image';
+}

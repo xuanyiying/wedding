@@ -17,13 +17,14 @@ import {
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { userService, profileService } from '../../services';
-
 import { useAppSelector } from '../../store/hooks';
 import type { MediaFile, User } from '../../types';
 import { formatDate } from '../../utils';
 import ProfileEditForm from '../../components/admin/profile/ProfileEditForm';
 import AvatarUploader from '../../components/AvatarUploader';
-import MediaGallery from '../../components/admin/profile/MediaGallery';
+import { MediaUploader, MediaList } from '../../components/common/MediaUploader';
+import type { MediaFileItem } from '../../components/common/MediaUploader/types';
+import type { DirectUploadResult } from '../../utils/direct-upload';
 
 const { TabPane } = Tabs;
 
@@ -277,10 +278,28 @@ const ProfilePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState('basic');
-  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
+  const [mediaFiles, setMediaFiles] = useState<MediaFileItem[]>([]);
 
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
+
+  // 转换MediaFile到MediaFileItem的函数（用于显示已上传的文件）
+  const convertMediaFileToMediaFileItem = (mediaFile: MediaFile): MediaFileItem => {
+    // 创建一个虚拟的File对象用于显示
+    const virtualFile = new File([], mediaFile.filename || 'unknown', {
+      type: mediaFile.fileType === 'image' ? 'image/*' : 'video/*'
+    });
+    
+    return {
+      id: mediaFile.fileId,
+      file: virtualFile,
+      type: mediaFile.fileType === 'image' ? 'image' : 'video',
+      status: 'success',
+      progress: 100,
+      preview: mediaFile.fileUrl || undefined
+    };
+  };
+
   const [uploading, setUploading] = useState(false);
 
   const [saving, setSaving] = useState(false);
@@ -303,21 +322,9 @@ const ProfilePage: React.FC = () => {
         try {
           const mediaResponse = await profileService.getUserMediaProfiles(userData.id);
           if (mediaResponse.success && mediaResponse.data) {
-            // 转换为MediaFile格式以兼容MediaGallery组件
-            const files = mediaResponse.data.map(media => ({
-              id: media.id!,
-              userId: media.userId,
-              fileId: media.fileId,
-              fileUrl: media.fileUrl,
-              thumbnailUrl: media.thumbnailUrl,
-              fileType: media.fileType,
-              fileName: `media_${media.id}`,
-              fileSize: 0,
-              mediaOrder: media.mediaOrder,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            }));
-            setMediaFiles(files);
+            // 转换为MediaFileItem格式以兼容MediaGallery组件
+            const convertedFiles = mediaResponse.data.map(convertMediaFileToMediaFileItem);
+            setMediaFiles(convertedFiles);
           }
         } catch (error) {
           console.error('加载媒体文件失败:', error);
@@ -337,7 +344,13 @@ const ProfilePage: React.FC = () => {
   // 处理头像变更（仅更新本地状态，上传由AvatarUploader内部处理）
   const handleAvatarChange = useCallback((url: string) => {
     // 只更新本地状态，避免重复API调用
-    setCurrentUser((prev) => (prev ? { ...prev, avatarUrl: url } : null));
+    setCurrentUser((prev) => {
+      // 避免不必要的状态更新，防止无限循环
+      if (prev?.avatarUrl === url) {
+        return prev;
+      }
+      return prev ? { ...prev, avatarUrl: url } : null;
+    });
   }, []);
 
   // 处理基本信息保存
@@ -392,7 +405,7 @@ const ProfilePage: React.FC = () => {
       if (mediaFiles.length > 0 && currentUser?.id) {
         try {
           const sortData = mediaFiles.map((media, index) => ({
-            fileId: media.fileId,
+            fileId: media.id,
             mediaOrder: index,
           }));
 
@@ -411,17 +424,9 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-
-
-
-  // 头像上传完成后的处理逻辑已集成到 AvatarUploader 组件的 customRequest 中
-  // 不再需要单独的 handleAvatarUpload 函数
-
-
-
   // 预览图片
-  const handlePreview = (url: string) => {
-    setPreviewImage(url);
+  const handlePreview = (file: MediaFileItem) => {
+    setPreviewImage(file.preview || '');
     setPreviewVisible(true);
   };
 
@@ -522,13 +527,43 @@ const ProfilePage: React.FC = () => {
               </Button>
             </Space>
           </div>
-          <MediaGallery
-            mediaFiles={mediaFiles}
-            onMediaFilesChange={setMediaFiles}
-            onPreview={handlePreview}
-            uploading={uploading}
-            onUploadingChange={setUploading}
+          <MediaUploader
+            config={{
+              maxCount: 20,
+              accept: ['image/*', 'video/*'],
+              category: 'profile',
+              multiple: true,
+              concurrent: 2
+            }}
+            onUploadSuccess={(results: DirectUploadResult[]) => {
+              // 将上传结果转换为MediaFileItem格式
+              const newFiles = results.map((result, index) => {
+                 const mediaFile: MediaFileItem = {
+                   id: result.fileId,
+                   file: new File([], result.filename || 'uploaded-file'),
+                   type: result.fileType === 'image' ? 'image' : 'video',
+                   status: 'success',
+                   progress: 100,
+                   preview: result.url, // 使用上传结果的文件URL作为预览
+                   uploadedAt: new Date(result.uploadedAt)
+                 };
+                 return mediaFile;
+               });
+              setMediaFiles(prev => [...prev, ...newFiles]);
+              message.success(`成功上传 ${results.length} 个文件`);
+            }}
+            onUploadError={(error: Error) => {
+              console.error('上传失败:', error);
+              message.error('文件上传失败，请重试');
+            }}
           />
+          <MediaList
+             files={mediaFiles}
+             onRemove={(fileId: string) => {
+               setMediaFiles(prev => prev.filter(f => f.id !== fileId));
+             }}
+             onPreview={handlePreview}
+           />
         </div>
       </div>
     </PublicProfileContainer>

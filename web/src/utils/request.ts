@@ -524,4 +524,5 @@ export const createCancelableRequest = (key: string) => {
   };
 };
 
+export { uploadRequest };
 export default request;

@@ -14,10 +14,10 @@ export class DirectUploadController {
 
       // 参数校验
       if (!fileName || !fileSize || !contentType || !fileType || !userId) {
-         Resp.badRequest(res, '缺少必要参数');
-         return;
+        Resp.badRequest(res, '缺少必要参数');
+        return;
       }
-
+      
       const result = await DirectUploadService.generatePresignedUrl({
         userId,
         fileName,

@@ -46,8 +46,33 @@ const createRateLimiter = (options: {
 // 通用速率限制
 export const generalRateLimit = createRateLimiter({
   windowMs: 15 * 60 * 1000, // 15 分钟
-  max: 2000, // 每个 IP 每 15 分钟最多 2000 个请求（增加限制）
+  max: 5000, // 每个 IP 每 15 分钟最多 5000 个请求（为批量上传优化）
   message: 'Too many requests from this IP, please try again later.',
+});
+
+// 文件上传专用速率限制 - 更宽松的配置
+export const uploadRateLimit = createRateLimiter({
+  windowMs: 60 * 60 * 1000, // 1 小时窗口
+  max: 1000, // 每小时最多 1000 次上传请求
+  message: 'Too many upload requests, please try again later.',
+  keyGenerator: (req: Request) => {
+    // 使用用户ID和IP组合作为键，为认证用户提供更高限制
+    const userId = (req as any).user?.id || 'anonymous';
+    return `upload-${userId}-${req.ip || 'unknown'}`;
+  },
+  skipFailedRequests: true, // 失败的请求不计入限制
+});
+
+// 批量上传专用速率限制 - 最宽松的配置
+export const batchUploadRateLimit = createRateLimiter({
+  windowMs: 60 * 60 * 1000, // 1 小时窗口
+  max: 200, // 每小时最多 200 次批量上传操作
+  message: 'Too many batch upload requests, please try again later.',
+  keyGenerator: (req: Request) => {
+    const userId = (req as any).user?.id || 'anonymous';
+    return `batch-upload-${userId}-${req.ip || 'unknown'}`;
+  },
+  skipFailedRequests: true,
 });
 
 // 严格速率限制（用于敏感操作）
@@ -79,12 +104,7 @@ export const passwordResetRateLimit = createRateLimiter({
   message: 'Too many password reset attempts, please try again later.',
 });
 
-// 文件上传速率限制
-export const uploadRateLimit = createRateLimiter({
-  windowMs: 15 * 60 * 1000, // 15 分钟
-  max: 20, // 每个 IP 每 15 分钟最多 20 次上传
-  message: 'Too many upload attempts, please try again later.',
-});
+// 原有的uploadRateLimit定义已移至上方，此处删除重复定义
 
 // API 速率限制（用于 API 密钥认证的请求）
 export const apiRateLimit = createRateLimiter({
@@ -101,7 +121,7 @@ export const apiRateLimit = createRateLimiter({
 export const speedLimiter = slowDown({
   windowMs: 15 * 60 * 1000, // 15 分钟
   delayAfter: 50, // 前 50 个请求正常处理
-  delayMs: 500, // 每个后续请求延迟 500ms
+  delayMs: () => 500, // 每个后续请求延迟 500ms (v2格式)
   maxDelayMs: 20000, // 最大延迟 20 秒
   skipSuccessfulRequests: true,
   skipFailedRequests: false,

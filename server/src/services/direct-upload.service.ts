@@ -90,9 +90,6 @@ export class DirectUploadService {
       // 生成OSS文件键
       const ossKey = this.generateOssKey(userId, fileName, fileType);
       
-      // 获取OSS服务实例
-     
-      
       // 生成预签名URL
       const presignedUrl = await this.ossService.getPresignedUploadUrl(ossKey, expires, contentType);
       
@@ -214,10 +211,13 @@ export class DirectUploadService {
       
       return {
         fileId: fileRecord.id,
-        fileName: session.fileName,
+        filename: session.fileName,
+        originalName: session.fileName,
         fileSize: actualFileSize || session.fileSize,
-        ossKey: session.ossKey,
-        uploadSessionId
+        url: this.ossService.getFileUrl(session.ossKey),
+        fileType: session.fileType,
+        uploadedAt: new Date().toISOString(),
+        category: session.category || 'other'
       };
     } catch (error) {
       logger.error('确认上传失败:', error);

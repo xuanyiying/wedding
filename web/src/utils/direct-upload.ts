@@ -1,4 +1,4 @@
-import  uploadRequest  from './request';
+import { uploadRequest } from './request';
 
 // 直传上传状态
 export const DirectUploadStatus = {
@@ -53,11 +53,10 @@ export interface DirectUploadResult {
 
 // 预签名URL响应
 interface PresignedUrlResponse {
-  uploadUrl: string;
+  presignedUrl: string;
   uploadSessionId: string;
-  key: string;
+  ossKey: string;
   expires: number;
-  maxFileSize: number;
 }
 
 
@@ -99,7 +98,7 @@ export class DirectUploader {
       // 2. 获取预签名URL
       const presignedData = await this.getPresignedUrl();
       this.uploadSessionId = presignedData.uploadSessionId;
-      this.uploadUrl = presignedData.uploadUrl;
+      this.uploadUrl = presignedData.presignedUrl;
 
       // 3. 直接上传到OSS（带重试机制）
       this.updateStatus(DirectUploadStatus.UPLOADING);
@@ -136,6 +135,10 @@ export class DirectUploader {
       if (this.uploadSessionId) {
         await uploadRequest.post(`/direct-upload/cancel`, {
           uploadSessionId: this.uploadSessionId
+        }, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
         });
       }
     } catch (error) {
@@ -252,6 +255,10 @@ export class DirectUploader {
       fileType: this.config.fileType,
       category: this.config.category,
       expires: this.config.expires || 3600
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
     });
 
     if (!response.data.success) {
@@ -351,6 +358,10 @@ export class DirectUploader {
     const response = await uploadRequest.post('/direct-upload/confirm', {
       uploadSessionId: this.uploadSessionId,
       actualFileSize: fileToUpload.size
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
     });
 
     if (!response.data.success) {

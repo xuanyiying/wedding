@@ -6,6 +6,10 @@ import {
 import { PlusOutlined, VideoCameraOutlined, PictureOutlined, ScissorOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Work } from './WorkCard';
+import { MediaUploader, MediaList } from '../../common/MediaUploader';
+import type { MediaFileItem } from '../../common/MediaUploader/types';
+import type { DirectUploadResult } from '../../../utils/direct-upload';
+
 import type { UploadFile, UploadProps } from 'antd';
 
 const { TextArea } = Input;
@@ -33,6 +37,9 @@ const WorkForm: React.FC<WorkFormProps> = ({
   const [coverFileList, setCoverFileList] = useState<UploadFile[]>([]);
   const [uploading, setUploading] = useState(false);
   const [customTag, setCustomTag] = useState('');
+  const [mediaFiles, setMediaFiles] = useState<MediaFileItem[]>([]);
+  const [coverMediaFiles, setCoverMediaFiles] = useState<MediaFileItem[]>([]);
+
   const [tags, setTags] = useState<string[]>([]);
   const [workType, setWorkType] = useState<string>('');
   
@@ -84,34 +91,113 @@ const WorkForm: React.FC<WorkFormProps> = ({
     }
   }, [initialValues, form]);
 
+  // MediaUploader回调处理
+  const handleMediaUploadSuccess = (results: DirectUploadResult[]) => {
+    const newMediaFiles = results.map(result => ({
+      id: result.fileId,
+      file: new File([], result.originalName, { type: result.fileType }),
+      type: result.fileType.startsWith('video/') ? 'video' as const : 'image' as const,
+      status: 'success' as const,
+      progress: 100,
+      result,
+      preview: result.url,
+      uploadedAt: new Date(result.uploadedAt)
+    }));
+    setMediaFiles(prev => [...prev, ...newMediaFiles]);
+    
+    // 同时更新原有的fileList以保持兼容性
+    const newFiles = results.map((result, index) => ({
+      uid: `media-${Date.now()}-${index}`,
+      name: result.originalName,
+      status: 'done' as const,
+      url: result.url,
+      response: result.url,
+      type: result.fileType
+    }));
+    setFileList(prev => [...prev, ...newFiles]);
+  };
+
+  const handleCoverUploadSuccess = (results: DirectUploadResult[]) => {
+    const newCoverFiles = results.map(result => ({
+      id: result.fileId,
+      file: new File([], result.originalName, { type: result.fileType }),
+      type: 'image' as const,
+      status: 'success' as const,
+      progress: 100,
+      result,
+      preview: result.url,
+      uploadedAt: new Date(result.uploadedAt)
+    }));
+    setCoverMediaFiles(newCoverFiles);
+    
+    // 同时更新原有的coverFileList以保持兼容性
+    const newFiles = results.map((result, index) => ({
+      uid: `cover-${Date.now()}-${index}`,
+      name: result.originalName,
+      status: 'done' as const,
+      url: result.url,
+      response: result.url,
+      type: result.fileType
+    }));
+    setCoverFileList(newFiles);
+  };
+
+  const handleMediaUploadError = (error: Error) => {
+    message.error(`上传失败: ${error.message}`);
+  };
+
+  const handleMediaRemove = (fileId: string) => {
+    setMediaFiles(prev => prev.filter(file => file.id !== fileId));
+    // 同步更新fileList
+    setFileList(prev => prev.filter(file => file.uid !== fileId));
+  };
+
+  const handleCoverRemove = (fileId: string) => {
+    setCoverMediaFiles(prev => prev.filter(file => file.id !== fileId));
+    // 同步更新coverFileList
+    setCoverFileList(prev => prev.filter(file => file.uid !== fileId));
+  };
+
   const handleSubmit = async () => {
     try {
       // 视频类型必须有视频文件和封面图片的验证
       if (workType === 'video') {
-        if (fileList.length === 0) {
+        if (mediaFiles.length === 0 && fileList.length === 0) {
           message.error('视频作品必须上传视频文件');
           return;
         }
-        if (coverFileList.length === 0) {
+        if (coverMediaFiles.length === 0 && coverFileList.length === 0) {
           message.error('视频作品必须上传封面图片');
           return;
         }
       } else {
-        if (fileList.length === 0) {
+        if (mediaFiles.length === 0 && fileList.length === 0) {
           message.error('请上传作品文件');
           return;
         }
       }
       
       const values = await form.validateFields();
+      
+      // 合并新旧上传方式的URL
+      const allContentUrls = [
+        ...mediaFiles.map(file => file.result?.url || file.preview).filter(Boolean),
+        ...fileList.map(file => file.response || file.url).filter(Boolean)
+      ];
+      
+      const allCoverUrls = [
+        ...coverMediaFiles.map(file => file.result?.url || file.preview).filter(Boolean),
+        ...coverFileList.map(file => file.response || file.url).filter(Boolean)
+      ];
+      
       const submitData = {
         ...values,
         shootDate: values.shootDate?.format('YYYY-MM-DD'),
         tags,
-        contentUrls: fileList.map(file => file.response || file.url).filter(Boolean),
+        contentUrls: allContentUrls,
         coverUrl: workType === 'video' 
-          ? (coverFileList[0]?.response || coverFileList[0]?.url || '')
-          : (fileList[0]?.response || fileList[0]?.url || ''),
+          ? (allCoverUrls[0] || '')
+          : (allContentUrls[0] || ''),
       };
       onSubmit(submitData);
     } catch (error) {
@@ -542,17 +628,39 @@ const WorkForm: React.FC<WorkFormProps> = ({
                 label="视频文件"
                 required
               >
-                <Upload
-                  listType="picture-card"
-                  fileList={fileList}
-                  onChange={handleChange}
-                  customRequest={handleUpload}
-                  beforeUpload={beforeUpload}
-                  multiple={false}
-                  accept="video/*"
-                >
-                  {fileList.length >= 1 ? null : uploadButton}
-                </Upload>
+                <div className="mb-4">
+                   <MediaUploader
+                     config={{
+                       accept: ['video/*'],
+                       multiple: false,
+                       maxCount: 1,
+                       category: 'work'
+                     }}
+                     onUploadSuccess={handleMediaUploadSuccess}
+                     onUploadError={handleMediaUploadError}
+                   />
+                 </div>
+                {mediaFiles.length > 0 && (
+                  <MediaList
+                    files={mediaFiles}
+                    onRemove={handleMediaRemove}
+                  />
+                )}
+                {/* 保留原有Upload组件以兼容现有数据 */}
+                {fileList.length > 0 && (
+                  <Upload
+                    listType="picture-card"
+                    fileList={fileList}
+                    onChange={handleChange}
+                    customRequest={handleUpload}
+                    beforeUpload={beforeUpload}
+                    multiple={false}
+                    accept="video/*"
+                    showUploadList={{ showPreviewIcon: true, showRemoveIcon: true }}
+                  >
+                    {fileList.length >= 1 ? null : uploadButton}
+                  </Upload>
+                )}
                 <div style={{ color: 'var(--admin-text-secondary)', fontSize: 12, marginTop: 8 }}>
                   支持视频格式，单个文件不超过10MB
                 </div>
@@ -571,7 +679,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
                       type="primary"
                       icon={<ScissorOutlined />}
                       onClick={openCoverSelection}
-                      disabled={fileList.length === 0}
+                      disabled={fileList.length === 0 && mediaFiles.length === 0}
                       loading={extractingFrames}
                     >
                       智能选择封面
@@ -581,17 +689,39 @@ const WorkForm: React.FC<WorkFormProps> = ({
                     </span>
                   </Space>
                   
-                  <Upload
-                    listType="picture-card"
-                    fileList={coverFileList}
-                    onChange={handleCoverChange}
-                    customRequest={handleUpload}
-                    beforeUpload={beforeCoverUpload}
-                    multiple={false}
-                    accept="image/*"
-                  >
-                    {coverFileList.length >= 1 ? null : uploadButton}
-                  </Upload>
+                  <div className="mb-4">
+                     <MediaUploader
+                       config={{
+                         accept: ['image/*'],
+                         multiple: false,
+                         maxCount: 1,
+                         category: 'cover'
+                       }}
+                       onUploadSuccess={handleCoverUploadSuccess}
+                       onUploadError={handleMediaUploadError}
+                     />
+                   </div>
+                  {coverMediaFiles.length > 0 && (
+                    <MediaList
+                      files={coverMediaFiles}
+                      onRemove={handleCoverRemove}
+                    />
+                  )}
+                  {/* 保留原有Upload组件以兼容现有数据 */}
+                  {coverFileList.length > 0 && (
+                    <Upload
+                      listType="picture-card"
+                      fileList={coverFileList}
+                      onChange={handleCoverChange}
+                      customRequest={handleUpload}
+                      beforeUpload={beforeCoverUpload}
+                      multiple={false}
+                      accept="image/*"
+                      showUploadList={{ showPreviewIcon: true, showRemoveIcon: true }}
+                    >
+                      {coverFileList.length >= 1 ? null : uploadButton}
+                    </Upload>
+                  )}
                   
                   <div style={{ color: 'var(--admin-text-secondary)', fontSize: 12 }}>
                     视频作品必须上传封面图片，支持图片格式，单个文件不超过10MB
@@ -608,17 +738,39 @@ const WorkForm: React.FC<WorkFormProps> = ({
               label="作品文件"
               required
             >
-              <Upload
-                listType="picture-card"
-                fileList={fileList}
-                onChange={handleChange}
-                customRequest={handleUpload}
-                beforeUpload={beforeUpload}
-                multiple={true}
-                accept="image/*,video/*"
-              >
-                {fileList.length >= 10 ? null : uploadButton}
-              </Upload>
+              <div className="mb-4">
+                 <MediaUploader
+                   config={{
+                     accept: ['image/*', 'video/*'],
+                     multiple: true,
+                     maxCount: 10,
+                     category: 'work'
+                   }}
+                   onUploadSuccess={handleMediaUploadSuccess}
+                   onUploadError={handleMediaUploadError}
+                 />
+               </div>
+              {mediaFiles.length > 0 && (
+                <MediaList
+                  files={mediaFiles}
+                  onRemove={handleMediaRemove}
+                />
+              )}
+              {/* 保留原有Upload组件以兼容现有数据 */}
+              {fileList.length > 0 && (
+                <Upload
+                  listType="picture-card"
+                  fileList={fileList}
+                  onChange={handleChange}
+                  customRequest={handleUpload}
+                  beforeUpload={beforeUpload}
+                  multiple={true}
+                  accept="image/*,video/*"
+                  showUploadList={{ showPreviewIcon: true, showRemoveIcon: true }}
+                >
+                  {fileList.length >= 10 ? null : uploadButton}
+                </Upload>
+              )}
               <div style={{ color: 'var(--admin-text-secondary)', fontSize: 12, marginTop: 8 }}>
                 支持图片和视频格式，单个文件不超过10MB，最多上传10个文件
               </div>

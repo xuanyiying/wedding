@@ -14,6 +14,31 @@ import profileRoutes from './profile';
 
 const router = Router();
 
+// API 根路径
+router.get('/', (_req, res) => {
+  res.json({
+    message: 'Wedding Club API',
+    version: '1.0.0',
+    status: 'running',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      auth: '/auth',
+      users: '/users',
+      schedules: '/schedules',
+      works: '/works',
+      files: '/files',
+      'direct-upload': '/direct-upload',
+      dashboard: '/dashboard',
+      team: '/team',
+      contact: '/contact',
+      settings: '/settings',
+      'page-views': '/page-views',
+      profile: '/profile',
+      docs: '/docs'
+    }
+  });
+});
+
 // 认证相关路由
 router.use('/auth', authRoutes);
 

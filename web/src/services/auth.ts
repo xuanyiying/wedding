@@ -1,17 +1,18 @@
-const TOKEN_KEY = 'authToken';
+import { AuthStorage } from '../utils/auth';
 
+// 使用统一的AuthStorage来管理token
 export const getToken = (): string | null => {
-  return localStorage.getItem(TOKEN_KEY);
+  return AuthStorage.getAccessToken();
 };
 
 export const setToken = (token: string): void => {
-  localStorage.setItem(TOKEN_KEY, token);
+  AuthStorage.setAccessToken(token);
 };
 
 export const removeToken = (): void => {
-  localStorage.removeItem(TOKEN_KEY);
+  AuthStorage.removeAccessToken();
 };
 
 export const isLoggedIn = (): boolean => {
-  return getToken() !== null;
+  return AuthStorage.hasValidAuth();
 };
