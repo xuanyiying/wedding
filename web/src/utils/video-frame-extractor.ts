@@ -404,7 +404,7 @@ export class VideoFrameExtractor {
         }
       };
       
-      const onError = (event: Event) => {
+      const onError = () => {
         if (isResolved) return;
         isResolved = true;
         
@@ -489,7 +489,7 @@ export class VideoFrameExtractor {
         resolve();
       };
       
-      const onError = (event: Event) => {
+      const onError = () => {
         if (isResolved) return;
         isResolved = true;
         cleanup();

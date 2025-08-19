@@ -28,10 +28,8 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
   const [uploadedCoverUrl, setUploadedCoverUrl] = useState<string>('');
   const [extractedFrames, setExtractedFrames] = useState<VideoFrame[]>([]);
   const [isExtracting, setIsExtracting] = useState(false);
-  const [videoMetadata, setVideoMetadata] = useState<VideoMetadata | null>(null);
   const [loading, setLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStartTime, setDragStartTime] = useState(0);
   const [isFrameDragging, setIsFrameDragging] = useState(false);
   const [dragStartFrame, setDragStartFrame] = useState<number | null>(null);
   

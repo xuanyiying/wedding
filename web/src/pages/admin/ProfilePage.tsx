@@ -300,7 +300,7 @@ const ProfilePage: React.FC = () => {
     };
   };
 
-  const [uploading, setUploading] = useState(false);
+  const [uploading] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [isPublicProfilePublished, setIsPublicProfilePublished] = useState(false);
