@@ -537,7 +537,7 @@ const ProfilePage: React.FC = () => {
             }}
             onUploadSuccess={(results: DirectUploadResult[]) => {
               // 将上传结果转换为MediaFileItem格式
-              const newFiles = results.map((result, index) => {
+              const newFiles = results.map((result, _) => {
                  const mediaFile: MediaFileItem = {
                    id: result.fileId,
                    file: new File([], result.filename || 'uploaded-file'),

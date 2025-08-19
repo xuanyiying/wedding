@@ -63,8 +63,9 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
       if (!extractorRef.current) {
         extractorRef.current = new VideoFrameExtractor();
       }
-      const metadata = await extractorRef.current.getVideoMetadata(videoFile);
+      // const metadata = await extractorRef.current.getVideoMetadata(videoFile);
       // setVideoMetadata(metadata);
+      // console.log('Video Metadata:', metadata);
     } catch (error) {
       console.error('Failed to get video metadata:', error);
       message.error('获取视频信息失败');
