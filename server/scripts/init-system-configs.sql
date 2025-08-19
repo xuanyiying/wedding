@@ -1,7 +1,7 @@
 -- 系统配置表初始化SQL脚本
 -- 创建system_configs表并插入初始数据
 
-USE wedding;
+USE wedding_club;
 
 -- 删除现有数据
 DELETE FROM system_configs;
