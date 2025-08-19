@@ -286,64 +286,68 @@ export class DirectUploader {
     let lastLoaded = 0;
     const updateInterval = this.config.progressUpdateInterval || 500;
 
-    const stream = new ReadableStream({
-      start: (controller) => {
-        const reader = fileToUpload.stream().getReader();
-        const pump = () => {
-          reader.read().then(({ done, value }) => {
-            if (done) {
-              controller.close();
-              return;
-            }
-            loaded += value.length;
-            const now = Date.now();
-            const timeDiff = (now - lastTime) / 1000; // in seconds
-            const loadedDiff = loaded - lastLoaded;
+    // 创建XMLHttpRequest来支持上传进度监控
+    const xhr = new XMLHttpRequest();
+    
+    return new Promise<void>((resolve, reject) => {
+      // 监听上传进度
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          loaded = event.loaded;
+          const now = Date.now();
+          const timeDiff = (now - lastTime) / 1000;
+          const loadedDiff = loaded - lastLoaded;
 
-            if (timeDiff > updateInterval / 1000 || loaded === total) { // 可配置的更新频率
-              const speed = loadedDiff / timeDiff; // bytes per second
-              const remainingTime = speed > 0 ? (total - loaded) / speed : Infinity;
-              const percentage = Math.round((loaded / total) * 100);
+          if (timeDiff > updateInterval / 1000 || loaded === total) {
+            const speed = loadedDiff / timeDiff;
+            const remainingTime = speed > 0 ? (total - loaded) / speed : Infinity;
+            const percentage = Math.round((loaded / total) * 100);
 
-              const progress: DirectUploadProgress = {
-                loaded,
-                total,
-                percentage,
-                speed,
-                remainingTime,
-                status: this.status
-              };
-              this.config.onProgress?.(progress);
+            const progress: DirectUploadProgress = {
+              loaded,
+              total,
+              percentage,
+              speed,
+              remainingTime,
+              status: this.status
+            };
+            this.config.onProgress?.(progress);
 
-              lastTime = now;
-              lastLoaded = loaded;
-            }
+            lastTime = now;
+            lastLoaded = loaded;
+          }
+        }
+      });
 
-            controller.enqueue(value);
-            pump();
-          }).catch(error => {
-            console.error('上传流读取错误:', error);
-            controller.error(error);
-          });
-        };
-        pump();
-      }
+      // 监听请求完成
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
+        } else {
+          reject(new Error(`上传失败: ${xhr.status} ${xhr.statusText}`));
+        }
+      });
+
+      // 监听请求错误
+      xhr.addEventListener('error', () => {
+        reject(new Error('上传请求失败'));
+      });
+
+      // 监听请求中止
+      xhr.addEventListener('abort', () => {
+        reject(new Error('上传已取消'));
+      });
+
+      // 监听取消信号
+       this.abortController?.signal.addEventListener('abort', () => {
+         xhr.abort();
+       });
+
+       // 发送PUT请求
+       xhr.open('PUT', this.uploadUrl!);
+       xhr.setRequestHeader('Content-Type', fileToUpload.type);
+       xhr.send(fileToUpload);
     });
-
-    const response = await fetch(this.uploadUrl, {
-      method: 'PUT',
-      body: stream,
-      headers: {
-        'Content-Type': fileToUpload.type,
-        'Content-Length': fileToUpload.size.toString(),
-      },
-      signal: this.abortController.signal,
-      duplex: 'half',
-    } as RequestInit);
-
-    if (!response.ok) {
-      throw new Error(`上传失败: ${response.status} ${response.statusText}`);
-    }
   }
 
   /**

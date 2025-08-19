@@ -88,7 +88,7 @@ export class DirectUploadService {
       const uploadSessionId = generateId();
       
       // 生成OSS文件键
-      const ossKey = this.generateOssKey(userId, fileName, fileType);
+      const ossKey = this.generateOssKey(userId, fileName, fileType, category);
       
       // 生成预签名URL
       const presignedUrl = await this.ossService.getPresignedUploadUrl(ossKey, expires, contentType);
