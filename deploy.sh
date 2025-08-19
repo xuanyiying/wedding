@@ -234,17 +234,9 @@ EOF
         if [ -d "/opt/wedding/.git" ]; then
             echo "[INFO] 更新现有项目代码..."
             cd /opt/wedding
-            git fetch origin || {
-                echo "[WARN] Git fetch 失败，尝试重新克隆..."
-                cd /opt
-                rm -rf wedding
-                git clone https://github.com/xuanyiying/wedding.git wedding
-            }
-            if [ -d "/opt/wedding/.git" ]; then
-                cd /opt/wedding
-                git reset --hard origin/main
-                git clean -fd
-            fi
+            git pull origin master
+            echo "[INFO] git pull 完毕..."
+           
         else
             echo "[INFO] 克隆项目代码..."
             cd /opt
@@ -372,7 +364,7 @@ check_services() {
         
         echo ""
         echo "=== 最近日志 ==="
-        docker-compose logs --tail=20
+        docker-compose logs --tail=50
         
         echo ""
         echo "=== 系统资源使用情况 ==="
@@ -515,6 +507,58 @@ main_deploy() {
     log_success "🎉 部署完成！"
 }
 
+# 查看服务器文件内容
+check_server_file() {
+    local file_path="$2"
+    if [ -z "$file_path" ]; then
+        echo "用法: $0 check <file_path>"
+        exit 1
+    fi
+    
+    log_step "查看服务器文件: $file_path"
+    sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "$SSH_USER@$SERVER_IP" << EOF
+        if [ -f "$file_path" ]; then
+            echo "[INFO] 文件内容:"
+            cat "$file_path"
+        else
+            echo "[ERROR] 文件不存在: $file_path"
+        fi
+EOF
+}
+
+# 修复服务器上的.env文件
+fix_env_file() {
+    log_step "修复服务器上的.env文件..."
+    
+    sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "$SSH_USER@$SERVER_IP" << 'EOF'
+        set -e
+        cd /opt/wedding
+        
+        echo "[INFO] 备份当前.env文件..."
+        if [ -f ".env" ]; then
+            cp .env .env.backup.$(date +%Y%m%d_%H%M%S)
+        fi
+        
+        echo "[INFO] 重新复制正确的.env文件..."
+        if [ -f "deployment/.env.tencent" ]; then
+            cp deployment/.env.tencent .env
+            echo "[SUCCESS] .env文件已修复"
+            echo "[INFO] 验证.env文件内容（前10行）:"
+            head -10 .env
+        else
+            echo "[ERROR] 未找到 deployment/.env.tencent"
+            exit 1
+        fi
+EOF
+    
+    if [ $? -eq 0 ]; then
+        log_success ".env文件修复完成"
+    else
+        log_error ".env文件修复失败"
+        exit 1
+    fi
+}
+
 # 主函数
 main() {
     local command="${1:-deploy}"
@@ -560,6 +604,14 @@ main() {
         "test")
             test_connection
             log_success "连接测试完成"
+            ;;
+        "check")
+            test_connection
+            check_server_file "$@"
+            ;;
+        "fix-env")
+            test_connection
+            fix_env_file
             ;;
         "help"|"--help"|"-h")
             show_help
