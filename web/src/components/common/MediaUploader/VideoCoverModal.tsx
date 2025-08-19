@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Modal, Button, Upload, Tabs, Slider, Image, message, Spin, Row, Col } from 'antd';
 import { UploadOutlined, PlayCircleOutlined, PauseCircleOutlined, ReloadOutlined, DragOutlined } from '@ant-design/icons';
 import type { VideoCoverSelection } from './types';
-import { VideoFrameExtractor, type VideoFrame, type VideoMetadata } from '../../../utils/video-frame-extractor';
+import { VideoFrameExtractor, type VideoFrame } from '../../../utils/video-frame-extractor';
 import './VideoCoverModal.scss';
 
 interface VideoCoverModalProps {
@@ -64,7 +64,7 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
         extractorRef.current = new VideoFrameExtractor();
       }
       const metadata = await extractorRef.current.getVideoMetadata(videoFile);
-      setVideoMetadata(metadata);
+      // setVideoMetadata(metadata);
     } catch (error) {
       console.error('Failed to get video metadata:', error);
       message.error('获取视频信息失败');
@@ -135,7 +135,7 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     setIsDragging(true);
-    setDragStartTime(currentTime);
+    // setDragStartTime(currentTime);
     e.preventDefault();
   }, [currentTime]);
 

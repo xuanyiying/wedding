@@ -450,12 +450,7 @@ export class VideoFrameExtractor {
     });
   }
 
-  /**
-   * 跳转到指定时间
-   */
-  private seekToTime(time: number): Promise<void> {
-    return this.seekToTimeOptimized(time);
-  }
+
 
   /**
    * 优化版本的时间跳转方法
@@ -554,16 +549,7 @@ export class VideoFrameExtractor {
     this.canvas.height = Math.round(canvasHeight);
   }
 
-  /**
-   * Canvas转Blob
-   */
-  private canvasToBlob(
-    canvas: HTMLCanvasElement,
-    format: string,
-    quality: number
-  ): Promise<Blob> {
-    return this.canvasToBlobOptimized(canvas, format, quality);
-  }
+
 
   /**
    * 优化版本的Canvas转Blob方法
