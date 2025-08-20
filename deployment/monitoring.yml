@@ -1,0 +1,125 @@
+# 部署监控和通知配置
+
+# Slack 通知配置
+slack:
+  webhook_url: ${SLACK_WEBHOOK_URL}
+  channel: "#deployments"
+  username: "Wedding Deployment Bot"
+  icon_emoji: ":rocket:"
+  
+  # 通知模板
+  templates:
+    deployment_start: |
+      :rocket: *部署开始*
+      项目: Wedding Client
+      分支: ${GITHUB_REF_NAME}
+      提交: ${GITHUB_SHA:0:7}
+      触发者: ${GITHUB_ACTOR}
+      时间: $(date '+%Y-%m-%d %H:%M:%S')
+      
+    deployment_success: |
+      :white_check_mark: *部署成功*
+      项目: Wedding Client
+      分支: ${GITHUB_REF_NAME}
+      提交: ${GITHUB_SHA:0:7}
+      部署时间: $(date '+%Y-%m-%d %H:%M:%S')
+      访问地址: http://114.132.225.94
+      
+    deployment_failure: |
+      :x: *部署失败*
+      项目: Wedding Client
+      分支: ${GITHUB_REF_NAME}
+      提交: ${GITHUB_SHA:0:7}
+      错误信息: ${ERROR_MESSAGE}
+      时间: $(date '+%Y-%m-%d %H:%M:%S')
+      
+    health_check_failure: |
+      :warning: *健康检查失败*
+      项目: Wedding Client
+      服务: ${SERVICE_NAME}
+      错误: ${ERROR_MESSAGE}
+      时间: $(date '+%Y-%m-%d %H:%M:%S')
+
+# 健康检查配置
+health_checks:
+  # 前端健康检查
+  frontend:
+    url: "http://114.132.225.94"
+    timeout: 30
+    retry_count: 3
+    retry_delay: 5
+    expected_status: 200
+    expected_content: "Wedding"
+    
+  # 后端API健康检查
+  backend:
+    url: "http://114.132.225.94/api/v1/health"
+    timeout: 30
+    retry_count: 3
+    retry_delay: 5
+    expected_status: 200
+    expected_json:
+      status: "ok"
+      
+  # 数据库连接检查
+  database:
+    url: "http://114.132.225.94/api/v1/health/db"
+    timeout: 30
+    retry_count: 3
+    retry_delay: 5
+    expected_status: 200
+    expected_json:
+      database: "connected"
+
+# 监控指标
+metrics:
+  # 响应时间监控
+  response_time:
+    threshold: 2000  # 毫秒
+    endpoints:
+      - "http://114.132.225.94"
+      - "http://114.132.225.94/api/v1/health"
+      
+  # 错误率监控
+  error_rate:
+    threshold: 5  # 百分比
+    time_window: 300  # 秒
+    
+  # 可用性监控
+  uptime:
+    check_interval: 60  # 秒
+    alert_threshold: 99  # 百分比
+
+# 告警规则
+alerts:
+  # 服务不可用告警
+  service_down:
+    condition: "health_check_failure"
+    severity: "critical"
+    cooldown: 300  # 秒
+    
+  # 响应时间过长告警
+  slow_response:
+    condition: "response_time > threshold"
+    severity: "warning"
+    cooldown: 600  # 秒
+    
+  # 错误率过高告警
+  high_error_rate:
+    condition: "error_rate > threshold"
+    severity: "warning"
+    cooldown: 300  # 秒
+
+# 日志配置
+logging:
+  level: "info"
+  format: "json"
+  outputs:
+    - "console"
+    - "file:/var/log/wedding-deployment.log"
+  
+  # 日志轮转
+  rotation:
+    max_size: "100MB"
+    max_files: 10
+    max_age: 30  # 天
