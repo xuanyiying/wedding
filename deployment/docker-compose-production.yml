@@ -220,6 +220,7 @@ services:
       - ./logs/nginx:/var/log/nginx
       - ./nginx/nginx-prod.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - wedding_web_prod_data:/usr/share/nginx/html:ro
     ports:
       - "${WEB_PORT:-8080}:80"
     networks:
@@ -261,6 +262,12 @@ volumes:
       type: none
       o: bind
       device: ${DATA_DIR:-./data}/minio
+  wedding_web_prod_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR:-./data}/web
 
 networks:
   wedding_prod_network:
