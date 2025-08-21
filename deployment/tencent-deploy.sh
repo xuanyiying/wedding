@@ -310,16 +310,13 @@ prepare_server_environment() {
 build_images() {
     log_info "在远程服务器上构建Docker镜像..."
     
-    # 设置远程部署目录
-    local REMOTE_DEPLOY_DIR="\$HOME/wedding"
-    
     # 构建API镜像
     log_info "构建API镜像..."
-    execute_ssh_command "cd $REMOTE_DEPLOY_DIR && docker build -f server/Dockerfile -t $API_IMAGE_NAME:$API_IMAGE_TAG server/" "构建API镜像"
+    execute_ssh_command "cd \$HOME/wedding && docker build -f server/Dockerfile -t $API_IMAGE_NAME:$API_IMAGE_TAG server/" "构建API镜像"
     
     # 构建Web镜像
     log_info "构建Web镜像..."
-    execute_ssh_command "cd $REMOTE_DEPLOY_DIR && docker build -f web/Dockerfile.prod -t $WEB_IMAGE_NAME:$WEB_IMAGE_TAG web/" "构建Web镜像"
+    execute_ssh_command "cd \$HOME/wedding && docker build --no-cache -f web/Dockerfile.prod -t $WEB_IMAGE_NAME:$WEB_IMAGE_TAG web/" "构建Web镜像"
     
     log_success "Docker镜像构建完成"
 }
@@ -395,8 +392,8 @@ transfer_source_code() {
             echo '更新现有Git仓库...'
             cd wedding
             git fetch origin
-            git reset --hard origin/main
-            git pull origin main
+            git reset --hard origin/master
+            git pull origin master
             echo 'Git仓库更新完成'
         else
             echo '克隆Git仓库...'
