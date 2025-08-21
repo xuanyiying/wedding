@@ -146,11 +146,16 @@ check_configuration() {
 execute_ssh_command() {
     local command="$1"
     local description="${2:-执行SSH命令}"
+    local silent="${3:-false}"
     
-    log_info "$description"
+    if [[ "$silent" != "true" ]]; then
+        log_info "$description"
+    fi
     
-    if ! sshpass -p "$SSH_PASS" ssh -o ConnectTimeout=30 -o StrictHostKeyChecking=no "$SSH_USER@$SERVER_IP" "$command"; then
-        log_error "SSH命令执行失败: $description"
+    if ! sshpass -p "$SSH_PASS" ssh -o ConnectTimeout=60 -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o StrictHostKeyChecking=no "$SSH_USER@$SERVER_IP" "$command"; then
+        if [[ "$silent" != "true" ]]; then
+            log_error "SSH命令执行失败: $description"
+        fi
         return 1
     fi
     
@@ -161,7 +166,7 @@ execute_ssh_command() {
 check_server_connection() {
     log_info "检查服务器连接..."
     
-    if ! execute_ssh_command "echo 'Connection test successful'" "测试服务器连接" &>/dev/null; then
+    if ! execute_ssh_command "echo 'Connection test successful'" "测试服务器连接" "true" &>/dev/null; then
         log_error "无法连接到服务器 $SERVER_IP"
         log_error "请检查服务器IP、用户名和密码是否正确"
         exit 1
@@ -170,20 +175,76 @@ check_server_connection() {
     log_success "服务器连接检查通过"
 }
 
+# 验证服务器环境
+verify_server_environment() {
+    log_info "验证服务器环境..."
+    
+    # 检查Docker
+    if ! execute_ssh_command "docker --version" "检查Docker安装" "true" &>/dev/null; then
+        log_error "Docker未正确安装或无法访问"
+        return 1
+    fi
+    
+    # 检查Docker Compose
+    if ! execute_ssh_command "docker-compose --version" "检查Docker Compose安装" "true" &>/dev/null; then
+        log_error "Docker Compose未正确安装或无法访问"
+        return 1
+    fi
+    
+    # 检查部署目录
+    if ! execute_ssh_command "test -d \$HOME/wedding" "检查部署目录" "true" &>/dev/null; then
+        log_warning "部署目录不存在，将在部署过程中创建"
+    fi
+    
+    log_success "服务器环境验证通过"
+}
+
 # 服务器环境准备
 prepare_server_environment() {
     log_info "准备服务器环境..."
     
-    # 更新系统和安装基础软件
-    execute_ssh_command "apt-get update -y && apt-get install -y curl wget git unzip" "更新系统并安装基础软件"
+    # 检测操作系统类型
+    log_info "检测服务器操作系统类型..."
+    local os_type
+    if execute_ssh_command "which apt-get" "检测apt-get" "true" &>/dev/null; then
+        os_type="debian"
+        log_info "检测到Debian/Ubuntu系统"
+    elif execute_ssh_command "which yum" "检测yum" "true" &>/dev/null; then
+        os_type="rhel"
+        log_info "检测到CentOS/RHEL系统"
+    elif execute_ssh_command "which dnf" "检测dnf" "true" &>/dev/null; then
+        os_type="fedora"
+        log_info "检测到Fedora系统"
+    else
+        log_error "无法检测操作系统类型，请手动配置包管理器"
+        return 1
+    fi
+    
+    # 根据操作系统类型更新系统和安装基础软件
+    case "$os_type" in
+        "debian")
+            execute_ssh_command "sudo apt-get update -y && sudo apt-get install -y curl wget git unzip" "更新系统并安装基础软件"
+            ;;
+        "rhel")
+            execute_ssh_command "sudo yum update -y && sudo yum install -y curl wget git unzip" "更新系统并安装基础软件"
+            ;;
+        "fedora")
+            execute_ssh_command "sudo dnf update -y && sudo dnf install -y curl wget git unzip" "更新系统并安装基础软件"
+            ;;
+        *)
+            log_error "不支持的操作系统类型: $os_type"
+            return 1
+            ;;
+    esac
     
     # 安装Docker
     execute_ssh_command "
         if ! command -v docker &> /dev/null; then
             curl -fsSL https://get.docker.com -o get-docker.sh
-            sh get-docker.sh
-            systemctl enable docker
-            systemctl start docker
+            sudo sh get-docker.sh
+            sudo systemctl enable docker
+            sudo systemctl start docker
+            sudo usermod -aG docker \$USER
             rm -f get-docker.sh
         else
             echo 'Docker已安装，跳过安装步骤'
@@ -193,44 +254,72 @@ prepare_server_environment() {
     # 安装Docker Compose
     execute_ssh_command "
         if ! command -v docker-compose &> /dev/null; then
-            curl -L 'https://github.com/docker/compose/releases/latest/download/docker-compose-\$(uname -s)-\$(uname -m)' -o /usr/local/bin/docker-compose
-            chmod +x /usr/local/bin/docker-compose
+            echo '安装Docker Compose...'
+            sudo curl -L 'https://github.com/docker/compose/releases/latest/download/docker-compose-\$(uname -s)-\$(uname -m)' -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            # 创建软链接到常用路径
+            sudo ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
+            echo 'Docker Compose安装完成'
         else
             echo 'Docker Compose已安装，跳过安装步骤'
         fi
+        # 验证安装
+        docker-compose --version
     " "安装Docker Compose"
     
     # 创建部署目录
     execute_ssh_command "mkdir -p \$HOME/wedding \$HOME/wedding-backups \$HOME/wedding/logs" "创建部署目录"
     
     # 配置防火墙
-    execute_ssh_command "
-        ufw allow 22
-        ufw allow 80
-        ufw allow 443
-        ufw allow 8080
-        ufw allow 3000
-        ufw allow 9000
-        ufw allow 9001
-        ufw --force enable
-    " "配置防火墙规则"
+    case "$os_type" in
+        "debian")
+            execute_ssh_command "
+                sudo ufw allow 22
+                sudo ufw allow 80
+                sudo ufw allow 443
+                sudo ufw allow 8080
+                sudo ufw allow 3000
+                sudo ufw allow 9000
+                sudo ufw allow 9001
+                sudo ufw --force enable
+            " "配置防火墙规则"
+            ;;
+        "rhel"|"fedora")
+            execute_ssh_command "
+                sudo systemctl start firewalld
+                sudo systemctl enable firewalld
+                sudo firewall-cmd --permanent --add-port=22/tcp
+                sudo firewall-cmd --permanent --add-port=80/tcp
+                sudo firewall-cmd --permanent --add-port=443/tcp
+                sudo firewall-cmd --permanent --add-port=8080/tcp
+                sudo firewall-cmd --permanent --add-port=3000/tcp
+                sudo firewall-cmd --permanent --add-port=9000/tcp
+                sudo firewall-cmd --permanent --add-port=9001/tcp
+                sudo firewall-cmd --reload
+            " "配置防火墙规则"
+            ;;
+        *)
+            log_warning "未知操作系统类型，跳过防火墙配置"
+            ;;
+    esac
     
     log_success "服务器环境准备完成"
 }
 
-# 构建Docker镜像
+# 构建Docker镜像（在远程服务器上）
 build_images() {
-    log_info "构建Docker镜像..."
+    log_info "在远程服务器上构建Docker镜像..."
     
-    cd "$PROJECT_ROOT"
+    # 设置远程部署目录
+    local REMOTE_DEPLOY_DIR="\$HOME/wedding"
     
     # 构建API镜像
     log_info "构建API镜像..."
-    docker build -f server/Dockerfile -t "$API_IMAGE_NAME:$API_IMAGE_TAG" server/
+    execute_ssh_command "cd $REMOTE_DEPLOY_DIR && docker build -f server/Dockerfile -t $API_IMAGE_NAME:$API_IMAGE_TAG server/" "构建API镜像"
     
     # 构建Web镜像
     log_info "构建Web镜像..."
-    docker build -f web/Dockerfile.prod -t "$WEB_IMAGE_NAME:$WEB_IMAGE_TAG" web/
+    execute_ssh_command "cd $REMOTE_DEPLOY_DIR && docker build -f web/Dockerfile.prod -t $WEB_IMAGE_NAME:$WEB_IMAGE_TAG web/" "构建Web镜像"
     
     log_success "Docker镜像构建完成"
 }
@@ -293,6 +382,36 @@ transfer_images() {
     rm -rf "$temp_dir"
     
     log_success "Docker镜像传输完成"
+}
+
+# 从Git仓库拉取项目源代码
+transfer_source_code() {
+    log_info "从Git仓库拉取项目源代码..."
+    
+    # 在服务器上克隆或更新Git仓库
+    execute_ssh_command "
+        cd \$HOME
+        if [[ -d 'wedding/.git' ]]; then
+            echo '更新现有Git仓库...'
+            cd wedding
+            git fetch origin
+            git reset --hard origin/main
+            git pull origin main
+            echo 'Git仓库更新完成'
+        else
+            echo '克隆Git仓库...'
+            rm -rf wedding
+            git clone https://github.com/xuanyiying/wedding.git wedding
+            cd wedding
+            echo 'Git仓库克隆完成'
+        fi
+        echo '当前分支和提交信息:'
+        git branch -v
+        git log --oneline -5
+        ls -la
+    " "从Git仓库获取源代码"
+    
+    log_success "项目源代码获取完成"
 }
 
 # 传输部署文件
@@ -381,6 +500,20 @@ deploy_services() {
 health_check() {
     log_info "开始健康检查..."
     
+    # 首先验证SSH连接
+    if ! execute_ssh_command "echo 'SSH连接正常'" "验证SSH连接" "true" &>/dev/null; then
+        log_error "SSH连接失败，无法进行健康检查"
+        log_error "请检查服务器连接状态和网络配置"
+        return 1
+    fi
+    
+    # 检查服务是否已部署
+    if ! execute_ssh_command "test -f \$HOME/wedding/docker-compose.yml" "检查部署状态" "true" &>/dev/null; then
+        log_warning "服务尚未部署到服务器"
+        log_info "请先运行完整部署命令: ./tencent-deploy.sh"
+        return 0
+    fi
+    
     local max_attempts=60
     local attempt=1
     local web_healthy=false
@@ -395,13 +528,22 @@ health_check() {
         
         # 检查容器状态
         local container_status
-        container_status=$(execute_ssh_command "cd \$HOME/wedding && docker-compose ps --format 'table {{.Name}}\t{{.Status}}' | grep -v 'NAME'" "检查容器状态" 2>/dev/null || echo "")
-        
-        if [[ -n "$container_status" ]]; then
-            log_info "容器状态:"
-            echo "$container_status" | while read -r line; do
-                log_info "  $line"
-            done
+        if execute_ssh_command "test -f \$HOME/wedding/docker-compose.yml" "检查配置文件" "true" &>/dev/null; then
+            if execute_ssh_command "cd \$HOME/wedding && docker-compose ps --format 'table {{.Name}}\t{{.Status}}' | grep -v 'NAME'" "检查容器状态" "true" &>/dev/null; then
+                container_status=$(sshpass -p "$SSH_PASS" ssh -o ConnectTimeout=30 -o StrictHostKeyChecking=no "$SSH_USER@$SERVER_IP" "cd \$HOME/wedding && docker-compose ps --format 'table {{.Name}}\t{{.Status}}' | grep -v 'NAME'" 2>/dev/null || echo "")
+                if [[ -n "$container_status" ]]; then
+                    log_info "容器状态:"
+                    echo "$container_status" | while read -r line; do
+                        log_info "  $line"
+                    done
+                else
+                    log_warning "容器状态为空，服务可能尚未启动"
+                fi
+            else
+                log_warning "无法获取容器状态，docker-compose命令执行失败"
+            fi
+        else
+            log_warning "未找到docker-compose.yml配置文件，服务可能尚未部署"
         fi
         
         # 检查Web服务
@@ -606,10 +748,19 @@ main() {
     # 设置回滚陷阱
     trap 'log_error "部署失败，开始回滚..."; rollback_deployment; exit 1' ERR
     
-    check_dependencies
+    # 健康检查模式跳过本地依赖检查
+    if [[ "${HEALTH_CHECK_ONLY:-false}" != "true" ]]; then
+        check_dependencies
+    fi
+    
     check_configuration
     check_server_connection
-    prepare_server_environment
+    
+    # 健康检查模式跳过环境准备
+    if [[ "${HEALTH_CHECK_ONLY:-false}" != "true" ]]; then
+        verify_server_environment
+        prepare_server_environment
+    fi
     
     # 条件执行备份
     if [[ "$SKIP_BACKUP" == "false" ]]; then
@@ -620,8 +771,8 @@ main() {
     
     # 条件执行构建
     if [[ "$SKIP_BUILD" == "false" ]]; then
+        transfer_source_code
         build_images
-        transfer_images
     else
         log_warning "跳过镜像构建步骤"
         log_info "假设镜像已存在于服务器上"
