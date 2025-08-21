@@ -462,7 +462,7 @@ deploy_services() {
         cd \$HOME/wedding
         echo '创建日志目录...'
         mkdir -p logs/{api,nginx,mysql,redis,minio}
-        mkdir -p data/{mysql,redis,minio}
+        mkdir -p data/{mysql,redis,minio,web}
         mkdir -p uploads
         echo '设置目录权限...'
         chmod -R 755 logs data uploads
