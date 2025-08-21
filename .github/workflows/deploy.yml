@@ -1,34 +1,53 @@
-name: Deploy to Production
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - production
+        - staging
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  NODE_VERSION: '20'
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    strategy:
+      matrix:
+        component: [frontend, backend]
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
     
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
         cache-dependency-path: |
           web/package-lock.json
           server/package-lock.json
 
     - name: Cache node modules
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           web/node_modules
@@ -37,62 +56,75 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-node-
     
-    - name: Install frontend dependencies
+    - name: Install dependencies
       run: |
-        cd web
-        npm ci
+        if [ "${{ matrix.component }}" = "frontend" ]; then
+          cd web && npm ci
+        else
+          cd server && npm ci
+        fi
     
-    - name: Install backend dependencies
+    - name: Run linting
       run: |
-        cd server
-        npm ci
+        if [ "${{ matrix.component }}" = "frontend" ]; then
+          cd web && npm run lint || echo "No lint script configured"
+        else
+          cd server && npm run lint || echo "No lint script configured"
+        fi
     
-    - name: Run frontend tests
+    - name: Run tests
       run: |
-        cd web
-        npm run test:ci || echo "No tests configured yet"
-    
-    - name: Run backend tests
-      run: |
-        cd server
-        npm test || echo "No tests configured yet"
-    
-    - name: Run frontend tests
-      run: |
-        cd web
-        npm run test:run
+        if [ "${{ matrix.component }}" = "frontend" ]; then
+          cd web
+          npm run test:ci || npm run test:run || echo "No tests configured yet"
+        else
+          cd server
+          npm run test:coverage || npm test || echo "No tests configured yet"
+        fi
 
-    - name: Build frontend
+    - name: Build application
       run: |
-        cd web
-        npm run build
-    
-    - name: Run backend tests
-      run: |
-        cd server
-        npm run test:coverage
-
-    - name: Build backend
-      run: |
-        cd server
-        npm run build || echo "No build script configured"
+        if [ "${{ matrix.component }}" = "frontend" ]; then
+          cd web && npm run build
+        else
+          cd server && npm run build || echo "No build script configured"
+        fi
+        
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-${{ matrix.component }}
+        path: |
+          web/coverage/
+          server/coverage/
+          web/test-results/
+          server/test-results/
+        retention-days: 7
 
   build-and-push:
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch'
+    timeout-minutes: 30
     
     permissions:
       contents: read
       packages: write
     
+    strategy:
+      matrix:
+        component: [frontend, backend]
+    
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
     
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
       with:
         driver-opts: image=moby/buildkit:buildx-stable-1
+        platforms: linux/amd64
     
     - name: Log in to Container Registry
       uses: docker/login-action@v3
@@ -101,57 +133,68 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     
-    - name: Extract metadata (tags, labels) for frontend
-      id: meta-web
+    - name: Extract metadata (tags, labels)
+      id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-web
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.component == 'frontend' && 'web' || 'server' }}
         tags: |
           type=ref,event=branch
           type=ref,event=pr
           type=sha,prefix={{branch}}-
           type=raw,value=latest,enable={{is_default_branch}}
+          type=raw,value=develop,enable=${{ github.ref == 'refs/heads/develop' }}
     
-    - name: Extract metadata (tags, labels) for backend
-      id: meta-server
-      uses: docker/metadata-action@v5
-      with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-server
-        tags: |
-          type=ref,event=branch
-          type=ref,event=pr
-          type=sha,prefix={{branch}}-
-          type=raw,value=latest,enable={{is_default_branch}}
-    
-    - name: Build and push frontend Docker image
+    - name: Build and push Docker image
       uses: docker/build-push-action@v5
       with:
-        context: ./web
-        file: ./web/Dockerfile
+        context: ${{ matrix.component == 'frontend' && './web' || './server' }}
+        file: ${{ matrix.component == 'frontend' && './web/Dockerfile' || './server/Dockerfile' }}
         push: true
-        tags: ${{ steps.meta-web.outputs.tags }}
-        labels: ${{ steps.meta-web.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-    
-    - name: Build and push backend Docker image
-      uses: docker/build-push-action@v5
-      with:
-        context: ./server
-        file: ./server/Dockerfile
-        push: true
-        tags: ${{ steps.meta-server.outputs.tags }}
-        labels: ${{ steps.meta-server.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha,scope=${{ matrix.component }}
+        cache-to: type=gha,mode=max,scope=${{ matrix.component }}
+        build-args: |
+          BUILDKIT_INLINE_CACHE=1
+          NODE_ENV=production
 
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
+    timeout-minutes: 20
+    
+    environment:
+      name: ${{ github.event.inputs.environment || 'production' }}
+      url: ${{ github.event.inputs.environment == 'staging' && 'http://staging.wedding.com' || 'http://114.132.225.94' }}
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set deployment variables
+      id: vars
+      run: |
+        if [ "${{ github.event.inputs.environment }}" = "staging" ]; then
+          echo "host=${{ secrets.STAGING_HOST }}" >> $GITHUB_OUTPUT
+          echo "user=${{ secrets.STAGING_USER }}" >> $GITHUB_OUTPUT
+          echo "key=${{ secrets.STAGING_SSH_KEY }}" >> $GITHUB_OUTPUT
+          echo "port=${{ secrets.STAGING_PORT || 22 }}" >> $GITHUB_OUTPUT
+          echo "deploy_path=/opt/wedding-staging" >> $GITHUB_OUTPUT
+          echo "compose_file=docker-compose-staging.yml" >> $GITHUB_OUTPUT
+          echo "env_file=.env.staging" >> $GITHUB_OUTPUT
+          echo "image_tag=develop" >> $GITHUB_OUTPUT
+        else
+          echo "host=${{ secrets.PRODUCTION_HOST }}" >> $GITHUB_OUTPUT
+          echo "user=${{ secrets.PRODUCTION_USER }}" >> $GITHUB_OUTPUT
+          echo "key=${{ secrets.PRODUCTION_SSH_KEY }}" >> $GITHUB_OUTPUT
+          echo "port=${{ secrets.PRODUCTION_PORT || 22 }}" >> $GITHUB_OUTPUT
+          echo "deploy_path=/opt/wedding" >> $GITHUB_OUTPUT
+          echo "compose_file=docker-compose-tencent.yml" >> $GITHUB_OUTPUT
+          echo "env_file=.env.tencent" >> $GITHUB_OUTPUT
+          echo "image_tag=latest" >> $GITHUB_OUTPUT
+        fi
     
     - name: Send deployment start notification
       if: env.SLACK_WEBHOOK_URL != ''
@@ -161,52 +204,108 @@ jobs:
             "channel": "#deployments",
             "username": "Wedding Deployment Bot",
             "icon_emoji": ":rocket:",
-            "text": ":rocket: *部署开始*\n项目: Wedding Client\n分支: ${{ github.ref_name }}\n提交: ${{ github.sha }}\n触发者: ${{ github.actor }}\n时间: $(date "+%Y-%m-%d %H:%M:%S")"
+            "text": ":rocket: *部署开始*\n项目: Wedding Client\n环境: ${{ github.event.inputs.environment || 'production' }}\n分支: ${{ github.ref_name }}\n提交: ${{ github.sha }}\n触发者: ${{ github.actor }}\n时间: $(date "+%Y-%m-%d %H:%M:%S")"
           }' \
           ${{ env.SLACK_WEBHOOK_URL }}
     
-    - name: Deploy to production server
+    - name: Deploy to server
       uses: appleboy/ssh-action@v1.0.0
       with:
-        host: ${{ secrets.PRODUCTION_HOST }}
-        username: ${{ secrets.PRODUCTION_USER }}
-        key: ${{ secrets.PRODUCTION_SSH_KEY }}
-        port: ${{ secrets.PRODUCTION_PORT || 22 }}
+        host: ${{ steps.vars.outputs.host }}
+        username: ${{ steps.vars.outputs.user }}
+        key: ${{ steps.vars.outputs.key }}
+        port: ${{ steps.vars.outputs.port }}
+        timeout: 300s
+        command_timeout: 300s
         script: |
-          cd /opt/wedding
+          set -e
+          
+          echo "Deploying to ${{ github.event.inputs.environment || 'production' }} environment..."
+          echo "Using image tag: ${{ steps.vars.outputs.image_tag }}"
+          
+          # Navigate to deployment directory
+          cd ${{ steps.vars.outputs.deploy_path }}
           
           # Pull latest code
-          git pull origin main
+          git fetch origin
+          git checkout ${{ github.ref_name }}
+          git pull origin ${{ github.ref_name }}
           
           # Login to GitHub Container Registry
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           
-          # Pull latest images
-          docker pull ghcr.io/${{ github.repository }}-web:latest
-          docker pull ghcr.io/${{ github.repository }}-server:latest
+          # Set environment variables for deployment
+          export DOCKER_IMAGE_TAG=${{ steps.vars.outputs.image_tag }}
+          export GITHUB_REPOSITORY=${{ github.repository }}
+          export COMPOSE_FILE=${{ steps.vars.outputs.compose_file }}
+          export ENV_FILE=${{ steps.vars.outputs.env_file }}
           
-          # Update docker-compose to use registry images
-          sed -i 's|image: wedding-web-prod:latest|image: ghcr.io/${{ github.repository }}-web:latest|g' deployment/docker-compose-tencent.yml
-          sed -i 's|build:|# build:|g' deployment/docker-compose-tencent.yml
-          sed -i 's|context: ./server|# context: ./server|g' deployment/docker-compose-tencent.yml
-          sed -i 's|dockerfile: Dockerfile|# dockerfile: Dockerfile|g' deployment/docker-compose-tencent.yml
-          
-          # Add server image configuration
-          if ! grep -q "image: ghcr.io/${{ github.repository }}-server:latest" deployment/docker-compose-tencent.yml; then
-            sed -i '/container_name: wedding_server_prod/a\    image: ghcr.io/${{ github.repository }}-server:latest' deployment/docker-compose-tencent.yml
-          fi
-          
-          # Deploy with zero-downtime
+          # Run deployment script with registry images
           chmod +x deployment/deploy.sh
-          ./deployment/deploy.sh
+          ./deployment/deploy.sh ${{ github.event.inputs.environment || 'production' }} --image-tag ${{ steps.vars.outputs.image_tag }} --registry --verbose
+    
+    - name: Verify deployment
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ steps.vars.outputs.host }}
+        username: ${{ steps.vars.outputs.user }}
+        key: ${{ steps.vars.outputs.key }}
+        port: ${{ steps.vars.outputs.port }}
+        script: |
+          cd ${{ steps.vars.outputs.deploy_path }}
           
-          # Verify deployment
-          docker-compose -f deployment/docker-compose-tencent.yml ps
+          echo "Verifying deployment..."
           
-          # Health check
-          sleep 30
-          curl -f http://localhost:8080/health || echo "Health check failed"
-          curl -f http://localhost:3000/api/v1/health || echo "API health check failed"
+          # Wait for services to be ready
+          echo "Waiting for services to start..."
+          sleep 60
+          
+          # Check service status
+          echo "Checking service status..."
+          docker-compose -f deployment/${{ steps.vars.outputs.compose_file }} ps
+          
+          # Get service logs for debugging
+          echo "Getting service logs..."
+          docker-compose -f deployment/${{ steps.vars.outputs.compose_file }} logs --tail=50
+          
+          # Health checks with retry and better error handling
+          echo "Performing health checks..."
+          
+          # Check web service
+          for i in {1..10}; do
+            echo "Web health check attempt $i/10..."
+            if curl -f -m 10 http://localhost:8080/health 2>/dev/null; then
+              echo "✅ Web service health check passed"
+              break
+            else
+              echo "❌ Web health check failed, attempt $i/10"
+              if [ $i -eq 10 ]; then
+                echo "💥 Web health check failed after 10 attempts"
+                docker-compose -f deployment/${{ steps.vars.outputs.compose_file }} logs web
+                exit 1
+              fi
+              sleep 15
+            fi
+          done
+          
+          # Check API service
+          for i in {1..10}; do
+            echo "API health check attempt $i/10..."
+            if curl -f -m 10 http://localhost:3000/api/v1/health 2>/dev/null; then
+              echo "✅ API service health check passed"
+              break
+            else
+              echo "❌ API health check failed, attempt $i/10"
+              if [ $i -eq 10 ]; then
+                echo "💥 API health check failed after 10 attempts"
+                docker-compose -f deployment/${{ steps.vars.outputs.compose_file }} logs api
+                exit 1
+              fi
+              sleep 15
+            fi
+          done
+          
+          echo "🎉 All health checks passed successfully!"
     
     - name: Send deployment success notification
       if: success() && env.SLACK_WEBHOOK_URL != ''
@@ -216,7 +315,7 @@ jobs:
             "channel": "#deployments",
             "username": "Wedding Deployment Bot",
             "icon_emoji": ":white_check_mark:",
-            "text": ":white_check_mark: *部署成功*\n项目: Wedding Client\n分支: ${{ github.ref_name }}\n提交: ${{ github.sha }}\n部署时间: $(date "+%Y-%m-%d %H:%M:%S")\n访问地址: http://114.132.225.94"
+            "text": ":white_check_mark: *部署成功*\n项目: Wedding Client\n环境: ${{ github.event.inputs.environment || 'production' }}\n分支: ${{ github.ref_name }}\n提交: ${{ github.sha }}\n部署时间: $(date "+%Y-%m-%d %H:%M:%S")\n访问地址: ${{ steps.vars.outputs.host }}"
           }' \
           ${{ env.SLACK_WEBHOOK_URL }}
           
@@ -228,6 +327,6 @@ jobs:
             "channel": "#deployments",
             "username": "Wedding Deployment Bot",
             "icon_emoji": ":x:",
-            "text": ":x: *部署失败*\n项目: Wedding Client\n分支: ${{ github.ref_name }}\n提交: ${{ github.sha }}\n时间: $(date "+%Y-%m-%d %H:%M:%S")\n请检查GitHub Actions日志获取详细信息"
+            "text": ":x: *部署失败*\n项目: Wedding Client\n环境: ${{ github.event.inputs.environment || 'production' }}\n分支: ${{ github.ref_name }}\n提交: ${{ github.sha }}\n时间: $(date "+%Y-%m-%d %H:%M:%S")\n请检查GitHub Actions日志获取详细信息"
           }' \
           ${{ env.SLACK_WEBHOOK_URL }}
