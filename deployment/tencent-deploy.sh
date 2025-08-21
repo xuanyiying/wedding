@@ -312,11 +312,17 @@ build_images() {
     
     # 构建API镜像
     log_info "构建API镜像..."
-    execute_ssh_command "cd \$HOME/wedding && docker build -f server/Dockerfile -t $API_IMAGE_NAME:$API_IMAGE_TAG server/" "构建API镜像"
+    execute_ssh_command "cd \$HOME/wedding && timeout 600 docker build -f server/Dockerfile -t $API_IMAGE_NAME:$API_IMAGE_TAG server/" "构建API镜像"
     
     # 构建Web镜像
     log_info "构建Web镜像..."
-    execute_ssh_command "cd \$HOME/wedding && docker build --no-cache -f web/Dockerfile.prod -t $WEB_IMAGE_NAME:$WEB_IMAGE_TAG web/" "构建Web镜像"
+    if ! execute_ssh_command "cd \$HOME/wedding && timeout 1200 docker build --no-cache --network=host -f web/Dockerfile.prod -t $WEB_IMAGE_NAME:$WEB_IMAGE_TAG web/" "构建Web镜像"; then
+        log_warning "Web镜像构建失败，尝试使用缓存重新构建..."
+        execute_ssh_command "cd \$HOME/wedding && timeout 900 docker build --network=host -f web/Dockerfile.prod -t $WEB_IMAGE_NAME:$WEB_IMAGE_TAG web/" "重新构建Web镜像（使用缓存）" || {
+            log_error "Web镜像构建失败，请检查网络连接和依赖包"
+            return 1
+        }
+    fi
     
     log_success "Docker镜像构建完成"
 }
@@ -386,29 +392,34 @@ transfer_source_code() {
     log_info "从Git仓库拉取项目源代码..."
     
     # 在服务器上克隆或更新Git仓库
-    execute_ssh_command "
+    if execute_ssh_command "
         cd \$HOME
         if [[ -d 'wedding/.git' ]]; then
             echo '更新现有Git仓库...'
             cd wedding
-            git fetch origin
-            git reset --hard origin/master
-            git pull origin master
-            echo 'Git仓库更新完成'
+            timeout 60 git fetch origin || echo 'Git fetch超时，使用现有代码'
+            timeout 60 git reset --hard origin/master || echo 'Git reset失败，使用现有代码'
+            timeout 60 git pull origin master || echo 'Git pull失败，使用现有代码'
+            echo 'Git仓库更新尝试完成'
         else
             echo '克隆Git仓库...'
             rm -rf wedding
-            git clone https://github.com/xuanyiying/wedding.git wedding
+            timeout 120 git clone https://github.com/xuanyiying/wedding.git wedding || {
+                echo 'Git clone失败，请检查网络连接'
+                exit 1
+            }
             cd wedding
             echo 'Git仓库克隆完成'
         fi
         echo '当前分支和提交信息:'
-        git branch -v
-        git log --oneline -5
+        git branch -v || echo '无法获取分支信息'
+        git log --oneline -5 || echo '无法获取提交历史'
         ls -la
-    " "从Git仓库获取源代码"
-    
-    log_success "项目源代码获取完成"
+    " "从Git仓库获取源代码"; then
+        log_success "项目源代码获取完成"
+    else
+        log_warning "Git操作部分失败，但将继续使用现有代码进行部署"
+    fi
 }
 
 # 传输部署文件
@@ -416,14 +427,14 @@ transfer_deployment_files() {
     log_info "传输部署文件到服务器..."
     
     # 传输docker-compose文件
-    transfer_file "$SCRIPT_DIR/docker-compose-production.yml" "\$HOME/wedding/docker-compose.yml" "传输Docker Compose配置文件"
+    transfer_file "$SCRIPT_DIR/docker-compose-production.yml" "$HOME/wedding/docker-compose.yml" "传输Docker Compose配置文件"
     
     # 传输环境变量文件
-    transfer_file "$SCRIPT_DIR/.env.production" "\$HOME/wedding/.env" "传输环境变量配置文件"
+    transfer_file "$SCRIPT_DIR/.env.production" "$HOME/wedding/.env" "传输环境变量配置文件"
     
     # 传输nginx配置目录
     log_info "传输Nginx配置目录"
-    if ! sshpass -p "$SSH_PASS" scp -r -o StrictHostKeyChecking=no -o ConnectTimeout=30 "$SCRIPT_DIR/nginx" "$SSH_USER@$SERVER_IP:\$HOME/wedding/"; then
+    if ! sshpass -p "$SSH_PASS" scp -r -o StrictHostKeyChecking=no -o ConnectTimeout=30 "$SCRIPT_DIR/nginx" "$SSH_USER@$SERVER_IP:$HOME/wedding/"; then
         log_error "Nginx配置目录传输失败"
         return 1
     fi
