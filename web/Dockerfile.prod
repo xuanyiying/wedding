@@ -12,7 +12,6 @@ COPY package*.json ./
 
 # 配置npm镜像源和网络优化
 RUN npm config set registry https://registry.npmmirror.com/ && \
-    npm config set timeout 300000 && \
     npm config set network-timeout 300000 && \
     npm config set fetch-timeout 300000 && \
     npm config set fetch-retry-mintimeout 20000 && \
