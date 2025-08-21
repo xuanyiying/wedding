@@ -1,11 +1,16 @@
 FROM node:18-alpine
 
+# 配置Alpine镜像源为国内镜像
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
 WORKDIR /app
 
 # 安装开发依赖
 COPY package*.json ./
-RUN npm config set registry https://registry.npmmirror.com
-RUN npm install
+RUN npm config set registry https://registry.npmmirror.com/ && \
+    npm config set timeout 60000 && \
+    npm config set network-timeout 60000
+RUN npm install --include=dev
 
 # 复制源代码
 COPY . .

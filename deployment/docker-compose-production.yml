@@ -5,7 +5,7 @@ services:
     container_name: wedding_mysql_prod
     restart: unless-stopped
     env_file:
-      - .env
+      - .env.production
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
@@ -51,7 +51,7 @@ services:
     container_name: wedding_redis_prod
     restart: unless-stopped
     env_file:
-      - .env
+      - .env.production
     command: >
       redis-server
       --requirepass ${REDIS_PASSWORD}
@@ -89,7 +89,7 @@ services:
     container_name: wedding_minio_prod
     restart: unless-stopped
     env_file:
-      - .env
+      - .env.production
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
@@ -124,7 +124,7 @@ services:
     container_name: wedding_api_prod
     restart: unless-stopped
     env_file:
-      - .env
+      - .env.production
     environment:
       NODE_ENV: production
       API_HOST: 0.0.0.0
@@ -207,7 +207,7 @@ services:
     container_name: wedding_web_prod
     restart: unless-stopped
     env_file:
-      - .env
+      - .env.production
     environment:
       NODE_ENV: production
       NGINX_HOST: ${SERVER_IP}

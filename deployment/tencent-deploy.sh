@@ -312,13 +312,13 @@ build_images() {
     
     # 构建API镜像
     log_info "构建API镜像..."
-    execute_ssh_command "cd \$HOME/wedding && timeout 600 docker build -f server/Dockerfile -t $API_IMAGE_NAME:$API_IMAGE_TAG server/" "构建API镜像"
+    execute_ssh_command "cd \$HOME/wedding && timeout 900 docker build --network=host --build-arg BUILDKIT_INLINE_CACHE=1 -f server/Dockerfile -t $API_IMAGE_NAME:$API_IMAGE_TAG server/" "构建API镜像"
     
     # 构建Web镜像
     log_info "构建Web镜像..."
-    if ! execute_ssh_command "cd \$HOME/wedding && timeout 1200 docker build --no-cache --network=host -f web/Dockerfile.prod -t $WEB_IMAGE_NAME:$WEB_IMAGE_TAG web/" "构建Web镜像"; then
+    if ! execute_ssh_command "cd \$HOME/wedding && timeout 1800 docker build --no-cache --network=host --build-arg BUILDKIT_INLINE_CACHE=1 -f web/Dockerfile.prod -t $WEB_IMAGE_NAME:$WEB_IMAGE_TAG web/" "构建Web镜像"; then
         log_warning "Web镜像构建失败，尝试使用缓存重新构建..."
-        execute_ssh_command "cd \$HOME/wedding && timeout 900 docker build --network=host -f web/Dockerfile.prod -t $WEB_IMAGE_NAME:$WEB_IMAGE_TAG web/" "重新构建Web镜像（使用缓存）" || {
+        execute_ssh_command "cd \$HOME/wedding && timeout 1200 docker build --network=host --build-arg BUILDKIT_INLINE_CACHE=1 -f web/Dockerfile.prod -t $WEB_IMAGE_NAME:$WEB_IMAGE_TAG web/" "重新构建Web镜像（使用缓存）" || {
             log_error "Web镜像构建失败，请检查网络连接和依赖包"
             return 1
         }
@@ -450,9 +450,9 @@ deploy_services() {
     
     # 停止现有服务
     execute_ssh_command "
-        cd \$HOME/wedding
+        cd \$HOME/wedding/deployment
         echo '停止现有服务...'
-        docker-compose down --remove-orphans 2>/dev/null || true
+        docker-compose -f docker-compose-production.yml --env-file .env.production down --remove-orphans 2>/dev/null || true
         echo '清理未使用的Docker资源...'
         docker system prune -f 2>/dev/null || true
     " "停止现有服务"
@@ -470,15 +470,17 @@ deploy_services() {
     
     # 启动服务
     execute_ssh_command "
-        cd \$HOME/wedding
+        cd \$HOME/wedding/deployment
+        echo '检查环境变量文件...'
+        ls -la .env.production
         echo '启动Docker Compose服务...'
-        docker-compose up -d
+        docker-compose -f docker-compose-production.yml --env-file .env.production up -d
         echo '等待服务初始化...'
         sleep 30
         echo '检查服务状态:'
-        docker-compose ps
+        docker-compose -f docker-compose-production.yml --env-file .env.production ps
         echo '检查服务日志:'
-        docker-compose logs --tail=10
+        docker-compose -f docker-compose-production.yml --env-file .env.production logs --tail=10
     " "启动Docker Compose服务"
     
     log_success "服务部署完成"
@@ -502,7 +504,7 @@ health_check() {
         return 0
     fi
     
-    local max_attempts=60
+    local max_attempts=1
     local attempt=1
     local web_healthy=false
     local api_healthy=false
@@ -516,9 +518,9 @@ health_check() {
         
         # 检查容器状态
         local container_status
-        if execute_ssh_command "test -f \$HOME/wedding/docker-compose.yml" "检查配置文件" "true" &>/dev/null; then
-            if execute_ssh_command "cd \$HOME/wedding && docker-compose ps --format 'table {{.Name}}\t{{.Status}}' | grep -v 'NAME'" "检查容器状态" "true" &>/dev/null; then
-                container_status=$(sshpass -p "$SSH_PASS" ssh -o ConnectTimeout=30 -o StrictHostKeyChecking=no "$SSH_USER@$SERVER_IP" "cd \$HOME/wedding && docker-compose ps --format 'table {{.Name}}\t{{.Status}}' | grep -v 'NAME'" 2>/dev/null || echo "")
+        if execute_ssh_command "test -f \$HOME/wedding/deployment/docker-compose-production.yml" "检查配置文件" "true" &>/dev/null; then
+            if execute_ssh_command "cd \$HOME/wedding/deployment && docker-compose -f docker-compose-production.yml --env-file .env.production ps --format 'table {{.Name}}\t{{.Status}}' | grep -v 'NAME'" "检查容器状态" "true" &>/dev/null; then
+                container_status=$(sshpass -p "$SSH_PASS" ssh -o ConnectTimeout=30 -o StrictHostKeyChecking=no "$SSH_USER@$SERVER_IP" "cd \$HOME/wedding/deployment && docker-compose -f docker-compose-production.yml --env-file .env.production ps --format 'table {{.Name}}\t{{.Status}}' | grep -v 'NAME'" 2>/dev/null || echo "")
                 if [[ -n "$container_status" ]]; then
                     log_info "容器状态:"
                     echo "$container_status" | while read -r line; do
@@ -567,7 +569,7 @@ health_check() {
             
             # 显示服务日志以便调试
             log_info "显示服务日志:"
-            execute_ssh_command "cd \$HOME/wedding && docker-compose logs --tail=50" "获取服务日志" 2>/dev/null || true
+            execute_ssh_command "cd \$HOME/wedding/deployment && docker-compose -f docker-compose-production.yml logs --tail=50" "获取服务日志" 2>/dev/null || true
             
             return 1
         fi
@@ -726,10 +728,11 @@ transfer_deployment_files() {
     execute_ssh_command "mkdir -p \$HOME/wedding" "创建部署目录"
     
     # 传输docker-compose文件
-    transfer_file "$SCRIPT_DIR/docker-compose-production.yml" "~/wedding/docker-compose.yml" "传输docker-compose配置文件"
+    transfer_file "$SCRIPT_DIR/docker-compose-production.yml" "~/wedding/deployment/docker-compose-production.yml" "传输docker-compose配置文件"
     
     # 传输环境变量文件
-    transfer_file "$SCRIPT_DIR/.env.production" "~/wedding/.env" "传输环境变量文件"
+    execute_ssh_command "mkdir -p \$HOME/wedding/deployment" "创建deployment目录"
+    transfer_file "$SCRIPT_DIR/.env.production" "~/wedding/deployment/.env.production" "传输环境变量文件"
     
     # 传输nginx配置文件
     if [[ -f "$SCRIPT_DIR/nginx/nginx-prod.conf" ]]; then
