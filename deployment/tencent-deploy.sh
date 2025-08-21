@@ -180,13 +180,13 @@ verify_server_environment() {
     log_info "验证服务器环境..."
     
     # 检查Docker
-    if ! execute_ssh_command "docker --version" "检查Docker安装" "true" &>/dev/null; then
+    if ! execute_ssh_command "sudo docker --version" "检查Docker安装" "true" &>/dev/null; then
         log_error "Docker未正确安装或无法访问"
         return 1
     fi
     
     # 检查Docker Compose
-    if ! execute_ssh_command "docker-compose --version" "检查Docker Compose安装" "true" &>/dev/null; then
+    if ! execute_ssh_command "sudo docker-compose --version" "检查Docker Compose安装" "true" &>/dev/null; then
         log_error "Docker Compose未正确安装或无法访问"
         return 1
     fi
@@ -420,26 +420,6 @@ transfer_source_code() {
     else
         log_warning "Git操作部分失败，但将继续使用现有代码进行部署"
     fi
-}
-
-# 传输部署文件
-transfer_deployment_files() {
-    log_info "传输部署文件到服务器..."
-    
-    # 传输docker-compose文件
-    transfer_file "$SCRIPT_DIR/docker-compose-production.yml" "wedding/docker-compose.yml" "传输Docker Compose配置文件"
-    
-    # 传输环境变量文件
-    transfer_file "$SCRIPT_DIR/.env.production" "wedding/.env" "传输环境变量配置文件"
-    
-    # 传输nginx配置目录
-    log_info "传输Nginx配置目录"
-    if ! sshpass -p "$SSH_PASS" scp -r -o StrictHostKeyChecking=no -o ConnectTimeout=30 "$SCRIPT_DIR/nginx" "$SSH_USER@$SERVER_IP:wedding/"; then
-        log_error "Nginx配置目录传输失败"
-        return 1
-    fi
-    
-    log_success "部署文件传输完成"
 }
 
 # 备份现有部署
@@ -738,15 +718,44 @@ rollback_deployment() {
     log_success "回滚完成"
 }
 
+# 传输部署文件
+transfer_deployment_files() {
+    log_info "传输部署配置文件..."
+    
+    # 确保远程目录存在
+    execute_ssh_command "mkdir -p \$HOME/wedding" "创建部署目录"
+    
+    # 传输docker-compose文件
+    transfer_file "$SCRIPT_DIR/docker-compose-production.yml" "~/wedding/docker-compose.yml" "传输docker-compose配置文件"
+    
+    # 传输环境变量文件
+    transfer_file "$SCRIPT_DIR/.env.production" "~/wedding/.env" "传输环境变量文件"
+    
+    # 传输nginx配置文件
+    if [[ -f "$SCRIPT_DIR/nginx/nginx-prod.conf" ]]; then
+        execute_ssh_command "mkdir -p \$HOME/wedding/nginx" "创建nginx配置目录"
+        transfer_file "$SCRIPT_DIR/nginx/nginx-prod.conf" "~/wedding/nginx/nginx.conf" "传输nginx配置文件"
+    fi
+    
+    # 传输其他必要的配置文件
+    if [[ -d "$SCRIPT_DIR/configs" ]]; then
+        execute_ssh_command "mkdir -p \$HOME/wedding/configs" "创建configs目录"
+        for config_file in "$SCRIPT_DIR/configs"/*; do
+            if [[ -f "$config_file" ]]; then
+                transfer_file "$config_file" "~/wedding/configs/$(basename "$config_file")" "传输配置文件: $(basename "$config_file")"
+            fi
+        done
+    fi
+    
+    log_success "部署配置文件传输完成"
+}
+
 # 在服务器上构建和启动服务
 build_and_start_on_server() {
     log_info "在服务器上构建和启动服务..."
     
     # 传输源代码
     transfer_source_code
-    
-    # 传输必要的部署配置文件
-    transfer_deployment_files
     
     # 在服务器上构建镜像
     build_images
@@ -773,7 +782,7 @@ main() {
     fi
     
     # 设置回滚陷阱
-    trap 'log_error "部署失败，开始回滚..."; rollback_deployment; exit 1' ERR
+    trap 'log_error "部署失败，开始回滚..."; rollback_deployment ""; exit 1' ERR
     
     # 健康检查模式跳过本地依赖检查
     if [[ "${HEALTH_CHECK_ONLY:-false}" != "true" ]]; then
