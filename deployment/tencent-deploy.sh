@@ -166,13 +166,13 @@ execute_ssh_command() {
 check_server_connection() {
     log_info "检查服务器连接..."
     
-    if ! execute_ssh_command "echo 'Connection test successful'" "测试服务器连接" "true" &>/dev/null; then
+    if sshpass -p "$SSH_PASS" ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no "$SSH_USER@$SERVER_IP" "echo 'Connection test successful'" >/dev/null 2>&1; then
+        log_success "服务器连接检查通过"
+    else
         log_error "无法连接到服务器 $SERVER_IP"
         log_error "请检查服务器IP、用户名和密码是否正确"
         exit 1
     fi
-    
-    log_success "服务器连接检查通过"
 }
 
 # 验证服务器环境
@@ -343,49 +343,49 @@ transfer_file() {
     return 0
 }
 
-# 保存并传输镜像
-transfer_images() {
-    log_info "传输Docker镜像到服务器..."
-    
-    local temp_dir="/tmp/wedding-images-$TIMESTAMP"
-    mkdir -p "$temp_dir"
-    
-    # 保存镜像
-    log_info "保存API镜像..."
-    if ! docker save "$API_IMAGE_NAME:$API_IMAGE_TAG" | gzip > "$temp_dir/api-image.tar.gz"; then
-        log_error "API镜像保存失败"
-        rm -rf "$temp_dir"
-        return 1
-    fi
-    
-    log_info "保存Web镜像..."
-    if ! docker save "$WEB_IMAGE_NAME:$WEB_IMAGE_TAG" | gzip > "$temp_dir/web-image.tar.gz"; then
-        log_error "Web镜像保存失败"
-        rm -rf "$temp_dir"
-        return 1
-    fi
-    
-    # 传输镜像到服务器
-    transfer_file "$temp_dir/api-image.tar.gz" "/tmp/api-image.tar.gz" "上传API镜像到服务器"
-    transfer_file "$temp_dir/web-image.tar.gz" "/tmp/web-image.tar.gz" "上传Web镜像到服务器"
-    
-    # 在服务器上加载镜像
-    execute_ssh_command "
-        cd /tmp
-        echo '加载API镜像...'
-        docker load < api-image.tar.gz
-        echo '加载Web镜像...'
-        docker load < web-image.tar.gz
-        echo '清理临时文件...'
-        rm -f api-image.tar.gz web-image.tar.gz
-        echo '镜像加载完成'
-    " "在服务器上加载Docker镜像"
-    
-    # 清理本地临时文件
-    rm -rf "$temp_dir"
-    
-    log_success "Docker镜像传输完成"
-}
+# 保存并传输镜像（已废弃 - 现在直接在服务器上构建）
+# transfer_images() {
+#     log_info "传输Docker镜像到服务器..."
+#     
+#     local temp_dir="/tmp/wedding-images-$TIMESTAMP"
+#     mkdir -p "$temp_dir"
+#     
+#     # 保存镜像
+#     log_info "保存API镜像..."
+#     if ! docker save "$API_IMAGE_NAME:$API_IMAGE_TAG" | gzip > "$temp_dir/api-image.tar.gz"; then
+#         log_error "API镜像保存失败"
+#         rm -rf "$temp_dir"
+#         return 1
+#     fi
+#     
+#     log_info "保存Web镜像..."
+#     if ! docker save "$WEB_IMAGE_NAME:$WEB_IMAGE_TAG" | gzip > "$temp_dir/web-image.tar.gz"; then
+#         log_error "Web镜像保存失败"
+#         rm -rf "$temp_dir"
+#         return 1
+#     fi
+#     
+#     # 传输镜像到服务器
+#     transfer_file "$temp_dir/api-image.tar.gz" "/tmp/api-image.tar.gz" "上传API镜像到服务器"
+#     transfer_file "$temp_dir/web-image.tar.gz" "/tmp/web-image.tar.gz" "上传Web镜像到服务器"
+#     
+#     # 在服务器上加载镜像
+#     execute_ssh_command "
+#         cd /tmp
+#         echo '加载API镜像...'
+#         docker load < api-image.tar.gz
+#         echo '加载Web镜像...'
+#         docker load < web-image.tar.gz
+#         echo '清理临时文件...'
+#         rm -f api-image.tar.gz web-image.tar.gz
+#         echo '镜像加载完成'
+#     " "在服务器上加载Docker镜像"
+#     
+#     # 清理本地临时文件
+#     rm -rf "$temp_dir"
+#     
+#     log_success "Docker镜像传输完成"
+# }
 
 # 从Git仓库拉取项目源代码
 transfer_source_code() {
@@ -427,14 +427,14 @@ transfer_deployment_files() {
     log_info "传输部署文件到服务器..."
     
     # 传输docker-compose文件
-    transfer_file "$SCRIPT_DIR/docker-compose-production.yml" "$HOME/wedding/docker-compose.yml" "传输Docker Compose配置文件"
+    transfer_file "$SCRIPT_DIR/docker-compose-production.yml" "wedding/docker-compose.yml" "传输Docker Compose配置文件"
     
     # 传输环境变量文件
-    transfer_file "$SCRIPT_DIR/.env.production" "$HOME/wedding/.env" "传输环境变量配置文件"
+    transfer_file "$SCRIPT_DIR/.env.production" "wedding/.env" "传输环境变量配置文件"
     
     # 传输nginx配置目录
     log_info "传输Nginx配置目录"
-    if ! sshpass -p "$SSH_PASS" scp -r -o StrictHostKeyChecking=no -o ConnectTimeout=30 "$SCRIPT_DIR/nginx" "$SSH_USER@$SERVER_IP:$HOME/wedding/"; then
+    if ! sshpass -p "$SSH_PASS" scp -r -o StrictHostKeyChecking=no -o ConnectTimeout=30 "$SCRIPT_DIR/nginx" "$SSH_USER@$SERVER_IP:wedding/"; then
         log_error "Nginx配置目录传输失败"
         return 1
     fi
@@ -738,6 +738,25 @@ rollback_deployment() {
     log_success "回滚完成"
 }
 
+# 在服务器上构建和启动服务
+build_and_start_on_server() {
+    log_info "在服务器上构建和启动服务..."
+    
+    # 传输源代码
+    transfer_source_code
+    
+    # 传输必要的部署配置文件
+    transfer_deployment_files
+    
+    # 在服务器上构建镜像
+    build_images
+    
+    # 部署服务
+    deploy_services
+    
+    log_success "服务构建和启动完成"
+}
+
 # 主函数
 main() {
     log_info "开始腾讯云生产环境部署..."
@@ -777,17 +796,17 @@ main() {
         log_warning "跳过备份步骤"
     fi
     
-    # 条件执行构建
+    # 条件执行构建和启动
     if [[ "$SKIP_BUILD" == "false" ]]; then
-        transfer_source_code
-        build_images
+        build_and_start_on_server
     else
         log_warning "跳过镜像构建步骤"
         log_info "假设镜像已存在于服务器上"
+        # 仍需传输配置文件
+        transfer_deployment_files
+        deploy_services
     fi
     
-    transfer_deployment_files
-    deploy_services
     health_check
     show_deployment_info
     
