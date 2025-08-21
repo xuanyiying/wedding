@@ -11,10 +11,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # 配置npm镜像源和网络优化
-RUN npm config set registry https://registry.npmmirror.com/ && \
-    npm config set timeout 60000 && \
-    npm config set network-timeout 60000
-
+RUN npm config set registry https://registry.npmmirror.com
 # 安装依赖（包含开发依赖用于构建）
 RUN npm install --legacy-peer-deps --no-audit --no-fund
 
