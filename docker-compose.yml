@@ -11,18 +11,28 @@ services:
       MYSQL_DATABASE: wedding_dev
       MYSQL_USER: wedding
       MYSQL_PASSWORD: wedding123
+      # 优化MySQL性能配置
+      MYSQL_INNODB_BUFFER_POOL_SIZE: 256M
+      MYSQL_INNODB_LOG_FILE_SIZE: 64M
     ports:
       - "3306:3306"
     volumes:
       - mysql_dev_data:/var/lib/mysql
       - ./server/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      # 添加MySQL配置文件挂载
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
     command: --default-authentication-plugin=mysql_native_password --bind-address=0.0.0.0
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 10
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     networks:
-      - wedding-dev-net
+      wedding-dev-net:
+        aliases:
+          - db
+          - database
 
   # Redis缓存
   redis:
@@ -33,14 +43,20 @@ services:
       - "6379:6379"
     volumes:
       - redis_dev_data:/data
-    command: redis-server --appendonly yes
+      # 添加Redis配置文件挂载
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf --appendonly yes
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
       retries: 5
+      start_period: 10s
     networks:
-      - wedding-dev-net
+      wedding-dev-net:
+        aliases:
+          - cache
+          - redis-server
 
   # MinIO对象存储
   minio:
@@ -51,19 +67,32 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin123
       MINIO_BROWSER_REDIRECT_URL: http://localhost:9001
+      # 优化MinIO性能配置
+      MINIO_CACHE_DRIVES: "/tmp/cache"
+      MINIO_CACHE_EXCLUDE: "*.pdf"
+      MINIO_CACHE_QUOTA: 80
+      MINIO_CACHE_AFTER: 3
+      MINIO_CACHE_WATERMARK_LOW: 70
+      MINIO_CACHE_WATERMARK_HIGH: 90
     ports:
       - "9000:9000"  # S3 API port
       - "9001:9001"  # Console port
     volumes:
       - minio_dev_data:/data
+      - minio_cache_data:/tmp/cache
     command: server /data --console-address ":9001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
+      interval: 15s
+      timeout: 10s
       retries: 3
+      start_period: 20s
     networks:
-      - wedding-dev-net
+      wedding-dev-net:
+        aliases:
+          - storage
+          - s3
+          - object-storage
 
   # 后端API服务 (开发模式)
   server:
@@ -78,6 +107,7 @@ services:
       - NODE_ENV=development
       - API_HOST=0.0.0.0
       - PORT=3000
+      # 数据库连接配置 - 支持多种别名
       - DATABASE_URL=mysql://wedding:wedding123@mysql:3306/wedding_dev
       - DB_HOST=mysql
       - DB_PORT=3306
@@ -86,20 +116,42 @@ services:
       - DB_PASSWORD=wedding123
       - DB_DIALECT=mysql
       - DB_LOGGING=true
+      - DB_POOL_MAX=10
+      - DB_POOL_MIN=0
+      - DB_POOL_ACQUIRE=30000
+      - DB_POOL_IDLE=10000
+      # Redis连接配置 - 支持多种别名
       - REDIS_URL=redis://redis:6379
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_CONNECT_TIMEOUT=10000
+      - REDIS_LAZYCONNECT=true
+      # MinIO对象存储配置
       - OSS_TYPE=minio
       - MINIO_ENDPOINT=http://minio:9000
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin123
       - MINIO_BUCKET=wedding-media
+      - MINIO_USE_SSL=false
+      - MINIO_REGION=us-east-1
+      # JWT配置
       - JWT_SECRET=dev-jwt-secret-key-change-in-production
       - JWT_REFRESH_SECRET=dev-jwt-refresh-secret-key-change-in-production
+      - JWT_EXPIRES_IN=24h
+      - JWT_REFRESH_EXPIRES_IN=7d
+      # 应用配置
+      - LOG_LEVEL=debug
+      - CORS_ORIGIN=http://localhost:5173
+      - UPLOAD_MAX_SIZE=10485760
+      - RATE_LIMIT_WINDOW=900000
+      - RATE_LIMIT_MAX=100
     volumes:
       - ./server:/app
       - /app/node_modules
       - /app/dist
+      # 添加日志目录挂载
+      - ./logs/server:/app/logs
     depends_on:
       mysql:
         condition: service_healthy
@@ -107,8 +159,18 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     networks:
-      - wedding-dev-net
+      wedding-dev-net:
+        aliases:
+          - api
+          - backend
+          - server
     command: npm run dev
 
   # 前端Web服务 (开发模式)
@@ -140,3 +202,4 @@ volumes:
   mysql_dev_data:
   redis_dev_data:
   minio_dev_data:
+  minio_cache_data:

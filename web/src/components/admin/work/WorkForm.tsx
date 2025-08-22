@@ -9,7 +9,6 @@ import type { Work } from './WorkCard';
 import { MediaUploader, MediaList } from '../../common/MediaUploader';
 import type { MediaFileItem } from '../../common/MediaUploader/types';
 import type { DirectUploadResult } from '../../../utils/direct-upload';
-
 import type { UploadFile, UploadProps } from 'antd';
 
 const { TextArea } = Input;
@@ -39,9 +38,9 @@ const WorkForm: React.FC<WorkFormProps> = ({
   const [customTag, setCustomTag] = useState('');
   const [mediaFiles, setMediaFiles] = useState<MediaFileItem[]>([]);
   const [coverMediaFiles, setCoverMediaFiles] = useState<MediaFileItem[]>([]);
-
   const [tags, setTags] = useState<string[]>([]);
   const [workType, setWorkType] = useState<string>('');
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   
   // 视频封面选择相关状态
   const [coverSelectionVisible, setCoverSelectionVisible] = useState(false);
@@ -51,7 +50,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
   const [activeUploads, setActiveUploads] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const maxConcurrentUploads = 2; // 限制并发上传数量
+  const maxConcurrentUploads = 2;
 
   useEffect(() => {
     if (initialValues) {
@@ -91,6 +90,56 @@ const WorkForm: React.FC<WorkFormProps> = ({
     }
   }, [initialValues, form]);
 
+  // 表单验证函数
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+    
+    // 验证标题
+    const title = form.getFieldValue('title');
+    if (!title || title.trim() === '') {
+      errors.title = '作品标题不能为空';
+    } else if (title.length > 100) {
+      errors.title = '标题不能超过100个字符';
+    }
+
+    // 验证作品类型
+    if (!workType) {
+      errors.type = '请选择作品类型';
+    }
+
+    // 验证媒体文件
+    const totalMediaFiles = mediaFiles.length + fileList.length;
+    if (totalMediaFiles === 0) {
+      errors.media = '请至少上传一个媒体文件';
+    }
+
+    // 视频类型特殊验证
+    if (workType === 'video') {
+      const hasVideo = mediaFiles.some(f => f.type === 'video') || 
+                      fileList.some(f => f.type?.startsWith('video/'));
+      if (!hasVideo) {
+        errors.video = '视频作品必须包含视频文件';
+      }
+
+      const totalCoverFiles = coverMediaFiles.length + coverFileList.length;
+      if (totalCoverFiles === 0) {
+        errors.cover = '视频作品必须上传封面图片';
+      }
+    }
+
+    // 验证文件大小
+    const allFiles = [...mediaFiles, ...coverMediaFiles];
+    for (const file of allFiles) {
+      if (file.file.size > 10 * 1024 * 1024) { // 10MB
+        errors.fileSize = '文件大小不能超过10MB';
+        break;
+      }
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   // MediaUploader回调处理
   const handleMediaUploadSuccess = (results: DirectUploadResult[]) => {
     const newMediaFiles = results.map(result => ({
@@ -115,6 +164,13 @@ const WorkForm: React.FC<WorkFormProps> = ({
       type: result.fileType
     }));
     setFileList(prev => [...prev, ...newFiles]);
+
+    // 清除相关错误
+    setFormErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors.media;
+      return newErrors;
+    });
   };
 
   const handleCoverUploadSuccess = (results: DirectUploadResult[]) => {
@@ -140,6 +196,13 @@ const WorkForm: React.FC<WorkFormProps> = ({
       type: result.fileType
     }));
     setCoverFileList(newFiles);
+
+    // 清除封面错误
+    setFormErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors.cover;
+      return newErrors;
+    });
   };
 
   const handleMediaUploadError = (error: Error) => {
@@ -148,35 +211,23 @@ const WorkForm: React.FC<WorkFormProps> = ({
 
   const handleMediaRemove = (fileId: string) => {
     setMediaFiles(prev => prev.filter(file => file.id !== fileId));
-    // 同步更新fileList
     setFileList(prev => prev.filter(file => file.uid !== fileId));
   };
 
   const handleCoverRemove = (fileId: string) => {
     setCoverMediaFiles(prev => prev.filter(file => file.id !== fileId));
-    // 同步更新coverFileList
     setCoverFileList(prev => prev.filter(file => file.uid !== fileId));
   };
 
   const handleSubmit = async () => {
     try {
-      // 视频类型必须有视频文件和封面图片的验证
-      if (workType === 'video') {
-        if (mediaFiles.length === 0 && fileList.length === 0) {
-          message.error('视频作品必须上传视频文件');
-          return;
-        }
-        if (coverMediaFiles.length === 0 && coverFileList.length === 0) {
-          message.error('视频作品必须上传封面图片');
-          return;
-        }
-      } else {
-        if (mediaFiles.length === 0 && fileList.length === 0) {
-          message.error('请上传作品文件');
-          return;
-        }
+      // 先进行自定义验证
+      if (!validateForm()) {
+        message.error('请检查表单中的错误信息');
+        return;
       }
-      
+
+      // 然后进行Ant Design表单验证
       const values = await form.validateFields();
       
       // 合并新旧上传方式的URL
@@ -192,16 +243,62 @@ const WorkForm: React.FC<WorkFormProps> = ({
       
       const submitData = {
         ...values,
-        shootDate: values.shootDate?.format('YYYY-MM-DD'),
+        weddingDate: values.weddingDate?.format('YYYY-MM-DD'),
         tags,
         contentUrls: allContentUrls,
         coverUrl: workType === 'video' 
           ? (allCoverUrls[0] || '')
           : (allContentUrls[0] || ''),
+        // 添加文件信息用于后端处理
+        files: [
+          ...mediaFiles.map(file => ({
+            fileUrl: file.result?.url || file.preview,
+            fileType: file.type === 'video' ? 'VIDEO' : 'IMAGE',
+            thumbnailUrl: file.type === 'video' ? (allCoverUrls[0] || '') : undefined,
+            originalName: file.file.name,
+            fileSize: file.file.size,
+            mimeType: file.file.type
+          })),
+          ...fileList.map(file => ({
+            fileUrl: file.response || file.url,
+            fileType: file.type?.startsWith('video/') ? 'VIDEO' : 'IMAGE',
+            thumbnailUrl: file.type?.startsWith('video/') ? (allCoverUrls[0] || '') : undefined,
+            originalName: file.name,
+            fileSize: file.size || 0,
+            mimeType: file.type || ''
+          }))
+        ]
       };
-      onSubmit(submitData);
+
+      // 提交前显示加载状态
+      setUploading(true);
+      
+      await onSubmit(submitData);
+      
+      // 成功后重置表单（如果不是编辑模式）
+      if (!isEdit) {
+        form.resetFields();
+        setTags([]);
+        setMediaFiles([]);
+        setCoverMediaFiles([]);
+        setFileList([]);
+        setCoverFileList([]);
+        setWorkType('');
+        setFormErrors({});
+        message.success('作品创建成功！');
+      } else {
+        message.success('作品更新成功！');
+      }
+      
     } catch (error) {
-      console.error('表单验证失败:', error);
+      console.error('表单提交失败:', error);
+      if (error instanceof Error) {
+        message.error(`提交失败: ${error.message}`);
+      } else {
+        message.error('提交失败，请重试');
+      }
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -226,25 +323,21 @@ const WorkForm: React.FC<WorkFormProps> = ({
       uploadItem.onError?.(error as Error);
     } finally {
       setActiveUploads(prev => prev - 1);
-      // 继续处理队列中的下一个文件
       setTimeout(processUploadQueue, 100);
     }
   };
 
-  // 监听上传队列变化
   useEffect(() => {
     if (uploadQueue.length > 0 && activeUploads < maxConcurrentUploads) {
       processUploadQueue();
     }
   }, [uploadQueue, activeUploads]);
 
-  // 监听活跃上传数量变化，更新上传状态
   useEffect(() => {
     setUploading(activeUploads > 0 || uploadQueue.length > 0);
   }, [activeUploads, uploadQueue.length]);
 
   const handleUpload: UploadProps['customRequest'] = ({ file, onSuccess, onError }) => {
-    // 添加到上传队列
     setUploadQueue(prev => [...prev, {
       file: file as File,
       onSuccess,
@@ -265,13 +358,11 @@ const WorkForm: React.FC<WorkFormProps> = ({
     const isVideo = file.type.startsWith('video/');
 
     if (workType === 'video') {
-      // 视频类型只允许上传视频文件
       if (!isVideo) {
         message.error('视频作品只能上传视频文件！');
         return false;
       }
     } else {
-      // 图片类型允许上传图片和视频
       if (!isImage && !isVideo) {
         message.error('只能上传图片或视频文件！');
         return false;
@@ -304,7 +395,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
     return true;
   };
 
-  // 从视频中提取帧（优化版本）
+  // 从视频中提取帧
   const extractVideoFrames = async (videoFile: File) => {
     return new Promise<string[]>((resolve, reject) => {
       const video = videoRef.current;
@@ -323,13 +414,11 @@ const WorkForm: React.FC<WorkFormProps> = ({
       const url = URL.createObjectURL(videoFile);
       video.src = url;
       
-      // 减少超时时间以提高响应速度
       const timeout = setTimeout(() => {
         URL.revokeObjectURL(url);
         reject(new Error('视频加载超时'));
-      }, 15000); // 15秒超时
+      }, 15000);
 
-      // 错误处理
       video.onerror = () => {
         clearTimeout(timeout);
         URL.revokeObjectURL(url);
@@ -347,11 +436,10 @@ const WorkForm: React.FC<WorkFormProps> = ({
 
         const frames: string[] = [];
         let frameIndex = 0;
-        const totalFrames = 8; // 增加帧数以提供更多选择
+        const totalFrames = 8;
         const interval = duration / (totalFrames + 1);
         
-        // 预计算画布尺寸以避免重复计算
-        const maxWidth = 600; // 减小尺寸以提高性能
+        const maxWidth = 600;
         const maxHeight = 400;
         let canvasWidth = video.videoWidth;
         let canvasHeight = video.videoHeight;
@@ -362,7 +450,6 @@ const WorkForm: React.FC<WorkFormProps> = ({
           canvasHeight = Math.floor(canvasHeight * ratio);
         }
         
-        // 设置画布尺寸一次
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
 
@@ -379,14 +466,12 @@ const WorkForm: React.FC<WorkFormProps> = ({
           
           const onSeeked = () => {
             try {
-              // 使用预计算的尺寸，避免重复计算
               ctx.drawImage(video, 0, 0, canvasWidth, canvasHeight);
-              frames.push(canvas.toDataURL('image/jpeg', 0.7)); // 稍微降低质量以提高速度
+              frames.push(canvas.toDataURL('image/jpeg', 0.7));
               
               frameIndex++;
               video.removeEventListener('seeked', onSeeked);
               
-              // 移除延迟，使用requestAnimationFrame优化性能
               requestAnimationFrame(captureFrame);
             } catch (error) {
               clearTimeout(timeout);
@@ -395,7 +480,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
             }
           };
 
-          video.addEventListener('seeked', onSeeked, { once: true }); // 使用once选项自动移除监听器
+          video.addEventListener('seeked', onSeeked, { once: true });
         };
 
         captureFrame();
@@ -403,15 +488,14 @@ const WorkForm: React.FC<WorkFormProps> = ({
     });
   };
 
-  // 打开封面选择模态框
   const openCoverSelection = async () => {
-    if (fileList.length === 0) {
+    if (fileList.length === 0 && mediaFiles.length === 0) {
       message.warning('请先上传视频文件');
       return;
     }
 
-    const videoFile = fileList[0];
-    if (!videoFile.originFileObj) {
+    const videoFile = fileList[0]?.originFileObj || mediaFiles[0]?.file;
+    if (!videoFile) {
       message.error('无法获取视频文件');
       return;
     }
@@ -420,7 +504,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
     setCoverSelectionVisible(true);
     
     try {
-      const frames = await extractVideoFrames(videoFile.originFileObj);
+      const frames = await extractVideoFrames(videoFile);
       setVideoFrames(frames);
     } catch (error) {
       message.error('提取视频帧失败');
@@ -430,10 +514,8 @@ const WorkForm: React.FC<WorkFormProps> = ({
     }
   };
 
-  // 选择视频帧作为封面
   const selectVideoFrame = async (frameDataUrl: string) => {
     try {
-      // 将base64转换为File对象
       const response = await fetch(frameDataUrl);
       const blob = await response.blob();
       const file = new File([blob], 'video-frame.jpg', { type: 'image/jpeg' });
@@ -449,9 +531,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
           response: url,
         };
         setCoverFileList([coverFile]);
-        // 不自动关闭模态框，让用户可以继续选择其他帧
-        // setCoverSelectionVisible(false);
-        message.success('视频帧封面设置成功，可继续选择其他帧或手动关闭');
+        message.success('视频帧封面设置成功');
       }
     } catch (error) {
       message.error('设置封面失败');
@@ -461,7 +541,6 @@ const WorkForm: React.FC<WorkFormProps> = ({
     }
   };
 
-  // 选择相册图片作为封面
   const selectAlbumImage = async (imageFile: UploadFile) => {
     if (imageFile.url || imageFile.response) {
       const coverFile = {
@@ -476,6 +555,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
       message.success('相册封面设置成功');
     }
   };
+
   const addTag = () => {
     if (customTag && !tags.includes(customTag)) {
       setTags([...tags, customTag]);
@@ -494,409 +574,374 @@ const WorkForm: React.FC<WorkFormProps> = ({
     </div>
   );
 
+  // 检查表单是否可以提交
+  const canSubmit = () => {
+    const hasTitle = form.getFieldValue('title')?.trim();
+    const hasType = workType;
+    const hasMedia = mediaFiles.length > 0 || fileList.length > 0;
+    const hasCover = workType === 'video' 
+      ? (coverMediaFiles.length > 0 || coverFileList.length > 0)
+      : true;
+    
+    return hasTitle && hasType && hasMedia && hasCover && !uploading;
+  };
+
   return (
     <>
-    <Form
-      form={form}
-      layout="vertical"
-      requiredMark={false}
-      autoComplete="off"
-    >
-      <Row gutter={[16, 16]}>
-        <Col xs={12} sm={12}>
-          <Form.Item
-            name="title"
-            label="作品标题"
-            rules={[
-              { required: true, message: '请输入作品标题' },
-              { max: 100, message: '标题不能超过100个字符' },
-            ]}
-          >
-            <Input
-              placeholder="请输入作品标题"
-              maxLength={100}
-              showCount
-            />
-          </Form.Item>
-        </Col>
-        <Col xs={12} sm={12}>
-          <Form.Item
-            name="type"
-            label="作品类型"
-            rules={[{ required: true, message: '请选择作品类型' }]}
-          >
-            <Select 
-              placeholder="请选择作品类型"
-              onChange={(value) => setWorkType(value)}
+      <Form
+        form={form}
+        layout="vertical"
+        requiredMark={false}
+        autoComplete="off"
+      >
+        <Row gutter={[16, 16]}>
+          <Col xs={12} sm={12}>
+            <Form.Item
+              name="title"
+              label="作品标题"
+              rules={[
+                { required: true, message: '请输入作品标题' },
+                { max: 100, message: '标题不能超过100个字符' },
+              ]}
+              validateStatus={formErrors.title ? 'error' : ''}
+              help={formErrors.title}
             >
-              <Option value="photo">图片</Option>
-              <Option value="video">视频</Option>
-            </Select>
-          </Form.Item>
-        </Col>
-        <Col xs={12} sm={12}>
-          <Form.Item
-            name="weddingDate"
-            label="婚礼日期"
-            rules={[{  message: '请选择婚礼日期' }]}
-          >
-            <DatePicker
-              placeholder="请选择婚礼日期"
-              style={{ width: '100%' }}
-              disabledDate={(current) => current && current > dayjs().endOf('day')}
-            />
-          </Form.Item>
-        </Col>
-        <Col xs={12} sm={12}>
-          <Form.Item
-            name="customer"
-            label="客户姓名"
-            rules={[{message: '请输入客户姓名' }]}
-          >
-            <Input
-              placeholder="请输入客户姓名"
-              maxLength={50}
-            />
-          </Form.Item>
-        </Col>
-      </Row>
+              <Input
+                placeholder="请输入作品标题"
+                maxLength={100}
+                showCount
+                onChange={() => {
+                  // 清除标题错误
+                  setFormErrors(prev => {
+                    const newErrors = { ...prev };
+                    delete newErrors.title;
+                    return newErrors;
+                  });
+                }}
+              />
+            </Form.Item>
+          </Col>
+          <Col xs={12} sm={12}>
+            <Form.Item
+              name="type"
+              label="作品类型"
+              rules={[{ required: true, message: '请选择作品类型' }]}
+              validateStatus={formErrors.type ? 'error' : ''}
+              help={formErrors.type}
+            >
+              <Select 
+                placeholder="请选择作品类型"
+                onChange={(value) => {
+                  setWorkType(value);
+                  // 清除类型错误
+                  setFormErrors(prev => {
+                    const newErrors = { ...prev };
+                    delete newErrors.type;
+                    return newErrors;
+                  });
+                }}
+              >
+                <Option value="photo">图片</Option>
+                <Option value="video">视频</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col xs={12} sm={12}>
+            <Form.Item
+              name="weddingDate"
+              label="婚礼日期"
+            >
+              <DatePicker
+                placeholder="请选择婚礼日期"
+                style={{ width: '100%' }}
+                disabledDate={(current) => current && current > dayjs().endOf('day')}
+              />
+            </Form.Item>
+          </Col>
+          <Col xs={12} sm={12}>
+            <Form.Item
+              name="customer"
+              label="客户姓名"
+            >
+              <Input
+                placeholder="请输入客户姓名"
+                maxLength={50}
+              />
+            </Form.Item>
+          </Col>
+        </Row>
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={24}>
-          <Form.Item
-            label="作品标签"
-          >
-            <Space direction="vertical" style={{ width: '100%' }}>
-              <Space wrap>
-                {tags.map((tag) => (
-                  <Tag
-                    key={tag}
-                    closable
-                    onClose={() => removeTag(tag)}
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={24}>
+            <Form.Item label="作品标签">
+              <Space direction="vertical" style={{ width: '100%' }}>
+                <Space wrap>
+                  {tags.map((tag) => (
+                    <Tag
+                      key={tag}
+                      closable
+                      onClose={() => removeTag(tag)}
+                    >
+                      {tag}
+                    </Tag>
+                  ))}
+                </Space>
+
+                <Space.Compact style={{ width: '100%' }}>
+                  <Input
+                    placeholder="输入标签"
+                    value={customTag}
+                    onChange={(e) => setCustomTag(e.target.value)}
+                    onPressEnter={addTag}
+                    maxLength={20}
+                  />
+                  <Button
+                    type="primary"
+                    onClick={addTag}
+                    disabled={!customTag || tags.includes(customTag)}
                   >
-                    {tag}
-                  </Tag>
-                ))}
+                    添加
+                  </Button>
+                </Space.Compact>
               </Space>
+            </Form.Item>
+          </Col>
+        </Row>
 
-              <Space.Compact style={{ width: '100%' }}>
-                <Input
-                  placeholder="输入标签"
-                  value={customTag}
-                  onChange={(e) => setCustomTag(e.target.value)}
-                  onPressEnter={addTag}
-                  maxLength={20}
-                />
-                <Button
-                  type="primary"
-                  onClick={addTag}
-                  disabled={!customTag || tags.includes(customTag)}
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={24}>
+            <Form.Item
+              name="description"
+              label="作品描述"
+              rules={[
+                { max: 500, message: '描述不能超过500个字符' },
+              ]}
+            >
+              <TextArea
+                placeholder="请输入作品描述"
+                rows={4}
+                maxLength={500}
+                showCount
+              />
+            </Form.Item>
+          </Col>
+        </Row>
+
+        {workType === 'video' ? (
+          <>
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={24}>
+                <Form.Item
+                  label="视频文件"
+                  required
+                  validateStatus={formErrors.media || formErrors.video ? 'error' : ''}
+                  help={formErrors.media || formErrors.video}
                 >
-                  添加
-                </Button>
-              </Space.Compact>
-            </Space>
-          </Form.Item>
-        </Col>
-
-      </Row>
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={24}>
-          <Form.Item
-            name="description"
-            label="作品描述"
-            rules={[
-              { message: '请输入作品描述' },
-              { max: 500, message: '描述不能超过500个字符' },
-            ]}
-          >
-            <TextArea
-              placeholder="请输入作品描述"
-              rows={4}
-              maxLength={500}
-              showCount
-            />
-          </Form.Item>
-        </Col>
-      </Row>
-
-      {workType === 'video' ? (
-        <>
+                  <div className="mb-4">
+                    <MediaUploader
+                      config={{
+                        accept: ['video/*'],
+                        multiple: false,
+                        maxCount: 1,
+                        category: 'work'
+                      }}
+                      onUploadSuccess={handleMediaUploadSuccess}
+                      onUploadError={handleMediaUploadError}
+                    />
+                  </div>
+                  {mediaFiles.length > 0 && (
+                    <MediaList
+                      files={mediaFiles}
+                      onRemove={handleMediaRemove}
+                    />
+                  )}
+                  {fileList.length > 0 && (
+                    <Upload
+                      listType="picture-card"
+                      fileList={fileList}
+                      onChange={handleChange}
+                      customRequest={handleUpload}
+                      beforeUpload={beforeUpload}
+                      multiple={false}
+                      accept="video/*"
+                      showUploadList={{ showPreviewIcon: true, showRemoveIcon: true }}
+                    >
+                      {fileList.length >= 1 ? null : uploadButton}
+                    </Upload>
+                  )}
+                  <div style={{ color: 'var(--admin-text-secondary)', fontSize: 12, marginTop: 8 }}>
+                    支持视频格式，单个文件不超过10MB
+                  </div>
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={24}>
+                <Form.Item
+                  label="视频封面图片"
+                  required
+                  validateStatus={formErrors.cover ? 'error' : ''}
+                  help={formErrors.cover}
+                >
+                  <Space direction="vertical" style={{ width: '100%' }}>
+                    <Space wrap>
+                      <Button
+                        type="primary"
+                        icon={<ScissorOutlined />}
+                        onClick={openCoverSelection}
+                        disabled={fileList.length === 0 && mediaFiles.length === 0}
+                        loading={extractingFrames}
+                      >
+                        智能选择封面
+                      </Button>
+                      <span style={{ color: 'var(--admin-text-secondary)', fontSize: 12 }}>
+                        从视频帧或相册图片中选择封面
+                      </span>
+                    </Space>
+                    
+                    <div className="mb-4">
+                      <MediaUploader
+                        config={{
+                          accept: ['image/*'],
+                          multiple: false,
+                          maxCount: 1,
+                          category: 'cover'
+                        }}
+                        onUploadSuccess={handleCoverUploadSuccess}
+                        onUploadError={handleMediaUploadError}
+                      />
+                    </div>
+                    {coverMediaFiles.length > 0 && (
+                      <MediaList
+                        files={coverMediaFiles}
+                        onRemove={handleCoverRemove}
+                      />
+                    )}
+                    {coverFileList.length > 0 && (
+                      <Upload
+                        listType="picture-card"
+                        fileList={coverFileList}
+                        onChange={handleCoverChange}
+                        customRequest={handleUpload}
+                        beforeUpload={beforeCoverUpload}
+                        multiple={false}
+                        accept="image/*"
+                        showUploadList={{ showPreviewIcon: true, showRemoveIcon: true }}
+                      >
+                        {coverFileList.length >= 1 ? null : uploadButton}
+                      </Upload>
+                    )}
+                    
+                    <div style={{ color: 'var(--admin-text-secondary)', fontSize: 12 }}>
+                      视频作品必须上传封面图片，支持图片格式，单个文件不超过10MB
+                    </div>
+                  </Space>
+                </Form.Item>
+              </Col>
+            </Row>
+          </>
+        ) : (
           <Row gutter={[16, 16]}>
             <Col xs={24} sm={24}>
               <Form.Item
-                label="视频文件"
+                label="作品文件"
                 required
+                validateStatus={formErrors.media ? 'error' : ''}
+                help={formErrors.media}
               >
                 <div className="mb-4">
-                   <MediaUploader
-                     config={{
-                       accept: ['video/*'],
-                       multiple: false,
-                       maxCount: 1,
-                       category: 'work'
-                     }}
-                     onUploadSuccess={handleMediaUploadSuccess}
-                     onUploadError={handleMediaUploadError}
-                   />
-                 </div>
+                  <MediaUploader
+                    config={{
+                      accept: ['image/*', 'video/*'],
+                      multiple: true,
+                      maxCount: 10,
+                      category: 'work'
+                    }}
+                    onUploadSuccess={handleMediaUploadSuccess}
+                    onUploadError={handleMediaUploadError}
+                  />
+                </div>
                 {mediaFiles.length > 0 && (
                   <MediaList
                     files={mediaFiles}
                     onRemove={handleMediaRemove}
                   />
                 )}
-                {/* 保留原有Upload组件以兼容现有数据 */}
-                {fileList.length > 0 && (
-                  <Upload
-                    listType="picture-card"
-                    fileList={fileList}
-                    onChange={handleChange}
-                    customRequest={handleUpload}
-                    beforeUpload={beforeUpload}
-                    multiple={false}
-                    accept="video/*"
-                    showUploadList={{ showPreviewIcon: true, showRemoveIcon: true }}
-                  >
-                    {fileList.length >= 1 ? null : uploadButton}
-                  </Upload>
-                )}
                 <div style={{ color: 'var(--admin-text-secondary)', fontSize: 12, marginTop: 8 }}>
-                  支持视频格式，单个文件不超过10MB
+                  支持图片和视频格式，单个文件不超过10MB，最多上传10个文件
                 </div>
               </Form.Item>
             </Col>
           </Row>
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={24}>
-              <Form.Item
-                label="视频封面图片"
-                required
-              >
-                <Space direction="vertical" style={{ width: '100%' }}>
-                  <Space wrap>
-                    <Button
-                      type="primary"
-                      icon={<ScissorOutlined />}
-                      onClick={openCoverSelection}
-                      disabled={fileList.length === 0 && mediaFiles.length === 0}
-                      loading={extractingFrames}
-                    >
-                      智能选择封面
-                    </Button>
-                    <span style={{ color: 'var(--admin-text-secondary)', fontSize: 12 }}>
-                      从视频帧或相册图片中选择封面
-                    </span>
-                  </Space>
-                  
-                  <div className="mb-4">
-                     <MediaUploader
-                       config={{
-                         accept: ['image/*'],
-                         multiple: false,
-                         maxCount: 1,
-                         category: 'cover'
-                       }}
-                       onUploadSuccess={handleCoverUploadSuccess}
-                       onUploadError={handleMediaUploadError}
-                     />
-                   </div>
-                  {coverMediaFiles.length > 0 && (
-                    <MediaList
-                      files={coverMediaFiles}
-                      onRemove={handleCoverRemove}
-                    />
-                  )}
-                  {/* 保留原有Upload组件以兼容现有数据 */}
-                  {coverFileList.length > 0 && (
-                    <Upload
-                      listType="picture-card"
-                      fileList={coverFileList}
-                      onChange={handleCoverChange}
-                      customRequest={handleUpload}
-                      beforeUpload={beforeCoverUpload}
-                      multiple={false}
-                      accept="image/*"
-                      showUploadList={{ showPreviewIcon: true, showRemoveIcon: true }}
-                    >
-                      {coverFileList.length >= 1 ? null : uploadButton}
-                    </Upload>
-                  )}
-                  
-                  <div style={{ color: 'var(--admin-text-secondary)', fontSize: 12 }}>
-                    视频作品必须上传封面图片，支持图片格式，单个文件不超过10MB
-                  </div>
-                </Space>
-              </Form.Item>
-            </Col>
-          </Row>
-        </>
-      ) : (
+        )}
+
         <Row gutter={[16, 16]}>
-          <Col xs={24} sm={24}>
+          <Col xs={12} sm={12}>
             <Form.Item
-              label="作品文件"
-              required
+              name="isPublic"
+              label="公开作品"
+              valuePropName="checked"
             >
-              <div className="mb-4">
-                 <MediaUploader
-                   config={{
-                     accept: ['image/*', 'video/*'],
-                     multiple: true,
-                     maxCount: 10,
-                     category: 'work'
-                   }}
-                   onUploadSuccess={handleMediaUploadSuccess}
-                   onUploadError={handleMediaUploadError}
-                 />
-               </div>
-              {mediaFiles.length > 0 && (
-                <MediaList
-                  files={mediaFiles}
-                  onRemove={handleMediaRemove}
-                />
-              )}
-              {/* 保留原有Upload组件以兼容现有数据 */}
-              {fileList.length > 0 && (
-                <Upload
-                  listType="picture-card"
-                  fileList={fileList}
-                  onChange={handleChange}
-                  customRequest={handleUpload}
-                  beforeUpload={beforeUpload}
-                  multiple={true}
-                  accept="image/*,video/*"
-                  showUploadList={{ showPreviewIcon: true, showRemoveIcon: true }}
-                >
-                  {fileList.length >= 10 ? null : uploadButton}
-                </Upload>
-              )}
-              <div style={{ color: 'var(--admin-text-secondary)', fontSize: 12, marginTop: 8 }}>
-                支持图片和视频格式，单个文件不超过10MB，最多上传10个文件
-              </div>
+              <Switch />
+            </Form.Item>
+          </Col>
+          <Col xs={12} sm={12}>
+            <Form.Item
+              name="isFeatured"
+              label="设为精选"
+              valuePropName="checked"
+            >
+              <Switch />
             </Form.Item>
           </Col>
         </Row>
-      )}
-      <Row gutter={[16, 16]}>
-        <Col xs={12} sm={12}>
 
-          <Form.Item
-            name="isPublic"
-            label="公开作品"
-            valuePropName="checked"
-          >
-            <Switch  />
-          </Form.Item>
-        </Col>
-        <Col xs={12} sm={12}>
-          <Form.Item
-            name="isFeatured"
-            label="设为精选"
-            valuePropName="checked"
-          >
-            <Switch />
-          </Form.Item>
-        </Col>
-      </Row>
+        <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
+          <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+            <Button onClick={onCancel}>
+              取消
+            </Button>
+            <Button
+              type="primary"
+              onClick={handleSubmit}
+              loading={loading || uploading}
+              disabled={!canSubmit()}
+            >
+              {isEdit ? '更新' : '创建'}
+            </Button>
+          </Space>
+        </Form.Item>
+      </Form>
 
-      <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
-        <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-          <Button onClick={onCancel}>
-            取消
-          </Button>
-          <Button
-            type="primary"
-            onClick={handleSubmit}
-            loading={loading || uploading}
-            disabled={
-              workType === 'video' 
-                ? (fileList.length === 0 || coverFileList.length === 0)
-                : fileList.length === 0
-            }
-          >
-            {isEdit ? '更新' : '创建'}
-          </Button>
-        </Space>
-      </Form.Item>
-    </Form>
+      {/* 隐藏的视频和画布元素用于帧提取 */}
+      <video ref={videoRef} style={{ display: 'none' }} />
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
 
-    {/* 隐藏的视频和画布元素用于帧提取 */}
-    <video ref={videoRef} style={{ display: 'none' }} />
-    <canvas ref={canvasRef} style={{ display: 'none' }} />
-
-    {/* 封面选择模态框 */}
-    <Modal
-      title="选择视频封面"
-      open={coverSelectionVisible}
-      onCancel={() => setCoverSelectionVisible(false)}
-      footer={null}
-      width={800}
-      style={{ top: 20 }}
-    >
-      <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-        {/* 视频帧选择 */}
-        <div style={{ marginBottom: 24 }}>
-          <h4 style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-            <VideoCameraOutlined />
-            从视频帧中选择
-          </h4>
-          {extractingFrames ? (
-            <div style={{ textAlign: 'center', padding: 40 }}>
-              <Button loading>正在提取视频帧...</Button>
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 12 }}>
-              {videoFrames.map((frame, index) => (
-                <div
-                  key={index}
-                  style={{
-                    cursor: 'pointer',
-                    border: '2px solid transparent',
-                    borderRadius: 8,
-                    overflow: 'hidden',
-                    transition: 'all 0.3s ease',
-                  }}
-                  onClick={() => selectVideoFrame(frame)}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = '#1890ff';
-                    e.currentTarget.style.transform = 'scale(1.05)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'transparent';
-                    e.currentTarget.style.transform = 'scale(1)';
-                  }}
-                >
-                  <Image
-                    src={frame}
-                    alt={`Frame ${index + 1}`}
-                    style={{ width: '100%', height: 80, objectFit: 'cover' }}
-                    preview={false}
-                  />
-                  <div style={{ textAlign: 'center', padding: '4px 0', fontSize: 12, color: '#666' }}>
-                    帧 {index + 1}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <Divider />
-
-        {/* 相册图片选择 */}
-        <div>
-          <h4 style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-            <PictureOutlined />
-            从相册图片中选择
-          </h4>
-          {fileList.filter(file => file.type?.startsWith('image/')).length > 0 ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 12 }}>
-              {fileList
-                .filter(file => file.type?.startsWith('image/'))
-                .map((imageFile) => (
+      {/* 封面选择模态框 */}
+      <Modal
+        title="选择视频封面"
+        open={coverSelectionVisible}
+        onCancel={() => setCoverSelectionVisible(false)}
+        footer={null}
+        width={800}
+        style={{ top: 20 }}
+      >
+        <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+          {/* 视频帧选择 */}
+          <div style={{ marginBottom: 24 }}>
+            <h4 style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+              <VideoCameraOutlined />
+              从视频帧中选择
+            </h4>
+            {extractingFrames ? (
+              <div style={{ textAlign: 'center', padding: 40 }}>
+                <Button loading>正在提取视频帧...</Button>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 12 }}>
+                {videoFrames.map((frame, index) => (
                   <div
-                    key={imageFile.uid}
+                    key={index}
                     style={{
                       cursor: 'pointer',
                       border: '2px solid transparent',
@@ -904,7 +949,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
                       overflow: 'hidden',
                       transition: 'all 0.3s ease',
                     }}
-                    onClick={() => selectAlbumImage(imageFile)}
+                    onClick={() => selectVideoFrame(frame)}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.borderColor = '#1890ff';
                       e.currentTarget.style.transform = 'scale(1.05)';
@@ -915,27 +960,74 @@ const WorkForm: React.FC<WorkFormProps> = ({
                     }}
                   >
                     <Image
-                      src={imageFile.url || imageFile.response}
-                      alt={imageFile.name}
+                      src={frame}
+                      alt={`Frame ${index + 1}`}
                       style={{ width: '100%', height: 80, objectFit: 'cover' }}
                       preview={false}
                     />
                     <div style={{ textAlign: 'center', padding: '4px 0', fontSize: 12, color: '#666' }}>
-                      {imageFile.name}
+                      帧 {index + 1}
                     </div>
                   </div>
                 ))}
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>
-              当前作品中没有图片文件
-            </div>
-          )}
+              </div>
+            )}
+          </div>
+
+          <Divider />
+
+          {/* 相册图片选择 */}
+          <div>
+            <h4 style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+              <PictureOutlined />
+              从相册图片中选择
+            </h4>
+            {fileList.filter(file => file.type?.startsWith('image/')).length > 0 ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 12 }}>
+                {fileList
+                  .filter(file => file.type?.startsWith('image/'))
+                  .map((imageFile) => (
+                    <div
+                      key={imageFile.uid}
+                      style={{
+                        cursor: 'pointer',
+                        border: '2px solid transparent',
+                        borderRadius: 8,
+                        overflow: 'hidden',
+                        transition: 'all 0.3s ease',
+                      }}
+                      onClick={() => selectAlbumImage(imageFile)}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = '#1890ff';
+                        e.currentTarget.style.transform = 'scale(1.05)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = 'transparent';
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
+                    >
+                      <Image
+                        src={imageFile.url || imageFile.response}
+                        alt={imageFile.name}
+                        style={{ width: '100%', height: 80, objectFit: 'cover' }}
+                        preview={false}
+                      />
+                      <div style={{ textAlign: 'center', padding: '4px 0', fontSize: 12, color: '#666' }}>
+                        {imageFile.name}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>
+                当前作品中没有图片文件
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </Modal>
-   </>
-   );
+      </Modal>
+    </>
+  );
 };
 
 export default WorkForm;

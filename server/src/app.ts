@@ -6,6 +6,8 @@ import compression from 'compression';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec, swaggerUiOptions } from './config/swagger';
 
 import { config } from './config/config';
 import { logger } from './utils/logger';
@@ -106,18 +108,15 @@ class App {
     // API 路由
     this.app.use(apiPrefix, apiRoutes);
 
-    // API 文档路由（开发环境）
-    if (config.nodeEnv === 'development') {
-      this.app.get(`${apiPrefix}/docs`, (_req, res) => {
-        res.json({
-          message: 'API Documentation',
-          version: '1.0.0',
-          endpoints: {
-            api: `${apiPrefix}`,
-          },
-        });
-      });
-    }
+    // Swagger API 文档路由
+    this.app.use(`${apiPrefix}/docs`, swaggerUi.serve);
+    this.app.get(`${apiPrefix}/docs`, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
+    
+    // API 规范 JSON 端点
+    this.app.get(`${apiPrefix}/docs.json`, (_req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.send(swaggerSpec);
+    });
   }
 
   private initializeErrorHandling(): void {

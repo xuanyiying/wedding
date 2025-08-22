@@ -1,0 +1,372 @@
+name: Rollback Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment for rollback'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - production
+        - staging
+      rollback_to:
+        description: 'Rollback target (commit SHA, tag, or "previous")'
+        required: true
+        default: 'previous'
+        type: string
+      reason:
+        description: 'Reason for rollback'
+        required: true
+        type: string
+      skip_health_check:
+        description: 'Skip health checks after rollback'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+jobs:
+  rollback:
+    name: Rollback to Previous Version
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    environment:
+      name: ${{ github.event.inputs.environment }}
+      url: ${{ github.event.inputs.environment == 'staging' && 'https://staging.wedding.example.com' || 'https://wedding.example.com' }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Validate rollback target
+      id: validate
+      run: |
+        ROLLBACK_TO="${{ github.event.inputs.rollback_to }}"
+        
+        if [ "$ROLLBACK_TO" = "previous" ]; then
+          # Get the previous successful deployment commit
+          PREVIOUS_COMMIT=$(git log --oneline --grep="deploy:" --grep="deployment" -n 2 | tail -n 1 | cut -d' ' -f1)
+          if [ -z "$PREVIOUS_COMMIT" ]; then
+            echo "❌ Could not find previous deployment commit"
+            exit 1
+          fi
+          echo "target_commit=$PREVIOUS_COMMIT" >> $GITHUB_OUTPUT
+          echo "rollback_type=previous" >> $GITHUB_OUTPUT
+        elif git rev-parse --verify "$ROLLBACK_TO" >/dev/null 2>&1; then
+          echo "target_commit=$ROLLBACK_TO" >> $GITHUB_OUTPUT
+          echo "rollback_type=specific" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Invalid rollback target: $ROLLBACK_TO"
+          exit 1
+        fi
+        
+        echo "✅ Rollback target validated: $(echo $GITHUB_OUTPUT | grep target_commit | cut -d'=' -f2)"
+    
+    - name: Set environment variables
+      id: vars
+      run: |
+        ENV="${{ github.event.inputs.environment }}"
+        echo "environment=$ENV" >> $GITHUB_OUTPUT
+        
+        if [ "$ENV" = "staging" ]; then
+          echo "host=${{ secrets.STAGING_HOST }}" >> $GITHUB_OUTPUT
+          echo "user=${{ secrets.STAGING_USER }}" >> $GITHUB_OUTPUT
+          echo "key=${{ secrets.STAGING_SSH_KEY }}" >> $GITHUB_OUTPUT
+          echo "port=${{ secrets.STAGING_PORT || 22 }}" >> $GITHUB_OUTPUT
+          echo "deploy_path=/opt/wedding-staging" >> $GITHUB_OUTPUT
+          echo "compose_file=docker-compose.staging.yml" >> $GITHUB_OUTPUT
+          echo "health_url=https://staging.wedding.example.com" >> $GITHUB_OUTPUT
+        else
+          echo "host=${{ secrets.PROD_HOST }}" >> $GITHUB_OUTPUT
+          echo "user=${{ secrets.PROD_USER }}" >> $GITHUB_OUTPUT
+          echo "key=${{ secrets.PROD_SSH_KEY }}" >> $GITHUB_OUTPUT
+          echo "port=${{ secrets.PROD_PORT || 22 }}" >> $GITHUB_OUTPUT
+          echo "deploy_path=/opt/wedding-club" >> $GITHUB_OUTPUT
+          echo "compose_file=docker-compose.prod.yml" >> $GITHUB_OUTPUT
+          echo "health_url=https://wedding.example.com" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Create rollback record
+      id: rollback_record
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const deployment = await github.rest.repos.createDeployment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            ref: '${{ steps.validate.outputs.target_commit }}',
+            environment: '${{ steps.vars.outputs.environment }}',
+            description: 'Rollback deployment - ${{ github.event.inputs.reason }}',
+            auto_merge: false,
+            required_contexts: []
+          });
+          return deployment.data.id;
+    
+    - name: Update rollback status to in_progress
+      uses: actions/github-script@v7
+      with:
+        script: |
+          await github.rest.repos.createDeploymentStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            deployment_id: ${{ steps.rollback_record.outputs.result }},
+            state: 'in_progress',
+            description: 'Rollback in progress'
+          });
+    
+    - name: Notify rollback start
+      if: env.SLACK_WEBHOOK_URL != ''
+      run: |
+        curl -X POST -H 'Content-type: application/json' \
+          --data '{
+            "username": "Wedding Rollback Bot",
+            "icon_emoji": ":rewind:",
+            "text": ":rewind: *回滚开始*\n项目: Wedding Client\n环境: ${{ steps.vars.outputs.environment }}\n目标提交: ${{ steps.validate.outputs.target_commit }}\n原因: ${{ github.event.inputs.reason }}\n触发者: ${{ github.actor }}\n时间: $(date \"+%Y-%m-%d %H:%M:%S\")"
+          }' \
+          ${{ env.SLACK_WEBHOOK_URL }}
+    
+    - name: Create current state backup
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ steps.vars.outputs.host }}
+        username: ${{ steps.vars.outputs.user }}
+        key: ${{ steps.vars.outputs.key }}
+        port: ${{ steps.vars.outputs.port }}
+        script: |
+          cd ${{ steps.vars.outputs.deploy_path }}
+          
+          BACKUP_DIR="rollback-backups/$(date +%Y%m%d_%H%M%S)_pre_rollback"
+          mkdir -p "$BACKUP_DIR"
+          
+          echo "📦 Creating pre-rollback backup..."
+          
+          # Backup current configuration
+          if [ -f "deployment/${{ steps.vars.outputs.compose_file }}" ]; then
+            cp "deployment/${{ steps.vars.outputs.compose_file }}" "$BACKUP_DIR/docker-compose.yml"
+          fi
+          
+          # Backup current container status
+          docker-compose -f "deployment/${{ steps.vars.outputs.compose_file }}" ps > "$BACKUP_DIR/containers.txt" 2>/dev/null || true
+          
+          # Backup current images
+          docker images --format "table {{.Repository}}:{{.Tag}}\t{{.ID}}\t{{.CreatedAt}}" | grep wedding > "$BACKUP_DIR/images.txt" || true
+          
+          # Get current commit info
+          echo "Current deployment info:" > "$BACKUP_DIR/deployment_info.txt"
+          echo "Backup created: $(date)" >> "$BACKUP_DIR/deployment_info.txt"
+          echo "Rollback reason: ${{ github.event.inputs.reason }}" >> "$BACKUP_DIR/deployment_info.txt"
+          
+          echo "✅ Pre-rollback backup created at $BACKUP_DIR"
+    
+    - name: Execute rollback
+      id: execute_rollback
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ steps.vars.outputs.host }}
+        username: ${{ steps.vars.outputs.user }}
+        key: ${{ steps.vars.outputs.key }}
+        port: ${{ steps.vars.outputs.port }}
+        script: |
+          cd ${{ steps.vars.outputs.deploy_path }}
+          
+          echo "🔄 Starting rollback process..."
+          
+          # Find the target backup or configuration
+          TARGET_COMMIT="${{ steps.validate.outputs.target_commit }}"
+          
+          # Look for existing backups that match the target commit
+          ROLLBACK_SOURCE=""
+          if [ -d "backups" ]; then
+            # Try to find a backup with the target commit
+            for backup_dir in $(ls -t backups/); do
+              if [ -f "backups/$backup_dir/deployment_info.txt" ]; then
+                if grep -q "$TARGET_COMMIT" "backups/$backup_dir/deployment_info.txt" 2>/dev/null; then
+                  ROLLBACK_SOURCE="backups/$backup_dir"
+                  echo "📁 Found matching backup: $ROLLBACK_SOURCE"
+                  break
+                fi
+              fi
+            done
+          fi
+          
+          # If no specific backup found, use the most recent backup
+          if [ -z "$ROLLBACK_SOURCE" ] && [ -d "backups" ]; then
+            LATEST_BACKUP=$(ls -t backups/ | head -n 1)
+            if [ -n "$LATEST_BACKUP" ]; then
+              ROLLBACK_SOURCE="backups/$LATEST_BACKUP"
+              echo "📁 Using latest backup: $ROLLBACK_SOURCE"
+            fi
+          fi
+          
+          if [ -n "$ROLLBACK_SOURCE" ] && [ -f "$ROLLBACK_SOURCE/docker-compose.yml" ]; then
+            echo "🔄 Rolling back using backup configuration..."
+            
+            # Stop current services
+            echo "⏹️ Stopping current services..."
+            docker-compose -f "deployment/${{ steps.vars.outputs.compose_file }}" down || true
+            
+            # Restore configuration
+            echo "📋 Restoring configuration..."
+            cp "$ROLLBACK_SOURCE/docker-compose.yml" "deployment/${{ steps.vars.outputs.compose_file }}"
+            
+            # Start services with restored configuration
+            echo "🚀 Starting services with rollback configuration..."
+            docker-compose -f "deployment/${{ steps.vars.outputs.compose_file }}" up -d
+            
+            echo "✅ Rollback execution completed"
+          else
+            echo "❌ No suitable backup found for rollback"
+            echo "Available backups:"
+            ls -la backups/ 2>/dev/null || echo "No backups directory found"
+            exit 1
+          fi
+    
+    - name: Wait for services to stabilize
+      run: |
+        echo "⏳ Waiting for services to stabilize..."
+        sleep 60
+    
+    - name: Health check after rollback
+      id: health_check
+      if: github.event.inputs.skip_health_check != 'true'
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ steps.vars.outputs.host }}
+        username: ${{ steps.vars.outputs.user }}
+        key: ${{ steps.vars.outputs.key }}
+        port: ${{ steps.vars.outputs.port }}
+        script: |
+          cd ${{ steps.vars.outputs.deploy_path }}
+          
+          echo "🏥 Starting post-rollback health checks..."
+          
+          # Check service status
+          echo "📊 Service status:"
+          docker-compose -f "deployment/${{ steps.vars.outputs.compose_file }}" ps
+          
+          # Health check with retries
+          HEALTH_PASSED=false
+          for i in {1..5}; do
+            echo "Health check attempt $i/5..."
+            
+            if curl -f -m 10 http://localhost:8080/health 2>/dev/null && \
+               curl -f -m 10 http://localhost:3000/api/v1/health 2>/dev/null; then
+              echo "✅ Health checks passed"
+              HEALTH_PASSED=true
+              break
+            else
+              echo "❌ Health check failed, attempt $i/5"
+              if [ $i -lt 5 ]; then
+                sleep 30
+              fi
+            fi
+          done
+          
+          if [ "$HEALTH_PASSED" != "true" ]; then
+            echo "💥 Health checks failed after rollback"
+            echo "📋 Service logs:"
+            docker-compose -f "deployment/${{ steps.vars.outputs.compose_file }}" logs --tail=20
+            exit 1
+          fi
+          
+          echo "🎉 Rollback health checks completed successfully"
+    
+    - name: Update rollback status to success
+      if: success()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          await github.rest.repos.createDeploymentStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            deployment_id: ${{ steps.rollback_record.outputs.result }},
+            state: 'success',
+            description: 'Rollback completed successfully',
+            environment_url: '${{ steps.vars.outputs.health_url }}'
+          });
+    
+    - name: Update rollback status to failure
+      if: failure()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          await github.rest.repos.createDeploymentStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            deployment_id: ${{ steps.rollback_record.outputs.result }},
+            state: 'failure',
+            description: 'Rollback failed'
+          });
+    
+    - name: Notify rollback success
+      if: success()
+      run: |
+        curl -X POST -H 'Content-type: application/json' \
+          --data '{
+            "username": "Wedding Rollback Bot",
+            "icon_emoji": ":white_check_mark:",
+            "text": ":white_check_mark: *回滚成功*\n项目: Wedding Client\n环境: ${{ steps.vars.outputs.environment }}\n目标提交: ${{ steps.validate.outputs.target_commit }}\n原因: ${{ github.event.inputs.reason }}\n完成时间: $(date \"+%Y-%m-%d %H:%M:%S\")\n访问地址: ${{ steps.vars.outputs.health_url }}"
+          }' \
+          ${{ env.SLACK_WEBHOOK_URL }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    
+    - name: Notify rollback failure
+      if: failure()
+      run: |
+        curl -X POST -H 'Content-type: application/json' \
+          --data '{
+            "username": "Wedding Rollback Bot",
+            "icon_emoji": ":x:",
+            "text": ":x: *回滚失败*\n项目: Wedding Client\n环境: ${{ steps.vars.outputs.environment }}\n目标提交: ${{ steps.validate.outputs.target_commit }}\n原因: ${{ github.event.inputs.reason }}\n失败时间: $(date \"+%Y-%m-%d %H:%M:%S\")\n请立即检查服务状态并考虑手动干预"
+          }' \
+          ${{ env.SLACK_WEBHOOK_URL }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    
+    - name: Generate rollback report
+      if: always()
+      run: |
+        cat << EOF > rollback-report.md
+        # Rollback Report
+        
+        **Date:** $(date '+%Y-%m-%d %H:%M:%S UTC')
+        **Environment:** ${{ steps.vars.outputs.environment }}
+        **Target Commit:** ${{ steps.validate.outputs.target_commit }}
+        **Rollback Type:** ${{ steps.validate.outputs.rollback_type }}
+        **Reason:** ${{ github.event.inputs.reason }}
+        **Triggered By:** ${{ github.actor }}
+        **Workflow Run:** ${{ github.run_id }}
+        
+        ## Results
+        - **Rollback Execution:** ${{ steps.execute_rollback.outcome }}
+        - **Health Check:** ${{ steps.health_check.outcome || 'skipped' }}
+        - **Overall Status:** ${{ job.status }}
+        
+        ## Actions Taken
+        1. Pre-rollback backup created
+        2. Services stopped and configuration restored
+        3. Services restarted with previous configuration
+        ${{ steps.health_check.outcome != 'skipped' && '4. Health checks performed' || '4. Health checks skipped' }}
+        
+        ---
+        Generated by GitHub Actions Rollback Workflow
+        EOF
+        
+        echo "Rollback report generated:"
+        cat rollback-report.md
+    
+    - name: Upload rollback report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: rollback-report-${{ github.run_id }}
+        path: rollback-report.md
+        retention-days: 90

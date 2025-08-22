@@ -149,7 +149,7 @@ const MediaList: React.FC<MediaListProps> = ({
                       status="active"
                       format={(percent) => `${percent}%`}
                     />
-                    <span className="uploading-text">正在上传...</span>
+                    <span className="uploading-text">正在...</span>
                   </div>
                 )}
                 {fileItem.status === UploadStatus.SUCCESS && (

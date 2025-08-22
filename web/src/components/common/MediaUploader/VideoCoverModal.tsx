@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Modal, Button, Upload, Tabs, Slider, Image, message, Spin, Row, Col } from 'antd';
-import { UploadOutlined, PlayCircleOutlined, PauseCircleOutlined, ReloadOutlined, DragOutlined } from '@ant-design/icons';
+import { Modal, Button, Upload, Slider, message, Spin, Alert } from 'antd';
+import { UploadOutlined, PlayCircleOutlined, PauseCircleOutlined, ReloadOutlined, DragOutlined, ExclamationCircleOutlined, CameraOutlined } from '@ant-design/icons';
 import type { VideoCoverSelection } from './types';
 import { VideoFrameExtractor, type VideoFrame } from '../../../utils/video-frame-extractor';
+import { authManager } from '../../../utils/auth-manager';
 import './VideoCoverModal.scss';
 
 interface VideoCoverModalProps {
@@ -18,57 +19,120 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
   onCancel,
   onConfirm
 }) => {
-  const [activeTab, setActiveTab] = useState<'frame' | 'upload'>('frame');
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string>('');
-  const [selectedFrame, setSelectedFrame] = useState<VideoFrame | null>(null);
-  const [uploadedCover, setUploadedCover] = useState<File | null>(null);
+  const [selectedCover, setSelectedCover] = useState<{ type: 'frame' | 'upload', data: VideoFrame | File } | null>(null);
   const [uploadedCoverUrl, setUploadedCoverUrl] = useState<string>('');
   const [extractedFrames, setExtractedFrames] = useState<VideoFrame[]>([]);
   const [isExtracting, setIsExtracting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [isFrameDragging, setIsFrameDragging] = useState(false);
-  const [dragStartFrame, setDragStartFrame] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [showUploadModal, setShowUploadModal] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const extractorRef = useRef<VideoFrameExtractor | null>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
-  const framesGridRef = useRef<HTMLDivElement>(null);
+  const blobUrlsRef = useRef<Set<string>>(new Set());
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  // 初始化视频
+  // 初始化视频和清理资源
   useEffect(() => {
     if (videoFile && visible) {
-      const url = URL.createObjectURL(videoFile);
-      setVideoUrl(url);
-      initializeExtractor();
-      
-      return () => {
-        URL.revokeObjectURL(url);
-        if (extractorRef.current) {
-          extractorRef.current.destroy();
-          extractorRef.current = null;
-        }
-      };
+      initializeVideo();
     }
+    
+    return () => {
+      cleanupResources();
+    };
   }, [videoFile, visible]);
+
+  // 组件卸载时清理
+  useEffect(() => {
+    return () => {
+      cleanupResources();
+    };
+  }, []);
+
+  const initializeVideo = async () => {
+    try {
+      setError(null);
+      setLoading(true);
+      
+      // 清理之前的资源
+      cleanupResources();
+      
+      // 创建新的 AbortController
+      abortControllerRef.current = new AbortController();
+      
+      // 创建视频 URL
+      const url = URL.createObjectURL(videoFile!);
+      blobUrlsRef.current.add(url);
+      setVideoUrl(url);
+      
+      // 初始化提取器
+      await initializeExtractor();
+      
+    } catch (error) {
+      console.error('视频初始化失败:', error);
+      setError(error instanceof Error ? error.message : '视频初始化失败');
+      message.error('视频初始化失败');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const initializeExtractor = async () => {
     if (!videoFile) return;
     
     try {
-      if (!extractorRef.current) {
-        extractorRef.current = new VideoFrameExtractor();
+      // 销毁旧的提取器
+      if (extractorRef.current) {
+        extractorRef.current.destroy();
       }
-      // const metadata = await extractorRef.current.getVideoMetadata(videoFile);
-      // setVideoMetadata(metadata);
-      // console.log('Video Metadata:', metadata);
+      
+      // 创建新的提取器
+      extractorRef.current = new VideoFrameExtractor();
+      
     } catch (error) {
-      console.error('Failed to get video metadata:', error);
-      message.error('获取视频信息失败');
+      console.error('提取器初始化失败:', error);
+      throw new Error('视频帧提取器初始化失败');
+    }
+  };
+
+  const cleanupResources = () => {
+    // 取消正在进行的操作
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    
+    // 清理视频 URL
+    blobUrlsRef.current.forEach(url => {
+      URL.revokeObjectURL(url);
+    });
+    blobUrlsRef.current.clear();
+    
+    // 清理提取器
+    if (extractorRef.current) {
+      extractorRef.current.destroy();
+      extractorRef.current = null;
+    }
+    
+    // 清理已提取的帧
+    extractedFrames.forEach(frame => {
+      if ((frame as any).dispose) {
+        (frame as any).dispose();
+      }
+    });
+    
+    // 清理上传的封面 URL
+    if (uploadedCoverUrl) {
+      URL.revokeObjectURL(uploadedCoverUrl);
     }
   };
 
@@ -77,42 +141,64 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
     if (videoRef.current) {
       setDuration(videoRef.current.duration);
       setCurrentTime(0);
-      // 自动提取一些关键帧
+      // 自动提取关键帧
       extractKeyFrames();
     }
   };
 
-  // 提取关键帧
+  // 提取关键帧（优化版本 - 快速生成缩略图）
   const extractKeyFrames = async () => {
-    if (!videoFile) return;
+    if (!videoFile || !extractorRef.current) return;
     
     setIsExtracting(true);
+    setError(null);
+    
     try {
-      if (!extractorRef.current) {
-        extractorRef.current = new VideoFrameExtractor();
+      // 检查是否被取消
+      if (abortControllerRef.current?.signal.aborted) {
+        throw new Error('操作已取消');
       }
       
+      // 清理之前的帧
+      extractedFrames.forEach(frame => {
+        if ((frame as any).dispose) {
+          (frame as any).dispose();
+        }
+      });
+      setExtractedFrames([]);
+      
+      // 优化参数：生成8个关键帧，小尺寸快速加载
       const frames = await extractorRef.current.extractFrames(videoFile, {
         frameCount: 8,
-        quality: 0.8,
+        quality: 0.6, // 适中质量保证清晰度
         format: 'image/jpeg',
-        maxWidth: 160,
-        maxHeight: 90,
+        maxWidth: 200, // 增加尺寸提升清晰度
+        maxHeight: 112, // 16:9 比例
+        startTime: 0.5, // 跳过开头可能的黑屏
+        endTime: undefined // 使用完整视频长度
       });
       
-      setExtractedFrames(frames);
-      if (frames.length > 0) {
-        setSelectedFrame(frames[0]);
+      if (frames.length === 0) {
+        throw new Error('未能提取到任何视频帧');
       }
+      
+      setExtractedFrames(frames);
+      // 默认选择中间的帧
+      const middleIndex = Math.floor(frames.length / 2);
+      handleFrameSelect(frames[middleIndex]);
+      
+      setRetryCount(0);
+      message.success(`成功生成 ${frames.length} 个缩略图`);
+      
     } catch (error) {
       console.error('提取视频帧失败:', error);
-      message.error('提取视频帧失败');
+      const errorMessage = error instanceof Error ? error.message : '提取视频帧失败';
+      setError(errorMessage);
+      message.error(`生成缩略图失败: ${errorMessage}`);
     } finally {
       setIsExtracting(false);
     }
   };
-
-  // 跳转到指定时间
 
   // 播放/暂停
   const togglePlay = () => {
@@ -136,9 +222,8 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     setIsDragging(true);
-    // setDragStartTime(currentTime);
     e.preventDefault();
-  }, [currentTime]);
+  }, []);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isDragging || !sliderRef.current || !videoRef.current) return;
@@ -151,94 +236,6 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
     setCurrentTime(newTime);
     videoRef.current.currentTime = newTime;
   }, [isDragging, duration]);
-
-  // 帧拖拽处理
-  const handleFrameMouseDown = useCallback((e: React.MouseEvent, frameIndex: number) => {
-    setIsFrameDragging(true);
-    setDragStartFrame(frameIndex);
-    e.preventDefault();
-  }, []);
-
-  const handleFrameMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isFrameDragging || !framesGridRef.current || dragStartFrame === null) return;
-    
-    const target = e.target as HTMLElement;
-    const frameElement = target.closest('.frame-item');
-    if (frameElement) {
-      const frameIndex = parseInt(frameElement.getAttribute('data-frame-index') || '0');
-      if (frameIndex !== dragStartFrame) {
-        // 可以在这里添加视觉反馈，比如高亮显示拖拽路径上的帧
-      }
-    }
-  }, [isFrameDragging, dragStartFrame]);
-
-  const handleFrameMouseUp = useCallback((e: React.MouseEvent) => {
-    if (!isFrameDragging || dragStartFrame === null) return;
-    
-    const target = e.target as HTMLElement;
-    const frameElement = target.closest('.frame-item');
-    if (frameElement) {
-      const frameIndex = parseInt(frameElement.getAttribute('data-frame-index') || '0');
-      if (frameIndex < extractedFrames.length) {
-        setSelectedFrame(extractedFrames[frameIndex]);
-        message.success('已选择视频帧作为封面');
-      }
-    }
-    
-    setIsFrameDragging(false);
-    setDragStartFrame(null);
-  }, [isFrameDragging, dragStartFrame, extractedFrames]);
-
-  useEffect(() => {
-    if (isFrameDragging) {
-      const handleGlobalFrameMouseMove = (e: MouseEvent) => {
-        if (!framesGridRef.current || dragStartFrame === null) return;
-        
-        const target = e.target as HTMLElement;
-        const frameElement = target.closest('.frame-item');
-        if (frameElement) {
-          const frameIndex = parseInt(frameElement.getAttribute('data-frame-index') || '0');
-          // 添加视觉反馈
-          document.querySelectorAll('.frame-item').forEach((item, index) => {
-            const element = item as HTMLElement;
-            if (index >= Math.min(dragStartFrame, frameIndex) && index <= Math.max(dragStartFrame, frameIndex)) {
-              element.classList.add('drag-selected');
-            } else {
-              element.classList.remove('drag-selected');
-            }
-          });
-        }
-      };
-
-      const handleGlobalFrameMouseUp = (e: MouseEvent) => {
-        const target = e.target as HTMLElement;
-        const frameElement = target.closest('.frame-item');
-        if (frameElement) {
-          const frameIndex = parseInt(frameElement.getAttribute('data-frame-index') || '0');
-          if (frameIndex < extractedFrames.length) {
-            setSelectedFrame(extractedFrames[frameIndex]);
-            message.success('已选择视频帧作为封面');
-          }
-        }
-        
-        // 清除所有拖拽选择状态
-        document.querySelectorAll('.frame-item').forEach(item => {
-          item.classList.remove('drag-selected');
-        });
-        
-        setIsFrameDragging(false);
-        setDragStartFrame(null);
-      };
-
-      document.addEventListener('mousemove', handleGlobalFrameMouseMove);
-      document.addEventListener('mouseup', handleGlobalFrameMouseUp);
-
-      return () => {
-        document.removeEventListener('mousemove', handleGlobalFrameMouseMove);
-        document.removeEventListener('mouseup', handleGlobalFrameMouseUp);
-      };
-    }
-  }, [isFrameDragging, dragStartFrame, extractedFrames]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -272,73 +269,161 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
     }
   }, [isDragging, duration]);
 
-  // 捕获当前帧
+  // 捕获当前帧（优化版本）
   const captureCurrentFrame = async () => {
-    if (!videoFile || !extractorRef.current) return;
+    if (!videoFile || !extractorRef.current) {
+      message.error('视频未准备就绪');
+      return;
+    }
     
     setLoading(true);
+    setError(null);
+    
     try {
-      const frame = await extractorRef.current.extractFrameAtTime(
-        currentTime,
-        0.8,
-        'image/jpeg'
-      );
-      setSelectedFrame(frame);
-      message.success('已捕获当前帧');
+      // 检查是否被取消
+      if (abortControllerRef.current?.signal.aborted) {
+        throw new Error('操作已取消');
+      }
+      
+      const frame = await extractorRef.current.extractSingleFrame(videoFile, currentTime, {
+        quality: 0.6,
+        format: 'image/jpeg',
+        maxWidth: 200,
+        maxHeight: 112
+      });
+      
+      handleFrameSelect(frame);
+      message.success(`已捕获 ${formatTime(currentTime)} 时刻的帧`);
+      
     } catch (error) {
-      console.error('Failed to capture current frame:', error);
-      message.error('捕获当前帧失败');
+      console.error('捕获当前帧失败:', error);
+      const errorMessage = error instanceof Error ? error.message : '捕获当前帧失败';
+      setError(errorMessage);
+      message.error(`捕获当前帧失败: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
   };
 
   const handleFrameSelect = (frame: VideoFrame) => {
-    setSelectedFrame(frame);
+    setSelectedCover({ type: 'frame', data: frame });
+    message.success('已选择视频帧作为封面');
   };
 
   // 上传封面图片
   const handleCoverUpload = (file: File) => {
     const url = URL.createObjectURL(file);
-    setUploadedCover(file);
     setUploadedCoverUrl(url);
+    setSelectedCover({ type: 'upload', data: file });
+    setShowUploadModal(false);
+    message.success('已选择上传的图片作为封面');
     return false; // 阻止自动上传
   };
 
-  // 确认选择
-  const handleConfirm = () => {
-    if (activeTab === 'frame' && selectedFrame) {
-      // 将VideoFrame转换为File
-      const coverFile = new File([selectedFrame.blob], `cover_${Date.now()}.jpg`, {
-        type: 'image/jpeg',
-      });
+  // 打开相册选择
+  const handleOpenAlbum = () => {
+    setShowUploadModal(true);
+  };
+
+  // 确认选择（优化版本）
+  const handleConfirm = async () => {
+    try {
+      if (!selectedCover) {
+        message.warning('请选择一个封面');
+        return;
+      }
+
+      // 验证认证状态
+      const isAuthenticated = await authManager.validateAuth();
+      if (!isAuthenticated) {
+        console.warn('⚠️ 认证状态可能无效，但继续尝试操作');
+      }
+
+      if (selectedCover.type === 'frame') {
+        const frame = selectedCover.data as VideoFrame;
+        // 验证选中的帧
+        if (!frame.blob || frame.blob.size === 0) {
+          message.error('选中的视频帧无效，请重新选择');
+          return;
+        }
+        
+        // 将VideoFrame转换为File
+        const coverFile = new File([frame.blob], `cover_${Date.now()}.jpg`, {
+          type: 'image/jpeg',
+          lastModified: Date.now()
+        });
+        
+        const selection: VideoCoverSelection = {
+          videoFile: videoFile!,
+          coverType: 'frame',
+          coverFile,
+          selectedFrame: frame,
+          frameTime: frame.time
+        };
+        
+        onConfirm(selection);
+        
+      } else if (selectedCover.type === 'upload') {
+        const file = selectedCover.data as File;
+        // 验证上传的封面
+        if (file.size === 0) {
+          message.error('上传的封面文件无效，请重新上传');
+          return;
+        }
+        
+        const selection: VideoCoverSelection = {
+          videoFile: videoFile!,
+          coverType: 'upload',
+          coverFile: file
+        };
+        
+        onConfirm(selection);
+      }
+    } catch (error: any) {
+      console.error('确认选择时出错:', error);
       
-      onConfirm({
-        videoFile: videoFile!,
-        coverType: 'frame',
-        coverFile,
-        frameTime: selectedFrame.time
-      });
-    } else if (activeTab === 'upload' && uploadedCover) {
-      onConfirm({
-        videoFile: videoFile!,
-        coverType: 'upload',
-        coverFile: uploadedCover
-      });
-    } else {
-      message.warning('请选择封面');
+      // 检查是否是认证相关错误
+      if (error?.response?.status === 401) {
+        console.log('🔐 检测到401错误，使用认证管理器处理');
+        const canRetry = await authManager.handle401Error(error);
+        
+        if (canRetry) {
+          message.warning('认证状态已更新，请重试');
+          return;
+        } else {
+          message.error('登录已过期，请重新登录后再试');
+          return;
+        }
+      }
+      
+      // 其他错误
+      const errorMessage = error?.message || error?.response?.data?.message || '确认选择失败，请重试';
+      message.error(errorMessage);
     }
   };
 
-  // 重置状态
+  // 重置状态和清理资源
   const handleCancel = () => {
-    setActiveTab('frame');
+    // 停止视频播放
+    if (videoRef.current) {
+      videoRef.current.pause();
+    }
+    
+    // 清理资源
+    cleanupResources();
+    
+    // 重置状态
     setCurrentTime(0);
     setIsPlaying(false);
-    setSelectedFrame(null);
-    setUploadedCover(null);
+    setSelectedCover(null);
     setUploadedCoverUrl('');
     setExtractedFrames([]);
+    setError(null);
+    setRetryCount(0);
+    setLoading(false);
+    setIsExtracting(false);
+    setShowUploadModal(false);
+    
     onCancel();
   };
 
@@ -349,156 +434,6 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const tabItems = [
-    {
-      key: 'frame',
-      label: '选择视频帧',
-      children: (
-        <div className="frame-selection">
-          <div className="video-player">
-            <video
-              ref={videoRef}
-              src={videoUrl}
-              onLoadedMetadata={handleVideoLoaded}
-              onTimeUpdate={() => setCurrentTime(videoRef.current?.currentTime || 0)}
-              style={{ width: '100%', maxHeight: '300px' }}
-            />
-            <div className="video-controls">
-              <Button
-                type="text"
-                icon={isPlaying ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
-                onClick={togglePlay}
-                size="large"
-              />
-              <div 
-                className={`time-slider ${isDragging ? 'dragging' : ''}`}
-                ref={sliderRef}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-              >
-                <Slider
-                  min={0}
-                  max={duration}
-                  step={0.1}
-                  value={currentTime}
-                  onChange={handleTimeChange}
-                  tooltip={{ formatter: (value) => formatTime(value || 0) }}
-                />
-                {isDragging && (
-                  <div className="drag-indicator">
-                    <DragOutlined />
-                  </div>
-                )}
-              </div>
-              <span className="time-display">
-                {formatTime(currentTime)} / {formatTime(duration)}
-              </span>
-              <Button onClick={captureCurrentFrame} loading={loading}>捕获当前帧</Button>
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={extractKeyFrames}
-                loading={isExtracting}
-              >
-                重新提取帧
-              </Button>
-            </div>
-          </div>
-          
-          <div className="extracted-frames">
-            <h4>选择视频帧作为封面：</h4>
-            {isExtracting ? (
-              <div className="extracting-loading">
-                <Spin size="large" />
-                <p>正在提取视频帧...</p>
-              </div>
-            ) : (
-              <Row 
-                gutter={[8, 8]} 
-                className={`frames-grid ${isFrameDragging ? 'dragging' : ''}`}
-                ref={framesGridRef}
-                onMouseMove={handleFrameMouseMove}
-              >
-                {extractedFrames.map((frame, index) => (
-                  <Col key={index} span={6}>
-                    <div
-                      className={`frame-item ${
-                        selectedFrame?.time === frame.time ? 'selected' : ''
-                      }`}
-                      data-frame-index={index}
-                      onMouseDown={(e) => handleFrameMouseDown(e, index)}
-                      onMouseUp={handleFrameMouseUp}
-                      onClick={() => {
-                        if (!isFrameDragging) {
-                          handleFrameSelect(frame);
-                        }
-                      }}
-                    >
-                      <img
-                        src={frame.dataUrl}
-                        alt={`Frame at ${frame.time.toFixed(1)}s`}
-                        style={{ width: '100%', height: 'auto' }}
-                      />
-                      <div className="frame-time">
-                        {Math.floor(frame.time / 60)}:{Math.floor(frame.time % 60).toString().padStart(2, '0')}
-                      </div>
-                      {isFrameDragging && dragStartFrame === index && (
-                        <div className="drag-start-indicator">
-                          <DragOutlined />
-                        </div>
-                      )}
-                    </div>
-                  </Col>
-                ))}
-              </Row>
-            )}
-          </div>
-          
-          {selectedFrame && (
-            <div className="selected-frame">
-              <h4>已选择的封面：</h4>
-              <div className="selected-frame-preview">
-                <img
-                  src={selectedFrame.dataUrl}
-                  alt="Selected frame"
-                  style={{ maxWidth: '200px', maxHeight: '120px' }}
-                />
-                <p>时间: {Math.floor(selectedFrame.time / 60)}:{Math.floor(selectedFrame.time % 60).toString().padStart(2, '0')}</p>
-              </div>
-            </div>
-          )}
-        </div>
-      )
-    },
-    {
-      key: 'upload',
-      label: '上传封面图片',
-      children: (
-        <div className="cover-upload">
-          <Upload.Dragger
-            accept="image/*"
-            beforeUpload={handleCoverUpload}
-            showUploadList={false}
-            multiple={false}
-          >
-            <p className="ant-upload-drag-icon">
-              <UploadOutlined />
-            </p>
-            <p className="ant-upload-text">点击或拖拽图片到此区域上传</p>
-            <p className="ant-upload-hint">支持 JPG、PNG、GIF 格式</p>
-          </Upload.Dragger>
-          
-          {uploadedCoverUrl && (
-            <div className="uploaded-cover">
-              <h4>已上传的封面：</h4>
-              <Image src={uploadedCoverUrl} width={200} />
-            </div>
-          )}
-        </div>
-      )
-    }
-  ];
-
   return (
     <>
       <Modal
@@ -508,15 +443,285 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
         onOk={handleConfirm}
         width={800}
         className="video-cover-modal"
-        okText="确认"
+        okText="确认选择"
         cancelText="取消"
-        confirmLoading={isExtracting}
+        confirmLoading={loading || isExtracting}
+        okButtonProps={{
+          disabled: !selectedCover || loading || isExtracting || !!error
+        }}
+        cancelButtonProps={{
+          disabled: loading || isExtracting
+        }}
+        maskClosable={false}
+        keyboard={false}
+        destroyOnClose={true}
       >
-        <Tabs
-          activeKey={activeTab}
-          onChange={(key) => setActiveTab(key as 'frame' | 'upload')}
-          items={tabItems}
-        />
+        <div className="video-cover-content">
+          {/* 错误提示 */}
+          {error && (
+            <Alert
+              message="操作失败"
+              description={error}
+              type="error"
+              showIcon
+              closable
+              onClose={() => setError(null)}
+              style={{ marginBottom: 16 }}
+              action={
+                <Button size="small" onClick={() => {
+                  setError(null);
+                  if (extractedFrames.length === 0) {
+                    extractKeyFrames();
+                  }
+                }}>
+                  重试
+                </Button>
+              }
+            />
+          )}
+
+          {/* 加载状态 */}
+          {loading && !isExtracting && (
+            <div className="loading-state">
+              <Spin size="large" />
+              <div className="loading-text">正在处理视频...</div>
+            </div>
+          )}
+
+          {/* 视频播放器 */}
+          {videoUrl && !loading && (
+            <div className="video-player">
+              <video
+                ref={videoRef}
+                src={videoUrl}
+                onLoadedMetadata={handleVideoLoaded}
+                onTimeUpdate={() => setCurrentTime(videoRef.current?.currentTime || 0)}
+                onError={(e) => {
+                  console.error('视频加载错误:', e);
+                  setError('视频加载失败，请检查文件格式');
+                }}
+                style={{ width: '100%', maxHeight: '300px' }}
+              />
+              <div className="video-controls">
+                <Button
+                  type="text"
+                  icon={isPlaying ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+                  onClick={togglePlay}
+                  size="large"
+                  disabled={duration === 0}
+                />
+                <div 
+                  className={`time-slider ${isDragging ? 'dragging' : ''}`}
+                  ref={sliderRef}
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUp}
+                >
+                  <Slider
+                    min={0}
+                    max={duration}
+                    step={0.1}
+                    value={currentTime}
+                    onChange={handleTimeChange}
+                    tooltip={{ formatter: (value) => formatTime(value || 0) }}
+                    disabled={duration === 0}
+                  />
+                  {isDragging && (
+                    <div className="drag-indicator">
+                      <DragOutlined />
+                    </div>
+                  )}
+                </div>
+                <span className="time-display">
+                  {formatTime(currentTime)} / {formatTime(duration)}
+                </span>
+                <Button 
+                  onClick={captureCurrentFrame} 
+                  loading={loading}
+                  disabled={duration === 0 || isExtracting}
+                >
+                  捕获当前帧
+                </Button>
+                <Button
+                  icon={<ReloadOutlined />}
+                  onClick={extractKeyFrames}
+                  loading={isExtracting}
+                  disabled={loading}
+                >
+                  {extractedFrames.length > 0 ? '重新提取帧' : '提取关键帧'}
+                </Button>
+              </div>
+            </div>
+          )}
+          
+          {/* 提取的帧和相册选择按钮 */}
+          <div className="extracted-frames">
+            <h4>选择视频帧作为封面：</h4>
+            {isExtracting ? (
+              <div className="extracting-loading">
+                <Spin size="large" />
+                <p>正在生成缩略图...{retryCount > 0 && ` (重试 ${retryCount}/3)`}</p>
+              </div>
+            ) : (
+              <div className="frames-grid-container">
+                {/* 优化后的水平布局 */}
+                <div className="frames-horizontal-layout">
+                  {/* 视频帧缩略图 */}
+                  <div className="frames-thumbnails">
+                    {extractedFrames.map((frame, index) => (
+                      <div
+                        key={index}
+                        className={`frame-thumbnail ${
+                          selectedCover?.type === 'frame' && (selectedCover.data as VideoFrame).time === frame.time ? 'selected' : ''
+                        }`}
+                        onClick={() => handleFrameSelect(frame)}
+                      >
+                        <div className="thumbnail-image-wrapper">
+                          <img
+                            src={frame.dataUrl}
+                            alt={`Frame ${index + 1}`}
+                            onError={(e) => {
+                              console.error('帧图片加载失败:', e);
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                          {selectedCover?.type === 'frame' && (selectedCover.data as VideoFrame).time === frame.time && (
+                            <div className="selected-overlay">
+                              <div className="selected-icon">✓</div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* 从相册选择按钮 */}
+                  {extractedFrames.length > 0 && (
+                    <div className="album-select-wrapper">
+                      <div 
+                        className={`album-select-button ${
+                          selectedCover?.type === 'upload' ? 'selected' : ''
+                        }`}
+                        onClick={handleOpenAlbum}
+                      >
+                        <div className="album-button-content">
+                          {selectedCover?.type === 'upload' && uploadedCoverUrl ? (
+                            <>
+                              <img
+                                src={uploadedCoverUrl}
+                                alt="Uploaded cover"
+                                onError={(e) => {
+                                  console.error('封面图片加载失败:', e);
+                                  setError('封面图片加载失败');
+                                }}
+                              />
+                              <div className="selected-overlay">
+                                <div className="selected-icon">✓</div>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="album-placeholder">
+                              <CameraOutlined className="album-icon" />
+                              <div className="album-text">从相册选择</div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* 空状态 */}
+                {extractedFrames.length === 0 && !loading && !error && videoUrl && (
+                  <div className="empty-state">
+                    <ExclamationCircleOutlined className="empty-icon" />
+                    <div className="empty-message">暂无提取的视频帧</div>
+                    <div className="empty-text">点击"提取关键帧"按钮开始提取</div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          
+          {/* 选中的封面预览 */}
+          {selectedCover && (
+            <div className="selected-cover">
+              <h4>已选择的封面：</h4>
+              <div className="cover-preview-container">
+                {selectedCover.type === 'frame' ? (
+                  <>
+                    <img
+                      className="cover-preview"
+                      src={(selectedCover.data as VideoFrame).dataUrl}
+                      alt="Selected frame"
+                    />
+                    <div className="cover-info">
+                      时间: {Math.floor((selectedCover.data as VideoFrame).time / 60)}:{Math.floor((selectedCover.data as VideoFrame).time % 60).toString().padStart(2, '0')} | 
+                      尺寸: {(selectedCover.data as VideoFrame).width} × {(selectedCover.data as VideoFrame).height}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <img
+                      className="cover-preview"
+                      src={uploadedCoverUrl}
+                      alt="Uploaded cover"
+                    />
+                    <div className="cover-info">
+                      文件名: {(selectedCover.data as File).name} ({((selectedCover.data as File).size / 1024 / 1024).toFixed(2)} MB)
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* 相册选择弹窗 */}
+      <Modal
+        title="从相册选择封面"
+        open={showUploadModal}
+        onCancel={() => setShowUploadModal(false)}
+        footer={null}
+        width={500}
+        className="album-select-modal"
+      >
+        <Upload.Dragger
+          accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+          beforeUpload={(file) => {
+            try {
+              // 验证文件类型
+              const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+              if (!validTypes.includes(file.type)) {
+                message.error('不支持的文件格式，请上传 JPG、PNG、GIF 或 WebP 格式的图片');
+                return false;
+              }
+
+              // 验证文件大小（最大 10MB）
+              const maxSize = 10 * 1024 * 1024;
+              if (file.size > maxSize) {
+                message.error('图片文件大小不能超过 10MB');
+                return false;
+              }
+
+              return handleCoverUpload(file);
+            } catch (error) {
+              console.error('文件验证失败:', error);
+              setError('文件验证失败，请重试');
+              return false;
+            }
+          }}
+          showUploadList={false}
+          multiple={false}
+          disabled={loading}
+        >
+          <p className="ant-upload-drag-icon">
+            <UploadOutlined />
+          </p>
+          <p className="ant-upload-text">点击或拖拽图片到此区域上传</p>
+          <p className="ant-upload-hint">支持 JPG、PNG、GIF、WebP 格式，最大 10MB</p>
+        </Upload.Dragger>
       </Modal>
       
       {/* 隐藏的canvas用于帧提取 */}

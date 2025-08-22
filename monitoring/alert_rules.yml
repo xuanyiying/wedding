@@ -1,0 +1,315 @@
+groups:
+  - name: wedding-club-system
+    rules:
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is above 80% for more than 5 minutes on {{ $labels.instance }}"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is above 85% for more than 5 minutes on {{ $labels.instance }}"
+
+      # Low disk space
+      - alert: LowDiskSpace
+        expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"})) * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "Low disk space detected"
+          description: "Disk usage is above 90% on {{ $labels.instance }} mount {{ $labels.mountpoint }}"
+
+      # High disk I/O
+      - alert: HighDiskIO
+        expr: irate(node_disk_io_time_seconds_total[5m]) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High disk I/O detected"
+          description: "Disk I/O utilization is above 80% for more than 10 minutes on {{ $labels.instance }}"
+
+  - name: wedding-club-application
+    rules:
+      # API server down
+      - alert: APIServerDown
+        expr: up{job="wedding-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: api
+        annotations:
+          summary: "API server is down"
+          description: "Wedding API server {{ $labels.instance }} has been down for more than 1 minute"
+
+      # High API response time
+      - alert: HighAPIResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="wedding-api"}[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: "High API response time"
+          description: "95th percentile API response time is above 2 seconds for {{ $labels.instance }}"
+
+      # High API error rate
+      - alert: HighAPIErrorRate
+        expr: rate(http_requests_total{job="wedding-api",status=~"5.."}[5m]) / rate(http_requests_total{job="wedding-api"}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: "High API error rate"
+          description: "API error rate is above 5% for {{ $labels.instance }}"
+
+      # Frontend server down
+      - alert: FrontendServerDown
+        expr: up{job="wedding-frontend"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: frontend
+        annotations:
+          summary: "Frontend server is down"
+          description: "Wedding frontend server {{ $labels.instance }} has been down for more than 2 minutes"
+
+  - name: wedding-club-database
+    rules:
+      # MySQL server down
+      - alert: MySQLServerDown
+        expr: up{job=~"mysql-.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "MySQL server is down"
+          description: "MySQL server {{ $labels.instance }} has been down for more than 1 minute"
+
+      # MySQL replication lag
+      - alert: MySQLReplicationLag
+        expr: mysql_slave_lag_seconds > 30
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "MySQL replication lag detected"
+          description: "MySQL slave replication lag is {{ $value }} seconds on {{ $labels.instance }}"
+
+      # High MySQL connections
+      - alert: HighMySQLConnections
+        expr: mysql_global_status_threads_connected / mysql_global_variables_max_connections > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "High MySQL connections"
+          description: "MySQL connections usage is above 80% on {{ $labels.instance }}"
+
+      # MySQL slow queries
+      - alert: MySQLSlowQueries
+        expr: rate(mysql_global_status_slow_queries[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "MySQL slow queries detected"
+          description: "MySQL slow query rate is {{ $value }} per second on {{ $labels.instance }}"
+
+  - name: wedding-club-redis
+    rules:
+      # Redis server down
+      - alert: RedisServerDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: cache
+        annotations:
+          summary: "Redis server is down"
+          description: "Redis server {{ $labels.instance }} has been down for more than 1 minute"
+
+      # High Redis memory usage
+      - alert: HighRedisMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          service: cache
+        annotations:
+          summary: "High Redis memory usage"
+          description: "Redis memory usage is above 90% on {{ $labels.instance }}"
+
+      # Redis connection spike
+      - alert: RedisConnectionSpike
+        expr: redis_connected_clients > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: cache
+        annotations:
+          summary: "Redis connection spike"
+          description: "Redis has {{ $value }} connected clients on {{ $labels.instance }}"
+
+  - name: wedding-club-storage
+    rules:
+      # MinIO server down
+      - alert: MinIOServerDown
+        expr: up{job=~"minio-.*"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: storage
+        annotations:
+          summary: "MinIO server is down"
+          description: "MinIO server {{ $labels.instance }} has been down for more than 2 minutes"
+
+      # High MinIO disk usage
+      - alert: HighMinIODiskUsage
+        expr: minio_cluster_disk_usage_free_bytes / minio_cluster_disk_usage_total_bytes < 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: storage
+        annotations:
+          summary: "High MinIO disk usage"
+          description: "MinIO disk usage is above 90% on cluster"
+
+  - name: wedding-club-nginx
+    rules:
+      # Nginx server down
+      - alert: NginxServerDown
+        expr: up{job="nginx"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: proxy
+        annotations:
+          summary: "Nginx server is down"
+          description: "Nginx server {{ $labels.instance }} has been down for more than 1 minute"
+
+      # High Nginx error rate
+      - alert: HighNginxErrorRate
+        expr: rate(nginx_http_requests_total{status=~"5.."}[5m]) / rate(nginx_http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: proxy
+        annotations:
+          summary: "High Nginx error rate"
+          description: "Nginx error rate is above 5% on {{ $labels.instance }}"
+
+  - name: wedding-club-ssl
+    rules:
+      # SSL certificate expiring soon
+      - alert: SSLCertificateExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 30
+        for: 1h
+        labels:
+          severity: warning
+          service: ssl
+        annotations:
+          summary: "SSL certificate expiring soon"
+          description: "SSL certificate for {{ $labels.instance }} will expire in {{ $value | humanizeDuration }}"
+
+      # SSL certificate expired
+      - alert: SSLCertificateExpired
+        expr: probe_ssl_earliest_cert_expiry - time() <= 0
+        for: 1m
+        labels:
+          severity: critical
+          service: ssl
+        annotations:
+          summary: "SSL certificate expired"
+          description: "SSL certificate for {{ $labels.instance }} has expired"
+
+  - name: wedding-club-business
+    rules:
+      # High user registration rate (potential spam)
+      - alert: HighUserRegistrationRate
+        expr: rate(wedding_user_registrations_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "High user registration rate detected"
+          description: "User registration rate is {{ $value }} per second, which may indicate spam activity"
+
+      # Low user activity
+      - alert: LowUserActivity
+        expr: rate(wedding_user_logins_total[1h]) < 0.1
+        for: 30m
+        labels:
+          severity: info
+          service: business
+        annotations:
+          summary: "Low user activity detected"
+          description: "User login rate is {{ $value }} per second over the last hour"
+
+      # High booking failure rate
+      - alert: HighBookingFailureRate
+        expr: rate(wedding_bookings_total{status="failed"}[5m]) / rate(wedding_bookings_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "High booking failure rate"
+          description: "Booking failure rate is {{ $value | humanizePercentage }} over the last 5 minutes"
+
+      # Payment processing issues
+      - alert: PaymentProcessingIssues
+        expr: rate(wedding_payments_total{status="failed"}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: business
+        annotations:
+          summary: "Payment processing issues detected"
+          description: "Payment failure rate is {{ $value }} per second, indicating processing issues"
+
+  - name: wedding-club-external
+    rules:
+      # Website down
+      - alert: WebsiteDown
+        expr: probe_success{job="blackbox-http"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: external
+        annotations:
+          summary: "Website is down"
+          description: "Website {{ $labels.instance }} is not responding to HTTP requests"
+
+      # High website response time
+      - alert: HighWebsiteResponseTime
+        expr: probe_duration_seconds{job="blackbox-http"} > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: external
+        annotations:
+          summary: "High website response time"
+          description: "Website {{ $labels.instance }} response time is {{ $value }} seconds"

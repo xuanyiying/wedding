@@ -2,6 +2,7 @@ import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse,
 import { API_BASE_URL, ERROR_MESSAGES } from '../constants';
 import type { ApiResponse } from '../types';
 import { AuthStorage } from './auth';
+import { authManager } from './auth-manager';
 
 // 获取message实例的函数
 let messageApi: any = null;
@@ -135,13 +136,13 @@ uploadRequest.interceptors.response.use(
     
     switch (status) {
       case 401:
-        // Token过期或无效，清除认证信息并跳转登录
-        console.error('🔐 上传请求401错误 - Token过期');
-        safeMessage.error('登录已过期，请重新登录');
-        AuthStorage.clearAll();
+        // 使用认证管理器处理401错误，避免不必要的跳转
+        console.error('🔐 上传请求401错误 - 使用认证管理器处理');
+        const shouldRetry = await authManager.handle401Error(error);
         
-        // Token过期时自动跳转到登录页面
-        window.location.replace('/admin/login');
+        if (!shouldRetry) {
+          safeMessage.error('登录已过期，请重新登录');
+        }
         break;
       case 413:
         safeMessage.error('文件大小超出限制，请选择较小的文件');
@@ -222,19 +223,19 @@ request.interceptors.response.use(
     
     switch (status) {
       case 401:
-        // Token过期或无效，直接清除认证信息并跳转登录
-        console.error('🔐 401错误 - Token问题:', {
+        // 使用认证管理器处理401错误，避免视频封面选择时的误跳转
+        console.error('🔐 401错误 - 使用认证管理器处理:', {
           url: error.config?.url,
           method: error.config?.method,
           currentToken: AuthStorage.getAccessToken(),
           responseData: response.data
         });
         
-        safeMessage.error('登录已过期，请重新登录');
-        AuthStorage.clearAll();
+        const canRetry = await authManager.handle401Error(error);
         
-        // Token过期时自动跳转到登录页面
-        window.location.replace('/admin/login');
+        if (!canRetry) {
+          safeMessage.error('登录已过期，请重新登录');
+        }
         break;
         
       case 403:

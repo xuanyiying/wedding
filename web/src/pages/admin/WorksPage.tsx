@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Modal, message } from 'antd';
-import { PlayCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined } from '@ant-design/icons';
 import { useTheme } from '../../hooks/useTheme';
 import { WorkType, WorkStatus, type Work, FileType } from '../../types';
 import { workService } from '../../services';
@@ -9,11 +9,9 @@ import type { RootState } from '../../store';
 import { useAppSelector } from '../../store';
 import { PageHeader, StatCard } from '../../components/admin/common';
 import QueryBar, { type QueryFilters } from '../../components/common/QueryBar';
-import { WorkForm, WorkPreviewModal, type Work as WorkCardType } from '../../components/admin/work';
+import { WorkForm, WorkMedia, WorkPreviewModal, type Work as WorkCardType } from '../../components/admin/work';
 import { isAdmin } from '../../utils/auth';
 import styled from 'styled-components';
-import ImageCarousel from '../../components/client/ImageCarousel';
-import { PlayButton } from '../../components/client/WorkCardStyles';
 
 const WorksContainer = styled.div`
   padding: 16px;
@@ -75,37 +73,6 @@ const AdminWorkCard = styled.div`
   }
 `;
 
-const WorkMediaContainer = styled.div`
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-  background: var(--admin-bg-layout);
-`;
-
-const WorkMedia = styled.div`
-  width: 100%;
-  height: 100%;
-  position: relative;
-  
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-`;
-
-
-const FeaturedBadge = styled.div`
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: linear-gradient(45deg, #ff6b6b, #ffa500);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-`;
 
 const WorkInfo = styled.div`
   padding: 16px;
@@ -460,39 +427,12 @@ const WorksPage: React.FC = () => {
         {works.map((work) => (
 
           <AdminWorkCard key={work.id}>
-            <WorkMediaContainer>
-              <WorkMedia>
-                {work.type === 'video' ? (
-                  // 视频类型：4:3宽高比响应式布局
-                  <div style={{ paddingBottom: '75%', position: 'relative', height: 0 }}>
-                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-                      <img
-                        src={work.files?.[0]?.thumbnailUrl ?? ''}
-                        alt={work.title}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                      <PlayButton>
-                        <PlayCircleOutlined />
-                      </PlayButton>
-                    </div>
-                  </div>
-                ) : (
-                  // 图片类型：使用轮播组件，4:3宽高比
-                  <div style={{ paddingBottom: '75%', position: 'relative', height: 0 }}>
-                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-                      <ImageCarousel
-                        images={work.files?.map((file) => file.fileUrl || '') || []}
-                        height="100%"
-                        showDots={(work.files?.length && work.files?.length > 1) || false}
-                        showArrows={(work.files?.length && work.files?.length > 1) || false}
-                        autoPlay={false}
-                      />
-                    </div>
-                  </div>
-                )}
-                {work.isFeatured && <FeaturedBadge>精选</FeaturedBadge>}
-              </WorkMedia>
-            </WorkMediaContainer>
+            <WorkMedia
+              files={work.files || []}
+              isFeatured={work.isFeatured}
+              title={work.title}
+              onClick={() => handlePreviewWork(work)}
+            />
 
             <WorkInfo>
               <WorkTitle>{work.title}</WorkTitle>

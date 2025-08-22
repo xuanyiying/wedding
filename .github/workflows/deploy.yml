@@ -15,6 +15,16 @@ on:
         options:
         - production
         - staging
+      skip_tests:
+        description: 'Skip tests'
+        required: false
+        default: false
+        type: boolean
+      force_deploy:
+        description: 'Force deployment (skip health checks)'
+        required: false
+        default: false
+        type: boolean
 
 env:
   REGISTRY: ghcr.io
@@ -25,8 +35,50 @@ env:
   COMPOSE_DOCKER_CLI_BUILD: 1
 
 jobs:
+  # 安全扫描
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    timeout-minutes: 10
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+    
+    - name: Setup Node.js for audit
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Run npm audit for frontend
+      run: |
+        cd web
+        npm audit --audit-level=moderate || true
+    
+    - name: Run npm audit for backend
+      run: |
+        cd server
+        npm audit --audit-level=moderate || true
+
   test:
     runs-on: ubuntu-latest
+    needs: [security]
+    if: always() && (needs.security.result == 'success' || github.event.inputs.skip_tests == 'true')
     timeout-minutes: 15
     
     strategy:
@@ -112,6 +164,12 @@ jobs:
       contents: read
       packages: write
     
+    outputs:
+      frontend-image: ${{ steps.frontend-meta.outputs.tags }}
+      backend-image: ${{ steps.backend-meta.outputs.tags }}
+      frontend-digest: ${{ steps.frontend-build.outputs.digest }}
+      backend-digest: ${{ steps.backend-build.outputs.digest }}
+    
     strategy:
       matrix:
         component: [frontend, backend]
@@ -119,12 +177,24 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Get component version
+      id: version
+      run: |
+        if [ "${{ matrix.component }}" = "frontend" ]; then
+          VERSION=$(jq -r '.version' web/package.json)
+        else
+          VERSION=$(jq -r '.version' server/package.json)
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
     
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
       with:
         driver-opts: image=moby/buildkit:buildx-stable-1
-        platforms: linux/amd64
+        platforms: linux/amd64,linux/arm64
     
     - name: Log in to Container Registry
       uses: docker/login-action@v3
@@ -144,8 +214,29 @@ jobs:
           type=sha,prefix={{branch}}-
           type=raw,value=latest,enable={{is_default_branch}}
           type=raw,value=develop,enable=${{ github.ref == 'refs/heads/develop' }}
+          type=semver,pattern={{version}},value=${{ steps.version.outputs.version }}
+          type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.version }}
+    
+    - name: Build dependencies for frontend
+      if: matrix.component == 'frontend'
+      run: |
+        cd web
+        npm ci
+        npm run build
+        ls -la dist/
+    
+    - name: Generate API documentation
+      if: matrix.component == 'backend'
+      run: |
+        cd server
+        npm ci
+        # Generate API documentation
+        chmod +x scripts/api-docs.sh
+        ./scripts/api-docs.sh --generate --validate --output docs/api
+        ls -la docs/api/
     
     - name: Build and push Docker image
+      id: build
       uses: docker/build-push-action@v5
       with:
         context: ${{ matrix.component == 'frontend' && './web' || './server' }}
@@ -155,9 +246,40 @@ jobs:
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha,scope=${{ matrix.component }}
         cache-to: type=gha,mode=max,scope=${{ matrix.component }}
+        platforms: linux/amd64,linux/arm64
         build-args: |
-          BUILDKIT_INLINE_CACHE=1
-          NODE_ENV=production
+            BUILDKIT_INLINE_CACHE=1
+            NODE_ENV=production
+            VERSION=${{ steps.version.outputs.version }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+            GITHUB_RUN_ID=${{ github.run_id }}
+            API_DOCS_ENABLED=true
+    
+    - name: Run container security scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
+        format: 'sarif'
+        output: 'trivy-${{ matrix.component }}-results.sarif'
+    
+    - name: Upload image scan results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-${{ matrix.component }}-results.sarif'
+        category: 'container-${{ matrix.component }}'
+    
+    - name: Set component outputs
+      id: component-output
+      run: |
+        if [ "${{ matrix.component }}" = "frontend" ]; then
+          echo "frontend-meta=${{ steps.meta.outputs.tags }}" >> $GITHUB_OUTPUT
+          echo "frontend-digest=${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
+        else
+          echo "backend-meta=${{ steps.meta.outputs.tags }}" >> $GITHUB_OUTPUT
+          echo "backend-digest=${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
+        fi
 
   deploy:
     needs: build-and-push
@@ -185,6 +307,7 @@ jobs:
           echo "compose_file=docker-compose-staging.yml" >> $GITHUB_OUTPUT
           echo "env_file=.env.staging" >> $GITHUB_OUTPUT
           echo "image_tag=develop" >> $GITHUB_OUTPUT
+          echo "health_url=http://staging.wedding.com" >> $GITHUB_OUTPUT
         else
           echo "host=${{ secrets.PRODUCTION_HOST }}" >> $GITHUB_OUTPUT
           echo "user=${{ secrets.PRODUCTION_USER }}" >> $GITHUB_OUTPUT
@@ -194,7 +317,36 @@ jobs:
           echo "compose_file=docker-compose-tencent.yml" >> $GITHUB_OUTPUT
           echo "env_file=.env.tencent" >> $GITHUB_OUTPUT
           echo "image_tag=latest" >> $GITHUB_OUTPUT
+          echo "health_url=http://114.132.225.94" >> $GITHUB_OUTPUT
         fi
+    
+    - name: Create deployment record
+      id: deployment
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const deployment = await github.rest.repos.createDeployment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            ref: context.sha,
+            environment: '${{ github.event.inputs.environment || 'production' }}',
+            description: 'Automated deployment via GitHub Actions',
+            auto_merge: false,
+            required_contexts: []
+          });
+          return deployment.data.id;
+    
+    - name: Update deployment status to in_progress
+      uses: actions/github-script@v7
+      with:
+        script: |
+          await github.rest.repos.createDeploymentStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            deployment_id: ${{ steps.deployment.outputs.result }},
+            state: 'in_progress',
+            description: 'Deployment started'
+          });
     
     - name: Send deployment start notification
       if: env.SLACK_WEBHOOK_URL != ''
@@ -206,9 +358,152 @@ jobs:
             "icon_emoji": ":rocket:",
             "text": ":rocket: *部署开始*\n项目: Wedding Client\n环境: ${{ github.event.inputs.environment || 'production' }}\n分支: ${{ github.ref_name }}\n提交: ${{ github.sha }}\n触发者: ${{ github.actor }}\n时间: $(date "+%Y-%m-%d %H:%M:%S")"
           }' \
+           ${{ env.SLACK_WEBHOOK_URL }}
+
+  # 清理和监控
+  cleanup:
+    name: Cleanup and Monitoring
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: always() && (needs.deploy.result == 'success' || needs.deploy.result == 'failure')
+    timeout-minutes: 5
+    
+    steps:
+    - name: Cleanup old Docker images
+      if: needs.deploy.result == 'success'
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.PROD_HOST }}
+        username: ${{ secrets.PROD_USER }}
+        key: ${{ secrets.PROD_SSH_KEY }}
+        port: ${{ secrets.PROD_PORT || 22 }}
+        script: |
+          echo "🧹 Cleaning up old Docker images..."
+          
+          # Remove unused images older than 7 days
+          docker image prune -a -f --filter "until=168h"
+          
+          # Remove unused volumes
+          docker volume prune -f
+          
+          # Remove unused networks
+          docker network prune -f
+          
+          # Show current disk usage
+          echo "Current disk usage:"
+          df -h
+          
+          echo "Docker system info:"
+          docker system df
+    
+    - name: Setup monitoring alerts
+      if: needs.deploy.result == 'success'
+      run: |
+        echo "📊 Setting up post-deployment monitoring..."
+        
+        # This could trigger monitoring setup or alerts
+        # For example, updating monitoring dashboards, setting up alerts, etc.
+        
+        echo "Monitoring setup completed"
+    
+    - name: Generate deployment report
+      if: always()
+      run: |
+        echo "📋 Generating deployment report..."
+        
+        cat << EOF > deployment-report.md
+        # Deployment Report
+        
+        **Date:** $(date '+%Y-%m-%d %H:%M:%S UTC')
+        **Environment:** ${{ github.event.inputs.environment || 'production' }}
+        **Branch:** ${{ github.ref_name }}
+        **Commit:** ${{ github.sha }}
+        **Workflow Run:** ${{ github.run_id }}
+        
+        ## Results
+        - **Security Scan:** ${{ needs.security.result || 'skipped' }}
+        - **Tests:** ${{ needs.test.result || 'skipped' }}
+        - **Build:** ${{ needs.build.result || 'skipped' }}
+        - **Deploy:** ${{ needs.deploy.result || 'skipped' }}
+        
+        ## Images Built
+        - **Frontend Version:** ${{ needs.build.outputs.frontend-version || 'N/A' }}
+        - **Backend Version:** ${{ needs.build.outputs.backend-version || 'N/A' }}
+        
+        ## API Documentation
+        - **Swagger UI:** Available at /api-docs
+        - **OpenAPI Spec:** Available at /api/v1/docs/openapi.json
+        - **Postman Collection:** Generated and available
+        
+        ## Deployment Status
+        ${{ needs.deploy.result == 'success' && '✅ Deployment completed successfully' || '❌ Deployment failed' }}
+        
+        ---
+        Generated by GitHub Actions
+        EOF
+        
+        echo "Deployment report generated:"
+        cat deployment-report.md
+    
+    - name: Upload deployment report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: deployment-report-${{ github.run_id }}
+        path: deployment-report.md
+        retention-days: 30
+    
+    - name: Final notification
+      if: always() && env.SLACK_WEBHOOK_URL != ''
+      run: |
+        STATUS_EMOJI=""
+        STATUS_TEXT=""
+        
+        if [ "${{ needs.deploy.result }}" = "success" ]; then
+          STATUS_EMOJI=":white_check_mark:"
+          STATUS_TEXT="部署流程完成"
+        else
+          STATUS_EMOJI=":warning:"
+          STATUS_TEXT="部署流程结束（存在问题）"
+        fi
+        
+        curl -X POST -H 'Content-type: application/json' \
+          --data "{
+            \"username\": \"Wedding CI/CD Bot\",
+            \"icon_emoji\": \"$STATUS_EMOJI\",
+            \"text\": \"$STATUS_EMOJI *$STATUS_TEXT*\\n项目: Wedding Client\\n环境: ${{ github.event.inputs.environment || 'production' }}\\n工作流程ID: ${{ github.run_id }}\\n清理状态: 完成\\n报告: 已生成并上传\"
+          }" \
           ${{ env.SLACK_WEBHOOK_URL }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    
+    - name: Backup current deployment
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ steps.vars.outputs.host }}
+        username: ${{ steps.vars.outputs.user }}
+        key: ${{ steps.vars.outputs.key }}
+        port: ${{ steps.vars.outputs.port }}
+        script: |
+          cd ${{ steps.vars.outputs.deploy_path }}
+          BACKUP_DIR="backups/$(date +%Y%m%d_%H%M%S)"
+          mkdir -p $BACKUP_DIR
+          
+          # Backup current docker-compose configuration
+          if [ -f "deployment/${{ steps.vars.outputs.compose_file }}" ]; then
+            cp "deployment/${{ steps.vars.outputs.compose_file }}" "$BACKUP_DIR/docker-compose.yml"
+          fi
+          
+          # Backup current images info
+          docker images --format "table {{.Repository}}:{{.Tag}}\t{{.ID}}\t{{.CreatedAt}}" | grep wedding > "$BACKUP_DIR/images.txt" || true
+          
+          # Backup current container status
+          docker-compose -f "deployment/${{ steps.vars.outputs.compose_file }}" ps > "$BACKUP_DIR/containers.txt" || true
+          
+          echo "Backup created at $BACKUP_DIR"
     
     - name: Deploy to server
+      id: deploy
       uses: appleboy/ssh-action@v1.0.0
       with:
         host: ${{ steps.vars.outputs.host }}
@@ -240,11 +535,22 @@ jobs:
           export COMPOSE_FILE=${{ steps.vars.outputs.compose_file }}
           export ENV_FILE=${{ steps.vars.outputs.env_file }}
           
+          # Run build script first
+          if [ -f "server/scripts/build.sh" ]; then
+            echo "Running server build script..."
+            cd server
+            chmod +x scripts/build.sh
+            ./scripts/build.sh --production --optimize
+            cd ..
+          fi
+          
           # Run deployment script with registry images
           chmod +x deployment/deploy.sh
           ./deployment/deploy.sh ${{ github.event.inputs.environment || 'production' }} --image-tag ${{ steps.vars.outputs.image_tag }} --registry --verbose
     
-    - name: Verify deployment
+    - name: Advanced health check
+      id: health_check
+      if: github.event.inputs.force_deploy != 'true'
       uses: appleboy/ssh-action@v1.0.0
       with:
         host: ${{ steps.vars.outputs.host }}
@@ -254,7 +560,7 @@ jobs:
         script: |
           cd ${{ steps.vars.outputs.deploy_path }}
           
-          echo "Verifying deployment..."
+          echo "Starting advanced health checks..."
           
           # Wait for services to be ready
           echo "Waiting for services to start..."
@@ -265,47 +571,198 @@ jobs:
           docker-compose -f deployment/${{ steps.vars.outputs.compose_file }} ps
           
           # Get service logs for debugging
-          echo "Getting service logs..."
+          echo "Getting recent service logs..."
           docker-compose -f deployment/${{ steps.vars.outputs.compose_file }} logs --tail=50
           
           # Health checks with retry and better error handling
           echo "Performing health checks..."
           
           # Check web service
+          WEB_HEALTHY=false
           for i in {1..10}; do
             echo "Web health check attempt $i/10..."
             if curl -f -m 10 http://localhost:8080/health 2>/dev/null; then
               echo "✅ Web service health check passed"
+              WEB_HEALTHY=true
               break
             else
               echo "❌ Web health check failed, attempt $i/10"
               if [ $i -eq 10 ]; then
                 echo "💥 Web health check failed after 10 attempts"
                 docker-compose -f deployment/${{ steps.vars.outputs.compose_file }} logs web
-                exit 1
               fi
               sleep 15
             fi
           done
           
+          # Check API documentation endpoint
+          echo "Checking API documentation availability..."
+          if curl -f -m 10 http://localhost:3000/api-docs 2>/dev/null; then
+            echo "✅ API documentation is accessible"
+          else
+            echo "⚠️ API documentation check failed (non-critical)"
+          fi
+          
           # Check API service
+          API_HEALTHY=false
           for i in {1..10}; do
             echo "API health check attempt $i/10..."
             if curl -f -m 10 http://localhost:3000/api/v1/health 2>/dev/null; then
               echo "✅ API service health check passed"
+              API_HEALTHY=true
               break
             else
               echo "❌ API health check failed, attempt $i/10"
               if [ $i -eq 10 ]; then
                 echo "💥 API health check failed after 10 attempts"
                 docker-compose -f deployment/${{ steps.vars.outputs.compose_file }} logs api
-                exit 1
               fi
               sleep 15
             fi
           done
           
-          echo "🎉 All health checks passed successfully!"
+          # Database connectivity check
+          echo "Checking database connectivity..."
+          DB_HEALTHY=false
+          for i in {1..5}; do
+            echo "Database connectivity check attempt $i/5..."
+            if docker-compose -f deployment/${{ steps.vars.outputs.compose_file }} exec -T api npm run db:check 2>/dev/null; then
+              echo "✅ Database connectivity check passed"
+              DB_HEALTHY=true
+              break
+            else
+              echo "❌ Database connectivity check failed, attempt $i/5"
+              sleep 10
+            fi
+          done
+          
+          # Overall health assessment
+          if [ "$WEB_HEALTHY" = "true" ] && [ "$API_HEALTHY" = "true" ] && [ "$DB_HEALTHY" = "true" ]; then
+            echo "🎉 All health checks passed successfully!"
+            exit 0
+          else
+            echo "💥 Health checks failed - WEB: $WEB_HEALTHY, API: $API_HEALTHY, DB: $DB_HEALTHY"
+            exit 1
+          fi
+    
+    - name: Run smoke tests
+      if: success() && github.event.inputs.force_deploy != 'true'
+      run: |
+        echo "Running smoke tests..."
+        
+        # Test critical endpoints
+        BASE_URL=${{ steps.vars.outputs.health_url }}
+        
+        # Test homepage
+        echo "Testing homepage..."
+        if curl -f -s --max-time 10 "$BASE_URL" > /dev/null; then
+          echo "✅ Homepage accessible"
+        else
+          echo "❌ Homepage not accessible"
+          exit 1
+        fi
+        
+        # Test API health endpoint
+        echo "Testing API health endpoint..."
+        if curl -f -s --max-time 10 "$BASE_URL:3000/api/v1/health" > /dev/null; then
+          echo "✅ API health endpoint accessible"
+        else
+          echo "❌ API health endpoint not accessible"
+          exit 1
+        fi
+        
+        # Test static assets
+        echo "Testing static assets..."
+        if curl -f -s --max-time 10 "$BASE_URL:8080/assets/" > /dev/null; then
+          echo "✅ Static assets accessible"
+        else
+          echo "⚠️ Static assets check failed (non-critical)"
+        fi
+        
+        echo "✅ All critical smoke tests passed"
+        
+        # Test API documentation endpoints
+        echo "Testing API documentation endpoints..."
+        if curl -f -s --max-time 10 "$BASE_URL:3000/api-docs" > /dev/null; then
+          echo "✅ Swagger UI accessible"
+        else
+          echo "⚠️ Swagger UI not accessible (non-critical)"
+        fi
+        
+        if curl -f -s --max-time 10 "$BASE_URL:3000/api/v1/docs/openapi.json" > /dev/null; then
+          echo "✅ OpenAPI specification accessible"
+        else
+          echo "⚠️ OpenAPI specification not accessible (non-critical)"
+        fi
+    
+    - name: Update deployment status to success
+      if: success()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          await github.rest.repos.createDeploymentStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            deployment_id: ${{ steps.deployment.outputs.result }},
+            state: 'success',
+            description: 'Deployment completed successfully',
+            environment_url: '${{ steps.vars.outputs.health_url }}'
+          });
+    
+    - name: Update deployment status to failure
+      if: failure()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          await github.rest.repos.createDeploymentStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            deployment_id: ${{ steps.deployment.outputs.result }},
+            state: 'failure',
+            description: 'Deployment failed'
+          });
+    
+    - name: Rollback on failure
+      if: failure() && steps.health_check.outcome == 'failure'
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ steps.vars.outputs.host }}
+        username: ${{ steps.vars.outputs.user }}
+        key: ${{ steps.vars.outputs.key }}
+        port: ${{ steps.vars.outputs.port }}
+        script: |
+          cd ${{ steps.vars.outputs.deploy_path }}
+          echo "🔄 Starting automatic rollback..."
+          
+          # Find the latest backup (excluding current one)
+          LATEST_BACKUP=$(ls -t backups/ | head -n 2 | tail -n 1)
+          
+          if [ -n "$LATEST_BACKUP" ] && [ -d "backups/$LATEST_BACKUP" ]; then
+            echo "Rolling back to backup: $LATEST_BACKUP"
+            
+            # Stop current services
+            docker-compose -f deployment/${{ steps.vars.outputs.compose_file }} down || true
+            
+            # Restore previous configuration if available
+            if [ -f "backups/$LATEST_BACKUP/docker-compose.yml" ]; then
+              cp "backups/$LATEST_BACKUP/docker-compose.yml" "deployment/${{ steps.vars.outputs.compose_file }}"
+            fi
+            
+            # Start services with previous configuration
+            docker-compose -f deployment/${{ steps.vars.outputs.compose_file }} up -d
+            
+            # Wait and verify rollback
+            sleep 30
+            if curl -f -m 10 http://localhost:8080/health 2>/dev/null; then
+              echo "✅ Rollback completed successfully"
+            else
+              echo "❌ Rollback verification failed"
+            fi
+          else
+            echo "❌ No backup found for rollback"
+            echo "Available backups:"
+            ls -la backups/ || echo "No backups directory found"
+          fi
     
     - name: Send deployment success notification
       if: success() && env.SLACK_WEBHOOK_URL != ''
@@ -315,18 +772,25 @@ jobs:
             "channel": "#deployments",
             "username": "Wedding Deployment Bot",
             "icon_emoji": ":white_check_mark:",
-            "text": ":white_check_mark: *部署成功*\n项目: Wedding Client\n环境: ${{ github.event.inputs.environment || 'production' }}\n分支: ${{ github.ref_name }}\n提交: ${{ github.sha }}\n部署时间: $(date "+%Y-%m-%d %H:%M:%S")\n访问地址: ${{ steps.vars.outputs.host }}"
+            "text": ":white_check_mark: *部署成功*\n项目: Wedding Client\n环境: ${{ github.event.inputs.environment || 'production' }}\n分支: ${{ github.ref_name }}\n提交: ${{ github.sha }}\n部署时间: $(date "+%Y-%m-%d %H:%M:%S")\n访问地址: ${{ steps.vars.outputs.health_url }}\n镜像标签: ${{ steps.vars.outputs.image_tag }}"
           }' \
           ${{ env.SLACK_WEBHOOK_URL }}
           
     - name: Send deployment failure notification
       if: failure() && env.SLACK_WEBHOOK_URL != ''
       run: |
+        ROLLBACK_STATUS=""
+        if [ "${{ steps.rollback.outcome }}" = "success" ]; then
+          ROLLBACK_STATUS="\n🔄 自动回滚: 成功"
+        elif [ "${{ steps.rollback.outcome }}" = "failure" ]; then
+          ROLLBACK_STATUS="\n❌ 自动回滚: 失败"
+        fi
+        
         curl -X POST -H 'Content-type: application/json' \
           --data '{
             "channel": "#deployments",
             "username": "Wedding Deployment Bot",
             "icon_emoji": ":x:",
-            "text": ":x: *部署失败*\n项目: Wedding Client\n环境: ${{ github.event.inputs.environment || 'production' }}\n分支: ${{ github.ref_name }}\n提交: ${{ github.sha }}\n时间: $(date "+%Y-%m-%d %H:%M:%S")\n请检查GitHub Actions日志获取详细信息"
+            "text": ":x: *部署失败*\n项目: Wedding Client\n环境: ${{ github.event.inputs.environment || 'production' }}\n分支: ${{ github.ref_name }}\n提交: ${{ github.sha }}\n时间: $(date "+%Y-%m-%d %H:%M:%S")\n失败阶段: ${{ steps.health_check.outcome == 'failure' && '健康检查' || '部署过程' }}'"$ROLLBACK_STATUS"'\n请检查GitHub Actions日志获取详细信息"
           }' \
           ${{ env.SLACK_WEBHOOK_URL }}

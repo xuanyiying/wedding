@@ -53,7 +53,7 @@ export interface MediaUploadConfig {
   autoExtractCover?: boolean; // 是否自动提取封面
   
   // 上传配置
-  category?: 'avatar' | 'work' | 'event' | 'profile' | 'cover' | 'other';
+  category?: 'avatar' | 'work' | 'event' | 'profile' | 'cover' | 'favicon' | 'logo' | 'other';
   concurrent?: number; // 并发上传数
 }
 

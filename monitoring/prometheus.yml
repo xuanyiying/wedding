@@ -1,0 +1,152 @@
+# Prometheus configuration for Wedding Club monitoring
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'wedding-club'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  - "alert_rules.yml"
+  - "recording_rules.yml"
+
+# A scrape configuration containing exactly one endpoint to scrape:
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Wedding Club API servers
+  - job_name: 'wedding-api'
+    static_configs:
+      - targets: 
+        - 'wedding-api-1:3000'
+        - 'wedding-api-2:3000'
+    metrics_path: '/api/v1/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    params:
+      format: ['prometheus']
+
+  # Wedding Club Frontend (if metrics endpoint exists)
+  - job_name: 'wedding-frontend'
+    static_configs:
+      - targets: ['wedding-frontend:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Nginx metrics
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx:9113']
+    scrape_interval: 15s
+
+  # MySQL metrics
+  - job_name: 'mysql-master'
+    static_configs:
+      - targets: ['mysql-exporter-master:9104']
+    scrape_interval: 15s
+
+  - job_name: 'mysql-slave'
+    static_configs:
+      - targets: ['mysql-exporter-slave:9104']
+    scrape_interval: 15s
+
+  # Redis metrics
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 15s
+
+  # MinIO metrics
+  - job_name: 'minio-1'
+    static_configs:
+      - targets: ['minio-1:9000']
+    metrics_path: '/minio/v2/metrics/cluster'
+    scrape_interval: 30s
+
+  - job_name: 'minio-2'
+    static_configs:
+      - targets: ['minio-2:9000']
+    metrics_path: '/minio/v2/metrics/cluster'
+    scrape_interval: 30s
+
+  # Node Exporter for system metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 15s
+
+  # Docker daemon metrics (if enabled)
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['host.docker.internal:9323']
+    scrape_interval: 30s
+
+  # Blackbox exporter for endpoint monitoring
+  - job_name: 'blackbox-http'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - https://wedding.example.com
+        - https://wedding.example.com/api/v1/health
+        - https://wedding.example.com/api/v1/auth/status
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # SSL certificate monitoring
+  - job_name: 'blackbox-ssl'
+    metrics_path: /probe
+    params:
+      module: [ssl_expire]
+    static_configs:
+      - targets:
+        - wedding.example.com:443
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # Custom application metrics
+  - job_name: 'wedding-business-metrics'
+    static_configs:
+      - targets: 
+        - 'wedding-api-1:3000'
+        - 'wedding-api-2:3000'
+    metrics_path: '/api/v1/metrics/business'
+    scrape_interval: 60s
+    params:
+      format: ['prometheus']
+
+# Remote write configuration (optional, for long-term storage)
+# remote_write:
+#   - url: "https://prometheus-remote-write.example.com/api/v1/write"
+#     basic_auth:
+#       username: "username"
+#       password: "password"
+
+# Remote read configuration (optional)
+# remote_read:
+#   - url: "https://prometheus-remote-read.example.com/api/v1/read"
+#     basic_auth:
+#       username: "username"
+#       password: "password"
