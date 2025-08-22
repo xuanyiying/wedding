@@ -206,16 +206,39 @@ install_mysql() {
             ;;
         centos|rhel|fedora|opencloudos|openeuler|anolis)
             if command -v dnf &> /dev/null; then
-                dnf install -y mysql-server mysql || dnf install -y mariadb-server mariadb
+                # 优先尝试安装MySQL，如果失败则安装MariaDB
+                if ! dnf install -y mysql-server mysql 2>/dev/null; then
+                    log_info "MySQL安装失败，尝试安装MariaDB"
+                    dnf install -y mariadb-server mariadb
+                fi
             else
-                yum install -y mysql-server mysql || yum install -y mariadb-server mariadb
+                # 优先尝试安装MySQL，如果失败则安装MariaDB
+                if ! yum install -y mysql-server mysql 2>/dev/null; then
+                    log_info "MySQL安装失败，尝试安装MariaDB"
+                    yum install -y mariadb-server mariadb
+                fi
             fi
             ;;
     esac
     
-    # 启动MySQL服务
-    systemctl enable mysql || systemctl enable mysqld
-    systemctl start mysql || systemctl start mysqld
+    # 启动MySQL服务 - 处理不同发行版的服务名称
+    if systemctl list-unit-files | grep -q "^mysql.service"; then
+        systemctl enable mysql
+        systemctl start mysql
+        MYSQL_SERVICE="mysql"
+    elif systemctl list-unit-files | grep -q "^mysqld.service"; then
+        systemctl enable mysqld
+        systemctl start mysqld
+        MYSQL_SERVICE="mysqld"
+    elif systemctl list-unit-files | grep -q "^mariadb.service"; then
+        systemctl enable mariadb
+        systemctl start mariadb
+        MYSQL_SERVICE="mariadb"
+    else
+        error_exit "无法找到MySQL/MariaDB服务，请检查安装"
+    fi
+    
+    log_info "MySQL服务已启动: $MYSQL_SERVICE"
     
     # 等待MySQL启动
     sleep 10
@@ -531,8 +554,15 @@ health_check() {
     
     local failed_services=()
     
-    # 检查MySQL
-    if ! systemctl is-active --quiet mysql && ! systemctl is-active --quiet mysqld; then
+    # 检查MySQL - 支持多种服务名称
+    mysql_running=false
+    for service in mysql mysqld mariadb; do
+        if systemctl is-active --quiet "$service"; then
+            mysql_running=true
+            break
+        fi
+    done
+    if ! $mysql_running; then
         failed_services+=("MySQL")
     fi
     
