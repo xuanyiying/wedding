@@ -222,21 +222,41 @@ install_mysql() {
     esac
     
     # 启动MySQL服务 - 处理不同发行版的服务名称
-    if systemctl list-unit-files | grep -q "^mysql.service"; then
-        systemctl enable mysql
-        systemctl start mysql
-        MYSQL_SERVICE="mysql"
-    elif systemctl list-unit-files | grep -q "^mysqld.service"; then
-        systemctl enable mysqld
-        systemctl start mysqld
-        MYSQL_SERVICE="mysqld"
-    elif systemctl list-unit-files | grep -q "^mariadb.service"; then
-        systemctl enable mariadb
-        systemctl start mariadb
-        MYSQL_SERVICE="mariadb"
-    else
-        error_exit "无法找到MySQL/MariaDB服务，请检查安装"
+    MYSQL_SERVICE=""
+    
+    # 检查可用的MySQL/MariaDB服务
+    for service in mysql mysqld mariadb; do
+        if systemctl list-unit-files | grep -q "^${service}.service"; then
+            MYSQL_SERVICE="$service"
+            break
+        fi
+    done
+    
+    # 如果没有找到服务文件，尝试直接检查服务状态
+    if [[ -z "$MYSQL_SERVICE" ]]; then
+        for service in mysql mysqld mariadb; do
+            if systemctl status "$service" &>/dev/null; then
+                MYSQL_SERVICE="$service"
+                break
+            fi
+        done
     fi
+    
+    # 如果仍然没有找到，检查是否有相关的服务正在运行
+    if [[ -z "$MYSQL_SERVICE" ]]; then
+        if pgrep -f "mysqld\|mariadb" &>/dev/null; then
+            log_info "检测到MySQL/MariaDB进程正在运行，但无法确定服务名称"
+            MYSQL_SERVICE="mariadb"  # 默认使用mariadb
+        else
+            error_exit "无法找到MySQL/MariaDB服务，请检查安装"
+        fi
+    fi
+    
+    log_info "使用MySQL服务: $MYSQL_SERVICE"
+    
+    # 启动和启用服务
+    systemctl enable "$MYSQL_SERVICE" || log_warning "无法启用$MYSQL_SERVICE服务"
+    systemctl start "$MYSQL_SERVICE" || log_warning "无法启动$MYSQL_SERVICE服务"
     
     log_info "MySQL服务已启动: $MYSQL_SERVICE"
     
