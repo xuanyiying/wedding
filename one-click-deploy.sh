@@ -13,6 +13,7 @@ FORCE_DEPLOY="${FORCE_DEPLOY:-false}"
 SKIP_BACKUP="${SKIP_BACKUP:-false}"
 SKIP_TESTS="${SKIP_TESTS:-false}"
 AUTO_ROLLBACK="${AUTO_ROLLBACK:-true}"
+COMPOSE_FILE=""
 
 # 颜色输出
 RED='\033[0;31m'
@@ -63,13 +64,20 @@ check_environment() {
     fi
     
     # 检查Docker Compose文件
-    local compose_file="$PROJECT_ROOT/deployment/docker-compose.$ENVIRONMENT.yml"
-    if [[ ! -f "$compose_file" ]]; then
-        compose_file="$PROJECT_ROOT/docker-compose.$ENVIRONMENT.yml"
-        if [[ ! -f "$compose_file" ]]; then
-            error_exit "Docker Compose配置文件不存在"
-        fi
-    fi
+     if [[ "$ENVIRONMENT" == "production" ]]; then
+         COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.prod.yml"
+     else
+         COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.$ENVIRONMENT.yml"
+     fi
+     
+     if [[ ! -f "$COMPOSE_FILE" ]]; then
+         COMPOSE_FILE="$PROJECT_ROOT/docker-compose.$ENVIRONMENT.yml"
+         if [[ ! -f "$COMPOSE_FILE" ]]; then
+             error_exit "Docker Compose配置文件不存在: $COMPOSE_FILE"
+         fi
+     fi
+     
+     log_info "使用配置文件: $COMPOSE_FILE"
     
     log_success "环境检查完成"
 }
@@ -153,9 +161,8 @@ start_services() {
         "$start_script" || error_exit "服务启动失败"
     else
         # 备用启动方法
-        local compose_file="$PROJECT_ROOT/deployment/docker-compose.$ENVIRONMENT.yml"
-        if [[ -f "$compose_file" ]]; then
-            docker-compose -f "$compose_file" up -d || error_exit "服务启动失败"
+        if [[ -f "$COMPOSE_FILE" ]]; then
+             docker-compose -f "$COMPOSE_FILE" up -d || error_exit "服务启动失败"
         else
             error_exit "无法找到服务启动配置"
         fi
@@ -263,10 +270,9 @@ show_deployment_status() {
     
     # 显示服务状态
     if command -v docker-compose >/dev/null 2>&1; then
-        local compose_file="$PROJECT_ROOT/deployment/docker-compose.$ENVIRONMENT.yml"
-        if [[ -f "$compose_file" ]]; then
+        if [[ -f "$COMPOSE_FILE" ]]; then
             echo "服务状态:"
-            docker-compose -f "$compose_file" ps
+            docker-compose -f "$COMPOSE_FILE" ps
         fi
     fi
     
