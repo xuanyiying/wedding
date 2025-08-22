@@ -76,6 +76,14 @@ detect_os() {
         . /etc/os-release
         OS=$ID
         OS_VERSION=$VERSION_ID
+        
+        # 处理特殊的操作系统标识
+        case "$OS" in
+            "opencloudos"|"openeuler"|"anolis")
+                OS="centos"  # 这些发行版基于RHEL/CentOS，使用相同的包管理器
+                log_info "检测到 $ID，将作为 CentOS 兼容系统处理"
+                ;;
+        esac
     elif [[ -f /etc/redhat-release ]]; then
         OS="centos"
     elif [[ -f /etc/debian_version ]]; then
@@ -117,21 +125,24 @@ install_system_dependencies() {
                 build-essential git unzip supervisor logrotate \
                 ca-certificates lsb-release apt-transport-https
             ;;
-        centos|rhel|fedora)
+        centos|rhel|fedora|opencloudos|openeuler|anolis)
+            # 首先尝试安装 EPEL 仓库（如果可用）
             if command -v dnf &> /dev/null; then
                 dnf update -y
-                dnf install -y curl wget gnupg2 epel-release \
+                dnf install -y epel-release || log_warning "EPEL仓库安装失败，继续使用默认仓库"
+                dnf install -y curl wget gnupg2 \
                     gcc gcc-c++ make git unzip supervisor logrotate \
                     ca-certificates
             else
                 yum update -y
-                yum install -y curl wget gnupg2 epel-release \
+                yum install -y epel-release || log_warning "EPEL仓库安装失败，继续使用默认仓库"
+                yum install -y curl wget gnupg2 \
                     gcc gcc-c++ make git unzip supervisor logrotate \
                     ca-certificates
             fi
             ;;
         *)
-            error_exit "不支持的操作系统: $OS"
+            error_exit "不支持的操作系统: $OS。支持的系统: Ubuntu, Debian, CentOS, RHEL, Fedora, OpenCloudOS, OpenEuler, Anolis"
             ;;
     esac
     
@@ -148,18 +159,27 @@ install_nodejs() {
         return 0
     fi
     
-    # 安装Node.js 18.x
-    curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
-    
     case "$OS" in
         ubuntu|debian)
+            # 安装Node.js 18.x for Debian/Ubuntu
+            curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
             apt-get install -y nodejs
             ;;
-        centos|rhel|fedora)
-            if command -v dnf &> /dev/null; then
-                dnf install -y nodejs npm
+        centos|rhel|fedora|opencloudos|openeuler|anolis)
+            # 对于RHEL系列，使用NodeSource仓库或直接安装
+            if curl -fsSL https://rpm.nodesource.com/setup_18.x | bash - 2>/dev/null; then
+                if command -v dnf &> /dev/null; then
+                    dnf install -y nodejs npm
+                else
+                    yum install -y nodejs npm
+                fi
             else
-                yum install -y nodejs npm
+                log_warning "NodeSource仓库安装失败，尝试从默认仓库安装"
+                if command -v dnf &> /dev/null; then
+                    dnf install -y nodejs npm
+                else
+                    yum install -y nodejs npm
+                fi
             fi
             ;;
     esac
@@ -184,11 +204,11 @@ install_mysql() {
             
             apt-get install -y mysql-server mysql-client
             ;;
-        centos|rhel|fedora)
+        centos|rhel|fedora|opencloudos|openeuler|anolis)
             if command -v dnf &> /dev/null; then
-                dnf install -y mysql-server mysql
+                dnf install -y mysql-server mysql || dnf install -y mariadb-server mariadb
             else
-                yum install -y mysql-server mysql
+                yum install -y mysql-server mysql || yum install -y mariadb-server mariadb
             fi
             ;;
     esac
@@ -219,7 +239,7 @@ install_redis() {
         ubuntu|debian)
             apt-get install -y redis-server
             ;;
-        centos|rhel|fedora)
+        centos|rhel|fedora|opencloudos|openeuler|anolis)
             if command -v dnf &> /dev/null; then
                 dnf install -y redis
             else
@@ -331,7 +351,7 @@ install_nginx() {
         ubuntu|debian)
             apt-get install -y nginx
             ;;
-        centos|rhel|fedora)
+        centos|rhel|fedora|opencloudos|openeuler|anolis)
             if command -v dnf &> /dev/null; then
                 dnf install -y nginx
             else
