@@ -33,7 +33,7 @@ print_error() {
 ENVIRONMENT="production"
 DEPLOY_PATH="/opt/wedding-club"
 SERVICE_NAME="wedding-club-server"
-USER="www-data"
+USER="root"
 RESTART_SERVICE=true
 BACKUP_PREVIOUS=true
 
