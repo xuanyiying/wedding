@@ -125,7 +125,12 @@ validate_environment() {
     esac
     
     # Check required files
-    local compose_file="docker-compose.${DEPLOY_ENV}.yml"
+    local compose_file
+    if [[ "$DEPLOY_ENV" == "production" ]]; then
+        compose_file="deployment/docker-compose.prod.yml"
+    else
+        compose_file="docker-compose.${DEPLOY_ENV}.yml"
+    fi
     if [[ ! -f "$PROJECT_ROOT/$compose_file" ]]; then
         log_error "Docker compose file not found: $compose_file"
         exit 1
@@ -159,7 +164,12 @@ create_backup() {
     mkdir -p "$backup_dir"
     
     # Backup current configuration
-    local compose_file="docker-compose.${DEPLOY_ENV}.yml"
+    local compose_file
+    if [[ "$DEPLOY_ENV" == "production" ]]; then
+        compose_file="deployment/docker-compose.prod.yml"
+    else
+        compose_file="docker-compose.${DEPLOY_ENV}.yml"
+    fi
     if [[ -f "$PROJECT_ROOT/$compose_file" ]]; then
         cp "$PROJECT_ROOT/$compose_file" "$backup_dir/docker-compose.yml"
         log_verbose "Backed up Docker compose configuration"
@@ -219,7 +229,12 @@ pre_deployment_checks() {
     done
     
     # Validate Docker images exist
-    local compose_file="docker-compose.${DEPLOY_ENV}.yml"
+    local compose_file
+    if [[ "$DEPLOY_ENV" == "production" ]]; then
+        compose_file="deployment/docker-compose.prod.yml"
+    else
+        compose_file="docker-compose.${DEPLOY_ENV}.yml"
+    fi
     log_verbose "Checking if required Docker images are available"
     
     # This would typically check if the images specified in docker-compose exist
@@ -236,7 +251,12 @@ pre_deployment_checks() {
 deploy_application() {
     log_info "Starting application deployment"
     
-    local compose_file="docker-compose.${DEPLOY_ENV}.yml"
+    local compose_file
+    if [[ "$DEPLOY_ENV" == "production" ]]; then
+        compose_file="deployment/docker-compose.prod.yml"
+    else
+        compose_file="docker-compose.${DEPLOY_ENV}.yml"
+    fi
     cd "$PROJECT_ROOT"
     
     # Pull latest images
@@ -252,11 +272,17 @@ deploy_application() {
     
     # Stop existing services
     log_info "Stopping existing services"
+    local compose_file
+    if [[ "$DEPLOY_ENV" == "production" ]]; then
+        compose_file="deployment/docker-compose.prod.yml"
+    else
+        compose_file="docker-compose.${DEPLOY_ENV}.yml"
+    fi
     docker-compose -f "$compose_file" down --remove-orphans || true
     
     # Start services
     log_info "Starting services"
-    if ! docker-compose -f "$compose_file" up -d; then
+    if ! docker-compose -f "$compose_file" up -d --build; then
         log_error "Failed to start services"
         
         # Attempt rollback if backup exists
@@ -338,7 +364,13 @@ run_health_checks() {
         if [[ "$FORCE_DEPLOY" != "true" ]]; then
             # Show service logs for debugging
             log_info "Showing recent service logs for debugging:"
-            docker-compose -f "docker-compose.${DEPLOY_ENV}.yml" logs --tail=20
+            local compose_file
+            if [[ "$DEPLOY_ENV" == "production" ]]; then
+                compose_file="deployment/docker-compose.prod.yml"
+            else
+                compose_file="docker-compose.${DEPLOY_ENV}.yml"
+            fi
+            docker-compose -f "$compose_file" logs --tail=20
             exit 1
         else
             log_warning "Continuing despite health check failures (forced)"
@@ -374,7 +406,13 @@ post_deployment_tasks() {
     
     # Show running services
     log_info "Running services:"
-    docker-compose -f "docker-compose.${DEPLOY_ENV}.yml" ps
+    local compose_file
+    if [[ "$DEPLOY_ENV" == "production" ]]; then
+        compose_file="deployment/docker-compose.prod.yml"
+    else
+        compose_file="docker-compose.${DEPLOY_ENV}.yml"
+    fi
+    docker-compose -f "$compose_file" ps
     
     log_success "Post-deployment tasks completed"
 }

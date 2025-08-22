@@ -33,7 +33,7 @@ error_exit() {
     log_error "$1"
     if [[ "$AUTO_ROLLBACK" == "true" && -f "$PROJECT_ROOT/.last_backup" ]]; then
         log_warning "尝试自动回滚..."
-        ./scripts/backup-restore.sh restore "$(cat "$PROJECT_ROOT/.last_backup")"
+        ./scripts/backup-restore.sh restore-backup "$(cat "$PROJECT_ROOT/.last_backup")"
     fi
     exit 1
 }
@@ -123,7 +123,7 @@ backup_current_version() {
     log_info "备份当前版本..."
     
     if [[ -x "$PROJECT_ROOT/scripts/backup-restore.sh" ]]; then
-        "$PROJECT_ROOT/scripts/backup-restore.sh" backup || error_exit "备份失败"
+        "$PROJECT_ROOT/scripts/backup-restore.sh" create-backup || error_exit "备份失败"
     else
         log_warning "备份脚本不存在，跳过备份"
     fi
