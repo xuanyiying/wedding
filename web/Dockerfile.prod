@@ -1,8 +1,11 @@
 # 生产环境Web服务Dockerfile
-# 多阶段构建，优化镜像大小
+# 多阶段构建，优化镜像大小和构建速度
 
 # 构建阶段
 FROM node:18-alpine AS builder
+
+# 配置Alpine镜像源（提前配置以加速后续包安装）
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
 # 设置工作目录
 WORKDIR /app
@@ -10,42 +13,42 @@ WORKDIR /app
 # 复制package文件
 COPY package*.json ./
 
-# 配置npm镜像源和网络优化
-RUN npm config set registry https://registry.npmmirror.com
-# 安装依赖（包含开发依赖用于构建）
-RUN npm install --legacy-peer-deps --no-audit --no-fund
+# 配置npm镜像源（使用可靠的淘宝镜像源）
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm config set cache /tmp/.npm && \
+    npm config set prefer-offline true
 
-# 复制源代码
-COPY . .
+# 安装依赖（优化参数以提升安装速度）
+RUN npm ci --only=production --legacy-peer-deps --no-audit --no-fund --prefer-offline --progress=false && \
+    npm install --only=dev --legacy-peer-deps --no-audit --no-fund --prefer-offline --progress=false
 
-# 设置生产环境变量
+# 设置生产环境变量（提前设置以优化缓存）
 ENV NODE_ENV=production
 ENV VITE_API_URL=http://114.132.225.94:3000
 ENV VITE_UPLOAD_URL=http://114.132.225.94:9000
 
-# 构建应用
-RUN npm run build
+# 复制源代码（.dockerignore应排除node_modules等不必要文件）
+COPY . .
+
+# 构建应用（使用并行构建优化）
+RUN npm run build --max_old_space_size=4096
 
 # 生产阶段
 FROM nginx:alpine AS production
 
-# 配置Alpine镜像源并安装必要工具
+# 一次性配置Alpine镜像源并安装工具（减少层数）
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
     apk update && \
     apk add --no-cache curl && \
+    mkdir -p /var/log/nginx && \
+    chown -R nginx:nginx /var/log/nginx /var/cache/nginx && \
     rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
 
 # 复制自定义nginx配置
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# 从构建阶段复制构建产物
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-# 创建nginx日志目录（nginx用户在nginx:alpine镜像中已存在）
-RUN mkdir -p /var/log/nginx && \
-    chown -R nginx:nginx /var/log/nginx && \
-    chown -R nginx:nginx /var/cache/nginx && \
-    chown -R nginx:nginx /usr/share/nginx/html
+# 从构建阶段复制构建产物并设置权限
+COPY --from=builder --chown=nginx:nginx /app/dist /usr/share/nginx/html
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
