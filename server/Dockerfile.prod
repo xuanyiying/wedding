@@ -39,9 +39,9 @@ ENV TZ=Asia/Shanghai \
 # 配置Alpine镜像源并快速配置运行环境
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
     apk update && \
-    apk add --no-cache dumb-init curl shadow && \
+    apk add --no-cache dumb-init curl && \
     addgroup -g 1001 nodejs && \
-    adduser -r -u 1001 -G nodejs -s /bin/sh -D wedding && \
+    adduser -u 1001 -G nodejs -s /bin/sh -D wedding && \
     rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
 
 # 设置工作目录并创建目录
