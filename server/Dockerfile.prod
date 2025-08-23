@@ -18,7 +18,7 @@ WORKDIR /app
 
 # 优化依赖安装：先安装package.json，利用Docker缓存
 COPY package*.json tsconfig.json ./
-RUN npm ci --silent --prefer-offline --no-audit --no-fund
+RUN npm ci --no-audit --no-fund
 
 # 复制源代码并构建（合并构建步骤减少层数）
 COPY . .
