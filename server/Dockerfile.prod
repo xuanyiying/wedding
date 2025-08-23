@@ -4,16 +4,18 @@
 # 构建阶段
 FROM node:18-alpine AS builder
 
+# 配置Alpine镜像源为国内镜像并安装构建依赖
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
+    apk update && \
+    apk add --no-cache \
+        python3 \
+        make \
+        g++ \
+        git && \
+    rm -rf /var/cache/apk/*
+
 # 设置工作目录
 WORKDIR /app
-
-# 安装构建依赖
-RUN apk add --no-cache \
-    python3 \
-    make \
-    g++ \
-    git \
-    curl
 
 # 复制package文件
 COPY package*.json ./
@@ -35,16 +37,16 @@ RUN npm ci --only=production --silent && npm cache clean --force
 # 生产阶段
 FROM node:18-alpine AS production
 
-# 创建非root用户
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S wedding -u 1001
-
-# 安装运行时依赖
-RUN apk add --no-cache \
-    dumb-init \
-    curl \
-    tzdata && \
-    rm -rf /var/cache/apk/*
+# 配置Alpine镜像源、创建非root用户并安装运行时依赖
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
+    apk update && \
+    addgroup -g 1001 -S nodejs && \
+    adduser -S wedding -u 1001 && \
+    apk add --no-cache \
+        dumb-init \
+        curl \
+        tzdata && \
+    rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
 
 # 设置时区
 ENV TZ=Asia/Shanghai
