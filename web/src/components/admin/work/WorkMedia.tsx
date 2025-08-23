@@ -2,7 +2,7 @@ import React from 'react';
 import { PlayCircleOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import ImageCarousel from '../../client/ImageCarousel';
-import { FileType } from '../../../types';
+import { FileType, type MediaFile } from '../../../types';
 
 const WorkMediaContainer = styled.div`
   position: relative;
@@ -75,7 +75,7 @@ const AbsoluteContent = styled.div`
 `;
 
 interface WorkMediaProps {
-  files: WorkFile[];
+  files: MediaFile[];
   isFeatured?: boolean;
   title: string;
   onClick?: () => void;

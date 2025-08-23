@@ -23,7 +23,7 @@ COPY tsconfig.json ./
 RUN npm config set registry https://registry.npmmirror.com/ 
 
 # 安装依赖（包括开发依赖）
-RUN npm ci --only=production=false --silent
+RUN npm ci --include=dev --silent
 
 # 复制源代码
 COPY src/ ./src/
