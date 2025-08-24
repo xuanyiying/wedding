@@ -149,7 +149,7 @@ services:
       - DB_HOST=mysql-master
       - DB_PORT=3306
       - DB_NAME=wedding_club
-      - DB_USER=wedding_user
+      - DB_USERNAME=wedding_user
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_POOL_MIN=5
       - DB_POOL_MAX=20
