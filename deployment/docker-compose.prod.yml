@@ -91,11 +91,19 @@ services:
       - JWT_EXPIRES_IN=24h
       - JWT_REFRESH_EXPIRES_IN=7d
       
+      # SMTP邮件配置
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_SECURE=${SMTP_SECURE}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_FROM=${SMTP_FROM}
+      
       # 应用配置
       - NODE_ENV=production
       - PORT=3000
       - LOG_LEVEL=info
-      - CORS_ORIGIN=https://wedding.example.com
+      - CORS_ORIGIN=${CORS_ORIGIN}
       - MAX_UPLOAD_SIZE=100mb
       - RATE_LIMIT_WINDOW=15
       - RATE_LIMIT_MAX=1000
@@ -163,10 +171,19 @@ services:
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
       - JWT_EXPIRES_IN=24h
       - JWT_REFRESH_EXPIRES_IN=7d
+      
+      # SMTP邮件配置
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_SECURE=${SMTP_SECURE}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_FROM=${SMTP_FROM}
+      
       - NODE_ENV=production
       - PORT=3000
       - LOG_LEVEL=info
-      - CORS_ORIGIN=https://wedding.example.com
+      - CORS_ORIGIN=${CORS_ORIGIN}
       - MAX_UPLOAD_SIZE=100mb
       - RATE_LIMIT_WINDOW=15
       - RATE_LIMIT_MAX=1000
