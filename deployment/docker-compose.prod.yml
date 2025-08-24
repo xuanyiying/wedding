@@ -19,7 +19,7 @@ services:
 
   # Nginx 负载均衡器和反向代理
   nginx:
-    image: wedding-nginx:curl
+    image: nginx:alpine
     container_name: wedding-nginx
     restart: unless-stopped
     ports:
@@ -34,9 +34,8 @@ services:
       - web_static:/usr/share/nginx/html:ro
     depends_on:
       - web
-      - api1
-      - api2
-      - minio1
+      - api
+      - minio
       - redis
     networks:
       - wedding-prod-net
@@ -52,31 +51,19 @@ services:
       - "com.wedding.service=nginx"
       - "com.wedding.environment=production"
 
-  # Let's Encrypt SSL证书管理
-  certbot:
-    image: certbot/certbot:latest
-    container_name: wedding-certbot
-    volumes:
-      - ./ssl:/etc/letsencrypt
-      - certbot_webroot:/var/www/certbot
-    command: certonly --webroot --webroot-path=/var/www/certbot --email admin@wedding.example.com --agree-tos --no-eff-email -d wedding.example.com -d www.wedding.example.com
-    networks:
-      - wedding-prod-net
-    profiles:
-      - ssl-setup
-
+ 
   # API服务器实例1
-  api1:
+  api:
     build:
       context: ../server
       dockerfile: Dockerfile.prod
       args:
         NODE_ENV: production
-    container_name: wedding-api1
+    container_name: wedding-api
     restart: unless-stopped
     environment:
       # 数据库配置
-      - DB_HOST=mysql-master
+      - DB_HOST=mysql
       - DB_PORT=3306
       - DB_NAME=wedding_club
       - DB_USERNAME=wedding_user
@@ -95,7 +82,7 @@ services:
       - REDIS_POOL_MAX=20
       
       # MinIO配置
-      - MINIO_ENDPOINT=minio1:9000
+      - MINIO_ENDPOINT=minio:9000
       - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
       - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
       - MINIO_BUCKET=wedding-files
@@ -130,14 +117,14 @@ services:
       - ENABLE_METRICS=true
       - METRICS_PORT=9090
     volumes:
-      - ./logs/api1:/app/logs
+      - ./logs/api:/app/logs
       - ./uploads:/app/uploads
     depends_on:
-      mysql-master:
+      mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
-      minio1:
+      minio:
         condition: service_healthy
     networks:
       - wedding-prod-net
@@ -149,91 +136,11 @@ services:
       start_period: 60s
     labels:
       - "com.wedding.service=api"
-      - "com.wedding.instance=1"
       - "com.wedding.environment=production"
-
-  # API服务器实例2
-  api2:
-    build:
-      context: ../server
-      dockerfile: Dockerfile.prod
-      args:
-        NODE_ENV: production
-    container_name: wedding-api2
-    restart: unless-stopped
-    environment:
-      # 与api1相同的环境变量
-      - DB_HOST=mysql-master
-      - DB_PORT=3306
-      - DB_NAME=wedding_club
-      - DB_USERNAME=wedding_user
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_POOL_MIN=5
-      - DB_POOL_MAX=20
-      - DB_POOL_ACQUIRE=60000
-      - DB_POOL_IDLE=10000
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - REDIS_DB=0
-      - REDIS_POOL_MIN=5
-      - REDIS_POOL_MAX=20
-      - MINIO_ENDPOINT=minio1:9000
-      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
-      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
-      - MINIO_BUCKET=wedding-files
-      - MINIO_REGION=us-east-1
-      - MINIO_USE_SSL=false
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
-      - JWT_EXPIRES_IN=24h
-      - JWT_REFRESH_EXPIRES_IN=7d
-      
-      # SMTP邮件配置
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_PORT=${SMTP_PORT}
-      - SMTP_SECURE=${SMTP_SECURE}
-      - SMTP_USER=${SMTP_USER}
-      - SMTP_PASS=${SMTP_PASS}
-      - SMTP_FROM=${SMTP_FROM}
-      
-      - NODE_ENV=production
-      - PORT=3000
-      - LOG_LEVEL=info
-      - CORS_ORIGIN=${CORS_ORIGIN}
-      - MAX_UPLOAD_SIZE=100mb
-      - RATE_LIMIT_WINDOW=15
-      - RATE_LIMIT_MAX=1000
-      - TZ=Asia/Shanghai
-      - ENABLE_METRICS=true
-      - METRICS_PORT=9090
-    volumes:
-      - ./logs/api2:/app/logs
-      - ./uploads:/app/uploads
-    depends_on:
-      mysql-master:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      minio1:
-        condition: service_healthy
-    networks:
-      - wedding-prod-net
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-    labels:
-      - "com.wedding.service=api"
-      - "com.wedding.instance=2"
-      - "com.wedding.environment=production"
-
   # MySQL主数据库
-  mysql-master:
+  mysql:
     image: mysql:8.0
-    container_name: wedding-mysql-master
+    container_name: wedding-mysql
     restart: unless-stopped
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
@@ -248,7 +155,7 @@ services:
       - MYSQL_QUERY_CACHE_SIZE=128M
       - TZ=Asia/Shanghai
     volumes:
-      - mysql_master_data:/var/lib/mysql
+      - mysql_data:/var/lib/mysql
       - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
       - ./mysql/init:/docker-entrypoint-initdb.d:ro
       - ./logs/mysql:/var/log/mysql
@@ -273,55 +180,7 @@ services:
       start_period: 60s
     labels:
       - "com.wedding.service=mysql"
-      - "com.wedding.role=master"
       - "com.wedding.environment=production"
-
-  # MySQL从数据库（读副本）
-  mysql-slave:
-    image: mysql:8.0
-    container_name: wedding-mysql-slave
-    restart: unless-stopped
-    environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=wedding_club
-      - MYSQL_USER=wedding_user
-      - MYSQL_PASSWORD=${DB_PASSWORD}
-      - MYSQL_INNODB_BUFFER_POOL_SIZE=512M
-      - MYSQL_INNODB_LOG_FILE_SIZE=128M
-      - TZ=Asia/Shanghai
-    volumes:
-      - mysql_slave_data:/var/lib/mysql
-      - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
-      - ./logs/mysql-slave:/var/log/mysql
-    depends_on:
-      mysql-master:
-        condition: service_healthy
-    networks:
-      - wedding-prod-net
-      - db-net
-    command: >
-      --server-id=2
-      --relay-log=mysql-relay-bin
-      --log-bin=mysql-bin
-      --binlog-format=ROW
-      --gtid-mode=ON
-      --enforce-gtid-consistency=ON
-      --log-slave-updates=ON
-      --read-only=ON
-      --skip-slave-start
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
-    labels:
-      - "com.wedding.service=mysql"
-      - "com.wedding.role=slave"
-      - "com.wedding.environment=production"
-    profiles:
-      - with-slave
-
   # Redis缓存服务
   redis:
     image: redis:7-alpine
@@ -349,9 +208,9 @@ services:
       - "com.wedding.environment=production"
 
   # MinIO对象存储主实例
-  minio1:
+  minio:
     image: minio/minio:latest
-    container_name: wedding-minio1
+    container_name: wedding-minio
     restart: unless-stopped
     environment:
       - MINIO_ROOT_USER=${MINIO_ACCESS_KEY}
@@ -364,9 +223,9 @@ services:
       - MINIO_PROMETHEUS_AUTH_TYPE=public
       - TZ=Asia/Shanghai
     volumes:
-      - minio1_data:/data
-      - minio1_cache:/cache
-      - ./logs/minio1:/var/log/minio
+      - minio_data:/data
+      - minio_cache:/cache
+      - ./logs/minio:/var/log/minio
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -381,46 +240,7 @@ services:
       start_period: 30s
     labels:
       - "com.wedding.service=minio"
-      - "com.wedding.instance=1"
       - "com.wedding.environment=production"
-
-  # MinIO对象存储备份实例
-  minio2:
-    image: minio/minio:latest
-    container_name: wedding-minio2
-    restart: unless-stopped
-    environment:
-      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY}
-      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY}
-      - MINIO_CACHE_DRIVES=/cache
-      - MINIO_CACHE_QUOTA=80
-      - MINIO_CACHE_AFTER=3
-      - MINIO_CACHE_WATERMARK_LOW=70
-      - MINIO_CACHE_WATERMARK_HIGH=90
-      - MINIO_PROMETHEUS_AUTH_TYPE=public
-      - TZ=Asia/Shanghai
-    volumes:
-      - minio2_data:/data
-      - minio2_cache:/cache
-      - ./logs/minio2:/var/log/minio
-    ports:
-      - "9002:9000"
-      - "9003:9001"
-    networks:
-      - wedding-prod-net
-    command: server /data --console-address ":9001"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    labels:
-      - "com.wedding.service=minio"
-      - "com.wedding.instance=2"
-      - "com.wedding.environment=production"
-    profiles:
-      - with-minio-ha
 
   # Prometheus监控
   prometheus:
@@ -557,16 +377,10 @@ networks:
 # 数据卷配置
 volumes:
   # 数据库数据
-  mysql_master_data:
+  mysql_data:
     driver: local
     labels:
-      - "com.wedding.volume=mysql-master"
-      - "com.wedding.environment=production"
-  
-  mysql_slave_data:
-    driver: local
-    labels:
-      - "com.wedding.volume=mysql-slave"
+      - "com.wedding.volume=mysql"
       - "com.wedding.environment=production"
   
   # Redis数据
@@ -577,28 +391,16 @@ volumes:
       - "com.wedding.environment=production"
   
   # MinIO数据
-  minio1_data:
+  minio_data:
     driver: local
     labels:
-      - "com.wedding.volume=minio1"
+      - "com.wedding.volume=minio"
       - "com.wedding.environment=production"
   
-  minio1_cache:
+  minio_cache:
     driver: local
     labels:
-      - "com.wedding.volume=minio1-cache"
-      - "com.wedding.environment=production"
-  
-  minio2_data:
-    driver: local
-    labels:
-      - "com.wedding.volume=minio2"
-      - "com.wedding.environment=production"
-  
-  minio2_cache:
-    driver: local
-    labels:
-      - "com.wedding.volume=minio2-cache"
+      - "com.wedding.volume=minio-cache"
       - "com.wedding.environment=production"
   
   # Nginx缓存
