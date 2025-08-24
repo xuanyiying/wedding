@@ -87,6 +87,7 @@ services:
       
       # JWT配置
       - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
       - JWT_EXPIRES_IN=24h
       - JWT_REFRESH_EXPIRES_IN=7d
       
@@ -159,6 +160,7 @@ services:
       - MINIO_REGION=us-east-1
       - MINIO_USE_SSL=false
       - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
       - JWT_EXPIRES_IN=24h
       - JWT_REFRESH_EXPIRES_IN=7d
       - NODE_ENV=production
