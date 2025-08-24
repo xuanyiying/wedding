@@ -2,6 +2,21 @@
 # 高可用、负载均衡、安全优化版本
 
 services:
+  # Web前端服务
+  web:
+    build:
+      context: ../web
+      dockerfile: Dockerfile.prod
+    container_name: wedding-web
+    restart: unless-stopped
+    volumes:
+      - web_static:/usr/share/nginx/html
+    networks:
+      - wedding-prod-net
+    labels:
+      - "com.wedding.service=web"
+      - "com.wedding.environment=production"
+
   # Nginx 负载均衡器和反向代理
   nginx:
     image: nginx:1.25-alpine
@@ -16,7 +31,9 @@ services:
       - ./logs/nginx:/var/log/nginx
       - nginx_cache:/var/cache/nginx
       - certbot_webroot:/var/www/certbot:ro
+      - web_static:/usr/share/nginx/html:ro
     depends_on:
+      - web
       - api1
       - api2
       - minio1
@@ -26,7 +43,7 @@ services:
     environment:
       - TZ=Asia/Shanghai
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -616,4 +633,11 @@ volumes:
     driver: local
     labels:
       - "com.wedding.volume=fluentd"
+      - "com.wedding.environment=production"
+  
+  # Web静态文件
+  web_static:
+    driver: local
+    labels:
+      - "com.wedding.volume=web-static"
       - "com.wedding.environment=production"
