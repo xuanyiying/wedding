@@ -37,6 +37,7 @@ show_help() {
     echo -e "${RED}修复命令:${NC}"
     echo "  fix           自动修复常见问题"
     echo "  fix-network   修复网络冲突"
+    echo "  fix-nginx     修复Nginx配置冲突"
     echo "  diagnose      问题诊断"
     echo ""
     echo -e "${BLUE}管理命令:${NC}"
@@ -202,10 +203,14 @@ auto_fix() {
     # 3. 清理Docker资源
     log_info "清理Docker资源..."
     docker container prune -f >/dev/null 2>&1 || true
-    docker volume prune -f >/dev/null 2>&1 || true
+    docker system prune -f >/dev/null 2>&1 || true
     
     # 4. 验证Nginx配置
     validate_nginx_config
+    
+    # 5. 重启服务
+    log_info "重启服务..."
+    restart_services
     
     log_success "自动修复完成"
 }
@@ -251,10 +256,57 @@ validate_nginx_config() {
         fi
     fi
 }
+
+# 修复Nginx配置问题
+fix_nginx_issues() {
+    log_info "修复Nginx配置问题..."
+    
+    if [[ -f "$PROJECT_ROOT/fix-nginx-emergency.sh" ]]; then
+        log_info "运行Nginx紧急修复脚本..."
+        bash "$PROJECT_ROOT/fix-nginx-emergency.sh"
+    else
+        log_warning "Nginx紧急修复脚本不存在，使用内置修复方法"
+        
+        get_config_files
+        cd "$PROJECT_ROOT"
+        
+        # 停止Nginx
+        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" stop nginx 2>/dev/null || true
+        
+        # 验证配置
+        validate_nginx_config
+        
+        # 重启Nginx
+        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d nginx
+        sleep 5
+        
+        if docker logs wedding-nginx 2>&1 | grep -q "load balancing method redefined"; then
+            log_warning "Nginx仍有负载均衡冲突警告"
+        else
+            log_success "Nginx配置修复完成"
+        fi
+    fi
+}
+
+# 自动修复
+auto_fix() {
+    log_info "开始自动修复常见问题..."
+    
+    # 1. 修复网络问题
+    fix_network_issues
+    
+    # 2. 检查环境变量
+    check_env_variables
+    
+    # 3. 清理Docker资源
+    log_info "清理Docker资源..."
     docker container prune -f >/dev/null 2>&1 || true
     docker system prune -f >/dev/null 2>&1 || true
     
-    # 3. 重启服务
+    # 4. 验证Nginx配置
+    validate_nginx_config
+    
+    # 5. 重启服务
     log_info "重启服务..."
     restart_services
     
@@ -432,6 +484,9 @@ main() {
             ;;
         fix-network)
             fix_network_issues
+            ;;
+        fix-nginx)
+            fix_nginx_issues
             ;;
         diagnose)
             diagnose

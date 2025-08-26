@@ -169,7 +169,7 @@ deploy_application() {
     # 根据环境选择部署方式
     if [[ "$ENVIRONMENT" == "tencent" ]]; then
         # 腾讯云环境使用专用脚本
-        local tencent_script="$PROJECT_ROOT/scripts/deploy-tencent.sh"
+        local tencent_script="$PROJECT_ROOT/deploy.sh"
         if [[ -x "$tencent_script" ]]; then
             local deploy_args=()
             
@@ -183,7 +183,7 @@ deploy_application() {
         fi
     else
         # 标准环境使用原有脚本
-        local deploy_script="$PROJECT_ROOT/scripts/deploy-production.sh"
+        local deploy_script="$PROJECT_ROOT/deploy.sh"
         if [[ -x "$deploy_script" ]]; then
             local deploy_args=("--env" "$ENVIRONMENT")
             
@@ -202,7 +202,7 @@ deploy_application() {
 
 # 启动服务
 start_services() {
-    # 如果是腾讯云环境，跳过这个步骤，因为已经在deploy-tencent.sh中处理了
+    # 如果是腾讯云环境，跳过这个步骤，因为已经在deploy.sh中处理了
     if [[ "$ENVIRONMENT" == "tencent" ]]; then
         log_info "腾讯云环境服务已在部署脚本中启动"
         return 0
