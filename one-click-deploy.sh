@@ -131,22 +131,70 @@ backup_current_version() {
     log_success "备份完成"
 }
 
+# 检测部署环境并选择合适的部署方式
+detect_deployment_environment() {
+    log_info "检测部署环境..."
+    
+    # 检查是否为腾讯云环境（通过检查本地镜像）
+    local tencent_images=("deployment-web:latest" "deployment-api1:latest")
+    local has_tencent_images=true
+    
+    for image in "${tencent_images[@]}"; do
+        if ! docker images --format "{{.Repository}}:{{.Tag}}" | grep -q "^$image$"; then
+            has_tencent_images=false
+            break
+        fi
+    done
+    
+    if [[ "$has_tencent_images" == "true" ]]; then
+        log_info "检测到腾讯云环境，使用本地镜像部署"
+        ENVIRONMENT="tencent"
+        COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.tencent.yml"
+        ENV_FILE="$PROJECT_ROOT/deployment/.env.tencent"
+    else
+        log_info "使用标准生产环境部署"
+        if [[ "$ENVIRONMENT" == "production" ]]; then
+            COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.prod.yml"
+            ENV_FILE="$PROJECT_ROOT/deployment/.env.production"
+        fi
+    fi
+    
+    log_success "环境检测完成: $ENVIRONMENT"
+}
+
 # 部署应用
 deploy_application() {
     log_info "开始部署应用..."
     
-    # 执行部署脚本
-    local deploy_script="$PROJECT_ROOT/scripts/deploy-production.sh"
-    if [[ -x "$deploy_script" ]]; then
-        local deploy_args=("--env" "$ENVIRONMENT")
-        
-        if [[ "$FORCE_DEPLOY" == "true" ]]; then
-            deploy_args+=("--force")
+    # 根据环境选择部署方式
+    if [[ "$ENVIRONMENT" == "tencent" ]]; then
+        # 腾讯云环境使用专用脚本
+        local tencent_script="$PROJECT_ROOT/scripts/deploy-tencent.sh"
+        if [[ -x "$tencent_script" ]]; then
+            local deploy_args=()
+            
+            if [[ "$FORCE_DEPLOY" == "true" ]]; then
+                deploy_args+=("--force")
+            fi
+            
+            "$tencent_script" "${deploy_args[@]}" || error_exit "腾讯云部署失败"
+        else
+            error_exit "腾讯云部署脚本不存在: $tencent_script"
         fi
-        
-        "$deploy_script" "${deploy_args[@]}" || error_exit "应用部署失败"
     else
-        error_exit "部署脚本不存在: $deploy_script"
+        # 标准环境使用原有脚本
+        local deploy_script="$PROJECT_ROOT/scripts/deploy-production.sh"
+        if [[ -x "$deploy_script" ]]; then
+            local deploy_args=("--env" "$ENVIRONMENT")
+            
+            if [[ "$FORCE_DEPLOY" == "true" ]]; then
+                deploy_args+=("--force")
+            fi
+            
+            "$deploy_script" "${deploy_args[@]}" || error_exit "应用部署失败"
+        else
+            error_exit "部署脚本不存在: $deploy_script"
+        fi
     fi
     
     log_success "应用部署完成"
@@ -154,6 +202,12 @@ deploy_application() {
 
 # 启动服务
 start_services() {
+    # 如果是腾讯云环境，跳过这个步骤，因为已经在deploy-tencent.sh中处理了
+    if [[ "$ENVIRONMENT" == "tencent" ]]; then
+        log_info "腾讯云环境服务已在部署脚本中启动"
+        return 0
+    fi
+    
     log_info "启动服务..."
     
     local start_script="$PROJECT_ROOT/deployment/start-production.sh"
@@ -351,6 +405,7 @@ main() {
     
     # 执行部署流程
     check_dependencies
+    detect_deployment_environment
     check_environment
     pre_deploy_checks
     backup_current_version
