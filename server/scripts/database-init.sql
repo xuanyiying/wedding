@@ -7,7 +7,7 @@ SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- 使用数据库
-USE host;
+USE wedding_club;
 
 -- ================================
 -- 1. 创建用户表 (users)

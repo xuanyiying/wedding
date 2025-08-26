@@ -33,6 +33,7 @@ show_help() {
     echo -e "${YELLOW}部署命令:${NC}"
     echo "  deploy        完整部署（推荐）"
     echo "  quick         快速部署"
+    echo "  init          服务器初始化"
     echo ""
     echo -e "${RED}修复命令:${NC}"
     echo "  fix           自动修复常见问题"
@@ -166,6 +167,9 @@ deploy_full() {
     # 健康检查
     health_check
     
+    # 自动执行初始化
+    auto_initialize
+    
     log_success "完整部署完成！"
 }
 
@@ -173,6 +177,37 @@ deploy_full() {
 deploy_quick() {
     log_info "开始快速部署..."
     restart_services
+}
+
+# 自动初始化
+auto_initialize() {
+    log_info "检查是否需要初始化..."
+    
+    # 检查是否已经初始化过
+    if [[ -f "$PROJECT_ROOT/.initialized" ]]; then
+        log_info "系统已经初始化过，跳过初始化步骤"
+        return 0
+    fi
+    
+    # 检查初始化脚本是否存在
+    if [[ -f "$PROJECT_ROOT/init-server.sh" ]]; then
+        log_info "发现初始化脚本，执行自动初始化..."
+        bash "$PROJECT_ROOT/init-server.sh"
+    else
+        log_warning "初始化脚本不存在，请手动执行: ./init-server.sh"
+    fi
+}
+
+# 手动初始化
+manual_initialize() {
+    log_info "手动执行服务器初始化..."
+    
+    if [[ -f "$PROJECT_ROOT/init-server.sh" ]]; then
+        bash "$PROJECT_ROOT/init-server.sh" "$@"
+    else
+        log_error "初始化脚本不存在: $PROJECT_ROOT/init-server.sh"
+        exit 1
+    fi
 }
 
 # 修复网络问题
@@ -478,6 +513,9 @@ main() {
             ;;
         quick)
             deploy_quick
+            ;;
+        init)
+            manual_initialize "${@:2}"
             ;;
         fix)
             auto_fix
