@@ -23,8 +23,8 @@ RUN npm ci --legacy-peer-deps --no-audit --no-fund --progress=false && \
 
 # 设置生产环境变量（提前设置以优化缓存）
 ENV NODE_ENV=production
-ENV VITE_API_URL=http://114.132.225.94:3000
-ENV VITE_UPLOAD_URL=http://114.132.225.94:9000
+ENV VITE_API_URL=http://114.132.225.94/api
+ENV VITE_UPLOAD_URL=http://114.132.225.94/upload
 
 # 复制源代码（.dockerignore应排除node_modules等不必要文件）
 COPY . .
@@ -33,26 +33,23 @@ COPY . .
 RUN npm run build --max_old_space_size=4096 && \
     rm -rf node_modules/.cache /tmp/* /var/tmp/* /root/.npm
 
-# 生产阶段 - 仅复制静态文件到共享卷
-FROM alpine:latest AS production
+# 生产阶段 - 使用nginx提供静态文件服务
+FROM nginx:alpine AS production
 
 # 配置Alpine镜像源
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
     apk update && \
-    apk add --no-cache rsync && \
+    apk add --no-cache wget && \
     rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
 
-# 从构建阶段复制构建产物
-COPY --from=builder /app/dist /app/dist
+# 复制构建产物
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# 创建启动脚本来复制文件到共享卷
-RUN echo '#!/bin/sh' > /copy-files.sh && \
-    echo 'echo "Copying static files to shared volume..."' >> /copy-files.sh && \
-    echo 'rsync -av /app/dist/ /usr/share/nginx/html/' >> /copy-files.sh && \
-    echo 'echo "Files copied successfully"' >> /copy-files.sh && \
-    echo 'echo "Keeping container alive..."' >> /copy-files.sh && \
-    echo 'tail -f /dev/null' >> /copy-files.sh && \
-    chmod +x /copy-files.sh
+# 复制nginx配置
+COPY nginx.prod.conf /etc/nginx/conf.d/default.conf
 
-# 启动脚本
-CMD ["/copy-files.sh"]
+# 暴露端口
+EXPOSE 80
+
+# 启动nginx
+CMD ["nginx", "-g", "daemon off;"]
