@@ -38,7 +38,6 @@ export class DatabaseInitializer {
   async initializeUsers(): Promise<void> {
     try {
       logger.info('开始初始化用户数据...');
-
       // 清除现有用户数据
       await User.destroy({ where: {}, force: true });
       logger.info('已清除现有用户数据');

@@ -101,35 +101,6 @@ wait_for_database() {
     return 1
 }
 
-# 等待API服务就绪
-wait_for_api() {
-    log_info "等待API服务就绪..."
-    
-    local max_attempts=20
-    local attempt=1
-    local server_ip=$(hostname -I | awk '{print $1}' || echo "localhost")
-    
-    if [[ "$ENV_TYPE" == "tencent" ]]; then
-        local api_url="http://$server_ip:3000/health"
-    else
-        local api_url="http://$server_ip:3000/health"
-    fi
-    
-    while [[ $attempt -le $max_attempts ]]; do
-        if curl -f -s "$api_url" >/dev/null 2>&1; then
-            log_success "API服务连接成功"
-            return 0
-        fi
-        
-        log_info "等待API服务启动... (${attempt}/${max_attempts})"
-        sleep 5
-        ((attempt++))
-    done
-    
-    log_warning "API服务健康检查失败，但继续执行初始化"
-    return 0
-}
-
 # 执行数据库初始化
 init_database() {
     log_info "执行数据库初始化..."
@@ -245,8 +216,6 @@ main() {
             log_error "数据库服务未就绪，初始化失败"
             exit 1
         fi
-        
-        wait_for_api
     else
         log_warning "跳过服务检查，直接执行初始化"
     fi
