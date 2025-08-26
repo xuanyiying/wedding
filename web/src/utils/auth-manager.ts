@@ -7,12 +7,13 @@
  * 4. 会话状态同步
  */
 import { AuthStorage } from './auth';
+import type { AxiosError } from 'axios';
 
 interface AuthManagerState {
   isRefreshing: boolean;
   failedQueue: Array<{
-    resolve: (value?: any) => void;
-    reject: (reason?: any) => void;
+    resolve: (value: boolean) => void;
+    reject: (reason: unknown) => void;
   }>;
   lastAuthCheck: number;
   redirecting: boolean;
@@ -35,7 +36,7 @@ class AuthManager {
   public isAuthenticated(): boolean {
     const token = AuthStorage.getAccessToken();
     const user = AuthStorage.getUser();
-    
+
     if (!token || !user) {
       return false;
     }
@@ -57,7 +58,7 @@ class AuthManager {
   /**
    * 处理401错误 - 防止重复处理和不必要的跳转
    */
-  public async handle401Error(error: any): Promise<boolean> {
+  public async handle401Error(error: AxiosError): Promise<boolean> {
     console.log('🔐 处理401错误:', {
       url: error.config?.url,
       method: error.config?.method,
@@ -73,10 +74,10 @@ class AuthManager {
 
     // 检查是否是文件上传相关的请求
     const isUploadRequest = this.isUploadRelatedRequest(error.config?.url);
-    
+
     if (isUploadRequest) {
       console.log('📁 检测到文件上传相关请求的401错误');
-      
+
       // 对于上传请求，先尝试验证当前认证状态
       if (this.isAuthenticated()) {
         console.log('✅ 当前认证状态有效，可能是临时网络问题');
@@ -87,17 +88,17 @@ class AuthManager {
     // 如果正在刷新token，将请求加入队列
     if (this.state.isRefreshing) {
       console.log('🔄 Token刷新中，将请求加入队列');
-      return new Promise((resolve, reject) => {
+      return new Promise<boolean>((resolve, reject) => {
         this.state.failedQueue.push({ resolve, reject });
       });
     }
 
     // 尝试刷新token
     this.state.isRefreshing = true;
-    
+
     try {
       const refreshed = await this.tryRefreshToken();
-      
+
       if (refreshed) {
         console.log('✅ Token刷新成功');
         this.processQueue(null);
@@ -110,7 +111,7 @@ class AuthManager {
       }
     } catch (refreshError) {
       console.error('💥 Token刷新异常:', refreshError);
-      this.processQueue(refreshError);
+      this.processQueue(refreshError as Error);
       this.handleLogout();
       return false;
     } finally {
@@ -123,7 +124,7 @@ class AuthManager {
    */
   private isUploadRelatedRequest(url?: string): boolean {
     if (!url) return false;
-    
+
     const uploadPatterns = [
       '/upload',
       '/media',
@@ -131,7 +132,7 @@ class AuthManager {
       '/direct-upload',
       '/presigned-url'
     ];
-    
+
     return uploadPatterns.some(pattern => url.includes(pattern));
   }
 
@@ -142,7 +143,7 @@ class AuthManager {
     try {
       // 这里应该调用刷新token的API
       // 由于当前系统可能没有refresh token机制，我们先检查当前token是否真的无效
-      
+
       const token = AuthStorage.getAccessToken();
       if (!token) {
         return false;
@@ -181,15 +182,15 @@ class AuthManager {
   /**
    * 处理队列中的请求
    */
-  private processQueue(error: any) {
+  private processQueue(error: Error | null) {
     this.state.failedQueue.forEach(({ resolve, reject }) => {
       if (error) {
         reject(error);
       } else {
-        resolve();
+        resolve(true);
       }
     });
-    
+
     this.state.failedQueue = [];
   }
 
@@ -198,7 +199,7 @@ class AuthManager {
    */
   private handleLogout() {
     const now = Date.now();
-    
+
     // 防止短时间内重复跳转
     if (this.state.redirecting || (now - this.state.lastAuthCheck) < this.REDIRECT_COOLDOWN) {
       console.log('🚫 跳转冷却中，跳过登出处理');
@@ -209,17 +210,17 @@ class AuthManager {
     this.state.lastAuthCheck = now;
 
     console.log('🚪 执行登出操作');
-    
+
     // 清除认证信息
     AuthStorage.clearAll();
-    
+
     // 延迟跳转，给用户一些反应时间
     setTimeout(() => {
       if (window.location.pathname !== '/admin/login') {
         console.log('🔄 跳转到登录页面');
         window.location.replace('/admin/login');
       }
-      
+
       // 重置跳转状态
       setTimeout(() => {
         this.state.redirecting = false;
@@ -233,10 +234,10 @@ class AuthManager {
   public startAuthCheck() {
     setInterval(() => {
       const now = Date.now();
-      
+
       if (now - this.state.lastAuthCheck > this.AUTH_CHECK_INTERVAL) {
         this.state.lastAuthCheck = now;
-        
+
         if (!this.isAuthenticated()) {
           console.warn('⚠️ 定期检查发现认证状态无效');
           // 不立即跳转，只记录警告

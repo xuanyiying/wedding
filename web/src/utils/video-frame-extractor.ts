@@ -96,10 +96,10 @@ export class VideoFrameExtractor {
     try {
       // 创建新的 AbortController
       this.abortController = new AbortController();
-      
+
       // 初始化视频
       await this.initializeVideo(file);
-      
+
       if (!this.video) {
         throw new Error('Failed to initialize video');
       }
@@ -108,14 +108,14 @@ export class VideoFrameExtractor {
       const metadata = await this.getVideoMetadata();
       const actualEndTime = endTime || metadata.duration;
       const duration = actualEndTime - startTime;
-      
+
       if (duration <= 0) {
         throw new Error('Invalid time range');
       }
 
       // 计算时间点
       const timePoints = this.calculateTimePoints(startTime, actualEndTime, frameCount);
-      
+
       // 提取帧
       const frames: VideoFrame[] = [];
       for (let i = 0; i < timePoints.length; i++) {
@@ -162,7 +162,7 @@ export class VideoFrameExtractor {
     try {
       this.abortController = new AbortController();
       await this.initializeVideo(file);
-      
+
       if (!this.video) {
         throw new Error('Failed to initialize video');
       }
@@ -328,7 +328,7 @@ export class VideoFrameExtractor {
   /**
    * 在指定时间提取帧
    */
-   async extractFrameAtTime(
+  async extractFrameAtTime(
     time: number,
     quality: number,
     format: string,
@@ -358,7 +358,7 @@ export class VideoFrameExtractor {
       return await this.performFrameExtraction(safetime, quality, format, maxWidth, maxHeight);
     } catch (error) {
       console.error(`Failed to extract frame at time ${time}:`, error);
-      
+
       // 如果是元数据问题，尝试重新初始化
       if (error instanceof Error && error.message.includes('metadata')) {
         try {
@@ -371,7 +371,7 @@ export class VideoFrameExtractor {
           throw retryError;
         }
       }
-      
+
       throw error;
     }
   }
@@ -483,7 +483,7 @@ export class VideoFrameExtractor {
     // 获取 canvas
     const canvas = this.canvasPool.getCanvas();
     const ctx = canvas.getContext('2d');
-    
+
     if (!ctx) {
       this.canvasPool.releaseCanvas(canvas);
       throw new Error('Failed to get canvas context');
@@ -491,7 +491,7 @@ export class VideoFrameExtractor {
 
     try {
       // 计算尺寸
-      let { width, height } = this.calculateDimensions(
+      const { width, height } = this.calculateDimensions(
         this.video.videoWidth,
         this.video.videoHeight,
         maxWidth,
@@ -547,13 +547,13 @@ export class VideoFrameExtractor {
   private calculateTimePoints(startTime: number, endTime: number, frameCount: number): number[] {
     const duration = endTime - startTime;
     const interval = duration / (frameCount - 1);
-    
+
     const timePoints: number[] = [];
     for (let i = 0; i < frameCount; i++) {
       const time = startTime + (i * interval);
       timePoints.push(Math.min(time, endTime - 0.1)); // 确保不超过结束时间
     }
-    
+
     return timePoints;
   }
 

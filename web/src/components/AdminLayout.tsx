@@ -190,9 +190,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
     ];
 
     // 根据用户角色过滤菜单项
-    return allMenuItems.filter(item => 
+    return allMenuItems.filter(item =>
       item.roles.includes(user?.role || 'user')
-    ).map(({ roles, ...item }) => item); // 移除roles属性
+    ).map(item => ({ key: item.key, icon: item.icon, label: item.label })); // 移除roles属性
   };
 
   const menuItems = getMenuItems();
@@ -302,7 +302,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
         <Logo className={collapsed ? 'collapsed' : ''}>
           {collapsed ? 'LH' : '婚礼主持俱乐部'}
         </Logo>
-        
+
         <Menu
           theme="dark"
           mode="inline"
@@ -312,7 +312,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
           style={{ flex: 1, borderRight: 0 }}
         />
       </StyledSider>
-      
+
       <Layout>
         <StyledHeader style={{ background: colorBgContainer }}>
           <HeaderLeft>
@@ -326,17 +326,17 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
                 height: 64,
               }}
             />
-            
+
             <Breadcrumb items={getBreadcrumbItems()} />
           </HeaderLeft>
-          
+
           <HeaderRight>
             <Button
               type="text"
               icon={<BellOutlined />}
               style={{ fontSize: '16px' }}
             />
-            
+
             <Dropdown
               menu={{ items: userMenuItems, onClick: handleUserMenuClick }}
               placement="bottomRight"
@@ -356,7 +356,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
             </Dropdown>
           </HeaderRight>
         </StyledHeader>
-        
+
         <StyledContent>
           <Outlet />
         </StyledContent>

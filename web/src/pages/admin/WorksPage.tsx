@@ -218,7 +218,7 @@ const WorksPage: React.FC = () => {
   // 预览作品
   const handlePreviewWork = (work: Work) => {
     let coverUrl = '';
-    let contentUrls: string[] = [];
+    const contentUrls: string[] = [];
     work.files?.forEach(file => {
       if (file.fileUrl) {
         contentUrls.push(file.fileUrl);

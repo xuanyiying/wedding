@@ -21,7 +21,7 @@ export const getRelativeTime = (date: string | Date | number): string => {
   const now = dayjs();
   const target = dayjs(date);
   const diff = now.diff(target, 'minute');
-  
+
   if (diff < 1) {
     return '刚刚';
   } else if (diff < 60) {
@@ -69,11 +69,11 @@ export const validateIdCard = (idCard: string): boolean => {
  */
 export const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 B';
-  
+
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
+
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
@@ -111,7 +111,7 @@ export const debounce = <T extends (...args: any[]) => any>(
   wait: number
 ): ((...args: Parameters<T>) => void) => {
   let timeout: NodeJS.Timeout;
-  
+
   return (...args: Parameters<T>) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => func(...args), wait);
@@ -129,7 +129,7 @@ export const throttle = <T extends (...args: any[]) => any>(
   wait: number
 ): ((...args: Parameters<T>) => void) => {
   let inThrottle: boolean;
-  
+
   return (...args: Parameters<T>) => {
     if (!inThrottle) {
       func(...args);
@@ -148,25 +148,25 @@ export const deepClone = <T>(obj: T): T => {
   if (obj === null || typeof obj !== 'object') {
     return obj;
   }
-  
+
   if (obj instanceof Date) {
     return new Date(obj.getTime()) as unknown as T;
   }
-  
+
   if (obj instanceof Array) {
     return obj.map(item => deepClone(item)) as unknown as T;
   }
-  
+
   if (typeof obj === 'object') {
     const clonedObj = {} as { [key: string]: any };
     for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
         clonedObj[key] = deepClone(obj[key]);
       }
     }
     return clonedObj as T;
   }
-  
+
   return obj;
 };
 

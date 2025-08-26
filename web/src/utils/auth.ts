@@ -47,9 +47,9 @@ export class AuthStorage {
     try {
       const userStr = localStorage.getItem(STORAGE_KEYS.USER);
       if (!userStr) return null;
-      
+
       return JSON.parse(userStr) as User;
-    } catch (error) {
+    } catch {
       this.removeUser();
       return null;
     }
@@ -76,7 +76,7 @@ export class AuthStorage {
   }): void {
     this.setUser(data.user);
     this.setAccessToken(data.accessToken);
-  
+
   }
 
   /**
@@ -130,7 +130,7 @@ export class AuthStorage {
   static hasValidAuth(): boolean {
     const accessToken = this.getAccessToken();
     const user = this.getUser();
-    
+
     return !!(accessToken && user);
   }
 
@@ -144,7 +144,7 @@ export class AuthStorage {
       const exp = payload.exp * 1000; // 转换为毫秒
       const now = Date.now();
       const threshold = thresholdMinutes * 60 * 1000; // 转换为毫秒
-      
+
       return (exp - now) <= threshold;
     } catch (error) {
       console.error('解析token失败:', error);
@@ -162,28 +162,28 @@ export const PERMISSIONS = {
   USER_CREATE: 'user:create',
   USER_UPDATE: 'user:update',
   USER_DELETE: 'user:delete',
-  
+
   // 档期管理权限
   SCHEDULE_VIEW: 'schedule:view',
   SCHEDULE_CREATE: 'schedule:create',
   SCHEDULE_UPDATE: 'schedule:update',
   SCHEDULE_DELETE: 'schedule:delete',
   SCHEDULE_VIEW_ALL: 'schedule:view_all', // 查看所有用户的档期
-  
+
   // 作品管理权限
   WORK_VIEW: 'work:view',
   WORK_CREATE: 'work:create',
   WORK_UPDATE: 'work:update',
   WORK_DELETE: 'work:delete',
   WORK_VIEW_ALL: 'work:view_all', // 查看所有用户的作品
-  
+
   // 预订管理权限
   BOOKING_VIEW: 'booking:view',
   BOOKING_CREATE: 'booking:create',
   BOOKING_UPDATE: 'booking:update',
   BOOKING_DELETE: 'booking:delete',
   BOOKING_VIEW_ALL: 'booking:view_all', // 查看所有预订
-  
+
   // 系统管理权限
   SYSTEM_CONFIG: 'system:config',
   SYSTEM_LOGS: 'system:logs',
@@ -198,49 +198,49 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     // 超级管理员拥有所有权限
     ...Object.values(PERMISSIONS)
   ],
-  
+
   [UserRole.ADMIN]: [
     // 管理员权限
     PERMISSIONS.USER_VIEW,
     PERMISSIONS.USER_CREATE,
     PERMISSIONS.USER_UPDATE,
-    
+
     PERMISSIONS.SCHEDULE_VIEW,
     PERMISSIONS.SCHEDULE_CREATE,
     PERMISSIONS.SCHEDULE_UPDATE,
     PERMISSIONS.SCHEDULE_DELETE,
     PERMISSIONS.SCHEDULE_VIEW_ALL,
-    
+
     PERMISSIONS.WORK_VIEW,
     PERMISSIONS.WORK_CREATE,
     PERMISSIONS.WORK_UPDATE,
     PERMISSIONS.WORK_DELETE,
     PERMISSIONS.WORK_VIEW_ALL,
-    
+
     PERMISSIONS.BOOKING_VIEW,
     PERMISSIONS.BOOKING_CREATE,
     PERMISSIONS.BOOKING_UPDATE,
     PERMISSIONS.BOOKING_DELETE,
     PERMISSIONS.BOOKING_VIEW_ALL,
   ],
-  
+
   [UserRole.USER]: [
     // 普通用户权限
     PERMISSIONS.SCHEDULE_VIEW,
     PERMISSIONS.SCHEDULE_CREATE,
     PERMISSIONS.SCHEDULE_UPDATE,
     PERMISSIONS.SCHEDULE_DELETE,
-    
+
     PERMISSIONS.WORK_VIEW,
     PERMISSIONS.WORK_CREATE,
     PERMISSIONS.WORK_UPDATE,
     PERMISSIONS.WORK_DELETE,
-    
+
     PERMISSIONS.BOOKING_VIEW,
     PERMISSIONS.BOOKING_CREATE,
     PERMISSIONS.BOOKING_UPDATE,
   ],
-  
+
 };
 
 /**
@@ -268,7 +268,7 @@ export class AuthChecker {
   static hasPermission(permission: string): boolean {
     const user = AuthStorage.getUser();
     if (!user) return false;
-    
+
     const userPermissions = ROLE_PERMISSIONS[user.role] || [];
     return userPermissions.includes(permission);
   }
@@ -293,7 +293,7 @@ export class AuthChecker {
   static isAdmin(): boolean {
     const user = AuthStorage.getUser();
     if (!user) return false;
-    
+
     return user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN;
   }
 
@@ -303,7 +303,7 @@ export class AuthChecker {
   static isSuperAdmin(): boolean {
     const user = AuthStorage.getUser();
     if (!user) return false;
-    
+
     return user.role === UserRole.SUPER_ADMIN;
   }
 
@@ -313,7 +313,7 @@ export class AuthChecker {
   static hasRole(role: UserRole): boolean {
     const user = AuthStorage.getUser();
     if (!user) return false;
-    
+
     return user.role === role;
   }
 
@@ -323,7 +323,7 @@ export class AuthChecker {
   static hasAnyRole(roles: UserRole[]): boolean {
     const user = AuthStorage.getUser();
     if (!user) return false;
-    
+
     return roles.includes(user.role);
   }
 
@@ -335,12 +335,12 @@ export class AuthChecker {
   static canAccessResource(resourceOwnerId: string, requiredPermission: string): boolean {
     const user = AuthStorage.getUser();
     if (!user) return false;
-    
+
     // 如果是资源所有者，直接允许访问
     if (user.id === resourceOwnerId) {
       return this.hasPermission(requiredPermission);
     }
-    
+
     // 检查是否有查看所有资源的权限
     const viewAllPermission = requiredPermission.replace(':view', ':view_all');
     return this.hasPermission(viewAllPermission);
@@ -352,7 +352,7 @@ export class AuthChecker {
   static getUserPermissions(): string[] {
     const user = AuthStorage.getUser();
     if (!user) return [];
-    
+
     return ROLE_PERMISSIONS[user.role] || [];
   }
 
@@ -362,7 +362,7 @@ export class AuthChecker {
   static isAccountActive(): boolean {
     const user = AuthStorage.getUser();
     if (!user) return false;
-    
+
     // 检查用户状态（假设User接口有status字段）
     return user.status === 'active';
   }

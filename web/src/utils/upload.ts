@@ -59,7 +59,7 @@ export class FileUploader {
 
   // 验证文件
   private validateFile(): string | null {
-        if (this.config.validateFile) {
+    if (this.config.validateFile) {
       return this.config.validateFile(this.file);
     }
 
@@ -82,17 +82,17 @@ export class FileUploader {
   private calculateProgress(loaded: number, total: number): UploadProgress {
     const percentage = Math.round((loaded * 100) / total);
     const currentTime = Date.now();
-    
+
     let speed: number | undefined;
     let remainingTime: number | undefined;
 
     if (this.lastTime > 0) {
       const timeDiff = (currentTime - this.lastTime) / 1000; // 秒
       const loadedDiff = loaded - this.lastLoaded;
-      
+
       if (timeDiff > 0) {
         speed = loadedDiff / timeDiff; // bytes/s
-        
+
         if (speed > 0) {
           remainingTime = (total - loaded) / speed; // 秒
         }
@@ -123,7 +123,7 @@ export class FileUploader {
     }
 
     this.updateStatus(UploadStatus.UPLOADING);
-    
+
     this.lastTime = 0;
     this.lastLoaded = 0;
 
@@ -136,22 +136,22 @@ export class FileUploader {
       this.abortController = new AbortController();
 
       // 上传文件
-            const response = await http.uploadWithRetry(this.config.url!, formData, {
-                timeout: this.config.timeout,
-                retryConfig: this.config.retryConfig,
+      const response = await http.uploadWithRetry(this.config.url!, formData, {
+        timeout: this.config.timeout,
+        retryConfig: this.config.retryConfig,
         signal: this.abortController.signal,
         onProgress: (percentage) => {
           const progress = this.calculateProgress(
             (percentage * this.file.size) / 100,
             this.file.size
           );
-                    this.config.onProgress?.(progress);
+          this.config.onProgress?.(progress);
         },
-                onRetry: this.config.onRetry,
+        onRetry: this.config.onRetry,
       });
 
       this.updateStatus(UploadStatus.SUCCESS);
-            this.config.onSuccess?.(response);
+      this.config.onSuccess?.(response);
       return response;
     } catch (error: any) {
       if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
@@ -211,7 +211,6 @@ export class BatchUploader {
     this.onBatchComplete = options.onBatchComplete;
     this.onBatchError = options.onBatchError;
 
-    // @ts-ignore
     this.uploaders = files.map((file) => new FileUploader(file, config));
   }
 
@@ -223,7 +222,7 @@ export class BatchUploader {
 
     // 分批并发上传
     const chunks = this.chunkArray(this.uploaders, this.concurrency);
-    
+
     for (const chunk of chunks) {
       const promises = chunk.map(async (uploader) => {
         try {
@@ -245,11 +244,11 @@ export class BatchUploader {
 
     // 处理结果
     const successResults = results.filter(r => r.success).map(r => r.result);
-    
+
     if (errors.length > 0) {
       this.onBatchError?.(errors);
     }
-    
+
     if (successResults.length > 0) {
       this.onBatchComplete?.(successResults);
     }
@@ -297,11 +296,11 @@ export class BatchUploader {
 // 工具函数：格式化文件大小
 export const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 B';
-  
+
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
+
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 

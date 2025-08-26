@@ -24,7 +24,7 @@ export interface DirectUploadProgress {
 // 直传上传配置
 export interface DirectUploadConfig {
   fileType: 'video' | 'image';
-  category?: 'avatar' | 'work' | 'event' | 'profile'| 'cover' | 'favicon'|'logo' | 'other';
+  category?: 'avatar' | 'work' | 'event' | 'profile' | 'cover' | 'favicon' | 'logo' | 'other';
   maxFileSize?: number;
   expires?: number; // 签名URL过期时间（秒）
   retryCount?: number; // 重试次数，默认3次
@@ -91,10 +91,10 @@ export class DirectUploader {
   async upload(): Promise<DirectUploadResult> {
     try {
       this.updateStatus(DirectUploadStatus.PENDING);
-      
+
       // 1. 预处理文件（压缩等）
       await this.preprocessFile();
-      
+
       // 2. 获取预签名URL
       const presignedData = await this.getPresignedUrl();
       this.uploadSessionId = presignedData.uploadSessionId;
@@ -106,10 +106,10 @@ export class DirectUploader {
 
       // 4. 确认上传完成
       const result = await this.confirmUpload();
-      
+
       this.updateStatus(DirectUploadStatus.COMPLETED);
       this.config.onSuccess?.(result);
-      
+
       return result;
     } catch (error) {
       this.updateStatus(DirectUploadStatus.FAILED);
@@ -125,7 +125,7 @@ export class DirectUploader {
   async cancel(): Promise<void> {
     try {
       this.updateStatus(DirectUploadStatus.CANCELLED);
-      
+
       // 取消正在进行的请求
       if (this.abortController) {
         this.abortController.abort();
@@ -175,25 +175,25 @@ export class DirectUploader {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       const img = new Image();
-      
+
       img.onload = () => {
         // 计算压缩后的尺寸
         const maxWidth = 1920;
         const maxHeight = 1080;
         let { width, height } = img;
-        
+
         if (width > maxWidth || height > maxHeight) {
           const ratio = Math.min(maxWidth / width, maxHeight / height);
           width *= ratio;
           height *= ratio;
         }
-        
+
         canvas.width = width;
         canvas.height = height;
-        
+
         // 绘制并压缩
         ctx?.drawImage(img, 0, 0, width, height);
-        
+
         canvas.toBlob(
           (blob) => {
             if (blob) {
@@ -210,7 +210,7 @@ export class DirectUploader {
           this.config.compressionQuality
         );
       };
-      
+
       img.onerror = () => reject(new Error('图片加载失败'));
       img.src = URL.createObjectURL(file);
     });
@@ -221,21 +221,21 @@ export class DirectUploader {
    */
   private async uploadToOssWithRetry(): Promise<void> {
     let lastError: Error;
-    
+
     for (let attempt = 0; attempt <= (this.config.retryCount || 3); attempt++) {
       try {
         await this.uploadToOss();
         return; // 成功则返回
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('上传失败');
-        
+
         if (attempt < (this.config.retryCount || 3)) {
           this.config.onRetry?.(attempt + 1, lastError);
           await this.delay(this.config.retryDelay || 1000);
         }
       }
     }
-    
+
     throw lastError!;
   }
 
@@ -288,7 +288,7 @@ export class DirectUploader {
 
     // 创建XMLHttpRequest来支持上传进度监控
     const xhr = new XMLHttpRequest();
-    
+
     return new Promise<void>((resolve, reject) => {
       // 监听上传进度
       xhr.upload.addEventListener('progress', (event) => {
@@ -339,14 +339,14 @@ export class DirectUploader {
       });
 
       // 监听取消信号
-       this.abortController?.signal.addEventListener('abort', () => {
-         xhr.abort();
-       });
+      this.abortController?.signal.addEventListener('abort', () => {
+        xhr.abort();
+      });
 
-       // 发送PUT请求
-       xhr.open('PUT', this.uploadUrl!);
-       xhr.setRequestHeader('Content-Type', fileToUpload.type);
-       xhr.send(fileToUpload);
+      // 发送PUT请求
+      xhr.open('PUT', this.uploadUrl!);
+      xhr.setRequestHeader('Content-Type', fileToUpload.type);
+      xhr.send(fileToUpload);
     });
   }
 
@@ -421,13 +421,13 @@ export class BatchDirectUploader {
   async upload(): Promise<BatchUploadResult> {
     this.uploaders = this.files.map(file => new DirectUploader(file, {
       ...this.config,
-      onProgress: (progress) => this.handleFileProgress(progress),
-      onStatusChange: (status) => this.handleStatusChange(status)
+      onProgress: () => this.handleFileProgress(),
+      onStatusChange: () => this.handleStatusChange()
     }));
 
     // 分批并发上传
     const batches = this.chunkArray(this.uploaders, this.concurrency);
-    
+
     for (const batch of batches) {
       const promises = batch.map(async (uploader) => {
         try {
@@ -465,14 +465,14 @@ export class BatchDirectUploader {
   /**
    * 处理单个文件进度
    */
-  private handleFileProgress(_progress: DirectUploadProgress): void {
+  private handleFileProgress(): void {
     this.updateBatchProgress();
   }
 
   /**
    * 处理状态变化
    */
-  private handleStatusChange(_status: DirectUploadStatusType): void {
+  private handleStatusChange(): void {
     this.updateBatchProgress();
   }
 
@@ -480,15 +480,15 @@ export class BatchDirectUploader {
    * 更新批量上传进度
    */
   private updateBatchProgress(): void {
-    const completed = this.uploaders.filter(u => 
+    const completed = this.uploaders.filter(u =>
       u.getStatus() === DirectUploadStatus.COMPLETED
     ).length;
-    
-    const failed = this.uploaders.filter(u => 
+
+    const failed = this.uploaders.filter(u =>
       u.getStatus() === DirectUploadStatus.FAILED
     ).length;
-    
-    const uploading = this.uploaders.filter(u => 
+
+    const uploading = this.uploaders.filter(u =>
       u.getStatus() === DirectUploadStatus.UPLOADING
     ).length;
 
@@ -540,11 +540,11 @@ export interface BatchUploadResult {
  */
 export function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 B';
-  
+
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
+
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
@@ -571,7 +571,7 @@ export function formatUploadSpeed(bytesPerSecond: number): string {
 /**
  * 工具函数：验证文件类型
  */
-export function validateFileType(file: File, fileType: 'video' | 'image' ): boolean {
+export function validateFileType(file: File, fileType: 'video' | 'image'): boolean {
   const typeConfig = {
     video: [
       'video/mp4',
@@ -619,7 +619,7 @@ export function createFileValidator(fileType: 'video' | 'image') {
     validate: (file: File) => {
       const typeValid = validateFileType(file, fileType);
       const sizeValid = validateFileSize(file, fileType);
-      
+
       return {
         valid: typeValid && sizeValid,
         errors: [

@@ -9,11 +9,11 @@ const baseQuery = fetchBaseQuery({
     // 优先从state中获取token，如果没有则从存储中获取
     const stateToken = (getState() as RootState).auth.token;
     const token = stateToken || AuthStorage.getAccessToken();
-    
+
     if (token) {
       headers.set('authorization', `Bearer ${token}`);
     }
-    
+
     headers.set('content-type', 'application/json');
     return headers;
   },
@@ -22,17 +22,17 @@ const baseQuery = fetchBaseQuery({
 // 带错误处理的查询
 const baseQueryWithReauth = async (args: any, api: any, extraOptions: any) => {
   const result = await baseQuery(args, api, extraOptions);
-  
+
   if (result.error && result.error.status === 401) {
-  
+
     // 清除认证状态
     api.dispatch({ type: 'auth/logout' });
     AuthStorage.clearAll();
-    
+
     // 跳转到登录页面
     window.location.href = '/admin/login';
   }
-  
+
   return result;
 };
 
@@ -44,5 +44,5 @@ export const api = createApi({
   endpoints: () => ({}),
 });
 
-// 导出API hooks
-export const {} = api;
+// Export API hooks here when endpoints are added
+// export const { } = api;

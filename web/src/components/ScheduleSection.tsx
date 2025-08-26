@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Typography, Empty, Col, Row } from 'antd';
 import styled from 'styled-components';
 import dayjs from 'dayjs';
@@ -92,14 +92,9 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, t
   const [modalVisible, setModalVisible] = useState(false);
   const { teamMembers } = useTeamData();
   const today = dayjs();
-  // 页面加载时自动查询当天可预约的团队成员
-  useEffect(() => {
-
-    handleQuery({ date: today, mealType: 'lunch' });
-  }, [teamMembers]);
 
   // 处理查询
-  const handleQuery = async (filters: QueryFilters) => {
+  const handleQuery = useCallback(async (filters: QueryFilters) => {
     try {
       setLoading(true);
 
@@ -110,12 +105,18 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, t
       });
       const available = result.data?.hosts.map(m => transformTeamMember(m)) || [];
       setAvailableMembers(available);
-    } catch (error) {
+    } catch {
       setAvailableMembers([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [team?.id, today]);
+
+  // 页面加载时自动查询当天可预约的团队成员
+  useEffect(() => {
+
+    handleQuery({ date: today, mealType: 'lunch' });
+  }, [teamMembers, handleQuery, today]);
 
   // 处理团队成员卡片点击
   const handleMemberClick = (member: ClientTeamMember) => {

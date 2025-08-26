@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, DatePicker, Button, List, Tag, Typography, Space, Spin, message } from 'antd';
 import { CalendarOutlined, UserOutlined, CheckCircleOutlined, ExclamationCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
@@ -19,7 +19,7 @@ const ScheduleAvailability: React.FC<ScheduleAvailabilityProps> = ({ onSelectDat
     dayjs().add(30, 'day')
   ]);
 
-    const fetchAvailability = async () => {
+  const fetchAvailability = useCallback(async () => {
     if (!dateRange[0]) return;
 
     setLoading(true);
@@ -32,11 +32,11 @@ const ScheduleAvailability: React.FC<ScheduleAvailabilityProps> = ({ onSelectDat
     } finally {
       setLoading(false);
     }
-  };
+  }, [dateRange]);
 
   useEffect(() => {
     fetchAvailability();
-  }, [dateRange]);
+  }, [dateRange, fetchAvailability]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {

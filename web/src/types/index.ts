@@ -1,7 +1,7 @@
 
 export interface SiteSettings {
   theme?: {
-    darkMode: any;
+    darkMode: boolean;
     colors: {
       primary: string; // 主题色
       secondary: string; // 次主题色
@@ -306,11 +306,23 @@ export interface User {
   realName?: string;
   nickname?: string;
   bio?: string;
-  specialties?: any;
+  specialties?: string[];
   experienceYears?: number;
   location?: string;
-  contactInfo?: any;
-  socialLinks?: any;
+  contactInfo?: {
+    phone?: string;
+    email?: string;
+    wechat?: string;
+    address?: string;
+  };
+  socialLinks?: {
+    weibo?: string;
+    wechat?: string;
+    xiaohongshu?: string;
+    douyin?: string;
+    instagram?: string;
+    facebook?: string;
+  };
   lastLoginAt?: Date;
   lastLoginIp?: string;
   emailVerifiedAt?: Date;
@@ -346,7 +358,9 @@ export interface MediaFile {
   bucketName?: string | null;
   isPublic?: boolean;
   downloadCount?: number | null;
-  metadata?: any | null;
+  metadata?: {
+    [key: string]: string | number | boolean | null;
+  } | null;
   category?: string;
 }
 
@@ -392,8 +406,21 @@ export interface Work {
   customer?: string | null; // 客户名称
   downloads?: number;
   isPublic?: boolean; // 前端使用字符串格式
-  equipmentInfo?: any | null;
-  technicalInfo?: any | null;
+  equipmentInfo?: {
+    cameras?: string[];
+    lenses?: string[];
+    lighting?: string[];
+    audio?: string[];
+    other?: string[];
+  } | null;
+  technicalInfo?: {
+    resolution?: string;
+    format?: string;
+    colorSpace?: string;
+    frameRate?: number;
+    duration?: number;
+    fileSize?: number;
+  } | null;
   status: WorkStatus;
   isFeatured: boolean;
   viewCount: number;
@@ -410,7 +437,7 @@ export interface Work {
 
 
 // API响应类型
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   statusCode: number;
   message: string;
@@ -499,7 +526,7 @@ export interface TableColumn {
   width?: number;
   align?: Alignment;
   sorter?: boolean;
-  render?: (value: any, record: any, index: number) => React.ReactNode;
+  render?: (value: unknown, record: unknown, index: number) => React.ReactNode;
 }
 
 // 表单字段类型
@@ -508,8 +535,15 @@ export interface FormField {
   label: string;
   type: FormFieldType;
   required?: boolean;
-  rules?: any[];
-  options?: { label: string; value: any }[];
+  rules?: Array<{
+    required?: boolean;
+    message?: string;
+    pattern?: RegExp;
+    min?: number;
+    max?: number;
+    validator?: (rule: unknown, value: unknown) => Promise<void>;
+  }>;
+  options?: { label: string; value: string | number | boolean }[];
   placeholder?: string;
 }
 
@@ -542,7 +576,11 @@ export interface CalendarEvent {
   title: string;
   start: Date;
   end: Date;
-  resource?: any;
+  resource?: {
+    id?: string;
+    type?: string;
+    data?: Record<string, unknown>;
+  };
   color?: string;
 }
 
@@ -553,14 +591,19 @@ export interface UploadFile {
   status: UploadStatus;
   url?: string;
   thumbUrl?: string;
-  response?: any;
+  response?: {
+    success?: boolean;
+    data?: unknown;
+    message?: string;
+    url?: string;
+  };
 }
 
 // 错误类型
 export interface AppError {
   code: string;
   message: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 //  团队成员类型
 export interface TeamMember {

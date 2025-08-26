@@ -58,7 +58,7 @@ export class PageViewService {
    */
   static async getPageViewStats(pageType: 'team_member' | 'work' | 'team' | 'team_page', pageId: string): Promise<PageViewStats> {
     const response = await http.get(`/page-views/stats/${pageType}/${pageId}`);
-    return response.data.data;
+    return (response.data as any).data;
   }
 
   /**
@@ -71,7 +71,7 @@ export class PageViewService {
     const response = await http.post(`/page-views/stats/${pageType}/batch`, {
       pageIds,
     });
-    return response.data.data;
+    return (response.data as any).data;
   }
 
   /**
@@ -93,7 +93,7 @@ export class PageViewService {
    */
   static async getPlayStats(pageId: string): Promise<PlayStats> {
     const response = await http.get(`/page-views/play/stats/${pageId}`);
-    return response.data.data;
+    return (response.data as any).data;
   }
 
   /**
@@ -103,7 +103,7 @@ export class PageViewService {
     const response = await http.post('/page-views/play/stats/batch', {
       pageIds,
     });
-    return response.data.data;
+    return (response.data as any).data;
   }
 
   /**
@@ -121,7 +121,7 @@ export class PageViewService {
     }
 
     const response = await http.get(`/page-views/popular/${pageType}`, { params });
-    return response.data.data;
+    return (response.data as any).data;
   }
 
   /**
@@ -138,7 +138,7 @@ export class PageViewService {
     }
 
     const response = await http.get(`/page-views/trends/${pageType}`, { params });
-    return response.data.data;
+    return (response.data as any).data;
   }
 
   /**
@@ -148,6 +148,6 @@ export class PageViewService {
     const response = await http.get('/page-views/admin/stats', {
       params: { days },
     });
-    return response.data.data;
+    return (response.data as any).data;
   }
 }
