@@ -196,8 +196,61 @@ auto_fix() {
     # 1. 修复网络问题
     fix_network_issues
     
-    # 2. 清理容器和镜像
+    # 2. 检查环境变量
+    check_env_variables
+    
+    # 3. 清理Docker资源
     log_info "清理Docker资源..."
+    docker container prune -f >/dev/null 2>&1 || true
+    docker volume prune -f >/dev/null 2>&1 || true
+    
+    # 4. 验证Nginx配置
+    validate_nginx_config
+    
+    log_success "自动修复完成"
+}
+
+# 检查环境变量
+check_env_variables() {
+    get_config_files
+    
+    log_info "检查环境变量配置..."
+    
+    # 检查SMTP配置
+    if ! grep -q "SMTP_USER=.*@.*" "$ENV_FILE"; then
+        log_warning "SMTP_USER未正确配置，应用可能无法发送邮件"
+        log_info "请编辑 $ENV_FILE 设置正确的SMTP配置"
+    fi
+    
+    # 检查数据库配置
+    if ! grep -q "DB_PASSWORD=.*" "$ENV_FILE"; then
+        log_warning "数据库密码未配置"
+    fi
+}
+
+# 验证Nginx配置
+validate_nginx_config() {
+    local env=$(detect_environment)
+    local nginx_config
+    
+    if [[ "$env" == "tencent" ]]; then
+        nginx_config="$PROJECT_ROOT/deployment/nginx/nginx.tencent.conf"
+    else
+        nginx_config="$PROJECT_ROOT/deployment/nginx/nginx.prod.conf"
+    fi
+    
+    if [[ -f "$nginx_config" ]]; then
+        log_info "验证Nginx配置..."
+        
+        # 检查负载均衡冲突
+        local upstream_blocks=$(grep -n "upstream" "$nginx_config" | wc -l)
+        local lb_methods=$(grep -E "least_conn|ip_hash|hash" "$nginx_config" | wc -l)
+        
+        if [[ $lb_methods -gt $upstream_blocks ]]; then
+            log_warning "检测到可能的负载均衡方法冲突"
+        fi
+    fi
+}
     docker container prune -f >/dev/null 2>&1 || true
     docker system prune -f >/dev/null 2>&1 || true
     
