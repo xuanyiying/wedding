@@ -563,7 +563,7 @@ check_api() {
     local endpoints=(
         "$API_URL/health:200"
         "$API_URL/api/v1/status:200"
-        "$API_URL/api/v1/users:401"  # Should return 401 without auth
+        "$API_URL/api/v1/docs:200"  # Should return 200 if Swagger is enabled
     )
     
     for endpoint_config in "${endpoints[@]}"; do

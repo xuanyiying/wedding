@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Wedding Client 统一部署管理脚本
-# 集成所有核心功能：部署、修复、诊断
+# Wedding Client 精简部署脚本
+# 确保部署流程一次成功，失败则需要重新构建
 
 set -e
 
@@ -19,40 +19,32 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 # 显示帮助信息
 show_help() {
     echo -e "${BLUE}========================================${NC}"
-    echo -e "${BLUE}    Wedding Client 部署管理工具${NC}"
+    echo -e "${BLUE}    Wedding Client 精简部署工具${NC}"
     echo -e "${BLUE}========================================${NC}"
     echo ""
-    echo "使用方法: ./deploy.sh [命令] [选项]"
+    echo "使用方法: ./deploy-simple.sh [命令]"
     echo ""
     echo -e "${GREEN}核心命令:${NC}"
-    echo "  start         快速启动服务"
-    echo "  stop          停止所有服务"
-    echo "  restart       重启所有服务"
-    echo "  redeploy      重新部署服务无需重新构建"
-    echo "  status        查看服务状态"
+    echo "  start         启动服务"
+    echo "  stop          停止服务"
+    echo "  restart       重启服务"
+    echo "  status        查看状态"
     echo ""
     echo -e "${YELLOW}部署命令:${NC}"
     echo "  deploy        完整部署（推荐）"
-    echo "  quick         快速部署"
-    echo "  init          服务器初始化"
-    echo ""
-    echo -e "${RED}修复命令:${NC}"
-    echo "  fix           自动修复常见问题"
-    echo "  fix-auth      修复认证和文件上传401/502问题"
-    echo "  fix-network   修复网络冲突"
-    echo "  fix-nginx     修复Nginx配置冲突"
-    echo "  diagnose      问题诊断"
+    echo "  rebuild       重新构建并部署"
     echo ""
     echo -e "${BLUE}管理命令:${NC}"
     echo "  logs [服务]   查看日志"
     echo "  clean         清理资源"
+    echo "  health        健康检查"
     echo "  test          测试配置"
     echo ""
     echo "示例:"
-    echo "  ./deploy.sh start          # 启动服务"
-    echo "  ./deploy.sh deploy         # 完整部署"
-    echo "  ./deploy.sh fix            # 修复问题"
-    echo "  ./deploy.sh logs nginx     # 查看nginx日志"
+    echo "  ./deploy-simple.sh deploy    # 完整部署"
+    echo "  ./deploy-simple.sh logs api  # 查看API日志"
+    echo ""
+    echo -e "${GREEN}Swagger文档:${NC} http://YOUR_IP/api/v1/docs"
     echo ""
 }
 
@@ -64,7 +56,6 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 # 检测环境
 detect_environment() {
-    # 检查是否有本地镜像（腾讯云环境）
     if docker images --format "{{.Repository}}:{{.Tag}}" | grep -q "^deployment-web:latest$"; then
         echo "tencent"
     else
@@ -91,19 +82,19 @@ start_services() {
     
     cd "$PROJECT_ROOT"
     
-    # 分层启动
-    log_info "启动基础服务 (数据库、缓存、存储)..."
+    # 分层启动 - 确保依赖顺序
+    log_info "1. 启动基础服务 (MySQL, Redis, MinIO)..."
     docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d mysql redis minio
+    sleep 30
+    
+    log_info "2. 启动API服务..."
+    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d api
     sleep 20
     
-    log_info "启动应用服务..."
-    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d api
-    sleep 10
-    
-    log_info "启动Web服务..."
+    log_info "3. 启动Web和Nginx服务..."
     docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d web nginx
     
-    sleep 5
+    sleep 10
     show_status
     log_success "服务启动完成！"
 }
@@ -123,7 +114,7 @@ stop_services() {
 restart_services() {
     log_info "重启Wedding Client服务..."
     stop_services
-    sleep 3
+    sleep 5
     start_services
 }
 
@@ -143,13 +134,15 @@ show_status() {
     local env=$(detect_environment)
     
     if [[ "$env" == "tencent" ]]; then
-        echo -e "  前端: ${GREEN}http://$server_ip${NC}"
-        echo -e "  API:  ${GREEN}http://$server_ip:3000${NC}"
+        echo -e "  前端:    ${GREEN}http://$server_ip${NC}"
+        echo -e "  API:     ${GREEN}http://$server_ip/api/v1${NC}"
+        echo -e "  Swagger: ${GREEN}http://$server_ip/api/v1/docs${NC}"
     else
-        echo -e "  前端: ${GREEN}http://$server_ip:8080${NC}"
-        echo -e "  API:  ${GREEN}http://$server_ip:3000${NC}"
+        echo -e "  前端:    ${GREEN}http://$server_ip:8080${NC}"
+        echo -e "  API:     ${GREEN}http://$server_ip:3000/api/v1${NC}"
+        echo -e "  Swagger: ${GREEN}http://$server_ip:3000/api/v1/docs${NC}"
     fi
-    echo -e "  MinIO: ${GREEN}http://$server_ip:9001${NC}"
+    echo -e "  MinIO:   ${GREEN}http://$server_ip:9001${NC}"
     echo ""
 }
 
@@ -160,8 +153,51 @@ deploy_full() {
     # 停止现有服务
     stop_services 2>/dev/null || true
     
-    # 清理网络冲突
-    fix_network_issues
+    # 启动服务
+    start_services
+    
+    # 健康检查
+    health_check
+    
+    log_success "完整部署完成！"
+    echo ""
+    echo -e "${YELLOW}重要访问地址:${NC}"
+    local server_ip=$(hostname -I | awk '{print $1}' || echo "localhost") 
+    echo -e "  📖 API文档: ${GREEN}http://$server_ip/api/v1/docs${NC}"
+    echo ""
+}
+
+# 重新构建部署
+rebuild_deploy() {
+    log_info "开始重新构建并部署..."
+    
+    # 停止服务
+    stop_services 2>/dev/null || true
+    
+    # 清理资源
+    clean_resources
+    
+    # 重新构建镜像
+    log_info "重新构建镜像..."
+    cd "$PROJECT_ROOT"
+    
+    # 构建Web镜像
+    if [[ -f "web/Dockerfile" ]]; then
+        log_info "构建Web镜像..."
+        docker build -t deployment-web:latest web/ || {
+            log_error "Web镜像构建失败"
+            return 1
+        }
+    fi
+    
+    # 构建API镜像
+    if [[ -f "server/Dockerfile" ]]; then
+        log_info "构建API镜像..."
+        docker build -t deployment-api1:latest server/ || {
+            log_error "API镜像构建失败"
+            return 1
+        }
+    fi
     
     # 启动服务
     start_services
@@ -169,302 +205,14 @@ deploy_full() {
     # 健康检查
     health_check
     
-    # 自动执行初始化
-    auto_initialize
-    
-    log_success "完整部署完成！"
-}
-
-# 快速部署
-deploy_quick() {
-    log_info "开始快速部署..."
-    restart_services
-}
-
-# 重新部署功能 - 不重新构建镜像
-redeploy() {
-    log_info "🚀 重新部署服务..."
-    
-    # 停止所有服务
-    stop_services
-    
-    # 等待服务完全停止
-    sleep 5
-    
-    # 重新启动服务
-    start_services
-    
-    # 检查服务状态
-    show_status
-    
-    log_success "重新部署完成"
-}
-
-# 修复401/502问题功能
-fix_auth_upload() {
-    log_info "🔧 修复认证和上传问题..."
-    
-    get_config_files
-    
-    # 检查nginx配置
-    if [[ -f "$PROJECT_ROOT/deployment/docker/nginx/nginx.tencent.conf" ]]; then
-        log_success "Nginx配置文件存在"
-    else
-        log_error "Nginx配置文件不存在"
-        return 1
-    fi
-    
-    cd "$PROJECT_ROOT"
-    
-    # 重启 nginx 服务
-    log_info "重启 nginx 服务..."
-    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" restart nginx
-    
-    # 重启 api 服务
-    log_info "重启 api 服务..."
-    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" restart api
-    
-    # 等待服务启动
-    log_info "等待服务启动..."
-    sleep 15
-    
-    # 检查服务状态
-    show_status
-    
-    log_success "认证和上传问题修复完成"
-}
-
-# 自动初始化
-auto_initialize() {
-    log_info "检查是否需要初始化..."
-    
-    # 检查是否已经初始化过
-    if [[ -f "$PROJECT_ROOT/.initialized" ]]; then
-        log_info "系统已经初始化过，跳过初始化步骤"
-        return 0
-    fi
-    
-    # 检查初始化脚本是否存在
-    if [[ -f "$PROJECT_ROOT/deployment/init-server.sh" ]]; then
-        log_info "发现初始化脚本，执行自动初始化..."
-        bash "$PROJECT_ROOT/deployment/init-server.sh"
-    else
-        log_warning "初始化脚本不存在，请手动执行: ./deployment/init-server.sh"
-    fi
-}
-
-# 手动初始化
-manual_initialize() {
-    log_info "手动执行服务器初始化..."
-    
-    if [[ -f "$PROJECT_ROOT/init-server.sh" ]]; then
-        bash "$PROJECT_ROOT/init-server.sh" "$@"
-    else
-        log_error "初始化脚本不存在: $PROJECT_ROOT/init-server.sh"
-        exit 1
-    fi
-}
-
-# 修复网络问题
-fix_network_issues() {
-    log_info "修复网络冲突问题..."
-    
-    # 清理冲突网络
-    docker network prune -f >/dev/null 2>&1 || true
-    
-    local networks=("deployment_wedding-net" "wedding-client_wedding-net" "wedding_wedding-net" "wedding-net")
-    for net in "${networks[@]}"; do
-        docker network rm "$net" 2>/dev/null || true
-    done
-    
-    log_success "网络问题修复完成"
-}
-
-# 自动修复
-auto_fix() {
-    log_info "开始自动修复常见问题..."
-    
-    # 1. 修复网络问题
-    fix_network_issues
-    
-    # 2. 检查环境变量
-    check_env_variables
-    
-    # 3. 清理Docker资源
-    log_info "清理Docker资源..."
-    docker container prune -f >/dev/null 2>&1 || true
-    docker system prune -f >/dev/null 2>&1 || true
-    
-    # 4. 验证Nginx配置
-    validate_nginx_config
-    
-    # 5. 重启服务
-    log_info "重启服务..."
-    restart_services
-    
-    log_success "自动修复完成"
-}
-
-# 检查环境变量
-check_env_variables() {
-    get_config_files
-    
-    log_info "检查环境变量配置..."
-    
-    # 检查SMTP配置
-    if ! grep -q "SMTP_USER=.*@.*" "$ENV_FILE"; then
-        log_warning "SMTP_USER未正确配置，应用可能无法发送邮件"
-        log_info "请编辑 $ENV_FILE 设置正确的SMTP配置"
-    fi
-    
-    # 检查数据库配置
-    if ! grep -q "DB_PASSWORD=.*" "$ENV_FILE"; then
-        log_warning "数据库密码未配置"
-    fi
-}
-
-# 验证Nginx配置
-validate_nginx_config() {
-    local env=$(detect_environment)
-    local nginx_config
-    
-    if [[ "$env" == "tencent" ]]; then
-        nginx_config="$PROJECT_ROOT/deployment/nginx/nginx.tencent.conf"
-    else
-        nginx_config="$PROJECT_ROOT/deployment/nginx/nginx.prod.conf"
-    fi
-    
-    if [[ -f "$nginx_config" ]]; then
-        log_info "验证Nginx配置..."
-        
-        # 检查负载均衡冲突
-        local upstream_blocks=$(grep -n "upstream" "$nginx_config" | wc -l)
-        local lb_methods=$(grep -E "least_conn|ip_hash|hash" "$nginx_config" | wc -l)
-        
-        if [[ $lb_methods -gt $upstream_blocks ]]; then
-            log_warning "检测到可能的负载均衡方法冲突"
-        fi
-    fi
-}
-
-# 修复Nginx配置问题
-fix_nginx_issues() {
-    log_info "修复Nginx配置问题..."
-    
-    if [[ -f "$PROJECT_ROOT/fix-nginx-emergency.sh" ]]; then
-        log_info "运行Nginx紧急修复脚本..."
-        bash "$PROJECT_ROOT/fix-nginx-emergency.sh"
-    else
-        log_warning "Nginx紧急修复脚本不存在，使用内置修复方法"
-        
-        get_config_files
-        cd "$PROJECT_ROOT"
-        
-        # 停止Nginx
-        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" stop nginx 2>/dev/null || true
-        
-        # 验证配置
-        validate_nginx_config
-        
-        # 重启Nginx
-        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d nginx
-        sleep 5
-        
-        if docker logs wedding-nginx 2>&1 | grep -q "load balancing method redefined"; then
-            log_warning "Nginx仍有负载均衡冲突警告"
-        else
-            log_success "Nginx配置修复完成"
-        fi
-    fi
-}
-
-# 自动修复
-auto_fix() {
-    log_info "开始自动修复常见问题..."
-    
-    # 1. 修复网络问题
-    fix_network_issues
-    
-    # 2. 检查环境变量
-    check_env_variables
-    
-    # 3. 清理Docker资源
-    log_info "清理Docker资源..."
-    docker container prune -f >/dev/null 2>&1 || true
-    docker system prune -f >/dev/null 2>&1 || true
-    
-    # 4. 验证Nginx配置
-    validate_nginx_config
-    
-    # 5. 重启服务
-    log_info "重启服务..."
-    restart_services
-    
-    log_success "自动修复完成！"
-}
-
-# 问题诊断
-diagnose() {
-    echo -e "${BLUE}========================================${NC}"
-    echo -e "${BLUE}    系统诊断${NC}"
-    echo -e "${BLUE}========================================${NC}"
-    
-    get_config_files
-    
-    # 检查Docker
-    log_info "检查Docker环境..."
-    if command -v docker >/dev/null 2>&1; then
-        echo -e "${GREEN}✓${NC} Docker已安装: $(docker --version)"
-    else
-        echo -e "${RED}✗${NC} Docker未安装"
-    fi
-    
-    if command -v docker-compose >/dev/null 2>&1; then
-        echo -e "${GREEN}✓${NC} Docker Compose已安装: $(docker-compose --version)"
-    else
-        echo -e "${RED}✗${NC} Docker Compose未安装"
-    fi
-    
-    # 检查配置文件
-    log_info "检查配置文件..."
-    if [[ -f "$COMPOSE_FILE" ]]; then
-        echo -e "${GREEN}✓${NC} Docker Compose配置存在"
-    else
-        echo -e "${RED}✗${NC} Docker Compose配置不存在: $COMPOSE_FILE"
-    fi
-    
-    if [[ -f "$ENV_FILE" ]]; then
-        echo -e "${GREEN}✓${NC} 环境配置文件存在"
-    else
-        echo -e "${RED}✗${NC} 环境配置文件不存在: $ENV_FILE"
-    fi
-    
-    # 检查服务状态
-    log_info "检查服务状态..."
-    cd "$PROJECT_ROOT"
-    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" ps
-    
-    # 检查网络
-    log_info "检查Docker网络..."
-    docker network ls | grep -E "(wedding|bridge)"
-    
-    # 检查端口
-    log_info "检查端口占用..."
-    local ports=("80" "3000" "3306" "6379" "9000" "9001")
-    for port in "${ports[@]}"; do
-        if ss -tlnp | grep -q ":$port "; then
-            echo -e "${GREEN}✓${NC} 端口 $port 正在使用"
-        else
-            echo -e "${YELLOW}○${NC} 端口 $port 未使用"
-        fi
-    done
+    log_success "重新构建部署完成！"
 }
 
 # 健康检查
 health_check() {
     log_info "执行健康检查..."
     
-    local max_attempts=6
+    local max_attempts=5
     local attempt=1
     
     while [[ $attempt -le $max_attempts ]]; do
@@ -484,7 +232,13 @@ health_check() {
             healthy=$((healthy + 1))
         fi
         
-        if [[ $healthy -eq 2 ]]; then
+        # 检查Swagger文档
+        if curl -f -m 5 -s http://localhost/api/v1/docs >/dev/null 2>&1; then
+            echo -e "${GREEN}✓${NC} Swagger文档可访问"
+            healthy=$((healthy + 1))
+        fi
+        
+        if [[ $healthy -ge 2 ]]; then
             log_success "健康检查通过"
             return 0
         fi
@@ -497,7 +251,8 @@ health_check() {
         ((attempt++))
     done
     
-    log_warning "健康检查未完全通过，请检查服务状态"
+    log_error "健康检查失败，建议执行重新构建: ./deploy-simple.sh rebuild"
+    return 1
 }
 
 # 查看日志
@@ -540,9 +295,11 @@ test_config() {
     
     if docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" config >/dev/null 2>&1; then
         echo -e "${GREEN}✓${NC} 配置文件语法正确"
+        return 0
     else
         echo -e "${RED}✗${NC} 配置文件语法错误"
         docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" config
+        return 1
     fi
 }
 
@@ -560,41 +317,23 @@ main() {
         restart)
             restart_services
             ;;
-        redeploy)
-            redeploy
-            ;;
-        fix-auth)
-            fix_auth_upload
-            ;;
         status)
             show_status
             ;;
         deploy)
             deploy_full
             ;;
-        quick)
-            deploy_quick
-            ;;
-        init)
-            manual_initialize "${@:2}"
-            ;;
-        fix)
-            auto_fix
-            ;;
-        fix-network)
-            fix_network_issues
-            ;;
-        fix-nginx)
-            fix_nginx_issues
-            ;;
-        diagnose)
-            diagnose
+        rebuild)
+            rebuild_deploy
             ;;
         logs)
             show_logs "$2"
             ;;
         clean)
             clean_resources
+            ;;
+        health)
+            health_check
             ;;
         test)
             test_config
