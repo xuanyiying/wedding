@@ -78,7 +78,7 @@ get_config_files() {
         ENV_FILE="$PROJECT_ROOT/deployment/.env.tencent"
     else
         COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.prod.yml"
-        ENV_FILE="$PROJECT_ROOT/deployment/.env.production"
+        ENV_FILE="$PROJECT_ROOT/deployment/.env"
     fi
 }
 
