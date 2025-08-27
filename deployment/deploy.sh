@@ -28,6 +28,7 @@ show_help() {
     echo "  start         快速启动服务"
     echo "  stop          停止所有服务"
     echo "  restart       重启所有服务"
+    echo "  redeploy      重新部署服务无需重新构建"
     echo "  status        查看服务状态"
     echo ""
     echo -e "${YELLOW}部署命令:${NC}"
@@ -37,6 +38,7 @@ show_help() {
     echo ""
     echo -e "${RED}修复命令:${NC}"
     echo "  fix           自动修复常见问题"
+    echo "  fix-auth      修复认证和文件上传401/502问题"
     echo "  fix-network   修复网络冲突"
     echo "  fix-nginx     修复Nginx配置冲突"
     echo "  diagnose      问题诊断"
@@ -177,6 +179,59 @@ deploy_full() {
 deploy_quick() {
     log_info "开始快速部署..."
     restart_services
+}
+
+# 重新部署功能 - 不重新构建镜像
+redeploy() {
+    log_info "🚀 重新部署服务..."
+    
+    # 停止所有服务
+    stop_services
+    
+    # 等待服务完全停止
+    sleep 5
+    
+    # 重新启动服务
+    start_services
+    
+    # 检查服务状态
+    show_status
+    
+    log_success "重新部署完成"
+}
+
+# 修复401/502问题功能
+fix_auth_upload() {
+    log_info "🔧 修复认证和上传问题..."
+    
+    get_config_files
+    
+    # 检查nginx配置
+    if [[ -f "$PROJECT_ROOT/deployment/docker/nginx/nginx.tencent.conf" ]]; then
+        log_success "Nginx配置文件存在"
+    else
+        log_error "Nginx配置文件不存在"
+        return 1
+    fi
+    
+    cd "$PROJECT_ROOT"
+    
+    # 重启 nginx 服务
+    log_info "重启 nginx 服务..."
+    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" restart nginx
+    
+    # 重启 api 服务
+    log_info "重启 api 服务..."
+    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" restart api
+    
+    # 等待服务启动
+    log_info "等待服务启动..."
+    sleep 15
+    
+    # 检查服务状态
+    show_status
+    
+    log_success "认证和上传问题修复完成"
 }
 
 # 自动初始化
@@ -504,6 +559,12 @@ main() {
             ;;
         restart)
             restart_services
+            ;;
+        redeploy)
+            redeploy
+            ;;
+        fix-auth)
+            fix_auth_upload
             ;;
         status)
             show_status

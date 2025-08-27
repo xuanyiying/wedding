@@ -20,24 +20,24 @@ import { fileValidators } from '../validators/file';
 
 const router = Router();
 
-// 单文件上传 - 添加超时和错误处理
+// 单文件上传 - 优化中间件顺序和错误处理
 router.post(
   '/upload',
-  authMiddleware,
-  uploadWithTimeout(), // 添加超时中间件
+  uploadWithTimeout(600000), // 10分钟超时
+  authMiddleware, // 认证检查提前
   uploadMiddleware.single('file'),
-  handleUploadError, // 添加错误处理
+  handleUploadError, // 错误处理
   validateRequest(fileValidators.uploadFile),
   uploadFile,
 );
 
-// 批量文件上传 - 添加超时和错误处理
+// 批量文件上传 - 优化中间件顺序和错误处理
 router.post(
   '/upload/batch',
-  authMiddleware,
-  uploadWithTimeout(), // 添加超时中间件
+  uploadWithTimeout(900000), // 15分钟超时
+  authMiddleware, // 认证检查提前
   uploadMiddleware.array('files', 10), // 最多10个文件
-  handleUploadError, // 添加错误处理
+  handleUploadError, // 错误处理
   validateRequest(fileValidators.uploadFiles),
   batchUploadFiles,
 );

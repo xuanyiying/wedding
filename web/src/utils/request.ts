@@ -141,12 +141,31 @@ uploadRequest.interceptors.response.use(
 
     switch (status) {
       case 401: {
-        // 使用认证管理器处理401错误，避免不必要的跳转
+        // 优化401错误处理 - 避免频繁重定向
         console.error('🔐 上传请求401错误 - 使用认证管理器处理');
-        const shouldRetry = await authManager.handle401Error(error);
 
-        if (!shouldRetry) {
-          safeMessage.error('登录已过期，请重新登录');
+        // 先检查是否是文件上传相关的请求
+        const isUploadRequest = error.config?.url?.includes('/upload') ||
+          error.config?.url?.includes('/files');
+
+        if (isUploadRequest) {
+          // 文件上传401错误，可能是token已过期，但不立即跳转
+          console.warn('⚠️ 文件上传认证失败，请重新登录');
+          safeMessage.error('登录状态已过期，请重新登录后再试');
+
+          // 延迟清理认证状态，给用户时间看到错误信息
+          setTimeout(() => {
+            const shouldRetry = authManager.handle401Error(error);
+            if (!shouldRetry) {
+              window.location.reload(); // 刻新页面而不是跳转
+            }
+          }, 2000);
+        } else {
+          // 非文件上传请求的401错误
+          const shouldRetry = await authManager.handle401Error(error);
+          if (!shouldRetry) {
+            safeMessage.error('登录已过期，请重新登录');
+          }
         }
         break;
       }

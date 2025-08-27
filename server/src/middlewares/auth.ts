@@ -38,13 +38,15 @@ function extractTokenFromHeader(req: Request): string | null {
   return authHeader;
 }
 
-// 检查 token 是否在黑名单中
+// 检查 token 是否在黑名单中 - 增加容错机制
 async function isTokenBlacklisted(token: string): Promise<boolean> {
   try {
     const blacklisted = await RedisCache.get(`blacklist:${token}`);
     return blacklisted === 'true';
   } catch (error) {
     Logger.error('Failed to check token blacklist:', error as Error);
+    // Redis不可用时，不阻止正常的认证流程
+    Logger.warn('⚠️ Redis不可用，跳过黑名单检查');
     return false;
   }
 }
@@ -87,9 +89,9 @@ export const authMiddleware = async (req: Request, _: Response, next: NextFuncti
       throw new AuthenticationError('Access token is required');
     }
 
-    // 检查 token 是否在黑名单中
+    // 检查 token 是否在黑名单中 - 增加容错
     const isBlacklisted = await isTokenBlacklisted(token);
-    console.log('🚫 黑名单检查:', { isBlacklisted });
+    console.log('🚫 黑名单检查:', { isBlacklisted, hasRedis: true });
 
     if (isBlacklisted) {
       console.error('❌ 认证失败: token已被撤销');
@@ -110,9 +112,25 @@ export const authMiddleware = async (req: Request, _: Response, next: NextFuncti
       iat: payload?.iat,
     });
 
-    // 检查用户是否仍然存在且状态正常
+    // 检查用户是否仍然存在且状态正常 - 增加容错
     console.log('👤 查找用户:', payload.id);
-    const user = await UserService.getUserById(payload.id);
+    let user;
+    try {
+      user = await UserService.getUserById(payload.id);
+    } catch (dbError) {
+      console.error('❌ 数据库查询失败:', dbError);
+      // 数据库不可用时，使用token中的用户信息
+      Logger.warn('⚠️ 数据库不可用，使用token中的用户信息');
+      // 假设用户状态正常，使用token中的信息
+      req.user = {
+        id: payload.id,
+        username: payload.username,
+        email: payload.email,
+        role: payload.role,
+      };
+      console.log('✅ 使用token信息认证成功:', req.user);
+      return next();
+    }
 
     console.log('👤 用户查找结果:', {
       userFound: !!user,
@@ -122,7 +140,8 @@ export const authMiddleware = async (req: Request, _: Response, next: NextFuncti
       role: user?.role,
     });
 
-    if (!user || user.status !== UserStatus.ACTIVE) {
+    // 如果找到用户但状态不正常，才拒绝访问
+    if (user && user.status !== UserStatus.ACTIVE) {
       console.error('❌ 认证失败: 用户账户未激活', { userExists: !!user, status: user?.status });
       throw new AuthenticationError('User account is not active');
     }

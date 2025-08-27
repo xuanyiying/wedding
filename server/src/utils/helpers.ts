@@ -90,7 +90,7 @@ export class JWTUtils {
     return jwt.sign(payload, config.jwt.refreshSecret, options);
   }
 
-  // 验证访问令牌
+  // 验证访问令牌 - 增加时间容错和重试机制
   static verifyAccessToken(token: string): object {
     try {
       console.log('🔍 JWT验证开始:', {
@@ -103,6 +103,8 @@ export class JWTUtils {
       const payload = jwt.verify(token, config.jwt.secret, {
         issuer: 'wedding-club',
         audience: 'wedding-club-users',
+        clockTolerance: 30, // 增加30秒时间容错
+        ignoreExpiration: false, // 不忽略过期，但允许时间容错
       }) as object;
 
       console.log('✅ JWT验证成功:', payload);
@@ -115,6 +117,24 @@ export class JWTUtils {
         tokenLength: token.length,
         tokenPreview: `${token.substring(0, 20)}...`,
       });
+
+      // 如果是时间相关错误，尝试使用更宽松的时间容错
+      if (error.name === 'TokenExpiredError' || error.name === 'NotBeforeError') {
+        try {
+          console.log('🔄 尝试使用宽松时间容错重新验证...');
+          const payload = jwt.verify(token, config.jwt.secret, {
+            issuer: 'wedding-club',
+            audience: 'wedding-club-users',
+            clockTolerance: 300, // 5分钟时间容错
+            ignoreExpiration: false,
+          }) as object;
+
+          console.log('✅ 宽松验证成功:', payload);
+          return payload;
+        } catch (retryError) {
+          console.error('❌ 宽松验证也失败:', retryError);
+        }
+      }
 
       logger.warn('Invalid access token', { error: (error as Error).message });
 

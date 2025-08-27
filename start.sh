@@ -52,6 +52,8 @@ show_available_commands() {
     echo "  ./start.sh backup      - 数据库备份"
     echo "  ./start.sh health      - 健康检查"
     echo "  ./start.sh diagnose    - 问题诊断"
+    echo "  ./start.sh fix-encoding - 修复字符编码问题"
+    echo "  ./start.sh fix-upload  - 修复文件上传问题"
     echo ""
     echo -e "${GREEN}文档相关：${NC}"
     echo "  ./start.sh docs        - 查看文档列表"
@@ -109,6 +111,12 @@ run_tool_script() {
                 script_path="$SCRIPT_DIR/diagnose-tencent.sh"
             fi
             ;;
+        "fix-encoding")
+            script_path="$SCRIPT_DIR/deployment/scripts/run-fix-encoding.sh"
+            ;;
+        "fix-upload")
+            script_path="$SCRIPT_DIR/deployment/scripts/fix-encoding-upload.sh"
+            ;;
         *)
             echo -e "${RED}❌ 未知的工具命令: $tool${NC}"
             exit 1
@@ -140,7 +148,7 @@ main() {
             run_deploy_command "$command"
             ;;
         # 工具命令
-        "backup"|"health"|"diagnose")
+        "backup"|"health"|"diagnose"|"fix-encoding"|"fix-upload")
             run_tool_script "$command"
             ;;
         # 文档命令
