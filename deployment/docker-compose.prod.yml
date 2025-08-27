@@ -26,7 +26,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
       - ./ssl:/etc/ssl:ro
       - ./logs/nginx:/var/log/nginx
       - nginx_cache:/var/cache/nginx

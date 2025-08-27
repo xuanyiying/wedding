@@ -14,7 +14,7 @@ NC='\033[0m'
 
 # 获取脚本目录
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$SCRIPT_DIR"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # 显示帮助信息
 show_help() {
@@ -190,11 +190,11 @@ auto_initialize() {
     fi
     
     # 检查初始化脚本是否存在
-    if [[ -f "$PROJECT_ROOT/init-server.sh" ]]; then
+    if [[ -f "$PROJECT_ROOT/deployment/init-server.sh" ]]; then
         log_info "发现初始化脚本，执行自动初始化..."
-        bash "$PROJECT_ROOT/init-server.sh"
+        bash "$PROJECT_ROOT/deployment/init-server.sh"
     else
-        log_warning "初始化脚本不存在，请手动执行: ./init-server.sh"
+        log_warning "初始化脚本不存在，请手动执行: ./deployment/init-server.sh"
     fi
 }
 
