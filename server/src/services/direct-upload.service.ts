@@ -196,13 +196,6 @@ export class DirectUploadService {
         this.SESSION_TTL // 完成后保留5分钟用于查询
       );
       
-      // 异步生成缩略图（如果是视频）
-      if (session.fileType === 'video' && session.generateCover) {
-        FileService.generateVideoCover(this.ossService.getFileUrl(session.ossKey)).catch(error => {
-          logger.error('生成视频缩略图失败:', error);
-        });
-      }
-      
       logger.info(`确认上传完成: ${uploadSessionId}`, {
         userId,
         fileName: session.fileName,

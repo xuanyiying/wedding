@@ -97,7 +97,7 @@ export class MinIOService implements OssService {
    * 上传文件
    */
   async uploadFile(
-    file: Buffer,
+    file: Buffer | Readable,
     originalName: string,
     contentType: string,
     folder?: string
@@ -123,10 +123,14 @@ export class MinIOService implements OssService {
 
       const url = this.getFileUrl(key);
 
+      // 对于流式上传，我们无法预先知道大小
+      const headCommand = new HeadObjectCommand({ Bucket: this.bucket, Key: key });
+      const { ContentLength } = await this.s3Client.send(headCommand);
+
       return {
         key,
         url,
-        size: file.length,
+        size: ContentLength || 0,
         contentType
       };
     } catch (error) {
@@ -146,7 +150,7 @@ export class MinIOService implements OssService {
       });
 
       const response = await this.s3Client.send(command);
-      
+
       if (!response.Body) {
         throw new Error('File not found');
       }
@@ -154,7 +158,7 @@ export class MinIOService implements OssService {
       // 将流转换为Buffer
       const chunks: Buffer[] = [];
       const stream = response.Body as Readable;
-      
+
       return new Promise((resolve, reject) => {
         stream.on('data', (chunk) => chunks.push(chunk));
         stream.on('end', () => resolve(Buffer.concat(chunks)));
@@ -254,6 +258,27 @@ export class MinIOService implements OssService {
    * 获取文件访问URL
    */
   getFileUrl(key: string): string {
+    // 检查是否有CDN_BASE_URL环境变量，如果有则使用CDN地址
+    const cdnBaseUrl = process.env.CDN_BASE_URL;
+    if (cdnBaseUrl) {
+      // 确保URL格式正确
+      const baseUrl = cdnBaseUrl.endsWith('/') ? cdnBaseUrl.slice(0, -1) : cdnBaseUrl;
+      const bucketPath = this.bucket;
+      const keyPath = key.startsWith('/') ? key.substring(1) : key;
+      return `${baseUrl}/${bucketPath}/${keyPath}`;
+    }
+
+    // 如果没有CDN配置，检查是否有外部访问URL配置
+    const publicEndpoint = process.env.MINIO_PUBLIC_ENDPOINT || process.env.VITE_MINIO_URL;
+    if (publicEndpoint) {
+      // 确保URL格式正确
+      const baseUrl = publicEndpoint.endsWith('/') ? publicEndpoint.slice(0, -1) : publicEndpoint;
+      const bucketPath = this.bucket;
+      const keyPath = key.startsWith('/') ? key.substring(1) : key;
+      return `${baseUrl}/${bucketPath}/${keyPath}`;
+    }
+
+    // 默认使用内部endpoint
     return `${this.config.endpoint}/${this.bucket}/${key}`;
   }
 
@@ -278,16 +303,9 @@ export class MinIOService implements OssService {
       // 先下载源文件
       const fileBuffer = await this.downloadFile(sourceKey);
       const fileInfo = await this.getFileInfo(sourceKey);
-      
-      // 上传到新位置
-      const command = new PutObjectCommand({
-        Bucket: this.bucket,
-        Key: targetKey,
-        Body: fileBuffer,
-        ContentType: fileInfo.contentType
-      });
 
-      await this.s3Client.send(command);
+      // 再上传到目标位置
+      await this.uploadFile(fileBuffer, path.basename(targetKey), fileInfo.contentType, path.dirname(targetKey));
     } catch (error) {
       console.error('Error copying file in MinIO:', error);
       throw new Error('Failed to copy file in MinIO');

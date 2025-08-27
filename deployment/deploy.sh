@@ -22,7 +22,7 @@ show_help() {
     echo -e "${BLUE}    Wedding Client 精简部署工具${NC}"
     echo -e "${BLUE}========================================${NC}"
     echo ""
-    echo "使用方法: ./deploy-simple.sh [命令]"
+    echo "使用方法: ./deploy.sh [命令]"
     echo ""
     echo -e "${GREEN}核心命令:${NC}"
     echo "  start         启动服务"
@@ -39,10 +39,12 @@ show_help() {
     echo "  clean         清理资源"
     echo "  health        健康检查"
     echo "  test          测试配置"
+    echo "  diagnose      诊断文件上传问题"
     echo ""
     echo "示例:"
-    echo "  ./deploy-simple.sh deploy    # 完整部署"
-    echo "  ./deploy-simple.sh logs api  # 查看API日志"
+    echo "  ./deploy.sh deploy    # 完整部署"
+    echo "  ./deploy.sh logs api  # 查看API日志"
+    echo "  ./deploy.sh diagnose  # 诊断文件上传问题"
     echo ""
     echo -e "${GREEN}Swagger文档:${NC} http://YOUR_IP/api/v1/docs"
     echo ""
@@ -303,6 +305,21 @@ test_config() {
     fi
 }
 
+# 诊断文件上传问题
+diagnose_upload() {
+    log_info "诊断文件上传问题..."
+    
+    # 检查诊断脚本是否存在
+    if [[ -f "$SCRIPT_DIR/scripts/diagnose-upload.sh" ]]; then
+        log_info "运行文件上传诊断脚本..."
+        bash "$SCRIPT_DIR/scripts/diagnose-upload.sh"
+        return $?
+    else
+        log_error "诊断脚本不存在: $SCRIPT_DIR/scripts/diagnose-upload.sh"
+        return 1
+    fi
+}
+
 # 主函数
 main() {
     local command="${1:-help}"
@@ -337,6 +354,9 @@ main() {
             ;;
         test)
             test_config
+            ;;
+        diagnose)
+            diagnose_upload
             ;;
         help|--help|-h)
             show_help

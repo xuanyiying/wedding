@@ -134,6 +134,12 @@ services:
     labels:
       - "com.wedding.service=api"
       - "com.wedding.environment=production"
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+        reservations:
+          memory: 512M
   # MySQL主数据库
   mysql:
     image: mysql:8.0

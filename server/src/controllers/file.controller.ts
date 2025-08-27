@@ -10,6 +10,15 @@ import { AuthenticatedRequest } from '../interfaces';
  */
 export const uploadFile = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
+    console.log('📥 文件上传请求开始:', {
+      userId: req.user?.id,
+      fileType: req.body.fileType,
+      category: req.body.category,
+      hasFile: !!req.file,
+      fileSize: req.file?.size,
+      originalName: req.file?.originalname
+    });
+
     if (!req.file) {
       Resp.badRequest(res, '请选择要上传的文件');
       return;
@@ -28,9 +37,23 @@ export const uploadFile = async (req: AuthenticatedRequest, res: Response, next:
       category: category,
     };
 
+    console.log('📤 开始上传到OSS:', {
+      filename: fileData.filename,
+      size: fileData.size,
+      fileType: fileData.fileType
+    });
+
     const result = await FileService.uploadFile(fileData);
+
+    console.log('✅ 文件上传成功:', {
+      fileId: result.id,
+      filename: result.filename,
+      url: result.fileUrl
+    });
+
     Resp.created(res, result, '文件上传成功');
   } catch (error) {
+    console.error('💥 文件上传失败:', error);
     logger.error('文件上传失败:', error);
     next(error);
   }

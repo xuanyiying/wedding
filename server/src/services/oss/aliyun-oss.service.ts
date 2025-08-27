@@ -4,6 +4,7 @@ import OSS from 'ali-oss';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { OssService, UploadResult, FileInfo } from './oss.service';
+import { Readable } from 'stream';
 
 export interface OSSConfig {
   region: string;
@@ -63,7 +64,7 @@ export class AliyunOssService implements OssService {
    * 上传文件
    */
   async uploadFile(
-    file: Buffer,
+    file: Buffer | Readable,
     originalName: string,
     contentType: string,
     folder?: string
@@ -73,6 +74,14 @@ export class AliyunOssService implements OssService {
       const fileExtension = path.extname(originalName);
       const fileName = `${uuidv4()}${fileExtension}`;
       const key = folder ? `${folder}/${fileName}` : fileName;
+
+      // 获取文件大小
+      let fileSize = 0;
+      if (Buffer.isBuffer(file)) {
+        fileSize = file.length;
+      } else if (file instanceof Readable && (file as any).readableLength !== undefined) {
+        fileSize = (file as any).readableLength;
+      }
 
       const result = await this.ossClient.put(key, file, {
         headers: {
@@ -86,10 +95,15 @@ export class AliyunOssService implements OssService {
         }
       });
 
+      // 如果上传成功但无法预先获取大小，从结果中获取
+      if (fileSize === 0 && result.res && result.res.size) {
+        fileSize = parseInt(String(result.res.size), 10);
+      }
+
       return {
         key,
         url: result.url,
-        size: file.length,
+        size: fileSize,
         contentType
       };
     } catch (error) {

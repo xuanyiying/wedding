@@ -1,3 +1,5 @@
+import stream from 'stream';
+
 /**
  * 存储服务接口
  * 定义统一的存储操作接口，支持MinIO和阿里云OSS
@@ -26,13 +28,13 @@ export interface OssService {
 
   /**
    * 上传文件
-   * @param file 文件缓冲区
+   * @param file 文件缓冲区或流
    * @param originalName 原始文件名
    * @param contentType 文件类型
    * @param folder 文件夹路径（可选）
    */
   uploadFile(
-    file: Buffer,
+    file: Buffer | stream.Readable,
     originalName: string,
     contentType: string,
     folder?: string

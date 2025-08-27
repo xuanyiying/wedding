@@ -3,13 +3,13 @@ import { File, FileAttributes, User } from '../models';
 import { logger } from '../utils/logger';
 import path from 'path';
 import fs from 'fs/promises';
+import * as fsSync from 'fs';
+import { Readable } from 'stream';
 import crypto from 'crypto';
 import sharp from 'sharp';
-import ffmpeg from 'fluent-ffmpeg';
 import { OssService } from './oss/oss.service';
 import { getOssService } from '../config/oss';
 import { createRetryHandler } from '../middlewares/upload';
-import axios from 'axios';
 import { FileCategory, FileType, StorageType } from '../types';
 
 interface GetFilesParams {
@@ -111,25 +111,18 @@ export class FileService {
     return file;
   }
 
-  static async generateVideoCover(videoUrl: string): Promise<string> {
-    try {
-      // 1. 下载视频文件
-      const response = await axios.get(videoUrl, { responseType: 'arraybuffer' });
-      const videoBuffer = Buffer.from(response.data, 'binary');
-      const originalName = path.basename(new URL(videoUrl).pathname);
-      // 2. 生成缩略图
-      const thumbnailUrl = await this.generateVideoThumbnail(videoBuffer, originalName);
-      return thumbnailUrl;
-    } catch (error) {
-      logger.error(`从URL生成视频封面失败: ${videoUrl}`, error);
-      throw new Error('生成视频封面失败');
-    }
-  }
-
   /**
    * 单文件上传
    */
   static async uploadFile(data: UploadFileData) {
+    console.log('📤 开始文件上传处理:', {
+      userId: data.userId,
+      filename: data.originalName,
+      size: data.size,
+      fileType: data.fileType,
+      category: data.category
+    });
+
     // 验证文件类型
     const allowedTypes = {
       [FileType.IMAGE]: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
@@ -147,29 +140,51 @@ export class FileService {
 
     if (data.fileType && allowedTypes[data.fileType]) {
       if (!allowedTypes[data.fileType].includes(data.mimetype)) {
-        throw new Error(`不支持的文件类型: ${data.mimetype}`);
+        const error = new Error(`不支持的文件类型: ${data.mimetype}`);
+        console.error('❌ 文件类型验证失败:', {
+          expected: allowedTypes[data.fileType],
+          received: data.mimetype
+        });
+        throw error;
       }
     }
 
-    // 获取文件缓冲区
-    let fileBuffer: Buffer;
+    // 准备文件数据（流或缓冲区）
+    let fileData: Buffer | Readable;
+    let fileHash: string;
+    
     if (data.buffer) {
-      fileBuffer = data.buffer;
+      // 如果已经是缓冲区，直接使用
+      fileData = data.buffer;
+      console.log('📄 使用缓冲区数据');
+      // 计算文件哈希
+      console.log('🔍 计算文件哈希...');
+      fileHash = crypto.createHash('md5').update(data.buffer).digest('hex');
+      console.log('✅ 文件哈希计算完成:', fileHash.substring(0, 8));
     } else if (data.path) {
-      fileBuffer = await fs.readFile(data.path);
+      console.log('📄 从路径创建文件流:', data.path);
+      // 创建文件读取流
+      fileData = fsSync.createReadStream(data.path);
+      
+      // 计算文件哈希 - 需要单独读取文件来计算哈希
+      console.log('🔍 计算文件哈希...');
+      const tempBuffer = await fs.readFile(data.path);
+      fileHash = crypto.createHash('md5').update(tempBuffer).digest('hex');
+      console.log('✅ 文件哈希计算完成:', fileHash.substring(0, 8));
     } else {
-      throw new Error('必须提供文件路径或缓冲区');
+      const error = new Error('必须提供文件路径或缓冲区');
+      console.error('❌ 文件数据缺失');
+      throw error;
     }
 
-    // 计算文件哈希
-    const hash = crypto.createHash('md5').update(fileBuffer).digest('hex');
-
     // 检查是否已存在相同文件
+    console.log('🔍 检查重复文件...');
     const existingFile = await File.findOne({
-      where: { hashMd5: hash },
+      where: { hashMd5: fileHash },
     });
 
     if (existingFile) {
+      console.log('✅ 发现重复文件，返回现有记录:', existingFile.id);
       // 删除临时文件（如果存在）
       if (data.path) {
         await fs.unlink(data.path).catch(() => { });
@@ -179,29 +194,18 @@ export class FileService {
 
     // 确定文件夹
     const folder = this.getFolderByType(data.fileType);
+    console.log('📁 确定存储文件夹:', folder);
 
     // 上传主文件到OSS - 添加重试机制
+    console.log('☁️ 开始上传到OSS...');
     const retryHandler = createRetryHandler();
     const uploadResult = await retryHandler(
-      () => this.ossService.uploadFile(fileBuffer, data.originalName, data.mimetype, folder),
+      () => this.ossService.uploadFile(fileData, data.originalName, data.mimetype, folder),
       `文件上传到OSS: ${data.originalName}`,
     );
-
-    let thumbnailUrl: string | undefined;
-
-    // 为视频文件生成缩略图 - 添加重试机制
-    if (data.fileType === FileType.VIDEO) {
-      try {
-        thumbnailUrl = await retryHandler(
-          () => this.generateVideoThumbnail(fileBuffer, data.originalName),
-          `视频缩略图生成: ${data.originalName}`,
-        );
-      } catch (error) {
-        logger.warn(`视频缩略图生成失败: ${data.originalName}`, error);
-      }
-    }
-
+    console.log('✅ OSS上传完成:', uploadResult.key);
     // 创建文件记录
+    console.log('💾 创建数据库记录...');
     const file = await File.create({
       filename: path.basename(uploadResult.key),
       originalName: data.originalName,
@@ -209,21 +213,27 @@ export class FileService {
       fileSize: data.size,
       fileUrl: uploadResult.url,
       filePath: uploadResult.key, // 存储OSS的key
-      hashMd5: hash,
+      hashMd5: fileHash,
       fileType: data.fileType,
       userId: data.userId,
       storageType: (process.env.OSS_TYPE as StorageType) || StorageType.MINIO,
       isPublic: false,
       downloadCount: 0,
       category: data.category as FileCategory,
-      thumbnailUrl: thumbnailUrl || null, // 如果是视频文件，存储缩略图URL
+      thumbnailUrl: null, // 缩略图URL将在视频处理后更新
     });
 
     // 清理临时文件
     if (data.path) {
+      console.log('🧹 清理临时文件:', data.path);
       await fs.unlink(data.path).catch(() => { });
     }
 
+    console.log('🎉 文件上传处理完成:', {
+      fileId: file.id,
+      filename: file.filename,
+      url: file.fileUrl
+    });
     logger.info(`文件上传成功: ${data.filename}, 用户: ${data.userId}, OSS Key: ${uploadResult.key}`);
 
     return this.getFileById(file.id);
@@ -481,7 +491,7 @@ export class FileService {
 
     await file.update(updateData);
     return this.getFileById(id);
-  } 
+  }
 
   /**
    * 获取文件统计
@@ -604,72 +614,6 @@ export class FileService {
       [FileType.VIDEO]: 'videos',
     };
     return folders[type] || 'images';
-  }
-
-  /**
-   * 生成视频缩略图
-   */
-  private static async generateVideoThumbnail(
-    videoBuffer: Buffer,
-    originalName: string,
-  ): Promise<string> {
-    return new Promise((resolve, reject) => {
-      // 创建临时文件
-      const tempVideoPath = path.join('/tmp', `temp_${Date.now()}_${originalName}`);
-      const tempThumbnailPath = path.join('/tmp', `thumb_${Date.now()}_${path.parse(originalName).name}.jpg`);
-
-      // 写入临时视频文件
-      fs.writeFile(tempVideoPath, videoBuffer)
-        .then(() => {
-          // 使用ffmpeg生成缩略图
-          ffmpeg(tempVideoPath)
-            .screenshots({
-              timestamps: ['00:00:01'], // 在第1秒截取
-              filename: path.basename(tempThumbnailPath),
-              folder: path.dirname(tempThumbnailPath),
-              size: '320x240',
-            })
-            .on('end', async () => {
-              try {
-                // 读取生成的缩略图
-                const thumbnailBuffer = await fs.readFile(tempThumbnailPath);
-
-                // 上传缩略图到OSS
-                const thumbnailName = `${path.parse(originalName).name}_thumbnail.jpg`;
-                const uploadResult = await this.ossService.uploadFile(
-                  thumbnailBuffer,
-                  thumbnailName,
-                  'image/jpeg',
-                  'thumbnails',
-                );
-
-                // 清理临时文件
-                await Promise.all([
-                  fs.unlink(tempVideoPath).catch(() => { }),
-                  fs.unlink(tempThumbnailPath).catch(() => { }),
-                ]);
-
-                resolve(uploadResult.url);
-              } catch (error) {
-                // 清理临时文件
-                await Promise.all([
-                  fs.unlink(tempVideoPath).catch(() => { }),
-                  fs.unlink(tempThumbnailPath).catch(() => { }),
-                ]);
-                reject(error);
-              }
-            })
-            .on('error', async error => {
-              // 清理临时文件
-              await Promise.all([
-                fs.unlink(tempVideoPath).catch(() => { }),
-                fs.unlink(tempThumbnailPath).catch(() => { }),
-              ]);
-              reject(error);
-            });
-        })
-        .catch(reject);
-    });
   }
 
   /**

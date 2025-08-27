@@ -98,9 +98,14 @@ export const uploadMiddleware = multer({
 
 // 带超时的上传中间件
 export const uploadWithTimeout = (timeoutMs: number = config.upload.timeout) => {
-  return (_: any, res: any, next: any) => {
+  return (req: any, res: any, next: any) => {
+    console.log(`📥 开始文件上传请求: ${req.method} ${req.url}`);
+    console.log(`👤 用户ID: ${req.user?.id}`);
+    console.log(`📁 文件大小限制: ${config.upload.maxFileSize} bytes`);
+
     // 设置请求超时
     const timeout = setTimeout(() => {
+      console.error(`⏰ 文件上传超时: ${req.url}, 超时时间: ${timeoutMs}ms`);
       if (!res.headersSent) {
         res.status(408).json({
           success: false,
@@ -112,13 +117,17 @@ export const uploadWithTimeout = (timeoutMs: number = config.upload.timeout) => 
 
     // 清理超时定时器
     const cleanup = () => {
+      console.log(`✅ 文件上传请求完成: ${req.url}`);
       clearTimeout(timeout);
     };
 
     // 监听响应完成
     res.on('finish', cleanup);
     res.on('close', cleanup);
-    res.on('error', cleanup);
+    res.on('error', (err: Error) => {
+      console.error(`💥 文件上传响应错误: ${req.url}`, err);
+      cleanup();
+    });
 
     next();
   };
