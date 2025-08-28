@@ -104,19 +104,6 @@ run_tool_script() {
         "health")
             script_path="$SCRIPT_DIR/deployment/scripts/health-check.sh"
             ;;
-        "diagnose")
-            if [[ -f "$SCRIPT_DIR/deployment/diagnose-tencent.sh" ]]; then
-                script_path="$SCRIPT_DIR/deployment/diagnose-tencent.sh"
-            else
-                script_path="$SCRIPT_DIR/diagnose-tencent.sh"
-            fi
-            ;;
-        "fix-encoding")
-            script_path="$SCRIPT_DIR/deployment/scripts/run-fix-encoding.sh"
-            ;;
-        "fix-upload")
-            script_path="$SCRIPT_DIR/deployment/scripts/fix-encoding-upload.sh"
-            ;;
         *)
             echo -e "${RED}❌ 未知的工具命令: $tool${NC}"
             exit 1
@@ -144,11 +131,11 @@ main() {
     
     case "$command" in
         # 部署相关命令
-        "deploy"|"start"|"stop"|"restart"|"status"|"init"|"fix"|"fix-network"|"fix-nginx"|"clean"|"test")
+        "deploy"|"start"|"stop"|"restart"|"status"|"init"|"clean"|"test")
             run_deploy_command "$command"
             ;;
         # 工具命令
-        "backup"|"health"|"diagnose"|"fix-encoding"|"fix-upload")
+        "backup"|"health")
             run_tool_script "$command"
             ;;
         # 文档命令

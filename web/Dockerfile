@@ -1,39 +1,55 @@
-# Stage 1: Build the React application
-FROM node:20-alpine AS build
+# 生产环境Web服务Dockerfile
+# 多阶段构建，优化镜像大小和构建速度
 
-# Accept build arguments
-ARG VITE_API_BASE_URL
-ARG VITE_UPLOAD_URL
-ARG VITE_APP_TITLE
-ARG VITE_NODE_ENV=production
+# 构建阶段
+FROM node:18-alpine AS builder
 
-# Set environment variables for build
-ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
-ENV VITE_UPLOAD_URL=${VITE_UPLOAD_URL}
-ENV VITE_APP_TITLE=${VITE_APP_TITLE}
-ENV VITE_NODE_ENV=${VITE_NODE_ENV}
+# 配置Alpine镜像源（提前配置以加速后续包安装）
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
+# 设置工作目录
 WORKDIR /app
 
+# 复制package文件
 COPY package*.json ./
 
-RUN npm config set registry https://registry.npmmirror.com
-RUN npm install
+# 配置npm镜像源（使用可靠的淘宝镜像源）
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm config set cache /tmp/.npm
 
+# 安装依赖（优化参数以提升安装速度）
+RUN npm ci --legacy-peer-deps --no-audit --no-fund --progress=false && \
+    rm -rf /tmp/.npm /root/.npm
+
+# 设置生产环境变量（提前设置以优化缓存）
+ENV NODE_ENV=production
+ENV VITE_API_URL=http://127.0.0.1/api
+ENV VITE_UPLOAD_URL=http://127.0.0.1/upload
+
+# 复制源代码（.dockerignore应排除node_modules等不必要文件）
 COPY . .
 
-RUN npm run build
+# 构建应用（使用并行构建优化）
+RUN npm run build --max_old_space_size=4096 && \
+    rm -rf node_modules/.cache /tmp/* /var/tmp/* /root/.npm
 
-# Stage 2: Serve the application using nginx
-FROM nginx:alpine
+# 生产阶段 - 使用nginx提供静态文件服务
+FROM nginx:alpine AS development
 
-# Copy the built application from the build stage
-COPY --from=build /app/dist /usr/share/nginx/html
+# 配置Alpine镜像源
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
+    apk update && \
+    apk add --no-cache wget && \
+    rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
 
-# Copy custom nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# 复制构建产物
+COPY --from=builder /app/dist /usr/share/nginx/html
 
+# 复制nginx配置
+COPY nginx.prod.conf /etc/nginx/conf.d/default.conf
+
+# 暴露端口
 EXPOSE 80
 
-# Start nginx
+# 启动nginx
 CMD ["nginx", "-g", "daemon off;"]

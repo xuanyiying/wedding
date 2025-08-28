@@ -17,6 +17,7 @@ import { Readable } from 'stream';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { OssService, UploadResult, FileInfo } from './oss.service';
+import logger from '@/utils/logger';
 
 export interface MinIOConfig {
   endpoint: string;
@@ -260,6 +261,7 @@ export class MinIOService implements OssService {
   getFileUrl(key: string): string {
     // 检查是否有CDN_BASE_URL环境变量，如果有则使用CDN地址
     const cdnBaseUrl = process.env.CDN_BASE_URL;
+    logger.info(`CDN_BASE_URL: ${cdnBaseUrl}`);
     if (cdnBaseUrl) {
       // 确保URL格式正确
       const baseUrl = cdnBaseUrl.endsWith('/') ? cdnBaseUrl.slice(0, -1) : cdnBaseUrl;
@@ -269,6 +271,8 @@ export class MinIOService implements OssService {
     }
 
     // 如果没有CDN配置，检查是否有外部访问URL配置
+    logger.info(`MINIO_PUBLIC_ENDPOINT: ${process.env.MINIO_PUBLIC_ENDPOINT}`);
+    logger.info(`VITE_MINIO_URL: ${process.env.VITE_MINIO_URL}`);
     const publicEndpoint = process.env.MINIO_PUBLIC_ENDPOINT || process.env.VITE_MINIO_URL;
     if (publicEndpoint) {
       // 确保URL格式正确
@@ -278,7 +282,7 @@ export class MinIOService implements OssService {
       return `${baseUrl}/${bucketPath}/${keyPath}`;
     }
 
-    // 默认使用内部endpoint
+    // 默认使用内部MinIO地址
     return `${this.config.endpoint}/${this.bucket}/${key}`;
   }
 

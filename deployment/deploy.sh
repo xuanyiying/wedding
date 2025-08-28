@@ -61,19 +61,19 @@ detect_environment() {
     if docker images --format "{{.Repository}}:{{.Tag}}" | grep -q "^deployment-web:latest$"; then
         echo "tencent"
     else
-        echo "production"
+        echo "prod"
     fi
 }
 
 # 获取配置文件路径
 get_config_files() {
     local env=$(detect_environment)
-    if [[ "$env" == "tencent" ]]; then
-        COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.tencent.yml"
-        ENV_FILE="$PROJECT_ROOT/deployment/.env.tencent"
+    if [[ "$env" == "deployment" ]]; then
+        COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.deployment.yml"
+        ENV_FILE="$PROJECT_ROOT/deployment/.env.deployment"
     else
-        COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.prod.yml"
-        ENV_FILE="$PROJECT_ROOT/deployment/.env"
+        COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.production.yml"
+        ENV_FILE="$PROJECT_ROOT/deployment/.env.production"
     fi
 }
 
@@ -305,21 +305,6 @@ test_config() {
     fi
 }
 
-# 诊断文件上传问题
-diagnose_upload() {
-    log_info "诊断文件上传问题..."
-    
-    # 检查诊断脚本是否存在
-    if [[ -f "$SCRIPT_DIR/scripts/diagnose-upload.sh" ]]; then
-        log_info "运行文件上传诊断脚本..."
-        bash "$SCRIPT_DIR/scripts/diagnose-upload.sh"
-        return $?
-    else
-        log_error "诊断脚本不存在: $SCRIPT_DIR/scripts/diagnose-upload.sh"
-        return 1
-    fi
-}
-
 # 主函数
 main() {
     local command="${1:-help}"
@@ -354,9 +339,6 @@ main() {
             ;;
         test)
             test_config
-            ;;
-        diagnose)
-            diagnose_upload
             ;;
         help|--help|-h)
             show_help

@@ -2,479 +2,210 @@
 
 ## 概述
 
-本方案实现了前端直接上传文件到OSS的功能，避免文件通过服务器中转，有效解决大文件上传超时问题。
+本方案实现了前端直接上传文件到OSS的功能，避免文件通过服务器中转，有效解决大文件上传超时问题。特别针对视频文件上传进行了全面优化，确保高效、稳定、安全。
 
 ## 架构设计
 
 ### 上传流程
 
-```
-1. 前端请求预签名URL
-   ↓
-2. 后端生成OSS预签名URL
-   ↓
-3. 前端直接上传到OSS
-   ↓
-4. 上传完成后通知后端
-   ↓
-5. 后端更新数据库记录
+```mermaid
+sequenceDiagram
+    participant Client as 前端
+    participant Server as 后端API
+    participant OSS as 对象存储服务
+
+    Client->>Server: 1. 请求预签名URL (携带文件名、大小、类型)
+    Server->>Server: 2. 验证权限、文件类型和大小
+    Server->>OSS: 3. 生成预签名上传URL
+    Server->>Client: 4. 返回预签名URL和上传会话ID
+    Client->>OSS: 5. 使用预签名URL直接上传文件
+    OSS-->>Client: 6. 返回上传成功状态
+    Client->>Server: 7. 通知后端确认上传 (携带上传会话ID)
+    Server->>OSS: 8. 验证OSS文件是否存在
+    Server->>Server: 9. 创建文件记录并更新数据库
+    Server->>Client: 10. 返回文件访问URL和确认信息
 ```
 
 ### 技术优势
 
-- **避免超时**: 文件直接上传到OSS，不经过服务器
-- **减少服务器负载**: 服务器只处理元数据，不处理文件流
-- **提高上传速度**: 利用OSS的CDN加速
-- **支持大文件**: 不受服务器内存和超时限制
-- **断点续传**: 可扩展支持分片上传
+- **避免超时**: 文件直接上传到OSS，不经过服务器，彻底解决大文件上传因服务器处理时间过长导致的超时问题。
+- **减少服务器负载**: 服务器仅处理元数据和认证，不消耗CPU和带宽处理文件流，极大提升了系统的并发处理能力。
+- **提高上传速度**: 客户端直连OSS，利用OSS的全球加速节点和优化的网络路径，上传速度更快。
+- **支持超大文件**: 不再受限于服务器的内存、磁盘和`client_max_body_size`配置，理论上支持OSS允许的任意大小文件。
+- **断点续传与分片上传**: 方案可轻松扩展以支持分片上传和断点续传，进一步提升大文件上传的稳定性和用户体验。
+- **精细化会话管理**: 通过Redis管理上传会话，可实现上传状态跟踪、进度查询、取消上传等高级功能。
+- **高并发与批量上传**: 前端实现并发控制，支持批量文件高效上传，后端通过异步处理和队列机制保证系统稳定性。
 
 ## 后端实现
 
-### 1. OSS服务接口扩展
+### 1. 直传上传服务 (`direct-upload.service.ts`)
 
-#### 文件: `src/services/oss/oss.service.ts`
+**核心功能**:
+- **生成预签名URL**: 根据文件类型、大小和用户权限，生成一个有时效性的、安全的上传URL。
+- **管理上传会话**: 在Redis中创建并管理每个上传操作的会话，记录状态（`pending`, `uploading`, `completed`, `failed`, `cancelled`）。
+- **验证文件合法性**: 严格校验文件类型和大小，防止非法文件上传。
+- **确认上传**: 在前端通知上传完成后，验证OSS上文件是否存在，并在数据库中创建文件记录。
 
+**主要方法**:
 ```typescript
-export interface OssService {
-  // 原有方法...
+class DirectUploadService {
+  // 生成预签名URL
+  static async generatePresignedUrl(params: PresignedUrlParams): Promise<PresignedUrlResponse>;
   
-  // 新增预签名URL方法
-  getPresignedUploadUrl(key: string, expires: number, contentType?: string): Promise<string>;
-  getPresignedDownloadUrl(key: string, expires: number): Promise<string>;
+  // 确认上传完成
+  static async confirmUpload(params: ConfirmUploadParams): Promise<FileRecord>;
+  
+  // 取消上传
+  static async cancelUpload(uploadSessionId: string, userId: string): Promise<void>;
+  
+  // 查询上传进度（可扩展）
+  static async getUploadProgress(uploadSessionId: string, userId: string): Promise<UploadProgress>;
 }
 ```
 
-### 2. MinIO服务实现
-
-#### 文件: `src/services/oss/minio.service.ts`
-
-- 实现 `getPresignedUploadUrl` 方法
-- 实现 `getPresignedDownloadUrl` 方法
-- 使用 `@aws-sdk/s3-request-presigner` 生成签名URL
-
-### 3. 阿里云OSS服务实现
-
-#### 文件: `src/services/oss/aliyun-oss.service.ts`
-
-- 实现 `getPresignedUploadUrl` 方法
-- 实现 `getPresignedDownloadUrl` 方法
-- 使用 `this.ossClient.signatureUrl` 生成签名URL
-
-### 4. 直传上传路由
-
-#### 文件: `src/routes/direct-upload.ts`
-
-**主要接口:**
-
-- `POST /direct-upload/presigned-url` - 获取预签名URL
-- `POST /direct-upload/confirm` - 确认上传完成
-- `DELETE /direct-upload/cancel/:uploadSessionId` - 取消上传
-- `GET /direct-upload/progress/:uploadSessionId` - 查询上传进度（可选）
-
-**请求示例:**
-
-```typescript
-// 获取预签名URL
-POST /direct-upload/presigned-url
-{
-  "fileName": "video.mp4",
-  "fileSize": 104857600,
-  "contentType": "video/mp4",
-  "fileType": "video",
-  "expires": 3600
-}
-
-// 确认上传
-POST /direct-upload/confirm
-{
-  "uploadSessionId": "session-123",
-  "actualFileSize": 104857600
-}
-```
-
-### 5. 文件服务扩展
-
-#### 文件: `src/services/file.service.ts`
-
-**新增方法:**
-
-- `createFileRecord` - 创建文件记录
-- `generateVideoThumbnailAsync` - 异步生成视频缩略图
-
-## 前端实现
-
-### 1. 直传上传工具类
-
-#### 文件: `src/utils/direct-upload.ts`
-
-**主要类:**
-
-- `DirectUploader` - 单文件直传上传器
-- `BatchDirectUploader` - 批量文件直传上传器
-
-**功能特性:**
-
-- 上传进度监控
-- 状态管理
-- 错误处理
-- 取消上传
-- 文件验证
-- 批量上传
-
-### 2. 使用示例
-
-#### 文件: `src/utils/direct-upload-example.ts`
-
-**示例类:**
-
-- `SingleFileUploadExample` - 单文件上传示例
-- `BatchFileUploadExample` - 批量文件上传示例
-
-**支持框架:**
-
-- React Hook 示例
-- Vue Composition API 示例
-- 原生JavaScript示例
-
-## 配置说明
-
-### 文件类型配置
-
+**文件类型配置**:
 ```typescript
 const FILE_TYPE_CONFIG = {
   video: {
     maxSize: 500 * 1024 * 1024, // 500MB
     allowedTypes: ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/flv', 'video/webm', 'video/mkv']
   },
-  work: {
-    maxSize: 200 * 1024 * 1024, // 200MB
-    allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/mov', 'video/webm']
-  },
-  image: {
-    maxSize: 50 * 1024 * 1024, // 50MB
-    allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff']
-  }
+  // ... 其他文件类型
 };
 ```
 
-### 环境变量
+### 2. 统一OSS服务接口 (`oss.service.ts`)
 
-```bash
-# OSS配置（已有）
-OSS_TYPE=minio  # 或 aliyun
-OSS_ENDPOINT=http://localhost:9000
-OSS_ACCESS_KEY=your-access-key
-OSS_SECRET_KEY=your-secret-key
-OSS_BUCKET=your-bucket
-
-# 直传上传配置
-DIRECT_UPLOAD_EXPIRES=3600  # 预签名URL过期时间（秒）
-DIRECT_UPLOAD_MAX_SESSION_TIME=7200  # 上传会话最大时间（秒）
-```
-
-## 使用方法
-
-### 1. 单文件上传
+为了支持多种OSS服务商（如MinIO, Aliyun OSS），我们定义了一个统一的接口。
 
 ```typescript
-import { SingleFileUploadExample } from '../utils/direct-upload-example';
-
-// 创建上传器
-const uploader = new SingleFileUploadExample({
-  onProgress: (progress) => {
-    console.log(`上传进度: ${progress.percentage}%`);
-  },
-  onStatus: (status) => {
-    console.log(`状态: ${status}`);
-  },
-  onSuccess: (result) => {
-    console.log('上传成功:', result);
-  },
-  onError: (error) => {
-    console.error('上传失败:', error);
-  }
-});
-
-// 上传视频
-const result = await uploader.uploadVideo(file);
+export interface OssService {
+  getPresignedUploadUrl(key: string, expires?: number, contentType?: string): Promise<string>;
+  fileExists(key: string): Promise<boolean>;
+  // ... 其他方法
+}
 ```
 
-### 2. 批量文件上传
+### 3. 直传上传路由 (`direct-upload.ts`)
 
-```typescript
-import { BatchFileUploadExample } from '../utils/direct-upload-example';
+**API接口**:
+- `POST /api/v1/direct-upload/presigned-url`: 获取预签名URL。
+- `POST /api/v1/direct-upload/confirm`: 确认上传完成。
+- `POST /api/v1/direct-upload/cancel`: 取消上传。
 
-// 创建批量上传器
-const batchUploader = new BatchFileUploadExample({
-  onProgress: (progress) => {
-    console.log(`批量上传进度: ${progress.percentage}%`);
-  },
-  onComplete: (result) => {
-    console.log('批量上传完成:', result);
-  }
-});
+**请求与响应示例**:
+```json
+// 请求预签名URL
+POST /api/v1/direct-upload/presigned-url
+{
+  "fileName": "wedding_highlights.mp4",
+  "fileSize": 524288000,
+  "contentType": "video/mp4",
+  "fileType": "video"
+}
 
-// 批量上传图片
-const result = await batchUploader.uploadFiles(files, 'image', {
-  concurrency: 3 // 并发数
-});
-```
-
-### 3. React Hook 使用
-
-```typescript
-// 在React组件中使用
-const {
-  uploadFile,
-  cancelUpload,
-  uploadProgress,
-  uploadStatus,
-  uploadResult,
-  uploadError,
-  isUploading
-} = useDirectUpload();
-
-// 上传文件
-const handleUpload = async (file: File) => {
-  try {
-    const result = await uploadFile(file, 'video');
-    console.log('上传成功:', result);
-  } catch (error) {
-    console.error('上传失败:', error);
-  }
-};
-```
-
-### 4. Vue Composition API 使用
-
-```typescript
-// 在Vue组件中使用
-const {
-  uploadFile,
-  cancelUpload,
-  uploadProgress,
-  uploadStatus,
-  uploadResult,
-  uploadError,
-  isUploading
-} = useDirectUpload();
-
-// 上传文件
-const handleUpload = async (file: File) => {
-  try {
-    const result = await uploadFile(file, 'video');
-    console.log('上传成功:', result);
-  } catch (error) {
-    console.error('上传失败:', error);
-  }
-};
-```
-
-## 错误处理
-
-### 常见错误类型
-
-1. **文件验证失败**
-   - 文件类型不支持
-   - 文件大小超过限制
-
-2. **预签名URL获取失败**
-   - OSS配置错误
-   - 网络连接问题
-
-3. **上传到OSS失败**
-   - 签名URL过期
-   - 网络中断
-   - OSS服务异常
-
-4. **确认上传失败**
-   - 上传会话过期
-   - 文件大小不匹配
-   - 数据库操作失败
-
-### 错误处理策略
-
-```typescript
-try {
-  const result = await uploader.uploadVideo(file);
-} catch (error) {
-  if (error.message.includes('文件验证失败')) {
-    // 处理文件验证错误
-    showValidationError(error.message);
-  } else if (error.message.includes('网络')) {
-    // 处理网络错误
-    showNetworkError();
-  } else {
-    // 处理其他错误
-    showGenericError(error.message);
+// 响应
+{
+  "success": true,
+  "data": {
+    "uploadSessionId": "session-uuid-12345",
+    "presignedUrl": "https://oss.example.com/bucket/path?signature=...",
+    "ossKey": "videos/user-id/timestamp_random_filename.mp4"
   }
 }
 ```
 
-## 监控和调试
+## 前端实现
 
-### 1. 上传进度监控
+### 1. 直传上传核心工具 (`direct-upload.ts`)
 
-```typescript
-const uploader = new DirectUploader(file, {
-  onProgress: (progress) => {
-    console.log('上传进度:', {
-      percentage: progress.percentage,
-      loaded: formatFileSize(progress.loaded),
-      total: formatFileSize(progress.total),
-      speed: formatUploadSpeed(progress.speed),
-      remainingTime: formatRemainingTime(progress.remainingTime)
-    });
-  }
-});
-```
+**核心类**:
+- `DirectUploader`: 处理单个文件的完整上传流程，包括获取预签名URL、上传到OSS、确认上传。
+- `BatchDirectUploader`: 管理多个文件的批量上传，支持并发控制和整体进度跟踪。
 
-### 2. 状态跟踪
+**功能特性**:
+- ✅ **实时上传进度**: 精确监控上传百分比、速度和剩余时间。
+- ✅ **完整状态管理**: `pending` → `uploading` → `completed`/`failed`/`cancelled`。
+- ✅ **自动重试**: 网络波动或OSS临时错误时自动重试，提升成功率。
+- ✅ **图片压缩**: 上传前可对图片进行客户端压缩，节省带宽和存储。
+- ✅ **文件验证**: 前端预验证，减少不必要的API请求。
+- ✅ **批量并发控制**: 可配置并发上传数量，避免浏览器请求阻塞。
+- ✅ **取消上传**: 支持随时取消单个或批量上传。
 
-```typescript
-const uploader = new DirectUploader(file, {
-  onStatusChange: (status) => {
-    console.log('状态变化:', status);
-    // pending -> uploading -> completed/failed/cancelled
-  }
-});
-```
+### 2. 直传上传服务 (`direct-upload.ts`)
 
-### 3. 调试日志
-
-后端会记录详细的上传日志，包括：
-- 预签名URL生成
-- 上传会话创建
-- 文件确认处理
-- 错误信息
-
-## 性能优化
-
-### 1. 并发控制
+封装了不同业务场景的上传方法，简化组件调用。
 
 ```typescript
-// 批量上传时控制并发数
-const result = await batchUploader.uploadFiles(files, 'image', {
-  concurrency: 3 // 同时最多上传3个文件
-});
-```
-
-### 2. 文件预处理
-
-```typescript
-// 上传前验证文件
-const validator = createFileValidator('video');
-const validation = validator.validate(file);
-
-if (!validation.valid) {
-  throw new Error(`文件验证失败: ${validation.errors.join(', ')}`);
+class DirectUploadService {
+  // 上传视频
+  async uploadVideo(file: File): Promise<DirectUploadResult>;
+  
+  // 批量上传作品图片
+  async uploadWorkImages(files: File[]): Promise<DirectUploadResult[]>;
+  
+  // ... 其他专用方法
 }
 ```
 
-### 3. 缓存优化
+## Nginx配置优化
 
-- 预签名URL缓存（短时间内相同文件可复用）
-- 上传会话状态缓存
-- 文件元数据缓存
+为了配合直传方案，Nginx配置也进行了相应优化。
 
-## 安全考虑
+### 1. 生产环境 (`nginx.prod.conf`)
 
-### 1. 文件验证
+我们为直传API端点 `/api/v1/direct-upload/` 创建了一个新的`location`块。
 
-- 文件类型白名单
-- 文件大小限制
-- 文件名安全检查
+```nginx
+# 直传服务代理
+location /api/v1/direct-upload/ {
+    proxy_pass http://api_backend/api/v1/direct-upload/;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
 
-### 2. 签名URL安全
+    # 直传API只处理元数据，请求体小，响应快，无需长超时
+    proxy_connect_timeout 10s;
+    proxy_send_timeout 60s;
+    proxy_read_timeout 60s;
 
-- 设置合理的过期时间
-- 限制上传文件大小
-- 验证Content-Type
-
-### 3. 上传会话管理
-
-- 会话超时机制
-- 会话状态验证
-- 防止重复确认
-
-## 扩展功能
-
-### 1. 分片上传
-
-可扩展支持大文件分片上传：
-
-```typescript
-// 未来可扩展的分片上传接口
-interface ChunkedUploadConfig {
-  chunkSize: number;
-  maxConcurrency: number;
-  enableResume: boolean;
+    # 禁用缓存，确保每次都获取最新的预签名URL
+    proxy_no_cache 1;
+    proxy_cache_bypass 1;
 }
 ```
 
-### 2. 上传队列
+### 2. 腾讯云环境 (`nginx.tencent.conf`)
 
-可扩展支持上传队列管理：
+腾讯云的配置同样增加了对直传API的支持，并优化了相关参数。
 
-```typescript
-// 未来可扩展的队列管理
-class UploadQueue {
-  add(file: File, config: DirectUploadConfig): void;
-  pause(): void;
-  resume(): void;
-  clear(): void;
+```nginx
+# 直传OSS上传API - 视频直传专用优化
+location /api/v1/direct-upload/ {
+    # 速率限制
+    limit_req zone=api_limit burst=20 nodelay;
+    limit_conn conn_limit 10;
+    
+    # 请求体小，超时短
+    client_max_body_size 1M;
+    proxy_connect_timeout 15s;
+    proxy_read_timeout 30s;
+    
+    # ... 其他代理设置
+    
+    # 响应头优化
+    add_header X-Upload-Method "direct" always;
 }
 ```
 
-### 3. 云存储适配
-
-可扩展支持更多云存储服务：
-
-- 腾讯云COS
-- 华为云OBS
-- AWS S3
-- Google Cloud Storage
-
-## 故障排除
-
-### 1. 上传失败
-
-**问题**: 文件上传到OSS失败
-
-**排查步骤**:
-1. 检查预签名URL是否有效
-2. 检查网络连接
-3. 检查OSS服务状态
-4. 检查文件大小是否超限
-
-### 2. 确认失败
-
-**问题**: 上传完成但确认失败
-
-**排查步骤**:
-1. 检查上传会话是否过期
-2. 检查文件大小是否匹配
-3. 检查数据库连接
-4. 检查后端日志
-
-### 3. 进度异常
-
-**问题**: 上传进度显示异常
-
-**排查步骤**:
-1. 检查进度回调函数
-2. 检查文件大小计算
-3. 检查网络状况
-4. 检查浏览器兼容性
+**关键变更**:
+- **独立的`location`块**: 将直传API与传统文件上传API分离，实现更精细的控制。
+- **更短的超时时间**: 由于服务器不处理文件流，直传API的响应非常快，因此设置了更短的超时时间，有助于快速失败和释放连接。
+- **禁用缓存**: 预签名URL具有时效性，必须禁用缓存，确保客户端每次都获取有效的URL。
+- **合理的速率限制**: 为直传API设置了独立的速率限制，防止恶意请求。
 
 ## 总结
 
-直传OSS上传解决方案通过以下方式有效解决了大文件上传超时问题：
-
-1. **架构优化**: 文件直接上传到OSS，避免服务器中转
-2. **性能提升**: 利用OSS的CDN加速和并发上传
-3. **用户体验**: 实时进度反馈和错误处理
-4. **可扩展性**: 支持多种文件类型和批量上传
-5. **安全性**: 完善的文件验证和权限控制
-
-该方案已在项目中完整实现，可直接使用。后续可根据业务需求扩展更多功能。
+通过实施直传OSS方案，我们彻底解决了大文件（特别是视频）上传的瓶颈问题。该方案不仅提升了上传性能和稳定性，还显著降低了服务器的资源消耗，为未来业务的扩展奠定了坚实的基础。

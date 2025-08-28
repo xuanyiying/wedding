@@ -203,15 +203,14 @@ export class FileService {
       () => this.ossService.uploadFile(fileData, data.originalName, data.mimetype, folder),
       `文件上传到OSS: ${data.originalName}`,
     );
-    console.log('✅ OSS上传完成:', uploadResult.key);
+    console.log('✅ OSS上传完成:', uploadResult.key, uploadResult.url);
     // 创建文件记录
-    console.log('💾 创建数据库记录...');
     const file = await File.create({
       filename: path.basename(uploadResult.key),
       originalName: data.originalName,
       mimeType: data.mimetype,
       fileSize: data.size,
-      fileUrl: uploadResult.url,
+      fileUrl: this.ossService.getFileUrl(uploadResult.url),
       filePath: uploadResult.key, // 存储OSS的key
       hashMd5: fileHash,
       fileType: data.fileType,
