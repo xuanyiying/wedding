@@ -24,7 +24,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./docker/nginx/nginx.tencent.conf:/etc/nginx/nginx.conf:ro
+      - ../web/nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
       - ./logs/nginx:/var/log/nginx
       - web_static:/usr/share/nginx/html:ro
     depends_on:
@@ -35,7 +35,7 @@ services:
     environment:
       - TZ=Asia/Shanghai
     healthcheck:
-      test: ["CMD", "sh", "-c", "wget --no-verbose --tries=1 --timeout=1 -O /dev/null http://127.0.0.1/health || exit 1"]
+      test: ["CMD", "sh", "-c", "wget --no-verbose --try=1 --timeout=1 -O /dev/null http://127.0.0.1/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -74,6 +74,8 @@ services:
       - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
       - MINIO_BUCKET=${MINIO_BUCKET}
       - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
+      - MINIO_PUBLIC_ENDPOINT=${MINIO_PUBLIC_ENDPOINT}
+      - VITE_MINIO_URL=${VITE_MINIO_URL}
       
       # JWT配置
       - JWT_SECRET=${JWT_SECRET}

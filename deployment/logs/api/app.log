@@ -443,3 +443,1701 @@
 2025-08-29 20:58:31 [INFO]: ::1 GET /health
 2025-08-29 20:58:31 [INFO]: ::1 - - [29/Aug/2025:12:58:31 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
 2025-08-29 20:58:45 [INFO]: SIGTERM received, shutting down gracefully
+2025-08-29 21:02:18 [INFO]: Database connection has been established successfully.
+2025-08-29 21:02:18 [INFO]: Database models initialized successfully.
+2025-08-29 21:02:18 [INFO]: ✅ Database connected successfully
+2025-08-29 21:02:18 [INFO]: Redis client connected successfully
+2025-08-29 21:02:18 [INFO]: Redis client ready to use
+2025-08-29 21:02:18 [INFO]: Redis connection established successfully
+2025-08-29 21:02:18 [INFO]: ✅ Redis connected successfully
+2025-08-29 21:02:18 [INFO]: 🚀 Server running on port 3000
+2025-08-29 21:02:18 [INFO]: 📝 Environment: production
+2025-08-29 21:02:18 [INFO]: 🔗 API Base URL: http://localhost:3000/api/v1
+2025-08-29 21:02:21 [INFO]: ::1 GET /health
+2025-08-29 21:02:21 [INFO]: ::1 - - [29/Aug/2025:13:02:21 +0000] "GET /health HTTP/1.1" 200 102 "-" "Wget"
+2025-08-29 21:02:51 [INFO]: ::1 GET /health
+2025-08-29 21:02:51 [INFO]: ::1 - - [29/Aug/2025:13:02:51 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:03:21 [INFO]: ::1 GET /health
+2025-08-29 21:03:21 [INFO]: ::1 - - [29/Aug/2025:13:03:21 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:03:51 [INFO]: ::1 GET /health
+2025-08-29 21:03:51 [INFO]: ::1 - - [29/Aug/2025:13:03:51 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:04:21 [INFO]: ::1 GET /health
+2025-08-29 21:04:21 [INFO]: ::1 - - [29/Aug/2025:13:04:21 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:04:51 [INFO]: ::1 GET /health
+2025-08-29 21:04:51 [INFO]: ::1 - - [29/Aug/2025:13:04:51 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:04:56 [INFO]: SIGTERM received, shutting down gracefully
+2025-08-29 21:05:40 [INFO]: Database connection has been established successfully.
+2025-08-29 21:05:40 [INFO]: Database models initialized successfully.
+2025-08-29 21:05:40 [INFO]: ✅ Database connected successfully
+2025-08-29 21:05:40 [INFO]: Redis client connected successfully
+2025-08-29 21:05:40 [INFO]: Redis client ready to use
+2025-08-29 21:05:40 [INFO]: Redis connection established successfully
+2025-08-29 21:05:40 [INFO]: ✅ Redis connected successfully
+2025-08-29 21:05:40 [INFO]: 🚀 Server running on port 3000
+2025-08-29 21:05:40 [INFO]: 📝 Environment: production
+2025-08-29 21:05:40 [INFO]: 🔗 API Base URL: http://localhost:3000/api/v1
+2025-08-29 21:05:42 [INFO]: ::1 GET /health
+2025-08-29 21:05:42 [INFO]: ::1 - - [29/Aug/2025:13:05:42 +0000] "GET /health HTTP/1.1" 200 102 "-" "Wget"
+2025-08-29 21:06:12 [INFO]: ::1 GET /health
+2025-08-29 21:06:12 [INFO]: ::1 - - [29/Aug/2025:13:06:12 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:06:42 [INFO]: ::1 GET /health
+2025-08-29 21:06:42 [INFO]: ::1 - - [29/Aug/2025:13:06:42 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:06:45 [INFO]: SIGTERM received, shutting down gracefully
+2025-08-29 21:07:00 [INFO]: Database connection has been established successfully.
+2025-08-29 21:07:01 [INFO]: Database models initialized successfully.
+2025-08-29 21:07:01 [INFO]: ✅ Database connected successfully
+2025-08-29 21:07:01 [INFO]: Redis client connected successfully
+2025-08-29 21:07:01 [INFO]: Redis client ready to use
+2025-08-29 21:07:01 [INFO]: Redis connection established successfully
+2025-08-29 21:07:01 [INFO]: ✅ Redis connected successfully
+2025-08-29 21:07:01 [INFO]: 🚀 Server running on port 3000
+2025-08-29 21:07:01 [INFO]: 📝 Environment: production
+2025-08-29 21:07:01 [INFO]: 🔗 API Base URL: http://localhost:3000/api/v1
+2025-08-29 21:07:04 [INFO]: ::1 GET /health
+2025-08-29 21:07:04 [INFO]: ::1 - - [29/Aug/2025:13:07:04 +0000] "GET /health HTTP/1.1" 200 101 "-" "Wget"
+2025-08-29 21:07:34 [INFO]: ::1 GET /health
+2025-08-29 21:07:34 [INFO]: ::1 - - [29/Aug/2025:13:07:34 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:08:04 [INFO]: ::1 GET /health
+2025-08-29 21:08:04 [INFO]: ::1 - - [29/Aug/2025:13:08:04 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:08:34 [INFO]: ::1 GET /health
+2025-08-29 21:08:34 [INFO]: ::1 - - [29/Aug/2025:13:08:34 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:09:04 [INFO]: ::1 GET /health
+2025-08-29 21:09:04 [INFO]: ::1 - - [29/Aug/2025:13:09:04 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:09:34 [INFO]: ::1 GET /health
+2025-08-29 21:09:34 [INFO]: ::1 - - [29/Aug/2025:13:09:34 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:10:04 [INFO]: ::1 GET /health
+2025-08-29 21:10:04 [INFO]: ::1 - - [29/Aug/2025:13:10:04 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:10:34 [INFO]: ::1 GET /health
+2025-08-29 21:10:34 [INFO]: ::1 - - [29/Aug/2025:13:10:34 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:11:04 [INFO]: ::1 GET /health
+2025-08-29 21:11:04 [INFO]: ::1 - - [29/Aug/2025:13:11:04 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:11:11 [INFO]: SIGTERM received, shutting down gracefully
+2025-08-29 21:22:49 [INFO]: Database connection has been established successfully.
+2025-08-29 21:22:49 [INFO]: Database models initialized successfully.
+2025-08-29 21:22:49 [INFO]: ✅ Database connected successfully
+2025-08-29 21:22:49 [INFO]: Redis client connected successfully
+2025-08-29 21:22:49 [INFO]: Redis client ready to use
+2025-08-29 21:22:49 [INFO]: Redis connection established successfully
+2025-08-29 21:22:49 [INFO]: ✅ Redis connected successfully
+2025-08-29 21:22:49 [INFO]: 🚀 Server running on port 3000
+2025-08-29 21:22:49 [INFO]: 📝 Environment: production
+2025-08-29 21:22:49 [INFO]: 🔗 API Base URL: http://localhost:3000/api/v1
+2025-08-29 21:22:52 [INFO]: ::1 GET /health
+2025-08-29 21:22:52 [INFO]: ::1 - - [29/Aug/2025:13:22:52 +0000] "GET /health HTTP/1.1" 200 102 "-" "Wget"
+2025-08-29 21:23:22 [INFO]: ::1 GET /health
+2025-08-29 21:23:22 [INFO]: ::1 - - [29/Aug/2025:13:23:22 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:23:52 [INFO]: ::1 GET /health
+2025-08-29 21:23:52 [INFO]: ::1 - - [29/Aug/2025:13:23:52 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:24:22 [INFO]: ::1 GET /health
+2025-08-29 21:24:22 [INFO]: ::1 - - [29/Aug/2025:13:24:22 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:24:52 [INFO]: ::1 GET /health
+2025-08-29 21:24:52 [INFO]: ::1 - - [29/Aug/2025:13:24:52 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:25:22 [INFO]: ::1 GET /health
+2025-08-29 21:25:22 [INFO]: ::1 - - [29/Aug/2025:13:25:22 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:25:52 [INFO]: ::1 GET /health
+2025-08-29 21:25:52 [INFO]: ::1 - - [29/Aug/2025:13:25:52 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:26:23 [INFO]: ::1 GET /health
+2025-08-29 21:26:23 [INFO]: ::1 - - [29/Aug/2025:13:26:23 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:26:53 [INFO]: ::1 GET /health
+2025-08-29 21:26:53 [INFO]: ::1 - - [29/Aug/2025:13:26:53 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:27:23 [INFO]: ::1 GET /health
+2025-08-29 21:27:23 [INFO]: ::1 - - [29/Aug/2025:13:27:23 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:27:53 [INFO]: ::1 GET /health
+2025-08-29 21:27:53 [INFO]: ::1 - - [29/Aug/2025:13:27:53 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:28:23 [INFO]: ::1 GET /health
+2025-08-29 21:28:23 [INFO]: ::1 - - [29/Aug/2025:13:28:23 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:28:53 [INFO]: ::1 GET /health
+2025-08-29 21:28:53 [INFO]: ::1 - - [29/Aug/2025:13:28:53 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:29:23 [INFO]: ::1 GET /health
+2025-08-29 21:29:23 [INFO]: ::1 - - [29/Aug/2025:13:29:23 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:29:53 [INFO]: ::1 GET /health
+2025-08-29 21:29:53 [INFO]: ::1 - - [29/Aug/2025:13:29:53 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:30:23 [INFO]: ::1 GET /health
+2025-08-29 21:30:23 [INFO]: ::1 - - [29/Aug/2025:13:30:23 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:30:53 [INFO]: ::1 GET /health
+2025-08-29 21:30:53 [INFO]: ::1 - - [29/Aug/2025:13:30:53 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:31:23 [INFO]: ::1 GET /health
+2025-08-29 21:31:23 [INFO]: ::1 - - [29/Aug/2025:13:31:23 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:31:54 [INFO]: ::1 GET /health
+2025-08-29 21:31:54 [INFO]: ::1 - - [29/Aug/2025:13:31:54 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:32:24 [INFO]: ::1 GET /health
+2025-08-29 21:32:24 [INFO]: ::1 - - [29/Aug/2025:13:32:24 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:32:54 [INFO]: ::1 GET /health
+2025-08-29 21:32:54 [INFO]: ::1 - - [29/Aug/2025:13:32:54 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:33:24 [INFO]: ::1 GET /health
+2025-08-29 21:33:24 [INFO]: ::1 - - [29/Aug/2025:13:33:24 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:33:54 [INFO]: ::1 GET /health
+2025-08-29 21:33:54 [INFO]: ::1 - - [29/Aug/2025:13:33:54 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:34:24 [INFO]: ::1 GET /health
+2025-08-29 21:34:24 [INFO]: ::1 - - [29/Aug/2025:13:34:24 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:34:54 [INFO]: ::1 GET /health
+2025-08-29 21:34:54 [INFO]: ::1 - - [29/Aug/2025:13:34:54 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:35:24 [INFO]: ::1 GET /health
+2025-08-29 21:35:24 [INFO]: ::1 - - [29/Aug/2025:13:35:24 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:35:54 [INFO]: ::1 GET /health
+2025-08-29 21:35:54 [INFO]: ::1 - - [29/Aug/2025:13:35:54 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:36:24 [INFO]: ::1 GET /health
+2025-08-29 21:36:24 [INFO]: ::1 - - [29/Aug/2025:13:36:24 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:36:54 [INFO]: ::1 GET /health
+2025-08-29 21:36:54 [INFO]: ::1 - - [29/Aug/2025:13:36:54 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:37:08 [INFO]: SIGTERM received, shutting down gracefully
+2025-08-29 21:41:15 [INFO]: Database connection has been established successfully.
+2025-08-29 21:41:15 [INFO]: Database models initialized successfully.
+2025-08-29 21:41:15 [INFO]: ✅ Database connected successfully
+2025-08-29 21:41:15 [INFO]: Redis client connected successfully
+2025-08-29 21:41:15 [INFO]: Redis client ready to use
+2025-08-29 21:41:15 [INFO]: Redis connection established successfully
+2025-08-29 21:41:15 [INFO]: ✅ Redis connected successfully
+2025-08-29 21:41:15 [INFO]: 🚀 Server running on port 3000
+2025-08-29 21:41:15 [INFO]: 📝 Environment: production
+2025-08-29 21:41:15 [INFO]: 🔗 API Base URL: http://localhost:3000/api/v1
+2025-08-29 21:41:18 [INFO]: ::1 GET /health
+2025-08-29 21:41:18 [INFO]: ::1 - - [29/Aug/2025:13:41:18 +0000] "GET /health HTTP/1.1" 200 102 "-" "Wget"
+2025-08-29 21:41:48 [INFO]: ::1 GET /health
+2025-08-29 21:41:48 [INFO]: ::1 - - [29/Aug/2025:13:41:48 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:42:14 [INFO]: ::ffff:172.30.0.6 GET /api/v1/settings/site-config
+2025-08-29 21:42:14 [INFO]: ::ffff:172.30.0.6 GET /api/v1/settings
+2025-08-29 21:42:14 [INFO]: 响应数据: 获取设置成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "site": "{\"name\":\"å©šç¤¼æœåŠ¡å¹³å°\",\"description\":\"ä¸“ä¸šçš„å©šç¤¼ç­–åˆ’ä¸ŽæœåŠ¡å¹³å°ï¼Œä¸ºæ‚¨æ‰“é€ å®Œç¾Žçš„å©šç¤¼ä½“éªŒ\",\"keywords\":\"å©šç¤¼ç­–åˆ’,å©šç¤¼æ‘„å½±,å©šç¤¼ä¸»æŒ,å©šç¤¼æœåŠ¡,å©šåº†å…¬å¸\",\"logo\":\"./assets/images/logo.png\",\"favicon\":\"./assets/images/favicon.ico\"}",
+    "siteTheme": "{\"colors\":{\"primary\":\"#1890ff\",\"secondary\":\"#52c41a\",\"background\":\"#ffffff\",\"text\":\"#000000\"},\"fonts\":{\"primary\":\"Arial, sans-serif\",\"secondary\":\"Georgia, serif\"},\"spacing\":{\"containerPadding\":\"20px\",\"sectionPadding\":\"40px\"}}",
+    "email": "{\"smtpHost\":\"smtp.gmail.com\",\"smtpPort\":587,\"smtpUser\":\"\",\"smtpPassword\":\"\",\"smtpSecure\":true,\"emailFrom\":\"noreply@wedding.com\",\"emailFromName\":\"å©šç¤¼æœåŠ¡å¹³å°\"}",
+    "seo": "{\"title\":\"å©šç¤¼æœåŠ¡å¹³å° - ä¸“ä¸šå©šç¤¼ç­–åˆ’ä¸ŽæœåŠ¡\",\"description\":\"ä¸“ä¸šçš„å©šç¤¼ç­–åˆ’ä¸ŽæœåŠ¡å¹³å°ï¼Œæä¾›å©šç¤¼æ‘„å½±ã€å©šç¤¼ä¸»æŒã€å©šç¤¼ç­–åˆ’ç­‰ä¸€ç«™å¼æœåŠ¡\",\"keywords\":\"å©šç¤¼ç­–åˆ’,å©šç¤¼æ‘„å½±,å©šç¤¼ä¸»æŒ,å©šç¤¼æœåŠ¡,å©šåº†å…¬å¸\",\"ogImage\":\"/images/og-image.jpg\",\"twitterCard\":\"summary_large_image\"}",
+    "homepageSections": "{\"hero\":{\"backgroundImage\":\"/images/hero-bg.jpg\",\"visible\":true,\"title\":\"å®Œç¾Žå©šç¤¼ï¼Œä»Žè¿™é‡Œå¼€å§‹\",\"description\":\"ä¸“ä¸šå›¢é˜Ÿä¸ºæ‚¨æ‰“é€ æ¢¦æƒ³ä¸­çš„å©šç¤¼\",\"ctaText\":\"ç«‹å³å’¨è¯¢\",\"ctaLink\":\"/contact\"},\"team\":{\"visible\":true,\"title\":\"ä¸“ä¸šå›¢é˜Ÿ\",\"subtitle\":\"ç»éªŒä¸°å¯Œçš„å©šç¤¼ç­–åˆ’å¸ˆ\",\"description\":\"ä¸“ä¸šå›¢é˜Ÿä¸ºæ‚¨æ‰“é€ æ¢¦æƒ³ä¸­çš„å©šç¤¼\"},\"teamShowcase\":{\"visible\":true,\"title\":\"å›¢é˜Ÿé£Žé‡‡\",\"subtitle\":\"å±•ç¤ºæˆ‘ä»¬çš„ä¸“ä¸šå®žåŠ›\",\"description\":\"æŸ¥çœ‹æˆ‘ä»¬å›¢é˜Ÿçš„ç²¾å½©çž¬é—´\"},\"portfolio\":{\"visible\":true,\"title\":\"ç²¾é€‰ä½œå“\",\"subtitle\":\"è§è¯æ¯ä¸€ä¸ªç¾Žå¥½æ—¶åˆ»\",\"description\":\"æµè§ˆæˆ‘ä»¬çš„å©šç¤¼æ‘„å½±ä½œå“é›†\"},\"schedule\":{\"visible\":true,\"title\":\"æ¡£æœŸæŸ¥è¯¢\",\"subtitle\":\"æŸ¥è¯¢å¯é¢„çº¦çš„ä¸»æŒäºº\",\"description\":\"æŸ¥è¯¢å¯é¢„çº¦çš„ä¸»æŒäºº\"},\"contact\":{\"visible\":true,\"title\":\"è”ç³»æˆ‘ä»¬\",\"subtitle\":\"éšæ—¶ä¸ºæ‚¨æä¾›å’¨è¯¢\",\"description\":\"å¤šç§æ–¹å¼è”ç³»æˆ‘ä»¬çš„å›¢é˜Ÿ\",\"address\":\"åŒ—äº¬å¸‚æœé˜³åŒºå©šç¤¼å¤§åŽ¦\",\"phone\":\"400-123-4567\",\"email\":\"contact@wedding.com\",\"wechat\":\"wedding_service\",\"xiaohongshu\":\"wedding_xiaohongshu\",\"douyin\":\"wedding_douyin\"}}",
+    "contactEmail": "contact@wedding.com",
+    "contactPhone": "400-123-4567"
+  },
+  "requestId": "6cddedda-bd62-4cc0-9055-5cc4e91c10f4"
+}
+2025-08-29 21:42:14 [INFO]: 响应数据: 获取网站配置成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "site": "{\"name\":\"å©šç¤¼æœåŠ¡å¹³å°\",\"description\":\"ä¸“ä¸šçš„å©šç¤¼ç­–åˆ’ä¸ŽæœåŠ¡å¹³å°ï¼Œä¸ºæ‚¨æ‰“é€ å®Œç¾Žçš„å©šç¤¼ä½“éªŒ\",\"keywords\":\"å©šç¤¼ç­–åˆ’,å©šç¤¼æ‘„å½±,å©šç¤¼ä¸»æŒ,å©šç¤¼æœåŠ¡,å©šåº†å…¬å¸\",\"logo\":\"./assets/images/logo.png\",\"favicon\":\"./assets/images/favicon.ico\"}",
+    "contactEmail": "contact@wedding.com",
+    "contactPhone": "400-123-4567",
+    "homepageSections": "{\"hero\":{\"backgroundImage\":\"/images/hero-bg.jpg\",\"visible\":true,\"title\":\"å®Œç¾Žå©šç¤¼ï¼Œä»Žè¿™é‡Œå¼€å§‹\",\"description\":\"ä¸“ä¸šå›¢é˜Ÿä¸ºæ‚¨æ‰“é€ æ¢¦æƒ³ä¸­çš„å©šç¤¼\",\"ctaText\":\"ç«‹å³å’¨è¯¢\",\"ctaLink\":\"/contact\"},\"team\":{\"visible\":true,\"title\":\"ä¸“ä¸šå›¢é˜Ÿ\",\"subtitle\":\"ç»éªŒä¸°å¯Œçš„å©šç¤¼ç­–åˆ’å¸ˆ\",\"description\":\"ä¸“ä¸šå›¢é˜Ÿä¸ºæ‚¨æ‰“é€ æ¢¦æƒ³ä¸­çš„å©šç¤¼\"},\"teamShowcase\":{\"visible\":true,\"title\":\"å›¢é˜Ÿé£Žé‡‡\",\"subtitle\":\"å±•ç¤ºæˆ‘ä»¬çš„ä¸“ä¸šå®žåŠ›\",\"description\":\"æŸ¥çœ‹æˆ‘ä»¬å›¢é˜Ÿçš„ç²¾å½©çž¬é—´\"},\"portfolio\":{\"visible\":true,\"title\":\"ç²¾é€‰ä½œå“\",\"subtitle\":\"è§è¯æ¯ä¸€ä¸ªç¾Žå¥½æ—¶åˆ»\",\"description\":\"æµè§ˆæˆ‘ä»¬çš„å©šç¤¼æ‘„å½±ä½œå“é›†\"},\"schedule\":{\"visible\":true,\"title\":\"æ¡£æœŸæŸ¥è¯¢\",\"subtitle\":\"æŸ¥è¯¢å¯é¢„çº¦çš„ä¸»æŒäºº\",\"description\":\"æŸ¥è¯¢å¯é¢„çº¦çš„ä¸»æŒäºº\"},\"contact\":{\"visible\":true,\"title\":\"è”ç³»æˆ‘ä»¬\",\"subtitle\":\"éšæ—¶ä¸ºæ‚¨æä¾›å’¨è¯¢\",\"description\":\"å¤šç§æ–¹å¼è”ç³»æˆ‘ä»¬çš„å›¢é˜Ÿ\",\"address\":\"åŒ—äº¬å¸‚æœé˜³åŒºå©šç¤¼å¤§åŽ¦\",\"phone\":\"400-123-4567\",\"email\":\"contact@wedding.com\",\"wechat\":\"wedding_service\",\"xiaohongshu\":\"wedding_xiaohongshu\",\"douyin\":\"wedding_douyin\"}}"
+  },
+  "requestId": "aa8b6b5a-b896-430f-9a79-92ec4bf698c1"
+}
+2025-08-29 21:42:14 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:42:14 +0000] "GET /api/v1/settings?_t=1756474934705 HTTP/1.1" 200 - "http://localhost/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:42:14 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:42:14 +0000] "GET /api/v1/settings/site-config?_t=1756474934705 HTTP/1.1" 200 - "http://localhost/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:42:14 [INFO]: ::ffff:172.30.0.6 GET /api/v1/settings
+2025-08-29 21:42:14 [INFO]: 响应数据: 获取设置成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "site": "{\"name\":\"å©šç¤¼æœåŠ¡å¹³å°\",\"description\":\"ä¸“ä¸šçš„å©šç¤¼ç­–åˆ’ä¸ŽæœåŠ¡å¹³å°ï¼Œä¸ºæ‚¨æ‰“é€ å®Œç¾Žçš„å©šç¤¼ä½“éªŒ\",\"keywords\":\"å©šç¤¼ç­–åˆ’,å©šç¤¼æ‘„å½±,å©šç¤¼ä¸»æŒ,å©šç¤¼æœåŠ¡,å©šåº†å…¬å¸\",\"logo\":\"./assets/images/logo.png\",\"favicon\":\"./assets/images/favicon.ico\"}",
+    "siteTheme": "{\"colors\":{\"primary\":\"#1890ff\",\"secondary\":\"#52c41a\",\"background\":\"#ffffff\",\"text\":\"#000000\"},\"fonts\":{\"primary\":\"Arial, sans-serif\",\"secondary\":\"Georgia, serif\"},\"spacing\":{\"containerPadding\":\"20px\",\"sectionPadding\":\"40px\"}}",
+    "email": "{\"smtpHost\":\"smtp.gmail.com\",\"smtpPort\":587,\"smtpUser\":\"\",\"smtpPassword\":\"\",\"smtpSecure\":true,\"emailFrom\":\"noreply@wedding.com\",\"emailFromName\":\"å©šç¤¼æœåŠ¡å¹³å°\"}",
+    "seo": "{\"title\":\"å©šç¤¼æœåŠ¡å¹³å° - ä¸“ä¸šå©šç¤¼ç­–åˆ’ä¸ŽæœåŠ¡\",\"description\":\"ä¸“ä¸šçš„å©šç¤¼ç­–åˆ’ä¸ŽæœåŠ¡å¹³å°ï¼Œæä¾›å©šç¤¼æ‘„å½±ã€å©šç¤¼ä¸»æŒã€å©šç¤¼ç­–åˆ’ç­‰ä¸€ç«™å¼æœåŠ¡\",\"keywords\":\"å©šç¤¼ç­–åˆ’,å©šç¤¼æ‘„å½±,å©šç¤¼ä¸»æŒ,å©šç¤¼æœåŠ¡,å©šåº†å…¬å¸\",\"ogImage\":\"/images/og-image.jpg\",\"twitterCard\":\"summary_large_image\"}",
+    "homepageSections": "{\"hero\":{\"backgroundImage\":\"/images/hero-bg.jpg\",\"visible\":true,\"title\":\"å®Œç¾Žå©šç¤¼ï¼Œä»Žè¿™é‡Œå¼€å§‹\",\"description\":\"ä¸“ä¸šå›¢é˜Ÿä¸ºæ‚¨æ‰“é€ æ¢¦æƒ³ä¸­çš„å©šç¤¼\",\"ctaText\":\"ç«‹å³å’¨è¯¢\",\"ctaLink\":\"/contact\"},\"team\":{\"visible\":true,\"title\":\"ä¸“ä¸šå›¢é˜Ÿ\",\"subtitle\":\"ç»éªŒä¸°å¯Œçš„å©šç¤¼ç­–åˆ’å¸ˆ\",\"description\":\"ä¸“ä¸šå›¢é˜Ÿä¸ºæ‚¨æ‰“é€ æ¢¦æƒ³ä¸­çš„å©šç¤¼\"},\"teamShowcase\":{\"visible\":true,\"title\":\"å›¢é˜Ÿé£Žé‡‡\",\"subtitle\":\"å±•ç¤ºæˆ‘ä»¬çš„ä¸“ä¸šå®žåŠ›\",\"description\":\"æŸ¥çœ‹æˆ‘ä»¬å›¢é˜Ÿçš„ç²¾å½©çž¬é—´\"},\"portfolio\":{\"visible\":true,\"title\":\"ç²¾é€‰ä½œå“\",\"subtitle\":\"è§è¯æ¯ä¸€ä¸ªç¾Žå¥½æ—¶åˆ»\",\"description\":\"æµè§ˆæˆ‘ä»¬çš„å©šç¤¼æ‘„å½±ä½œå“é›†\"},\"schedule\":{\"visible\":true,\"title\":\"æ¡£æœŸæŸ¥è¯¢\",\"subtitle\":\"æŸ¥è¯¢å¯é¢„çº¦çš„ä¸»æŒäºº\",\"description\":\"æŸ¥è¯¢å¯é¢„çº¦çš„ä¸»æŒäºº\"},\"contact\":{\"visible\":true,\"title\":\"è”ç³»æˆ‘ä»¬\",\"subtitle\":\"éšæ—¶ä¸ºæ‚¨æä¾›å’¨è¯¢\",\"description\":\"å¤šç§æ–¹å¼è”ç³»æˆ‘ä»¬çš„å›¢é˜Ÿ\",\"address\":\"åŒ—äº¬å¸‚æœé˜³åŒºå©šç¤¼å¤§åŽ¦\",\"phone\":\"400-123-4567\",\"email\":\"contact@wedding.com\",\"wechat\":\"wedding_service\",\"xiaohongshu\":\"wedding_xiaohongshu\",\"douyin\":\"wedding_douyin\"}}",
+    "contactEmail": "contact@wedding.com",
+    "contactPhone": "400-123-4567"
+  },
+  "requestId": "8017c856-0a9e-4735-a39b-42098e2ed6e0"
+}
+2025-08-29 21:42:14 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:42:14 +0000] "GET /api/v1/settings?_t=1756474934705 HTTP/1.1" 200 - "http://localhost/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:42:18 [INFO]: ::1 GET /health
+2025-08-29 21:42:18 [INFO]: ::1 - - [29/Aug/2025:13:42:18 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:42:29 [INFO]: ::ffff:172.30.0.6 GET /api/v1/docs/
+2025-08-29 21:42:29 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:42:29 +0000] "GET /api/v1/docs/ HTTP/1.1" 304 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:42:48 [INFO]: ::1 GET /health
+2025-08-29 21:42:48 [INFO]: ::1 - - [29/Aug/2025:13:42:48 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:43:18 [INFO]: ::1 GET /health
+2025-08-29 21:43:18 [INFO]: ::1 - - [29/Aug/2025:13:43:18 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:43:48 [INFO]: ::1 GET /health
+2025-08-29 21:43:48 [INFO]: ::1 - - [29/Aug/2025:13:43:48 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:44:15 [INFO]: ::ffff:172.30.0.6 POST /api/v1/auth/logout
+2025-08-29 21:44:15 [WARN]: Invalid access token
+{
+  "error": "jwt expired"
+}
+2025-08-29 21:44:15 [WARN]: Security Authentication failed
+{
+  "ip": "::ffff:172.30.0.6",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "POST /logout",
+  "error": "jwt expired"
+}
+2025-08-29 21:44:15 [WARN]: Client Error: Token expired
+{
+  "statusCode": 401,
+  "code": "AUTHENTICATION_ERROR",
+  "url": "/api/v1/auth/logout",
+  "method": "POST",
+  "ip": "::ffff:172.30.0.6",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+}
+2025-08-29 21:44:15 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:44:15 +0000] "POST /api/v1/auth/logout HTTP/1.1" 401 190 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:44:16 [INFO]: ::ffff:172.30.0.6 GET /api/v1/settings/site-config
+2025-08-29 21:44:16 [INFO]: 响应数据: 获取网站配置成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "site": "{\"name\":\"å©šç¤¼æœåŠ¡å¹³å°\",\"description\":\"ä¸“ä¸šçš„å©šç¤¼ç­–åˆ’ä¸ŽæœåŠ¡å¹³å°ï¼Œä¸ºæ‚¨æ‰“é€ å®Œç¾Žçš„å©šç¤¼ä½“éªŒ\",\"keywords\":\"å©šç¤¼ç­–åˆ’,å©šç¤¼æ‘„å½±,å©šç¤¼ä¸»æŒ,å©šç¤¼æœåŠ¡,å©šåº†å…¬å¸\",\"logo\":\"./assets/images/logo.png\",\"favicon\":\"./assets/images/favicon.ico\"}",
+    "contactEmail": "contact@wedding.com",
+    "contactPhone": "400-123-4567",
+    "homepageSections": "{\"hero\":{\"backgroundImage\":\"/images/hero-bg.jpg\",\"visible\":true,\"title\":\"å®Œç¾Žå©šç¤¼ï¼Œä»Žè¿™é‡Œå¼€å§‹\",\"description\":\"ä¸“ä¸šå›¢é˜Ÿä¸ºæ‚¨æ‰“é€ æ¢¦æƒ³ä¸­çš„å©šç¤¼\",\"ctaText\":\"ç«‹å³å’¨è¯¢\",\"ctaLink\":\"/contact\"},\"team\":{\"visible\":true,\"title\":\"ä¸“ä¸šå›¢é˜Ÿ\",\"subtitle\":\"ç»éªŒä¸°å¯Œçš„å©šç¤¼ç­–åˆ’å¸ˆ\",\"description\":\"ä¸“ä¸šå›¢é˜Ÿä¸ºæ‚¨æ‰“é€ æ¢¦æƒ³ä¸­çš„å©šç¤¼\"},\"teamShowcase\":{\"visible\":true,\"title\":\"å›¢é˜Ÿé£Žé‡‡\",\"subtitle\":\"å±•ç¤ºæˆ‘ä»¬çš„ä¸“ä¸šå®žåŠ›\",\"description\":\"æŸ¥çœ‹æˆ‘ä»¬å›¢é˜Ÿçš„ç²¾å½©çž¬é—´\"},\"portfolio\":{\"visible\":true,\"title\":\"ç²¾é€‰ä½œå“\",\"subtitle\":\"è§è¯æ¯ä¸€ä¸ªç¾Žå¥½æ—¶åˆ»\",\"description\":\"æµè§ˆæˆ‘ä»¬çš„å©šç¤¼æ‘„å½±ä½œå“é›†\"},\"schedule\":{\"visible\":true,\"title\":\"æ¡£æœŸæŸ¥è¯¢\",\"subtitle\":\"æŸ¥è¯¢å¯é¢„çº¦çš„ä¸»æŒäºº\",\"description\":\"æŸ¥è¯¢å¯é¢„çº¦çš„ä¸»æŒäºº\"},\"contact\":{\"visible\":true,\"title\":\"è”ç³»æˆ‘ä»¬\",\"subtitle\":\"éšæ—¶ä¸ºæ‚¨æä¾›å’¨è¯¢\",\"description\":\"å¤šç§æ–¹å¼è”ç³»æˆ‘ä»¬çš„å›¢é˜Ÿ\",\"address\":\"åŒ—äº¬å¸‚æœé˜³åŒºå©šç¤¼å¤§åŽ¦\",\"phone\":\"400-123-4567\",\"email\":\"contact@wedding.com\",\"wechat\":\"wedding_service\",\"xiaohongshu\":\"wedding_xiaohongshu\",\"douyin\":\"wedding_douyin\"}}"
+  },
+  "requestId": "cdcca75a-e417-493b-b94b-34f1f7894dac"
+}
+2025-08-29 21:44:16 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:44:16 +0000] "GET /api/v1/settings/site-config?_t=1756475056823 HTTP/1.1" 200 - "http://localhost/admin/login" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:44:18 [INFO]: ::1 GET /health
+2025-08-29 21:44:18 [INFO]: ::1 - - [29/Aug/2025:13:44:18 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:44:23 [INFO]: ::ffff:172.30.0.6 POST /api/v1/auth/login
+2025-08-29 21:44:23 [INFO]: admin
+2025-08-29 21:44:23 [INFO]: [object SequelizeInstance:User]
+2025-08-29 21:44:24 [INFO]: User logged in successfully
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "username": "admin",
+  "ip": "127.0.0.1"
+}
+2025-08-29 21:44:24 [INFO]: User login attempt
+{
+  "username": "admin",
+  "ip": "::ffff:172.30.0.6",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+}
+2025-08-29 21:44:24 [INFO]: 响应数据: 登录成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "user": {
+      "id": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+      "username": "admin",
+      "email": "admin@wedding.com",
+      "phone": null,
+      "role": "super_admin",
+      "status": "active",
+      "avatarUrl": null,
+      "realName": "系统管理员",
+      "nickname": null,
+      "bio": null,
+      "createdAt": "2025-08-27 00:55:52",
+      "updatedAt": "2025-08-29T13:44:24.114Z"
+    },
+    "tokens": {
+      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijg2YjEzNGQ0LTgyOWQtMTFmMC1hYjQyLTdhMmU0YTkyYmU0OSIsInVzZXJuYW1lIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQHdlZGRpbmcuY29tIiwicm9sZSI6InN1cGVyX2FkbWluIiwiaWF0IjoxNzU2NDc1MDY0LCJleHAiOjE3NTY0NzU5NjQsImF1ZCI6IndlZGRpbmctY2x1Yi11c2VycyIsImlzcyI6IndlZGRpbmctY2x1YiJ9.AEQwzJ9mtxfoX_R3orI-X8ciI1XnstOd4KSsLKl-ymI",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijg2YjEzNGQ0LTgyOWQtMTFmMC1hYjQyLTdhMmU0YTkyYmU0OSIsInVzZXJuYW1lIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQHdlZGRpbmcuY29tIiwicm9sZSI6InN1cGVyX2FkbWluIiwiaWF0IjoxNzU2NDc1MDY0LCJleHAiOjE3NTcwNzk4NjQsImF1ZCI6IndlZGRpbmctY2x1Yi11c2VycyIsImlzcyI6IndlZGRpbmctY2x1YiJ9.GrYKunlTQV0jGr9rfpznOPBZsHjgD3tWjfxAnVPCsbg",
+      "expiresIn": 3600
+    }
+  },
+  "requestId": "023927e0-6321-4641-b4c5-acb2c26a7525"
+}
+2025-08-29 21:44:24 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:44:24 +0000] "POST /api/v1/auth/login HTTP/1.1" 200 - "http://localhost/admin/login" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:44:24 [INFO]: ::ffff:172.30.0.6 GET /api/v1/dashboard/stats
+2025-08-29 21:44:24 [INFO]: ::ffff:172.30.0.6 GET /api/v1/page-views/admin/stats
+2025-08-29 21:44:24 [INFO]: ::ffff:172.30.0.6 GET /api/v1/page-views/trends/work
+2025-08-29 21:44:24 [INFO]: ::ffff:172.30.0.6 GET /api/v1/schedules/calendar/86b134d4-829d-11f0-ab42-7a2e4a92be49/2025/8
+2025-08-29 21:44:24 [INFO]: ::ffff:172.30.0.6 GET /api/v1/page-views/popular/work
+2025-08-29 21:44:24 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.6",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /admin/stats"
+}
+2025-08-29 21:44:24 [INFO]: Role authorization passed
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "role": "super_admin",
+  "allowedRoles": [
+    "admin",
+    "super_admin"
+  ],
+  "endpoint": "GET /admin/stats"
+}
+2025-08-29 21:44:24 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.6",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /trends/work"
+}
+2025-08-29 21:44:24 [INFO]: Role authorization passed
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "role": "super_admin",
+  "allowedRoles": [
+    "admin",
+    "super_admin"
+  ],
+  "endpoint": "GET /trends/work"
+}
+2025-08-29 21:44:24 [INFO]: 响应数据: 获取档期日历成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": [],
+  "requestId": "7d3a2609-3613-451e-8592-d1246996cdef"
+}
+2025-08-29 21:44:24 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:44:24 +0000] "GET /api/v1/schedules/calendar/86b134d4-829d-11f0-ab42-7a2e4a92be49/2025/8?_t=1756475064463 HTTP/1.1" 200 170 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:44:24 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.6",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /popular/work"
+}
+2025-08-29 21:44:24 [INFO]: Role authorization passed
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "role": "super_admin",
+  "allowedRoles": [
+    "admin",
+    "super_admin"
+  ],
+  "endpoint": "GET /popular/work"
+}
+2025-08-29 21:44:24 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:44:24 +0000] "GET /api/v1/page-views/popular/work?limit=10&_t=1756475064463 HTTP/1.1" 200 26 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:44:24 [INFO]: 响应数据: 获取仪表盘统计成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "bookings": {
+      "total": 0,
+      "confirmed": 0,
+      "pending": 0,
+      "completed": 0,
+      "today": 0
+    },
+    "revenue": {
+      "total": 0,
+      "deposit": 0,
+      "average": 0,
+      "today": 0
+    },
+    "users": {
+      "total": 1,
+      "active": 1
+    },
+    "works": {
+      "total": 0,
+      "published": 0
+    }
+  },
+  "requestId": "7b462961-43c6-431b-8e75-9503a5d86ada"
+}
+2025-08-29 21:44:24 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:44:24 +0000] "GET /api/v1/dashboard/stats?_t=1756475064463 HTTP/1.1" 200 366 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:44:24 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:44:24 +0000] "GET /api/v1/page-views/trends/work?days=7&_t=1756475064463 HTTP/1.1" 200 107 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:44:24 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:44:24 +0000] "GET /api/v1/page-views/admin/stats?days=7&_t=1756475064463 HTTP/1.1" 200 235 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:44:29 [INFO]: ::ffff:172.30.0.6 GET /api/v1/users/me
+2025-08-29 21:44:30 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.6",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /me"
+}
+2025-08-29 21:44:30 [INFO]: 响应数据: 获取当前用户信息成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "id": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+    "username": "admin",
+    "email": "admin@wedding.com",
+    "phone": null,
+    "role": "super_admin",
+    "status": "active",
+    "avatarUrl": null,
+    "realName": "系统管理员",
+    "nickname": null,
+    "bio": null,
+    "specialties": null,
+    "experienceYears": 0,
+    "location": null,
+    "contactInfo": null,
+    "socialLinks": null,
+    "lastLoginAt": "2025-08-29 21:44:24",
+    "lastLoginIp": "127.0.0.1",
+    "emailVerifiedAt": null,
+    "phoneVerifiedAt": null,
+    "createdAt": "2025-08-27 00:55:52",
+    "updatedAt": "2025-08-29 21:44:24",
+    "deletedAt": null
+  },
+  "requestId": "f6d5c46a-115a-4579-8dd5-cd74ed7c21ba"
+}
+2025-08-29 21:44:30 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:44:30 +0000] "GET /api/v1/users/me?_t=1756475069963 HTTP/1.1" 200 677 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:44:30 [INFO]: ::ffff:172.30.0.6 GET /api/v1/profile/media-profiles/86b134d4-829d-11f0-ab42-7a2e4a92be49
+2025-08-29 21:44:30 [INFO]: 获取用户媒体资料列表，用户ID：86b134d4-829d-11f0-ab42-7a2e4a92be49
+2025-08-29 21:44:30 [INFO]: 响应数据: 操作成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": [],
+  "requestId": "bc9c33f9-0931-44f4-a29b-ed8d97cacd06"
+}
+2025-08-29 21:44:30 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:44:30 +0000] "GET /api/v1/profile/media-profiles/86b134d4-829d-11f0-ab42-7a2e4a92be49?_t=1756475070550 HTTP/1.1" 200 158 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:44:46 [INFO]: ::ffff:172.30.0.6 GET /api/auth/verify
+2025-08-29 21:44:46 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:44:46 +0000] "GET /api/auth/verify HTTP/1.1" 404 154 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:44:46 [INFO]: ::ffff:172.30.0.6 GET /api/auth/verify
+2025-08-29 21:44:46 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:44:46 +0000] "GET /api/auth/verify HTTP/1.1" 404 154 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:44:47 [INFO]: ::ffff:172.30.0.6 POST /api/v1/direct-upload/presigned-url
+2025-08-29 21:44:47 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.6",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "POST /presigned-url"
+}
+2025-08-29 21:44:47 [INFO]: 生成预签名URL成功: d03d2ef3-00e1-450c-8102-d93048fd80b1
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "fileName": "录屏2025-03-16 20.16.23.mp4",
+  "fileType": "video",
+  "fileSize": 7581841
+}
+2025-08-29 21:44:47 [INFO]: 响应数据: 操作成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "presignedUrl": "http://minio:9000/wedding-media-prod/videos/other/86b134d4-829d-11f0-ab42-7a2e4a92be49/1756475087490_4f9098bd___2025-03-16_20.16.23.mp4_.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=weddingadmin%2F20250829%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250829T134447Z&X-Amz-Expires=3600&X-Amz-Signature=10f6fa2ac122653baeb01da07dc5a404d5b1131907219fe904efe54737ad4c5b&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject",
+    "uploadSessionId": "d03d2ef3-00e1-450c-8102-d93048fd80b1",
+    "ossKey": "videos/other/86b134d4-829d-11f0-ab42-7a2e4a92be49/1756475087490_4f9098bd___2025-03-16_20.16.23.mp4_.mp4",
+    "expires": 3600
+  },
+  "requestId": "befb5e30-43e7-4d72-bdaf-1e224749733b"
+}
+2025-08-29 21:44:47 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:44:47 +0000] "POST /api/v1/direct-upload/presigned-url HTTP/1.1" 200 883 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:44:48 [INFO]: ::1 GET /health
+2025-08-29 21:44:48 [INFO]: ::1 - - [29/Aug/2025:13:44:48 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:44:53 [INFO]: ::ffff:172.30.0.6 GET /api/auth/verify
+2025-08-29 21:44:53 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:44:53 +0000] "GET /api/auth/verify HTTP/1.1" 404 154 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:44:53 [INFO]: ::ffff:172.30.0.6 POST /api/v1/direct-upload/presigned-url
+2025-08-29 21:44:53 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.6",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "POST /presigned-url"
+}
+2025-08-29 21:44:53 [INFO]: 生成预签名URL成功: dfb5b80a-28c1-4b92-9bf3-d7d230920ee6
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "fileName": "录屏2025-03-16 20.16.23.mp4",
+  "fileType": "video",
+  "fileSize": 7581841
+}
+2025-08-29 21:44:53 [INFO]: 响应数据: 操作成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "presignedUrl": "http://minio:9000/wedding-media-prod/videos/other/86b134d4-829d-11f0-ab42-7a2e4a92be49/1756475093687_8e6fb5e1___2025-03-16_20.16.23.mp4_.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=weddingadmin%2F20250829%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250829T134453Z&X-Amz-Expires=3600&X-Amz-Signature=04f2c3b5efec46140fc298040b5fc1c933e5997b816be6cb7f1b8a08144a2d8b&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject",
+    "uploadSessionId": "dfb5b80a-28c1-4b92-9bf3-d7d230920ee6",
+    "ossKey": "videos/other/86b134d4-829d-11f0-ab42-7a2e4a92be49/1756475093687_8e6fb5e1___2025-03-16_20.16.23.mp4_.mp4",
+    "expires": 3600
+  },
+  "requestId": "c00d0b63-c97e-4411-94ea-2d2751fd62ca"
+}
+2025-08-29 21:44:53 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:44:53 +0000] "POST /api/v1/direct-upload/presigned-url HTTP/1.1" 200 883 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:45:00 [INFO]: ::ffff:172.30.0.6 GET /api/auth/verify
+2025-08-29 21:45:00 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:45:00 +0000] "GET /api/auth/verify HTTP/1.1" 404 154 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:45:00 [INFO]: ::ffff:172.30.0.6 POST /api/v1/direct-upload/presigned-url
+2025-08-29 21:45:00 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.6",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "POST /presigned-url"
+}
+2025-08-29 21:45:00 [INFO]: 生成预签名URL成功: b5c5ac95-92ac-4d1c-b6bc-95940a319eff
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "fileName": "录屏2025-03-16 20.16.23.mp4",
+  "fileType": "video",
+  "fileSize": 7581841
+}
+2025-08-29 21:45:00 [INFO]: 响应数据: 操作成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "presignedUrl": "http://minio:9000/wedding-media-prod/videos/other/86b134d4-829d-11f0-ab42-7a2e4a92be49/1756475100833_9b2fd686___2025-03-16_20.16.23.mp4_.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=weddingadmin%2F20250829%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250829T134500Z&X-Amz-Expires=3600&X-Amz-Signature=608bccf4da3b2c599730070a93dfe77b70e08caf1de8a88e2c5f6741d015b68e&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject",
+    "uploadSessionId": "b5c5ac95-92ac-4d1c-b6bc-95940a319eff",
+    "ossKey": "videos/other/86b134d4-829d-11f0-ab42-7a2e4a92be49/1756475100833_9b2fd686___2025-03-16_20.16.23.mp4_.mp4",
+    "expires": 3600
+  },
+  "requestId": "3ab5ee35-f979-46a5-a885-8bd5e4f5d1dc"
+}
+2025-08-29 21:45:00 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:45:00 +0000] "POST /api/v1/direct-upload/presigned-url HTTP/1.1" 200 883 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:45:08 [INFO]: ::ffff:172.30.0.6 GET /api/auth/verify
+2025-08-29 21:45:08 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:45:08 +0000] "GET /api/auth/verify HTTP/1.1" 404 154 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:45:09 [INFO]: ::ffff:172.30.0.6 POST /api/v1/direct-upload/presigned-url
+2025-08-29 21:45:09 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.6",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "POST /presigned-url"
+}
+2025-08-29 21:45:09 [INFO]: 生成预签名URL成功: bdd514b5-2f11-4a90-9b19-f0fdc4a6a25f
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "fileName": "录屏2025-03-16 20.16.23.mp4",
+  "fileType": "video",
+  "fileSize": 7581841
+}
+2025-08-29 21:45:09 [INFO]: 响应数据: 操作成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "presignedUrl": "http://minio:9000/wedding-media-prod/videos/other/86b134d4-829d-11f0-ab42-7a2e4a92be49/1756475109119_cfa27014___2025-03-16_20.16.23.mp4_.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=weddingadmin%2F20250829%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250829T134509Z&X-Amz-Expires=3600&X-Amz-Signature=045b0f9c1ac0d3365168f2a0431dc67900e7ba918a9c155b16b4e2f95e3192cb&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject",
+    "uploadSessionId": "bdd514b5-2f11-4a90-9b19-f0fdc4a6a25f",
+    "ossKey": "videos/other/86b134d4-829d-11f0-ab42-7a2e4a92be49/1756475109119_cfa27014___2025-03-16_20.16.23.mp4_.mp4",
+    "expires": 3600
+  },
+  "requestId": "8434c2a5-2cc1-4d5b-923c-8832ae8681a7"
+}
+2025-08-29 21:45:09 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:45:09 +0000] "POST /api/v1/direct-upload/presigned-url HTTP/1.1" 200 883 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:45:17 [INFO]: ::ffff:172.30.0.6 GET /api/auth/verify
+2025-08-29 21:45:18 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:45:18 +0000] "GET /api/auth/verify HTTP/1.1" 404 154 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:45:18 [INFO]: ::ffff:172.30.0.6 POST /api/v1/direct-upload/presigned-url
+2025-08-29 21:45:18 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.6",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "POST /presigned-url"
+}
+2025-08-29 21:45:18 [INFO]: 生成预签名URL成功: 0db6d18b-6a75-4cbb-8eed-a6863f0e53f9
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "fileName": "录屏2025-03-16 20.16.23.mp4",
+  "fileType": "video",
+  "fileSize": 7581841
+}
+2025-08-29 21:45:18 [INFO]: 响应数据: 操作成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "presignedUrl": "http://minio:9000/wedding-media-prod/videos/other/86b134d4-829d-11f0-ab42-7a2e4a92be49/1756475118592_464d4a65___2025-03-16_20.16.23.mp4_.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=weddingadmin%2F20250829%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250829T134518Z&X-Amz-Expires=3600&X-Amz-Signature=5fb858c3e79f593ece3ab2a2d54f81a0a7e4dc061887ea1255fb1d001680e084&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject",
+    "uploadSessionId": "0db6d18b-6a75-4cbb-8eed-a6863f0e53f9",
+    "ossKey": "videos/other/86b134d4-829d-11f0-ab42-7a2e4a92be49/1756475118592_464d4a65___2025-03-16_20.16.23.mp4_.mp4",
+    "expires": 3600
+  },
+  "requestId": "96ddd208-44c7-40b5-9105-e234e74530eb"
+}
+2025-08-29 21:45:18 [INFO]: ::ffff:172.30.0.6 - - [29/Aug/2025:13:45:18 +0000] "POST /api/v1/direct-upload/presigned-url HTTP/1.1" 200 883 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:45:18 [INFO]: ::1 GET /health
+2025-08-29 21:45:18 [INFO]: ::1 - - [29/Aug/2025:13:45:18 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:45:49 [INFO]: ::1 GET /health
+2025-08-29 21:45:49 [INFO]: ::1 - - [29/Aug/2025:13:45:49 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:46:19 [INFO]: ::1 GET /health
+2025-08-29 21:46:19 [INFO]: ::1 - - [29/Aug/2025:13:46:19 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:46:49 [INFO]: ::1 GET /health
+2025-08-29 21:46:49 [INFO]: ::1 - - [29/Aug/2025:13:46:49 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:47:19 [INFO]: ::1 GET /health
+2025-08-29 21:47:19 [INFO]: ::1 - - [29/Aug/2025:13:47:19 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:47:49 [INFO]: ::1 GET /health
+2025-08-29 21:47:49 [INFO]: ::1 - - [29/Aug/2025:13:47:49 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:48:19 [INFO]: ::1 GET /health
+2025-08-29 21:48:19 [INFO]: ::1 - - [29/Aug/2025:13:48:19 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:48:49 [INFO]: ::1 GET /health
+2025-08-29 21:48:49 [INFO]: ::1 - - [29/Aug/2025:13:48:49 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:49:19 [INFO]: ::1 GET /health
+2025-08-29 21:49:19 [INFO]: ::1 - - [29/Aug/2025:13:49:19 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:49:49 [INFO]: ::1 GET /health
+2025-08-29 21:49:49 [INFO]: ::1 - - [29/Aug/2025:13:49:49 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:50:19 [INFO]: ::1 GET /health
+2025-08-29 21:50:19 [INFO]: ::1 - - [29/Aug/2025:13:50:19 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:50:49 [INFO]: ::1 GET /health
+2025-08-29 21:50:49 [INFO]: ::1 - - [29/Aug/2025:13:50:49 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:51:19 [INFO]: ::1 GET /health
+2025-08-29 21:51:19 [INFO]: ::1 - - [29/Aug/2025:13:51:19 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:51:49 [INFO]: ::1 GET /health
+2025-08-29 21:51:49 [INFO]: ::1 - - [29/Aug/2025:13:51:49 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:52:19 [INFO]: ::1 GET /health
+2025-08-29 21:52:19 [INFO]: ::1 - - [29/Aug/2025:13:52:19 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:52:50 [INFO]: ::1 GET /health
+2025-08-29 21:52:50 [INFO]: ::1 - - [29/Aug/2025:13:52:50 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:53:20 [INFO]: ::1 GET /health
+2025-08-29 21:53:20 [INFO]: ::1 - - [29/Aug/2025:13:53:20 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:53:50 [INFO]: ::1 GET /health
+2025-08-29 21:53:50 [INFO]: ::1 - - [29/Aug/2025:13:53:50 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:54:20 [INFO]: ::1 GET /health
+2025-08-29 21:54:20 [INFO]: ::1 - - [29/Aug/2025:13:54:20 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:54:50 [INFO]: ::1 GET /health
+2025-08-29 21:54:50 [INFO]: ::1 - - [29/Aug/2025:13:54:50 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:55:20 [INFO]: ::1 GET /health
+2025-08-29 21:55:20 [INFO]: ::1 - - [29/Aug/2025:13:55:20 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:55:50 [INFO]: ::1 GET /health
+2025-08-29 21:55:50 [INFO]: ::1 - - [29/Aug/2025:13:55:50 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:56:20 [INFO]: ::1 GET /health
+2025-08-29 21:56:20 [INFO]: ::1 - - [29/Aug/2025:13:56:20 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:56:50 [INFO]: ::1 GET /health
+2025-08-29 21:56:50 [INFO]: ::1 - - [29/Aug/2025:13:56:50 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 21:57:11 [INFO]: SIGTERM received, shutting down gracefully
+2025-08-29 21:57:49 [INFO]: Database connection has been established successfully.
+2025-08-29 21:57:49 [INFO]: Database models initialized successfully.
+2025-08-29 21:57:49 [INFO]: Redis client connected successfully
+2025-08-29 21:57:49 [INFO]: Redis client ready to use
+2025-08-29 21:57:49 [INFO]: Redis connection established successfully
+2025-08-29 21:57:49 [INFO]: File storage service initialized successfully
+2025-08-29 21:57:49 [INFO]: 🚀 Server running on port 3000
+2025-08-29 21:57:49 [INFO]: 📝 Environment: production
+2025-08-29 21:57:49 [INFO]: 🔗 API Base URL: http://localhost:3000/api/v1
+2025-08-29 21:57:51 [INFO]: ::1 GET /health
+2025-08-29 21:57:51 [INFO]: ::1 - - [29/Aug/2025:13:57:51 +0000] "GET /health HTTP/1.1" 200 102 "-" "Wget"
+2025-08-29 21:58:22 [INFO]: ::1 GET /health
+2025-08-29 21:58:22 [INFO]: ::1 - - [29/Aug/2025:13:58:22 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:58:40 [INFO]: ::ffff:172.30.0.7 GET /api/v1/docs/
+2025-08-29 21:58:40 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:13:58:40 +0000] "GET /api/v1/docs/ HTTP/1.1" 304 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:58:41 [INFO]: ::ffff:172.30.0.7 GET /api/v1/settings/site-config
+2025-08-29 21:58:41 [INFO]: ::ffff:172.30.0.7 GET /api/v1/dashboard/stats
+2025-08-29 21:58:41 [INFO]: ::ffff:172.30.0.7 GET /api/v1/page-views/admin/stats
+2025-08-29 21:58:41 [INFO]: ::ffff:172.30.0.7 GET /api/v1/page-views/popular/work
+2025-08-29 21:58:41 [INFO]: ::ffff:172.30.0.7 GET /api/v1/page-views/trends/work
+2025-08-29 21:58:41 [INFO]: 响应数据: 获取网站配置成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "site": "{\"name\":\"å©šç¤¼æœåŠ¡å¹³å°\",\"description\":\"ä¸“ä¸šçš„å©šç¤¼ç­–åˆ’ä¸ŽæœåŠ¡å¹³å°ï¼Œä¸ºæ‚¨æ‰“é€ å®Œç¾Žçš„å©šç¤¼ä½“éªŒ\",\"keywords\":\"å©šç¤¼ç­–åˆ’,å©šç¤¼æ‘„å½±,å©šç¤¼ä¸»æŒ,å©šç¤¼æœåŠ¡,å©šåº†å…¬å¸\",\"logo\":\"./assets/images/logo.png\",\"favicon\":\"./assets/images/favicon.ico\"}",
+    "contactEmail": "contact@wedding.com",
+    "contactPhone": "400-123-4567",
+    "homepageSections": "{\"hero\":{\"backgroundImage\":\"/images/hero-bg.jpg\",\"visible\":true,\"title\":\"å®Œç¾Žå©šç¤¼ï¼Œä»Žè¿™é‡Œå¼€å§‹\",\"description\":\"ä¸“ä¸šå›¢é˜Ÿä¸ºæ‚¨æ‰“é€ æ¢¦æƒ³ä¸­çš„å©šç¤¼\",\"ctaText\":\"ç«‹å³å’¨è¯¢\",\"ctaLink\":\"/contact\"},\"team\":{\"visible\":true,\"title\":\"ä¸“ä¸šå›¢é˜Ÿ\",\"subtitle\":\"ç»éªŒä¸°å¯Œçš„å©šç¤¼ç­–åˆ’å¸ˆ\",\"description\":\"ä¸“ä¸šå›¢é˜Ÿä¸ºæ‚¨æ‰“é€ æ¢¦æƒ³ä¸­çš„å©šç¤¼\"},\"teamShowcase\":{\"visible\":true,\"title\":\"å›¢é˜Ÿé£Žé‡‡\",\"subtitle\":\"å±•ç¤ºæˆ‘ä»¬çš„ä¸“ä¸šå®žåŠ›\",\"description\":\"æŸ¥çœ‹æˆ‘ä»¬å›¢é˜Ÿçš„ç²¾å½©çž¬é—´\"},\"portfolio\":{\"visible\":true,\"title\":\"ç²¾é€‰ä½œå“\",\"subtitle\":\"è§è¯æ¯ä¸€ä¸ªç¾Žå¥½æ—¶åˆ»\",\"description\":\"æµè§ˆæˆ‘ä»¬çš„å©šç¤¼æ‘„å½±ä½œå“é›†\"},\"schedule\":{\"visible\":true,\"title\":\"æ¡£æœŸæŸ¥è¯¢\",\"subtitle\":\"æŸ¥è¯¢å¯é¢„çº¦çš„ä¸»æŒäºº\",\"description\":\"æŸ¥è¯¢å¯é¢„çº¦çš„ä¸»æŒäºº\"},\"contact\":{\"visible\":true,\"title\":\"è”ç³»æˆ‘ä»¬\",\"subtitle\":\"éšæ—¶ä¸ºæ‚¨æä¾›å’¨è¯¢\",\"description\":\"å¤šç§æ–¹å¼è”ç³»æˆ‘ä»¬çš„å›¢é˜Ÿ\",\"address\":\"åŒ—äº¬å¸‚æœé˜³åŒºå©šç¤¼å¤§åŽ¦\",\"phone\":\"400-123-4567\",\"email\":\"contact@wedding.com\",\"wechat\":\"wedding_service\",\"xiaohongshu\":\"wedding_xiaohongshu\",\"douyin\":\"wedding_douyin\"}}"
+  },
+  "requestId": "06190781-d399-43b8-afbd-a2ac4a52244f"
+}
+2025-08-29 21:58:41 [INFO]: ::ffff:172.30.0.7 GET /api/v1/schedules/calendar/86b134d4-829d-11f0-ab42-7a2e4a92be49/2025/8
+2025-08-29 21:58:41 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:13:58:41 +0000] "GET /api/v1/settings/site-config?_t=1756475921202 HTTP/1.1" 200 - "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:58:41 [INFO]: 响应数据: 获取档期日历成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": [],
+  "requestId": "a81f4486-7d74-4a3c-953a-5ff12d8b93f5"
+}
+2025-08-29 21:58:41 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:13:58:41 +0000] "GET /api/v1/schedules/calendar/86b134d4-829d-11f0-ab42-7a2e4a92be49/2025/8?_t=1756475921203 HTTP/1.1" 200 170 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:58:41 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /trends/work"
+}
+2025-08-29 21:58:41 [INFO]: Role authorization passed
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "role": "super_admin",
+  "allowedRoles": [
+    "admin",
+    "super_admin"
+  ],
+  "endpoint": "GET /trends/work"
+}
+2025-08-29 21:58:41 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /popular/work"
+}
+2025-08-29 21:58:41 [INFO]: Role authorization passed
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "role": "super_admin",
+  "allowedRoles": [
+    "admin",
+    "super_admin"
+  ],
+  "endpoint": "GET /popular/work"
+}
+2025-08-29 21:58:41 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /admin/stats"
+}
+2025-08-29 21:58:41 [INFO]: Role authorization passed
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "role": "super_admin",
+  "allowedRoles": [
+    "admin",
+    "super_admin"
+  ],
+  "endpoint": "GET /admin/stats"
+}
+2025-08-29 21:58:41 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:13:58:41 +0000] "GET /api/v1/page-views/popular/work?limit=10&_t=1756475921203 HTTP/1.1" 200 26 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:58:41 [INFO]: 响应数据: 获取仪表盘统计成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "bookings": {
+      "total": 0,
+      "confirmed": 0,
+      "pending": 0,
+      "completed": 0,
+      "today": 0
+    },
+    "revenue": {
+      "total": 0,
+      "deposit": 0,
+      "average": 0,
+      "today": 0
+    },
+    "users": {
+      "total": 1,
+      "active": 1
+    },
+    "works": {
+      "total": 0,
+      "published": 0
+    }
+  },
+  "requestId": "191979b0-ab49-4250-b274-4b74efc09fa4"
+}
+2025-08-29 21:58:42 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:13:58:42 +0000] "GET /api/v1/dashboard/stats?_t=1756475921203 HTTP/1.1" 200 366 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:58:42 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:13:58:42 +0000] "GET /api/v1/page-views/trends/work?days=7&_t=1756475921203 HTTP/1.1" 200 107 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:58:42 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:13:58:42 +0000] "GET /api/v1/page-views/admin/stats?days=7&_t=1756475921203 HTTP/1.1" 200 235 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:58:48 [INFO]: ::ffff:172.30.0.7 GET /api/v1/docs/
+2025-08-29 21:58:48 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:13:58:48 +0000] "GET /api/v1/docs/ HTTP/1.1" 304 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 21:58:52 [INFO]: ::1 GET /health
+2025-08-29 21:58:52 [INFO]: ::1 - - [29/Aug/2025:13:58:52 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:59:22 [INFO]: ::1 GET /health
+2025-08-29 21:59:22 [INFO]: ::1 - - [29/Aug/2025:13:59:22 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 21:59:52 [INFO]: ::1 GET /health
+2025-08-29 21:59:52 [INFO]: ::1 - - [29/Aug/2025:13:59:52 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:00:22 [INFO]: ::1 GET /health
+2025-08-29 22:00:22 [INFO]: ::1 - - [29/Aug/2025:14:00:22 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:00:52 [INFO]: ::1 GET /health
+2025-08-29 22:00:52 [INFO]: ::1 - - [29/Aug/2025:14:00:52 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:01:22 [INFO]: ::1 GET /health
+2025-08-29 22:01:22 [INFO]: ::1 - - [29/Aug/2025:14:01:22 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:01:52 [INFO]: ::1 GET /health
+2025-08-29 22:01:52 [INFO]: ::1 - - [29/Aug/2025:14:01:52 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:02:22 [INFO]: ::1 GET /health
+2025-08-29 22:02:22 [INFO]: ::1 - - [29/Aug/2025:14:02:22 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:02:52 [INFO]: ::1 GET /health
+2025-08-29 22:02:52 [INFO]: ::1 - - [29/Aug/2025:14:02:52 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:03:22 [INFO]: ::1 GET /health
+2025-08-29 22:03:22 [INFO]: ::1 - - [29/Aug/2025:14:03:22 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:04:01 [INFO]: Database connection has been established successfully.
+2025-08-29 22:04:01 [INFO]: Database models initialized successfully.
+2025-08-29 22:04:01 [INFO]: Redis client connected successfully
+2025-08-29 22:04:01 [INFO]: Redis client ready to use
+2025-08-29 22:04:01 [INFO]: Redis connection established successfully
+2025-08-29 22:04:01 [INFO]: File storage service initialized successfully
+2025-08-29 22:04:01 [INFO]: 🚀 Server running on port 3000
+2025-08-29 22:04:01 [INFO]: 📝 Environment: production
+2025-08-29 22:04:01 [INFO]: 🔗 API Base URL: http://localhost:3000/api/v1
+2025-08-29 22:04:03 [INFO]: ::1 GET /health
+2025-08-29 22:04:03 [INFO]: ::1 - - [29/Aug/2025:14:04:03 +0000] "GET /health HTTP/1.1" 200 102 "-" "Wget"
+2025-08-29 22:04:33 [INFO]: ::1 GET /health
+2025-08-29 22:04:33 [INFO]: ::1 - - [29/Aug/2025:14:04:33 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:05:03 [INFO]: ::1 GET /health
+2025-08-29 22:05:03 [INFO]: ::1 - - [29/Aug/2025:14:05:03 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:05:33 [INFO]: ::1 GET /health
+2025-08-29 22:05:33 [INFO]: ::1 - - [29/Aug/2025:14:05:33 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:06:16 [INFO]: Database connection has been established successfully.
+2025-08-29 22:06:16 [INFO]: Database models initialized successfully.
+2025-08-29 22:06:16 [INFO]: Redis client connected successfully
+2025-08-29 22:06:16 [INFO]: Redis client ready to use
+2025-08-29 22:06:16 [INFO]: Redis connection established successfully
+2025-08-29 22:06:16 [INFO]: File storage service initialized successfully
+2025-08-29 22:06:16 [INFO]: 🚀 Server running on port 3000
+2025-08-29 22:06:16 [INFO]: 📝 Environment: production
+2025-08-29 22:06:16 [INFO]: 🔗 API Base URL: http://localhost:3000/api/v1
+2025-08-29 22:06:20 [INFO]: ::1 GET /health
+2025-08-29 22:06:20 [INFO]: ::1 - - [29/Aug/2025:14:06:20 +0000] "GET /health HTTP/1.1" 200 100 "-" "Wget"
+2025-08-29 22:06:50 [INFO]: ::1 GET /health
+2025-08-29 22:06:50 [INFO]: ::1 - - [29/Aug/2025:14:06:50 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:07:20 [INFO]: ::1 GET /health
+2025-08-29 22:07:20 [INFO]: ::1 - - [29/Aug/2025:14:07:20 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:07:50 [INFO]: ::1 GET /health
+2025-08-29 22:07:50 [INFO]: ::1 - - [29/Aug/2025:14:07:50 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:08:20 [INFO]: ::1 GET /health
+2025-08-29 22:08:20 [INFO]: ::1 - - [29/Aug/2025:14:08:20 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:08:50 [INFO]: ::1 GET /health
+2025-08-29 22:08:50 [INFO]: ::1 - - [29/Aug/2025:14:08:50 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:09:20 [INFO]: ::1 GET /health
+2025-08-29 22:09:20 [INFO]: ::1 - - [29/Aug/2025:14:09:20 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:09:50 [INFO]: ::1 GET /health
+2025-08-29 22:09:50 [INFO]: ::1 - - [29/Aug/2025:14:09:50 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:10:20 [INFO]: ::1 GET /health
+2025-08-29 22:10:20 [INFO]: ::1 - - [29/Aug/2025:14:10:20 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:10:50 [INFO]: ::1 GET /health
+2025-08-29 22:10:50 [INFO]: ::1 - - [29/Aug/2025:14:10:50 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:11:20 [INFO]: ::1 GET /health
+2025-08-29 22:11:20 [INFO]: ::1 - - [29/Aug/2025:14:11:20 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:11:50 [INFO]: ::1 GET /health
+2025-08-29 22:11:50 [INFO]: ::1 - - [29/Aug/2025:14:11:50 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:12:20 [INFO]: ::1 GET /health
+2025-08-29 22:12:20 [INFO]: ::1 - - [29/Aug/2025:14:12:20 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:12:51 [INFO]: ::1 GET /health
+2025-08-29 22:12:51 [INFO]: ::1 - - [29/Aug/2025:14:12:51 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:13:21 [INFO]: ::1 GET /health
+2025-08-29 22:13:21 [INFO]: ::1 - - [29/Aug/2025:14:13:21 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:13:51 [INFO]: ::1 GET /health
+2025-08-29 22:13:51 [INFO]: ::1 - - [29/Aug/2025:14:13:51 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:14:21 [INFO]: ::1 GET /health
+2025-08-29 22:14:21 [INFO]: ::1 - - [29/Aug/2025:14:14:21 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:14:40 [INFO]: ::ffff:172.30.0.7 POST /api/v1/files/upload
+2025-08-29 22:14:40 [WARN]: Invalid access token
+{
+  "error": "jwt malformed"
+}
+2025-08-29 22:14:40 [WARN]: Security Authentication failed
+{
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "curl/8.7.1",
+  "endpoint": "POST /upload",
+  "error": "jwt malformed"
+}
+2025-08-29 22:14:40 [WARN]: Client Error: Invalid token
+{
+  "statusCode": 401,
+  "code": "AUTHENTICATION_ERROR",
+  "url": "/api/v1/files/upload",
+  "method": "POST",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "curl/8.7.1"
+}
+2025-08-29 22:14:40 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:14:40 +0000] "POST /api/v1/files/upload HTTP/1.1" 401 190 "-" "curl/8.7.1"
+2025-08-29 22:14:51 [INFO]: ::1 GET /health
+2025-08-29 22:14:51 [INFO]: ::1 - - [29/Aug/2025:14:14:51 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:15:02 [INFO]: ::ffff:172.30.0.7 HEAD /api/v1/docs/
+2025-08-29 22:15:02 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:15:02 +0000] "HEAD /api/v1/docs/ HTTP/1.1" 200 3082 "-" "curl/8.7.1"
+2025-08-29 22:15:21 [INFO]: ::1 GET /health
+2025-08-29 22:15:21 [INFO]: ::1 - - [29/Aug/2025:14:15:21 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:15:51 [INFO]: ::1 GET /health
+2025-08-29 22:15:51 [INFO]: ::1 - - [29/Aug/2025:14:15:51 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:16:36 [INFO]: Database connection has been established successfully.
+2025-08-29 22:16:36 [INFO]: Database models initialized successfully.
+2025-08-29 22:16:36 [INFO]: Redis client connected successfully
+2025-08-29 22:16:36 [INFO]: Redis client ready to use
+2025-08-29 22:16:36 [INFO]: Redis connection established successfully
+2025-08-29 22:16:36 [INFO]: File storage service initialized successfully
+2025-08-29 22:16:36 [INFO]: 🚀 Server running on port 3000
+2025-08-29 22:16:36 [INFO]: 📝 Environment: production
+2025-08-29 22:16:36 [INFO]: 🔗 API Base URL: http://localhost:3000/api/v1
+2025-08-29 22:16:39 [INFO]: ::1 GET /health
+2025-08-29 22:16:39 [INFO]: ::1 - - [29/Aug/2025:14:16:39 +0000] "GET /health HTTP/1.1" 200 102 "-" "Wget"
+2025-08-29 22:17:09 [INFO]: ::1 GET /health
+2025-08-29 22:17:09 [INFO]: ::1 - - [29/Aug/2025:14:17:09 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:17:32 [INFO]: ::ffff:172.30.0.7 HEAD /api/v1/docs/
+2025-08-29 22:17:32 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:17:32 +0000] "HEAD /api/v1/docs/ HTTP/1.1" 200 3082 "-" "curl/8.7.1"
+2025-08-29 22:17:40 [INFO]: ::1 GET /health
+2025-08-29 22:17:40 [INFO]: ::1 - - [29/Aug/2025:14:17:40 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:17:58 [INFO]: ::ffff:172.30.0.7 GET /api/v1/docs/
+2025-08-29 22:17:58 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:17:58 +0000] "GET /api/v1/docs/ HTTP/1.1" 304 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:18:10 [INFO]: ::1 GET /health
+2025-08-29 22:18:10 [INFO]: ::1 - - [29/Aug/2025:14:18:10 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:18:40 [INFO]: ::1 GET /health
+2025-08-29 22:18:40 [INFO]: ::1 - - [29/Aug/2025:14:18:40 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:19:10 [INFO]: ::1 GET /health
+2025-08-29 22:19:10 [INFO]: ::1 - - [29/Aug/2025:14:19:10 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:19:40 [INFO]: ::1 GET /health
+2025-08-29 22:19:40 [INFO]: ::1 - - [29/Aug/2025:14:19:40 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:20:51 [INFO]: Database connection has been established successfully.
+2025-08-29 22:20:51 [INFO]: Database models initialized successfully.
+2025-08-29 22:20:51 [INFO]: Redis client connected successfully
+2025-08-29 22:20:51 [INFO]: Redis client ready to use
+2025-08-29 22:20:51 [INFO]: Redis connection established successfully
+2025-08-29 22:20:51 [INFO]: File storage service initialized successfully
+2025-08-29 22:20:51 [INFO]: 🚀 Server running on port 3000
+2025-08-29 22:20:51 [INFO]: 📝 Environment: production
+2025-08-29 22:20:51 [INFO]: 🔗 API Base URL: http://localhost:3000/api/v1
+2025-08-29 22:20:54 [INFO]: ::1 GET /health
+2025-08-29 22:20:54 [INFO]: ::1 - - [29/Aug/2025:14:20:54 +0000] "GET /health HTTP/1.1" 200 102 "-" "Wget"
+2025-08-29 22:21:24 [INFO]: ::1 GET /health
+2025-08-29 22:21:24 [INFO]: ::1 - - [29/Aug/2025:14:21:24 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:21:54 [INFO]: ::1 GET /health
+2025-08-29 22:21:54 [INFO]: ::1 - - [29/Aug/2025:14:21:54 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:22:24 [INFO]: ::1 GET /health
+2025-08-29 22:22:24 [INFO]: ::1 - - [29/Aug/2025:14:22:24 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:22:54 [INFO]: ::1 GET /health
+2025-08-29 22:22:54 [INFO]: ::1 - - [29/Aug/2025:14:22:54 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:22:55 [INFO]: ::ffff:172.30.0.7 GET /api/v1/settings/site-config
+2025-08-29 22:22:55 [INFO]: ::ffff:172.30.0.7 GET /api/v1/page-views/admin/stats
+2025-08-29 22:22:55 [INFO]: ::ffff:172.30.0.7 GET /api/v1/dashboard/stats
+2025-08-29 22:22:55 [WARN]: Invalid access token
+{
+  "error": "jwt expired"
+}
+2025-08-29 22:22:55 [WARN]: Security Authentication failed
+{
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /admin/stats",
+  "error": "jwt expired"
+}
+2025-08-29 22:22:55 [WARN]: Client Error: Token expired
+{
+  "statusCode": 401,
+  "code": "AUTHENTICATION_ERROR",
+  "url": "/api/v1/page-views/admin/stats?days=7&_t=1756477375763",
+  "method": "GET",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+}
+2025-08-29 22:22:55 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:22:55 +0000] "GET /api/v1/page-views/admin/stats?days=7&_t=1756477375763 HTTP/1.1" 401 190 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:22:55 [INFO]: ::ffff:172.30.0.7 GET /api/v1/page-views/popular/work
+2025-08-29 22:22:55 [WARN]: Invalid access token
+{
+  "error": "jwt expired"
+}
+2025-08-29 22:22:55 [WARN]: Security Authentication failed
+{
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /popular/work",
+  "error": "jwt expired"
+}
+2025-08-29 22:22:55 [WARN]: Client Error: Token expired
+{
+  "statusCode": 401,
+  "code": "AUTHENTICATION_ERROR",
+  "url": "/api/v1/page-views/popular/work?limit=10&_t=1756477375763",
+  "method": "GET",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+}
+2025-08-29 22:22:55 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:22:55 +0000] "GET /api/v1/page-views/popular/work?limit=10&_t=1756477375763 HTTP/1.1" 401 190 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:22:55 [INFO]: ::ffff:172.30.0.7 GET /api/v1/page-views/trends/work
+2025-08-29 22:22:55 [WARN]: Invalid access token
+{
+  "error": "jwt expired"
+}
+2025-08-29 22:22:55 [WARN]: Security Authentication failed
+{
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /trends/work",
+  "error": "jwt expired"
+}
+2025-08-29 22:22:55 [WARN]: Client Error: Token expired
+{
+  "statusCode": 401,
+  "code": "AUTHENTICATION_ERROR",
+  "url": "/api/v1/page-views/trends/work?days=7&_t=1756477375763",
+  "method": "GET",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+}
+2025-08-29 22:22:55 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:22:55 +0000] "GET /api/v1/page-views/trends/work?days=7&_t=1756477375763 HTTP/1.1" 401 190 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:22:55 [INFO]: ::ffff:172.30.0.7 GET /api/v1/schedules/calendar/86b134d4-829d-11f0-ab42-7a2e4a92be49/2025/8
+2025-08-29 22:22:55 [INFO]: 响应数据: 获取档期日历成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": [],
+  "requestId": "324616a9-8a1f-41c9-b1cd-f84af7ef8588"
+}
+2025-08-29 22:22:55 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:22:55 +0000] "GET /api/v1/schedules/calendar/86b134d4-829d-11f0-ab42-7a2e4a92be49/2025/8?_t=1756477375763 HTTP/1.1" 200 170 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:22:55 [INFO]: 响应数据: 获取网站配置成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "site": "{\"name\":\"å©šç¤¼æœåŠ¡å¹³å°\",\"description\":\"ä¸“ä¸šçš„å©šç¤¼ç­–åˆ’ä¸ŽæœåŠ¡å¹³å°ï¼Œä¸ºæ‚¨æ‰“é€ å®Œç¾Žçš„å©šç¤¼ä½“éªŒ\",\"keywords\":\"å©šç¤¼ç­–åˆ’,å©šç¤¼æ‘„å½±,å©šç¤¼ä¸»æŒ,å©šç¤¼æœåŠ¡,å©šåº†å…¬å¸\",\"logo\":\"./assets/images/logo.png\",\"favicon\":\"./assets/images/favicon.ico\"}",
+    "contactEmail": "contact@wedding.com",
+    "contactPhone": "400-123-4567",
+    "homepageSections": "{\"hero\":{\"backgroundImage\":\"/images/hero-bg.jpg\",\"visible\":true,\"title\":\"å®Œç¾Žå©šç¤¼ï¼Œä»Žè¿™é‡Œå¼€å§‹\",\"description\":\"ä¸“ä¸šå›¢é˜Ÿä¸ºæ‚¨æ‰“é€ æ¢¦æƒ³ä¸­çš„å©šç¤¼\",\"ctaText\":\"ç«‹å³å’¨è¯¢\",\"ctaLink\":\"/contact\"},\"team\":{\"visible\":true,\"title\":\"ä¸“ä¸šå›¢é˜Ÿ\",\"subtitle\":\"ç»éªŒä¸°å¯Œçš„å©šç¤¼ç­–åˆ’å¸ˆ\",\"description\":\"ä¸“ä¸šå›¢é˜Ÿä¸ºæ‚¨æ‰“é€ æ¢¦æƒ³ä¸­çš„å©šç¤¼\"},\"teamShowcase\":{\"visible\":true,\"title\":\"å›¢é˜Ÿé£Žé‡‡\",\"subtitle\":\"å±•ç¤ºæˆ‘ä»¬çš„ä¸“ä¸šå®žåŠ›\",\"description\":\"æŸ¥çœ‹æˆ‘ä»¬å›¢é˜Ÿçš„ç²¾å½©çž¬é—´\"},\"portfolio\":{\"visible\":true,\"title\":\"ç²¾é€‰ä½œå“\",\"subtitle\":\"è§è¯æ¯ä¸€ä¸ªç¾Žå¥½æ—¶åˆ»\",\"description\":\"æµè§ˆæˆ‘ä»¬çš„å©šç¤¼æ‘„å½±ä½œå“é›†\"},\"schedule\":{\"visible\":true,\"title\":\"æ¡£æœŸæŸ¥è¯¢\",\"subtitle\":\"æŸ¥è¯¢å¯é¢„çº¦çš„ä¸»æŒäºº\",\"description\":\"æŸ¥è¯¢å¯é¢„çº¦çš„ä¸»æŒäºº\"},\"contact\":{\"visible\":true,\"title\":\"è”ç³»æˆ‘ä»¬\",\"subtitle\":\"éšæ—¶ä¸ºæ‚¨æä¾›å’¨è¯¢\",\"description\":\"å¤šç§æ–¹å¼è”ç³»æˆ‘ä»¬çš„å›¢é˜Ÿ\",\"address\":\"åŒ—äº¬å¸‚æœé˜³åŒºå©šç¤¼å¤§åŽ¦\",\"phone\":\"400-123-4567\",\"email\":\"contact@wedding.com\",\"wechat\":\"wedding_service\",\"xiaohongshu\":\"wedding_xiaohongshu\",\"douyin\":\"wedding_douyin\"}}"
+  },
+  "requestId": "0c30328b-6831-4341-9d4c-ce5bc55edf2e"
+}
+2025-08-29 22:22:55 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:22:55 +0000] "GET /api/v1/settings/site-config?_t=1756477375763 HTTP/1.1" 200 - "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:22:55 [INFO]: 响应数据: 获取仪表盘统计成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "bookings": {
+      "total": 0,
+      "confirmed": 0,
+      "pending": 0,
+      "completed": 0,
+      "today": 0
+    },
+    "revenue": {
+      "total": 0,
+      "deposit": 0,
+      "average": 0,
+      "today": 0
+    },
+    "users": {
+      "total": 1,
+      "active": 1
+    },
+    "works": {
+      "total": 0,
+      "published": 0
+    }
+  },
+  "requestId": "901078e7-8b6b-47d3-811d-7d2e914219a4"
+}
+2025-08-29 22:22:55 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:22:55 +0000] "GET /api/v1/dashboard/stats?_t=1756477375763 HTTP/1.1" 200 366 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:22:56 [INFO]: ::ffff:172.30.0.7 GET /api/v1/page-views/admin/stats
+2025-08-29 22:22:56 [WARN]: Invalid access token
+{
+  "error": "jwt expired"
+}
+2025-08-29 22:22:56 [WARN]: Security Authentication failed
+{
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /admin/stats",
+  "error": "jwt expired"
+}
+2025-08-29 22:22:56 [WARN]: Client Error: Token expired
+{
+  "statusCode": 401,
+  "code": "AUTHENTICATION_ERROR",
+  "url": "/api/v1/page-views/admin/stats?days=7&_t=1756477375763",
+  "method": "GET",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+}
+2025-08-29 22:22:56 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:22:56 +0000] "GET /api/v1/page-views/admin/stats?days=7&_t=1756477375763 HTTP/1.1" 401 190 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:22:56 [INFO]: ::ffff:172.30.0.7 GET /api/auth/verify
+2025-08-29 22:22:56 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:22:56 +0000] "GET /api/auth/verify HTTP/1.1" 404 154 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:22:56 [INFO]: ::ffff:172.30.0.7 GET /api/v1/page-views/popular/work
+2025-08-29 22:22:56 [WARN]: Invalid access token
+{
+  "error": "jwt expired"
+}
+2025-08-29 22:22:56 [WARN]: Security Authentication failed
+{
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /popular/work",
+  "error": "jwt expired"
+}
+2025-08-29 22:22:56 [WARN]: Client Error: Token expired
+{
+  "statusCode": 401,
+  "code": "AUTHENTICATION_ERROR",
+  "url": "/api/v1/page-views/popular/work?limit=10&_t=1756477375763",
+  "method": "GET",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+}
+2025-08-29 22:22:56 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:22:56 +0000] "GET /api/v1/page-views/popular/work?limit=10&_t=1756477375763 HTTP/1.1" 401 190 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:22:56 [INFO]: ::ffff:172.30.0.7 GET /api/v1/page-views/trends/work
+2025-08-29 22:22:56 [WARN]: Invalid access token
+{
+  "error": "jwt expired"
+}
+2025-08-29 22:22:56 [WARN]: Security Authentication failed
+{
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /trends/work",
+  "error": "jwt expired"
+}
+2025-08-29 22:22:56 [WARN]: Client Error: Token expired
+{
+  "statusCode": 401,
+  "code": "AUTHENTICATION_ERROR",
+  "url": "/api/v1/page-views/trends/work?days=7&_t=1756477375763",
+  "method": "GET",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+}
+2025-08-29 22:22:56 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:22:56 +0000] "GET /api/v1/page-views/trends/work?days=7&_t=1756477375763 HTTP/1.1" 401 190 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:22:58 [INFO]: ::ffff:172.30.0.7 GET /api/v1/settings/site-config
+2025-08-29 22:22:58 [INFO]: 响应数据: 获取网站配置成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "site": "{\"name\":\"å©šç¤¼æœåŠ¡å¹³å°\",\"description\":\"ä¸“ä¸šçš„å©šç¤¼ç­–åˆ’ä¸ŽæœåŠ¡å¹³å°ï¼Œä¸ºæ‚¨æ‰“é€ å®Œç¾Žçš„å©šç¤¼ä½“éªŒ\",\"keywords\":\"å©šç¤¼ç­–åˆ’,å©šç¤¼æ‘„å½±,å©šç¤¼ä¸»æŒ,å©šç¤¼æœåŠ¡,å©šåº†å…¬å¸\",\"logo\":\"./assets/images/logo.png\",\"favicon\":\"./assets/images/favicon.ico\"}",
+    "contactEmail": "contact@wedding.com",
+    "contactPhone": "400-123-4567",
+    "homepageSections": "{\"hero\":{\"backgroundImage\":\"/images/hero-bg.jpg\",\"visible\":true,\"title\":\"å®Œç¾Žå©šç¤¼ï¼Œä»Žè¿™é‡Œå¼€å§‹\",\"description\":\"ä¸“ä¸šå›¢é˜Ÿä¸ºæ‚¨æ‰“é€ æ¢¦æƒ³ä¸­çš„å©šç¤¼\",\"ctaText\":\"ç«‹å³å’¨è¯¢\",\"ctaLink\":\"/contact\"},\"team\":{\"visible\":true,\"title\":\"ä¸“ä¸šå›¢é˜Ÿ\",\"subtitle\":\"ç»éªŒä¸°å¯Œçš„å©šç¤¼ç­–åˆ’å¸ˆ\",\"description\":\"ä¸“ä¸šå›¢é˜Ÿä¸ºæ‚¨æ‰“é€ æ¢¦æƒ³ä¸­çš„å©šç¤¼\"},\"teamShowcase\":{\"visible\":true,\"title\":\"å›¢é˜Ÿé£Žé‡‡\",\"subtitle\":\"å±•ç¤ºæˆ‘ä»¬çš„ä¸“ä¸šå®žåŠ›\",\"description\":\"æŸ¥çœ‹æˆ‘ä»¬å›¢é˜Ÿçš„ç²¾å½©çž¬é—´\"},\"portfolio\":{\"visible\":true,\"title\":\"ç²¾é€‰ä½œå“\",\"subtitle\":\"è§è¯æ¯ä¸€ä¸ªç¾Žå¥½æ—¶åˆ»\",\"description\":\"æµè§ˆæˆ‘ä»¬çš„å©šç¤¼æ‘„å½±ä½œå“é›†\"},\"schedule\":{\"visible\":true,\"title\":\"æ¡£æœŸæŸ¥è¯¢\",\"subtitle\":\"æŸ¥è¯¢å¯é¢„çº¦çš„ä¸»æŒäºº\",\"description\":\"æŸ¥è¯¢å¯é¢„çº¦çš„ä¸»æŒäºº\"},\"contact\":{\"visible\":true,\"title\":\"è”ç³»æˆ‘ä»¬\",\"subtitle\":\"éšæ—¶ä¸ºæ‚¨æä¾›å’¨è¯¢\",\"description\":\"å¤šç§æ–¹å¼è”ç³»æˆ‘ä»¬çš„å›¢é˜Ÿ\",\"address\":\"åŒ—äº¬å¸‚æœé˜³åŒºå©šç¤¼å¤§åŽ¦\",\"phone\":\"400-123-4567\",\"email\":\"contact@wedding.com\",\"wechat\":\"wedding_service\",\"xiaohongshu\":\"wedding_xiaohongshu\",\"douyin\":\"wedding_douyin\"}}"
+  },
+  "requestId": "6e57d18a-7967-4849-bd7a-a96ec44cfd00"
+}
+2025-08-29 22:22:58 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:22:58 +0000] "GET /api/v1/settings/site-config?_t=1756477378682 HTTP/1.1" 200 - "http://localhost/admin/login" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:23:00 [INFO]: ::ffff:172.30.0.7 GET /api/v1/docs/
+2025-08-29 22:23:00 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:23:00 +0000] "GET /api/v1/docs/ HTTP/1.1" 304 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:23:00 [INFO]: ::ffff:172.30.0.7 GET /api/v1/docs/swagger-ui.css
+2025-08-29 22:23:00 [INFO]: ::ffff:172.30.0.7 GET /api/v1/docs/swagger-ui-bundle.js
+2025-08-29 22:23:00 [INFO]: ::ffff:172.30.0.7 GET /api/v1/docs/swagger-ui-standalone-preset.js
+2025-08-29 22:23:01 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:23:01 +0000] "GET /api/v1/docs/swagger-ui.css HTTP/1.1" 200 - "http://localhost/api/v1/docs/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:23:01 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:23:01 +0000] "GET /api/v1/docs/swagger-ui-standalone-preset.js HTTP/1.1" 200 - "http://localhost/api/v1/docs/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:23:01 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:23:01 +0000] "GET /api/v1/docs/swagger-ui-bundle.js HTTP/1.1" 200 - "http://localhost/api/v1/docs/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:23:01 [INFO]: ::ffff:172.30.0.7 GET /api/v1/docs/swagger-ui.css
+2025-08-29 22:23:01 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:23:01 +0000] "GET /api/v1/docs/swagger-ui.css HTTP/1.1" 200 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:23:24 [INFO]: ::1 GET /health
+2025-08-29 22:23:24 [INFO]: ::1 - - [29/Aug/2025:14:23:24 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:23:54 [INFO]: ::1 GET /health
+2025-08-29 22:23:54 [INFO]: ::1 - - [29/Aug/2025:14:23:54 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:24:20 [INFO]: ::ffff:172.30.0.7 GET /api/v1/docs/swagger-ui.css
+2025-08-29 22:24:20 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:24:20 +0000] "GET /api/v1/docs/swagger-ui.css HTTP/1.1" 304 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:24:24 [INFO]: ::1 GET /health
+2025-08-29 22:24:25 [INFO]: ::1 - - [29/Aug/2025:14:24:25 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:24:26 [INFO]: ::ffff:172.30.0.7 GET /api/v1/docs/swagger-ui.css
+2025-08-29 22:24:26 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:24:26 +0000] "GET /api/v1/docs/swagger-ui.css HTTP/1.1" 304 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:24:28 [INFO]: ::ffff:172.30.0.7 GET /api/v1/docs/swagger-ui.css
+2025-08-29 22:24:28 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:24:28 +0000] "GET /api/v1/docs/swagger-ui.css HTTP/1.1" 304 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:24:28 [INFO]: ::ffff:172.30.0.7 GET /api/v1/docs/swagger-ui.css
+2025-08-29 22:24:28 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:24:28 +0000] "GET /api/v1/docs/swagger-ui.css HTTP/1.1" 304 - "http://localhost/api/v1/docs/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:24:28 [INFO]: ::ffff:172.30.0.7 GET /api/v1/docs/swagger-ui.css
+2025-08-29 22:24:28 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:24:28 +0000] "GET /api/v1/docs/swagger-ui.css HTTP/1.1" 304 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:24:55 [INFO]: ::1 GET /health
+2025-08-29 22:24:55 [INFO]: ::1 - - [29/Aug/2025:14:24:55 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:25:25 [INFO]: ::1 GET /health
+2025-08-29 22:25:25 [INFO]: ::1 - - [29/Aug/2025:14:25:25 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:25:55 [INFO]: ::1 GET /health
+2025-08-29 22:25:55 [INFO]: ::1 - - [29/Aug/2025:14:25:55 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:26:19 [INFO]: ::ffff:172.30.0.7 HEAD /api/v1/docs/
+2025-08-29 22:26:19 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:26:19 +0000] "HEAD /api/v1/docs/ HTTP/1.1" 200 3082 "-" "curl/8.7.1"
+2025-08-29 22:26:25 [INFO]: ::1 GET /health
+2025-08-29 22:26:25 [INFO]: ::1 - - [29/Aug/2025:14:26:25 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:26:36 [INFO]: ::ffff:172.30.0.7 HEAD /api/v1/docs/swagger-ui.css
+2025-08-29 22:26:36 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:26:36 +0000] "HEAD /api/v1/docs/swagger-ui.css HTTP/1.1" 200 155212 "-" "curl/8.7.1"
+2025-08-29 22:26:55 [INFO]: ::1 GET /health
+2025-08-29 22:26:55 [INFO]: ::1 - - [29/Aug/2025:14:26:55 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:26:58 [INFO]: ::ffff:172.30.0.7 HEAD /api/v1/docs/swagger-ui-bundle.js
+2025-08-29 22:26:58 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:26:58 +0000] "HEAD /api/v1/docs/swagger-ui-bundle.js HTTP/1.1" 200 1485855 "-" "curl/8.7.1"
+2025-08-29 22:27:10 [INFO]: ::ffff:172.30.0.7 POST /api/v1/files/upload
+2025-08-29 22:27:10 [WARN]: Invalid access token
+{
+  "error": "jwt malformed"
+}
+2025-08-29 22:27:10 [WARN]: Security Authentication failed
+{
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "curl/8.7.1",
+  "endpoint": "POST /upload",
+  "error": "jwt malformed"
+}
+2025-08-29 22:27:10 [WARN]: Client Error: Invalid token
+{
+  "statusCode": 401,
+  "code": "AUTHENTICATION_ERROR",
+  "url": "/api/v1/files/upload",
+  "method": "POST",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "curl/8.7.1"
+}
+2025-08-29 22:27:10 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:27:10 +0000] "POST /api/v1/files/upload HTTP/1.1" 401 190 "-" "curl/8.7.1"
+2025-08-29 22:27:25 [INFO]: ::1 GET /health
+2025-08-29 22:27:25 [INFO]: ::1 - - [29/Aug/2025:14:27:25 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:27:55 [INFO]: ::1 GET /health
+2025-08-29 22:27:55 [INFO]: ::1 - - [29/Aug/2025:14:27:55 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:36:54 [INFO]: Database connection has been established successfully.
+2025-08-29 22:36:55 [INFO]: Database models initialized successfully.
+2025-08-29 22:36:55 [INFO]: Redis client connected successfully
+2025-08-29 22:36:55 [INFO]: Redis client ready to use
+2025-08-29 22:36:55 [INFO]: Redis connection established successfully
+2025-08-29 22:36:55 [INFO]: File storage service initialized successfully
+2025-08-29 22:36:55 [INFO]: 🚀 Server running on port 3000
+2025-08-29 22:36:55 [INFO]: 📝 Environment: production
+2025-08-29 22:36:55 [INFO]: 🔗 API Base URL: http://localhost:3000/api/v1
+2025-08-29 22:36:56 [INFO]: ::1 GET /health
+2025-08-29 22:36:56 [INFO]: ::1 - - [29/Aug/2025:14:36:56 +0000] "GET /health HTTP/1.1" 200 102 "-" "Wget"
+2025-08-29 22:37:27 [INFO]: ::1 GET /health
+2025-08-29 22:37:27 [INFO]: ::1 - - [29/Aug/2025:14:37:27 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:37:57 [INFO]: ::1 GET /health
+2025-08-29 22:37:57 [INFO]: ::1 - - [29/Aug/2025:14:37:57 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:38:27 [INFO]: ::1 GET /health
+2025-08-29 22:38:27 [INFO]: ::1 - - [29/Aug/2025:14:38:27 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:39:05 [INFO]: Database connection has been established successfully.
+2025-08-29 22:39:05 [INFO]: Database models initialized successfully.
+2025-08-29 22:39:05 [INFO]: Redis client connected successfully
+2025-08-29 22:39:05 [INFO]: Redis client ready to use
+2025-08-29 22:39:05 [INFO]: Redis connection established successfully
+2025-08-29 22:39:05 [INFO]: File storage service initialized successfully
+2025-08-29 22:39:05 [INFO]: 🚀 Server running on port 3000
+2025-08-29 22:39:05 [INFO]: 📝 Environment: production
+2025-08-29 22:39:05 [INFO]: 🔗 API Base URL: http://localhost:3000/api/v1
+2025-08-29 22:39:08 [INFO]: ::1 GET /health
+2025-08-29 22:39:08 [INFO]: ::1 - - [29/Aug/2025:14:39:08 +0000] "GET /health HTTP/1.1" 200 102 "-" "Wget"
+2025-08-29 22:39:38 [INFO]: ::1 GET /health
+2025-08-29 22:39:38 [INFO]: ::1 - - [29/Aug/2025:14:39:38 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:40:08 [INFO]: ::1 GET /health
+2025-08-29 22:40:08 [INFO]: ::1 - - [29/Aug/2025:14:40:08 +0000] "GET /health HTTP/1.1" 200 102 "-" "Wget"
+2025-08-29 22:40:09 [INFO]: ::ffff:172.30.0.7 GET /api/v1/docs/
+2025-08-29 22:40:09 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:40:09 +0000] "GET /api/v1/docs/ HTTP/1.1" 304 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:40:10 [INFO]: ::ffff:172.30.0.7 GET /api/v1/docs/swagger-ui.css
+2025-08-29 22:40:10 [INFO]: ::ffff:172.30.0.7 GET /api/v1/docs/swagger-ui-init.js
+2025-08-29 22:40:10 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:40:10 +0000] "GET /api/v1/docs/swagger-ui.css HTTP/1.1" 304 - "http://localhost/api/v1/docs/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:40:10 [INFO]: ::ffff:172.30.0.7 GET /api/v1/docs/swagger-ui-bundle.js
+2025-08-29 22:40:10 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:40:10 +0000] "GET /api/v1/docs/swagger-ui-bundle.js HTTP/1.1" 304 - "http://localhost/api/v1/docs/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:40:10 [INFO]: ::ffff:172.30.0.7 GET /api/v1/docs/swagger-ui-standalone-preset.js
+2025-08-29 22:40:10 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:40:10 +0000] "GET /api/v1/docs/swagger-ui-standalone-preset.js HTTP/1.1" 304 - "http://localhost/api/v1/docs/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:40:10 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:40:10 +0000] "GET /api/v1/docs/swagger-ui-init.js HTTP/1.1" 200 - "http://localhost/api/v1/docs/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:40:10 [INFO]: ::ffff:172.30.0.7 GET /api/v1/docs/swagger-ui.css
+2025-08-29 22:40:10 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:40:10 +0000] "GET /api/v1/docs/swagger-ui.css HTTP/1.1" 304 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:40:23 [INFO]: ::ffff:172.30.0.7 POST /api/v1/auth/login
+2025-08-29 22:40:23 [INFO]: admin
+2025-08-29 22:40:23 [INFO]: [object SequelizeInstance:User]
+2025-08-29 22:40:23 [INFO]: User logged in successfully
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "username": "admin",
+  "ip": "127.0.0.1"
+}
+2025-08-29 22:40:23 [INFO]: User login attempt
+{
+  "username": "admin",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+}
+2025-08-29 22:40:23 [INFO]: 响应数据: 登录成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "user": {
+      "id": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+      "username": "admin",
+      "email": "admin@wedding.com",
+      "phone": null,
+      "role": "super_admin",
+      "status": "active",
+      "avatarUrl": null,
+      "realName": "系统管理员",
+      "nickname": null,
+      "bio": null,
+      "createdAt": "2025-08-27 00:55:52",
+      "updatedAt": "2025-08-29T14:40:23.587Z"
+    },
+    "tokens": {
+      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijg2YjEzNGQ0LTgyOWQtMTFmMC1hYjQyLTdhMmU0YTkyYmU0OSIsInVzZXJuYW1lIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQHdlZGRpbmcuY29tIiwicm9sZSI6InN1cGVyX2FkbWluIiwiaWF0IjoxNzU2NDc4NDIzLCJleHAiOjE3NTY0NzkzMjMsImF1ZCI6IndlZGRpbmctY2x1Yi11c2VycyIsImlzcyI6IndlZGRpbmctY2x1YiJ9.UYEq6_MZFEntmHce77Hyo9MjJ61F3mT2sNgmkpgNso0",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijg2YjEzNGQ0LTgyOWQtMTFmMC1hYjQyLTdhMmU0YTkyYmU0OSIsInVzZXJuYW1lIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQHdlZGRpbmcuY29tIiwicm9sZSI6InN1cGVyX2FkbWluIiwiaWF0IjoxNzU2NDc4NDIzLCJleHAiOjE3NTcwODMyMjMsImF1ZCI6IndlZGRpbmctY2x1Yi11c2VycyIsImlzcyI6IndlZGRpbmctY2x1YiJ9.r07nu0sT60aRtgys7VAnTsPrr-1RCY0uNmMx-q0BHJw",
+      "expiresIn": 3600
+    }
+  },
+  "requestId": "ec4238d1-c44a-488e-ade3-5b94e283635b"
+}
+2025-08-29 22:40:23 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:40:23 +0000] "POST /api/v1/auth/login HTTP/1.1" 200 - "http://localhost/admin/login" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:40:23 [INFO]: ::ffff:172.30.0.7 GET /api/v1/dashboard/stats
+2025-08-29 22:40:24 [INFO]: ::ffff:172.30.0.7 GET /api/v1/page-views/popular/work
+2025-08-29 22:40:24 [INFO]: ::ffff:172.30.0.7 GET /api/v1/schedules/calendar/86b134d4-829d-11f0-ab42-7a2e4a92be49/2025/8
+2025-08-29 22:40:24 [INFO]: ::ffff:172.30.0.7 GET /api/v1/page-views/trends/work
+2025-08-29 22:40:24 [INFO]: ::ffff:172.30.0.7 GET /api/v1/page-views/admin/stats
+2025-08-29 22:40:24 [INFO]: 响应数据: 获取档期日历成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": [],
+  "requestId": "8b854582-e8c4-4740-8eae-a11d59a9e1a9"
+}
+2025-08-29 22:40:24 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:40:24 +0000] "GET /api/v1/schedules/calendar/86b134d4-829d-11f0-ab42-7a2e4a92be49/2025/8?_t=1756478423975 HTTP/1.1" 200 170 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:40:24 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /popular/work"
+}
+2025-08-29 22:40:24 [INFO]: Role authorization passed
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "role": "super_admin",
+  "allowedRoles": [
+    "admin",
+    "super_admin"
+  ],
+  "endpoint": "GET /popular/work"
+}
+2025-08-29 22:40:24 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /trends/work"
+}
+2025-08-29 22:40:24 [INFO]: Role authorization passed
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "role": "super_admin",
+  "allowedRoles": [
+    "admin",
+    "super_admin"
+  ],
+  "endpoint": "GET /trends/work"
+}
+2025-08-29 22:40:24 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /admin/stats"
+}
+2025-08-29 22:40:24 [INFO]: Role authorization passed
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "role": "super_admin",
+  "allowedRoles": [
+    "admin",
+    "super_admin"
+  ],
+  "endpoint": "GET /admin/stats"
+}
+2025-08-29 22:40:24 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:40:24 +0000] "GET /api/v1/page-views/popular/work?limit=10&_t=1756478423975 HTTP/1.1" 200 26 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:40:24 [INFO]: 响应数据: 获取仪表盘统计成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "bookings": {
+      "total": 0,
+      "confirmed": 0,
+      "pending": 0,
+      "completed": 0,
+      "today": 0
+    },
+    "revenue": {
+      "total": 0,
+      "deposit": 0,
+      "average": 0,
+      "today": 0
+    },
+    "users": {
+      "total": 1,
+      "active": 1
+    },
+    "works": {
+      "total": 0,
+      "published": 0
+    }
+  },
+  "requestId": "85a62a73-2aa8-45df-b4de-2690fc49b261"
+}
+2025-08-29 22:40:24 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:40:24 +0000] "GET /api/v1/dashboard/stats?_t=1756478423975 HTTP/1.1" 200 366 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:40:24 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:40:24 +0000] "GET /api/v1/page-views/trends/work?days=7&_t=1756478423975 HTTP/1.1" 200 107 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:40:24 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:40:24 +0000] "GET /api/v1/page-views/admin/stats?days=7&_t=1756478423975 HTTP/1.1" 200 235 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:40:25 [INFO]: ::ffff:172.30.0.7 GET /api/v1/users/me
+2025-08-29 22:40:25 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /me"
+}
+2025-08-29 22:40:25 [INFO]: 响应数据: 获取当前用户信息成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "id": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+    "username": "admin",
+    "email": "admin@wedding.com",
+    "phone": null,
+    "role": "super_admin",
+    "status": "active",
+    "avatarUrl": null,
+    "realName": "系统管理员",
+    "nickname": null,
+    "bio": null,
+    "specialties": null,
+    "experienceYears": 0,
+    "location": null,
+    "contactInfo": null,
+    "socialLinks": null,
+    "lastLoginAt": "2025-08-29 22:40:23",
+    "lastLoginIp": "127.0.0.1",
+    "emailVerifiedAt": null,
+    "phoneVerifiedAt": null,
+    "createdAt": "2025-08-27 00:55:52",
+    "updatedAt": "2025-08-29 22:40:23",
+    "deletedAt": null
+  },
+  "requestId": "b7f7ac6b-dbf0-400e-99ef-48865ca192fb"
+}
+2025-08-29 22:40:25 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:40:25 +0000] "GET /api/v1/users/me?_t=1756478425697 HTTP/1.1" 200 677 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:40:26 [INFO]: ::ffff:172.30.0.7 GET /api/v1/profile/media-profiles/86b134d4-829d-11f0-ab42-7a2e4a92be49
+2025-08-29 22:40:26 [INFO]: 获取用户媒体资料列表，用户ID：86b134d4-829d-11f0-ab42-7a2e4a92be49
+2025-08-29 22:40:26 [INFO]: 响应数据: 操作成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": [],
+  "requestId": "bdcda3b5-08da-4fdd-8542-8deeae9fbdd7"
+}
+2025-08-29 22:40:26 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:40:26 +0000] "GET /api/v1/profile/media-profiles/86b134d4-829d-11f0-ab42-7a2e4a92be49?_t=1756478426284 HTTP/1.1" 200 158 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:40:38 [INFO]: ::1 GET /health
+2025-08-29 22:40:38 [INFO]: ::1 - - [29/Aug/2025:14:40:38 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:40:40 [INFO]: ::ffff:172.30.0.7 GET /api/auth/verify
+2025-08-29 22:40:40 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:40:40 +0000] "GET /api/auth/verify HTTP/1.1" 404 154 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:40:41 [INFO]: ::ffff:172.30.0.7 POST /api/v1/direct-upload/presigned-url
+2025-08-29 22:40:41 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "POST /presigned-url"
+}
+2025-08-29 22:40:41 [INFO]: 生成预签名URL成功: 0312bd9d-77e8-407c-9a73-f1c78195da4c
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "fileName": "录屏2025-03-16 20.16.23.mp4",
+  "fileType": "video",
+  "fileSize": 7581841
+}
+2025-08-29 22:40:41 [INFO]: 响应数据: 操作成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "presignedUrl": "http://minio:9000/wedding-media-prod/videos/other/86b134d4-829d-11f0-ab42-7a2e4a92be49/1756478441507_f0af9828___2025-03-16_20.16.23.mp4_.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=weddingadmin%2F20250829%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250829T144041Z&X-Amz-Expires=3600&X-Amz-Signature=fbc75360894773488461e98765dee7be454ac96e34af6e6d080e4853edfce582&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject",
+    "uploadSessionId": "0312bd9d-77e8-407c-9a73-f1c78195da4c",
+    "ossKey": "videos/other/86b134d4-829d-11f0-ab42-7a2e4a92be49/1756478441507_f0af9828___2025-03-16_20.16.23.mp4_.mp4",
+    "expires": 3600
+  },
+  "requestId": "28f975a6-f23b-4cd5-a581-8a53f4a47111"
+}
+2025-08-29 22:40:41 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:40:41 +0000] "POST /api/v1/direct-upload/presigned-url HTTP/1.1" 200 883 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:40:47 [INFO]: ::ffff:172.30.0.7 POST /api/v1/direct-upload/presigned-url
+2025-08-29 22:40:47 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "POST /presigned-url"
+}
+2025-08-29 22:40:47 [INFO]: 生成预签名URL成功: 489c0196-b088-4e13-94e0-deed892b2cd9
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "fileName": "录屏2025-03-16 20.16.23.mp4",
+  "fileType": "video",
+  "fileSize": 7581841
+}
+2025-08-29 22:40:47 [INFO]: 响应数据: 操作成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "presignedUrl": "http://minio:9000/wedding-media-prod/videos/other/86b134d4-829d-11f0-ab42-7a2e4a92be49/1756478447637_991afa2c___2025-03-16_20.16.23.mp4_.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=weddingadmin%2F20250829%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250829T144047Z&X-Amz-Expires=3600&X-Amz-Signature=92359fa8493f35c3395c19e697044161b3b310e0c34deffe4126c7e203b386d0&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject",
+    "uploadSessionId": "489c0196-b088-4e13-94e0-deed892b2cd9",
+    "ossKey": "videos/other/86b134d4-829d-11f0-ab42-7a2e4a92be49/1756478447637_991afa2c___2025-03-16_20.16.23.mp4_.mp4",
+    "expires": 3600
+  },
+  "requestId": "b54623ae-ac6b-4d4e-bee7-add352a7e0ac"
+}
+2025-08-29 22:40:47 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:40:47 +0000] "POST /api/v1/direct-upload/presigned-url HTTP/1.1" 200 883 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:40:54 [INFO]: ::ffff:172.30.0.7 POST /api/v1/direct-upload/presigned-url
+2025-08-29 22:40:54 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "POST /presigned-url"
+}
+2025-08-29 22:40:54 [INFO]: 生成预签名URL成功: d64b68c3-f7f5-43ba-b924-516b539719de
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "fileName": "录屏2025-03-16 20.16.23.mp4",
+  "fileType": "video",
+  "fileSize": 7581841
+}
+2025-08-29 22:40:54 [INFO]: 响应数据: 操作成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "presignedUrl": "http://minio:9000/wedding-media-prod/videos/other/86b134d4-829d-11f0-ab42-7a2e4a92be49/1756478454978_882f754b___2025-03-16_20.16.23.mp4_.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=weddingadmin%2F20250829%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250829T144054Z&X-Amz-Expires=3600&X-Amz-Signature=c9bd21072a3e92a3704392a7e288c75a1229803098c3785a3bb6736beadcb8bd&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject",
+    "uploadSessionId": "d64b68c3-f7f5-43ba-b924-516b539719de",
+    "ossKey": "videos/other/86b134d4-829d-11f0-ab42-7a2e4a92be49/1756478454978_882f754b___2025-03-16_20.16.23.mp4_.mp4",
+    "expires": 3600
+  },
+  "requestId": "345bd597-f312-4ff3-9d48-3800ef47280d"
+}
+2025-08-29 22:40:54 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:40:54 +0000] "POST /api/v1/direct-upload/presigned-url HTTP/1.1" 200 883 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:41:03 [INFO]: ::ffff:172.30.0.7 POST /api/v1/direct-upload/presigned-url
+2025-08-29 22:41:03 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "POST /presigned-url"
+}
+2025-08-29 22:41:03 [INFO]: 生成预签名URL成功: 727ec929-1392-41a0-9e56-410ac17b0c24
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "fileName": "录屏2025-03-16 20.16.23.mp4",
+  "fileType": "video",
+  "fileSize": 7581841
+}
+2025-08-29 22:41:03 [INFO]: 响应数据: 操作成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "presignedUrl": "http://minio:9000/wedding-media-prod/videos/other/86b134d4-829d-11f0-ab42-7a2e4a92be49/1756478463226_1c17f190___2025-03-16_20.16.23.mp4_.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=weddingadmin%2F20250829%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250829T144103Z&X-Amz-Expires=3600&X-Amz-Signature=6e996d9263e234330fa67720afd038d778caafe939edb52c5ec86b14546dad65&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject",
+    "uploadSessionId": "727ec929-1392-41a0-9e56-410ac17b0c24",
+    "ossKey": "videos/other/86b134d4-829d-11f0-ab42-7a2e4a92be49/1756478463226_1c17f190___2025-03-16_20.16.23.mp4_.mp4",
+    "expires": 3600
+  },
+  "requestId": "7951ee80-1405-4e79-bec2-41f39958040d"
+}
+2025-08-29 22:41:03 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:41:03 +0000] "POST /api/v1/direct-upload/presigned-url HTTP/1.1" 200 883 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:41:09 [INFO]: ::1 GET /health
+2025-08-29 22:41:09 [INFO]: ::1 - - [29/Aug/2025:14:41:09 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:41:12 [INFO]: ::ffff:172.30.0.7 POST /api/v1/direct-upload/presigned-url
+2025-08-29 22:41:12 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "POST /presigned-url"
+}
+2025-08-29 22:41:12 [INFO]: 生成预签名URL成功: 790369d8-af12-4a30-a5be-a6cbdd3322b8
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "fileName": "录屏2025-03-16 20.16.23.mp4",
+  "fileType": "video",
+  "fileSize": 7581841
+}
+2025-08-29 22:41:12 [INFO]: 响应数据: 操作成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "presignedUrl": "http://minio:9000/wedding-media-prod/videos/other/86b134d4-829d-11f0-ab42-7a2e4a92be49/1756478472655_2916fba2___2025-03-16_20.16.23.mp4_.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=weddingadmin%2F20250829%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250829T144112Z&X-Amz-Expires=3600&X-Amz-Signature=ab96c74ea5d524355b4ba38c931a08de6dff192c719640e859524285b630e19e&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject",
+    "uploadSessionId": "790369d8-af12-4a30-a5be-a6cbdd3322b8",
+    "ossKey": "videos/other/86b134d4-829d-11f0-ab42-7a2e4a92be49/1756478472655_2916fba2___2025-03-16_20.16.23.mp4_.mp4",
+    "expires": 3600
+  },
+  "requestId": "a99371e5-fac4-47fc-9412-bf9f3fc7dab3"
+}
+2025-08-29 22:41:12 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:41:12 +0000] "POST /api/v1/direct-upload/presigned-url HTTP/1.1" 200 883 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 22:41:39 [INFO]: ::1 GET /health
+2025-08-29 22:41:39 [INFO]: ::1 - - [29/Aug/2025:14:41:39 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:42:09 [INFO]: ::1 GET /health
+2025-08-29 22:42:09 [INFO]: ::1 - - [29/Aug/2025:14:42:09 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:42:39 [INFO]: ::1 GET /health
+2025-08-29 22:42:39 [INFO]: ::1 - - [29/Aug/2025:14:42:39 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:43:09 [INFO]: ::1 GET /health
+2025-08-29 22:43:09 [INFO]: ::1 - - [29/Aug/2025:14:43:09 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:43:39 [INFO]: ::1 GET /health
+2025-08-29 22:43:39 [INFO]: ::1 - - [29/Aug/2025:14:43:39 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:44:09 [INFO]: ::1 GET /health
+2025-08-29 22:44:09 [INFO]: ::1 - - [29/Aug/2025:14:44:09 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:44:39 [INFO]: ::1 GET /health
+2025-08-29 22:44:39 [INFO]: ::1 - - [29/Aug/2025:14:44:39 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:45:09 [INFO]: ::1 GET /health
+2025-08-29 22:45:09 [INFO]: ::1 - - [29/Aug/2025:14:45:09 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:45:39 [INFO]: ::1 GET /health
+2025-08-29 22:45:39 [INFO]: ::1 - - [29/Aug/2025:14:45:39 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:46:09 [INFO]: ::1 GET /health
+2025-08-29 22:46:09 [INFO]: ::1 - - [29/Aug/2025:14:46:09 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:46:39 [INFO]: ::1 GET /health
+2025-08-29 22:46:39 [INFO]: ::1 - - [29/Aug/2025:14:46:39 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:47:09 [INFO]: ::1 GET /health
+2025-08-29 22:47:09 [INFO]: ::1 - - [29/Aug/2025:14:47:09 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:47:40 [INFO]: ::1 GET /health
+2025-08-29 22:47:40 [INFO]: ::1 - - [29/Aug/2025:14:47:40 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:48:10 [INFO]: ::1 GET /health
+2025-08-29 22:48:10 [INFO]: ::1 - - [29/Aug/2025:14:48:10 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:48:40 [INFO]: ::1 GET /health
+2025-08-29 22:48:40 [INFO]: ::1 - - [29/Aug/2025:14:48:40 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:49:39 [INFO]: Database connection has been established successfully.
+2025-08-29 22:49:39 [INFO]: Database models initialized successfully.
+2025-08-29 22:49:39 [INFO]: Redis client connected successfully
+2025-08-29 22:49:39 [INFO]: Redis client ready to use
+2025-08-29 22:49:39 [INFO]: Redis connection established successfully
+2025-08-29 22:49:39 [INFO]: File storage service initialized successfully
+2025-08-29 22:49:39 [INFO]: 🚀 Server running on port 3000
+2025-08-29 22:49:39 [INFO]: 📝 Environment: production
+2025-08-29 22:49:39 [INFO]: 🔗 API Base URL: http://localhost:3000/api/v1
+2025-08-29 22:49:41 [INFO]: ::1 GET /health
+2025-08-29 22:49:41 [INFO]: ::1 - - [29/Aug/2025:14:49:41 +0000] "GET /health HTTP/1.1" 200 102 "-" "Wget"
+2025-08-29 22:50:11 [INFO]: ::1 GET /health
+2025-08-29 22:50:11 [INFO]: ::1 - - [29/Aug/2025:14:50:11 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:50:41 [INFO]: ::1 GET /health
+2025-08-29 22:50:41 [INFO]: ::1 - - [29/Aug/2025:14:50:41 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:51:11 [INFO]: ::1 GET /health
+2025-08-29 22:51:11 [INFO]: ::1 - - [29/Aug/2025:14:51:11 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 22:51:41 [INFO]: ::1 GET /health
+2025-08-29 22:51:41 [INFO]: ::1 - - [29/Aug/2025:14:51:41 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:52:11 [INFO]: ::ffff:172.30.0.7 POST /api/v1/direct-upload/presigned-url
+2025-08-29 22:52:11 [WARN]: Invalid access token
+{
+  "error": "jwt malformed"
+}
+2025-08-29 22:52:11 [WARN]: Security Authentication failed
+{
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "curl/8.7.1",
+  "endpoint": "POST /presigned-url",
+  "error": "jwt malformed"
+}
+2025-08-29 22:52:11 [WARN]: Client Error: Invalid token
+{
+  "statusCode": 401,
+  "code": "AUTHENTICATION_ERROR",
+  "url": "/api/v1/direct-upload/presigned-url",
+  "method": "POST",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "curl/8.7.1"
+}
+2025-08-29 22:52:11 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:14:52:11 +0000] "POST /api/v1/direct-upload/presigned-url HTTP/1.1" 401 190 "-" "curl/8.7.1"
+2025-08-29 22:52:11 [INFO]: ::1 GET /health
+2025-08-29 22:52:11 [INFO]: ::1 - - [29/Aug/2025:14:52:11 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:52:41 [INFO]: ::1 GET /health
+2025-08-29 22:52:41 [INFO]: ::1 - - [29/Aug/2025:14:52:41 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:53:11 [INFO]: ::1 GET /health
+2025-08-29 22:53:11 [INFO]: ::1 - - [29/Aug/2025:14:53:11 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:53:41 [INFO]: ::1 GET /health
+2025-08-29 22:53:41 [INFO]: ::1 - - [29/Aug/2025:14:53:41 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:54:11 [INFO]: ::1 GET /health
+2025-08-29 22:54:11 [INFO]: ::1 - - [29/Aug/2025:14:54:11 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:54:41 [INFO]: ::1 GET /health
+2025-08-29 22:54:41 [INFO]: ::1 - - [29/Aug/2025:14:54:41 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:55:12 [INFO]: ::1 GET /health
+2025-08-29 22:55:12 [INFO]: ::1 - - [29/Aug/2025:14:55:12 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:55:42 [INFO]: ::1 GET /health
+2025-08-29 22:55:42 [INFO]: ::1 - - [29/Aug/2025:14:55:42 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:56:12 [INFO]: ::1 GET /health
+2025-08-29 22:56:12 [INFO]: ::1 - - [29/Aug/2025:14:56:12 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:56:42 [INFO]: ::1 GET /health
+2025-08-29 22:56:42 [INFO]: ::1 - - [29/Aug/2025:14:56:42 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:57:12 [INFO]: ::1 GET /health
+2025-08-29 22:57:12 [INFO]: ::1 - - [29/Aug/2025:14:57:12 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:57:42 [INFO]: ::1 GET /health
+2025-08-29 22:57:42 [INFO]: ::1 - - [29/Aug/2025:14:57:42 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:58:12 [INFO]: ::1 GET /health
+2025-08-29 22:58:12 [INFO]: ::1 - - [29/Aug/2025:14:58:12 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:58:42 [INFO]: ::1 GET /health
+2025-08-29 22:58:42 [INFO]: ::1 - - [29/Aug/2025:14:58:42 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:59:12 [INFO]: ::1 GET /health
+2025-08-29 22:59:12 [INFO]: ::1 - - [29/Aug/2025:14:59:12 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 22:59:42 [INFO]: ::1 GET /health
+2025-08-29 22:59:42 [INFO]: ::1 - - [29/Aug/2025:14:59:42 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 23:00:12 [INFO]: ::1 GET /health
+2025-08-29 23:00:12 [INFO]: ::1 - - [29/Aug/2025:15:00:12 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 23:00:42 [INFO]: ::1 GET /health
+2025-08-29 23:00:42 [INFO]: ::1 - - [29/Aug/2025:15:00:42 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 23:01:12 [INFO]: ::1 GET /health
+2025-08-29 23:01:12 [INFO]: ::1 - - [29/Aug/2025:15:01:12 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 23:01:42 [INFO]: ::1 GET /health
+2025-08-29 23:01:42 [INFO]: ::1 - - [29/Aug/2025:15:01:42 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 23:02:13 [INFO]: ::1 GET /health
+2025-08-29 23:02:13 [INFO]: ::1 - - [29/Aug/2025:15:02:13 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 23:02:43 [INFO]: ::1 GET /health
+2025-08-29 23:02:43 [INFO]: ::1 - - [29/Aug/2025:15:02:43 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 23:03:13 [INFO]: ::1 GET /health
+2025-08-29 23:03:13 [INFO]: ::1 - - [29/Aug/2025:15:03:13 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 23:03:43 [INFO]: ::1 GET /health
+2025-08-29 23:03:43 [INFO]: ::1 - - [29/Aug/2025:15:03:43 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 23:04:13 [INFO]: ::1 GET /health
+2025-08-29 23:04:13 [INFO]: ::1 - - [29/Aug/2025:15:04:13 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 23:04:43 [INFO]: ::1 GET /health
+2025-08-29 23:04:43 [INFO]: ::1 - - [29/Aug/2025:15:04:43 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 23:05:13 [INFO]: ::1 GET /health
+2025-08-29 23:05:13 [INFO]: ::1 - - [29/Aug/2025:15:05:13 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"

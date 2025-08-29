@@ -210,7 +210,7 @@ export class FileService {
       originalName: data.originalName,
       mimeType: data.mimetype,
       fileSize: data.size,
-      fileUrl: this.ossService.getFileUrl(uploadResult.url),
+      fileUrl: uploadResult.url, // 直接使用uploadResult.url，避免重复拼接
       filePath: uploadResult.key, // 存储OSS的key
       hashMd5: fileHash,
       fileType: data.fileType,
@@ -705,3 +705,8 @@ export class FileService {
     return fileRecord;
   }
 }
+
+
+
+
+

@@ -4,7 +4,7 @@
 # 多阶段构建：构建阶段 + 生产阶段
 
 # 构建阶段 - 使用最新的安全Alpine镜像提升构建速度
-FROM node:22.17.1-alpine AS builder
+FROM node:22-alpine AS builder
 
 # 配置Alpine镜像源并安装必要的系统依赖
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
@@ -28,11 +28,11 @@ RUN npm run build && \
     rm -rf /tmp/.npm /root/.npm
 
 # 生产阶段
-FROM node:22.17.1-alpine AS development
+FROM node:22-alpine AS production
 
 # 设置环境变量
 ENV TZ=Asia/Shanghai \
-    NODE_ENV=development \
+    NODE_ENV=production \
     PORT=3000 \
     LOG_LEVEL=info
 
@@ -55,23 +55,23 @@ COPY --from=builder --chown=wedding:nodejs /app/package*.json ./
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:3000/api/v1/health || exit 1
+    CMD curl -f http://localhost:3000/health || exit 1
 
 # 切换到非root用户
 USER wedding
 
 # 暴露端口
-EXPOSE 3000 9090
+EXPOSE 3000
 
 # 使用dumb-init作为PID 1，处理信号
 ENTRYPOINT ["dumb-init", "--"]
 
 # 启动应用
-CMD ["node", "dist/server.js"]
+CMD ["node", "dist/app.js"]
 
 # 添加标签
 LABEL maintainer="Wedding Club Team" \
     version="1.0.0" \
-    description="Wedding Club Server - Development" \
+    description="Wedding Club Server - Production" \
     com.wedding.service="api" \
-    com.wedding.environment="development"
+    com.wedding.environment="production"
