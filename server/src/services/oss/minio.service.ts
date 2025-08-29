@@ -267,6 +267,12 @@ export class MinIOService implements OssService {
       const baseUrl = cdnBaseUrl.endsWith('/') ? cdnBaseUrl.slice(0, -1) : cdnBaseUrl;
       const bucketPath = this.bucket;
       const keyPath = key.startsWith('/') ? key.substring(1) : key;
+
+      // 检查key是否已经包含了完整的URL
+      if (key.startsWith('http://') || key.startsWith('https://')) {
+        return key;
+      }
+
       return `${baseUrl}/${bucketPath}/${keyPath}`;
     }
 
@@ -279,14 +285,30 @@ export class MinIOService implements OssService {
       const baseUrl = publicEndpoint.endsWith('/') ? publicEndpoint.slice(0, -1) : publicEndpoint;
       const bucketPath = this.bucket;
       const keyPath = key.startsWith('/') ? key.substring(1) : key;
+
+      // 检查key是否已经包含了完整的URL
+      if (key.startsWith('http://') || key.startsWith('https://')) {
+        return key;
+      }
+
       return `${baseUrl}/${bucketPath}/${keyPath}`;
     }
 
     // 默认使用内部MinIO地址
     const endpoint = this.config.endpoint;
     if (process.env.NODE_ENV === 'development' && endpoint.includes('minio')) {
+      // 检查key是否已经包含了完整的URL
+      if (key.startsWith('http://') || key.startsWith('https://')) {
+        return key;
+      }
       return `${endpoint.replace('minio', '127.0.0.1')}/${this.bucket}/${key}`;
     }
+
+    // 检查key是否已经包含了完整的URL
+    if (key.startsWith('http://') || key.startsWith('https://')) {
+      return key;
+    }
+
     return `${endpoint}/${this.bucket}/${key}`;
   }
 

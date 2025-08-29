@@ -17,3 +17,429 @@
 2025-08-29 20:45:19 [INFO]: ::1 GET /health
 2025-08-29 20:45:19 [INFO]: ::1 - - [29/Aug/2025:12:45:19 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
 2025-08-29 20:45:44 [INFO]: SIGTERM received, shutting down gracefully
+2025-08-29 20:48:56 [INFO]: Database connection has been established successfully.
+2025-08-29 20:48:57 [INFO]: Database models initialized successfully.
+2025-08-29 20:48:57 [INFO]: ✅ Database connected successfully
+2025-08-29 20:48:57 [INFO]: Redis client connected successfully
+2025-08-29 20:48:57 [INFO]: Redis client ready to use
+2025-08-29 20:48:57 [INFO]: Redis connection established successfully
+2025-08-29 20:48:57 [INFO]: ✅ Redis connected successfully
+2025-08-29 20:48:57 [INFO]: 🚀 Server running on port 3000
+2025-08-29 20:48:57 [INFO]: 📝 Environment: production
+2025-08-29 20:48:57 [INFO]: 🔗 API Base URL: http://localhost:3000/api/v1
+2025-08-29 20:48:59 [INFO]: ::1 GET /health
+2025-08-29 20:48:59 [INFO]: ::1 - - [29/Aug/2025:12:48:59 +0000] "GET /health HTTP/1.1" 200 102 "-" "Wget"
+2025-08-29 20:49:29 [INFO]: ::1 GET /health
+2025-08-29 20:49:29 [INFO]: ::1 - - [29/Aug/2025:12:49:29 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 20:49:59 [INFO]: ::1 GET /health
+2025-08-29 20:49:59 [INFO]: ::1 - - [29/Aug/2025:12:49:59 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 20:50:29 [INFO]: ::1 GET /health
+2025-08-29 20:50:29 [INFO]: ::1 - - [29/Aug/2025:12:50:29 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 20:50:30 [INFO]: ::ffff:172.30.0.7 GET /api/v1/settings/site-config
+2025-08-29 20:50:30 [INFO]: ::ffff:172.30.0.7 GET /api/v1/dashboard/stats
+2025-08-29 20:50:30 [INFO]: ::ffff:172.30.0.7 GET /api/v1/page-views/admin/stats
+2025-08-29 20:50:30 [WARN]: Invalid access token
+{
+  "error": "jwt expired"
+}
+2025-08-29 20:50:30 [WARN]: Security Authentication failed
+{
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /admin/stats",
+  "error": "jwt expired"
+}
+2025-08-29 20:50:30 [WARN]: Client Error: Token expired
+{
+  "statusCode": 401,
+  "code": "AUTHENTICATION_ERROR",
+  "url": "/api/v1/page-views/admin/stats?days=7&_t=1756471830187",
+  "method": "GET",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+}
+2025-08-29 20:50:30 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:12:50:30 +0000] "GET /api/v1/page-views/admin/stats?days=7&_t=1756471830187 HTTP/1.1" 401 190 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 20:50:30 [INFO]: ::ffff:172.30.0.7 GET /api/v1/page-views/popular/work
+2025-08-29 20:50:30 [WARN]: Invalid access token
+{
+  "error": "jwt expired"
+}
+2025-08-29 20:50:30 [WARN]: Security Authentication failed
+{
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /popular/work",
+  "error": "jwt expired"
+}
+2025-08-29 20:50:30 [WARN]: Client Error: Token expired
+{
+  "statusCode": 401,
+  "code": "AUTHENTICATION_ERROR",
+  "url": "/api/v1/page-views/popular/work?limit=10&_t=1756471830187",
+  "method": "GET",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+}
+2025-08-29 20:50:30 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:12:50:30 +0000] "GET /api/v1/page-views/popular/work?limit=10&_t=1756471830187 HTTP/1.1" 401 190 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 20:50:30 [INFO]: ::ffff:172.30.0.7 GET /api/v1/page-views/trends/work
+2025-08-29 20:50:30 [WARN]: Invalid access token
+{
+  "error": "jwt expired"
+}
+2025-08-29 20:50:30 [WARN]: Security Authentication failed
+{
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /trends/work",
+  "error": "jwt expired"
+}
+2025-08-29 20:50:30 [WARN]: Client Error: Token expired
+{
+  "statusCode": 401,
+  "code": "AUTHENTICATION_ERROR",
+  "url": "/api/v1/page-views/trends/work?days=7&_t=1756471830187",
+  "method": "GET",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+}
+2025-08-29 20:50:30 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:12:50:30 +0000] "GET /api/v1/page-views/trends/work?days=7&_t=1756471830187 HTTP/1.1" 401 190 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 20:50:30 [INFO]: ::ffff:172.30.0.7 GET /api/v1/schedules/calendar/86b134d4-829d-11f0-ab42-7a2e4a92be49/2025/8
+2025-08-29 20:50:30 [INFO]: ::ffff:172.30.0.7 GET /api/auth/verify
+2025-08-29 20:50:30 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:12:50:30 +0000] "GET /api/auth/verify HTTP/1.1" 404 154 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 20:50:30 [INFO]: 响应数据: 获取网站配置成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "site": "{\"name\":\"å©šç¤¼æœåŠ¡å¹³å°\",\"description\":\"ä¸“ä¸šçš„å©šç¤¼ç­–åˆ’ä¸ŽæœåŠ¡å¹³å°ï¼Œä¸ºæ‚¨æ‰“é€ å®Œç¾Žçš„å©šç¤¼ä½“éªŒ\",\"keywords\":\"å©šç¤¼ç­–åˆ’,å©šç¤¼æ‘„å½±,å©šç¤¼ä¸»æŒ,å©šç¤¼æœåŠ¡,å©šåº†å…¬å¸\",\"logo\":\"./assets/images/logo.png\",\"favicon\":\"./assets/images/favicon.ico\"}",
+    "contactEmail": "contact@wedding.com",
+    "contactPhone": "400-123-4567",
+    "homepageSections": "{\"hero\":{\"backgroundImage\":\"/images/hero-bg.jpg\",\"visible\":true,\"title\":\"å®Œç¾Žå©šç¤¼ï¼Œä»Žè¿™é‡Œå¼€å§‹\",\"description\":\"ä¸“ä¸šå›¢é˜Ÿä¸ºæ‚¨æ‰“é€ æ¢¦æƒ³ä¸­çš„å©šç¤¼\",\"ctaText\":\"ç«‹å³å’¨è¯¢\",\"ctaLink\":\"/contact\"},\"team\":{\"visible\":true,\"title\":\"ä¸“ä¸šå›¢é˜Ÿ\",\"subtitle\":\"ç»éªŒä¸°å¯Œçš„å©šç¤¼ç­–åˆ’å¸ˆ\",\"description\":\"ä¸“ä¸šå›¢é˜Ÿä¸ºæ‚¨æ‰“é€ æ¢¦æƒ³ä¸­çš„å©šç¤¼\"},\"teamShowcase\":{\"visible\":true,\"title\":\"å›¢é˜Ÿé£Žé‡‡\",\"subtitle\":\"å±•ç¤ºæˆ‘ä»¬çš„ä¸“ä¸šå®žåŠ›\",\"description\":\"æŸ¥çœ‹æˆ‘ä»¬å›¢é˜Ÿçš„ç²¾å½©çž¬é—´\"},\"portfolio\":{\"visible\":true,\"title\":\"ç²¾é€‰ä½œå“\",\"subtitle\":\"è§è¯æ¯ä¸€ä¸ªç¾Žå¥½æ—¶åˆ»\",\"description\":\"æµè§ˆæˆ‘ä»¬çš„å©šç¤¼æ‘„å½±ä½œå“é›†\"},\"schedule\":{\"visible\":true,\"title\":\"æ¡£æœŸæŸ¥è¯¢\",\"subtitle\":\"æŸ¥è¯¢å¯é¢„çº¦çš„ä¸»æŒäºº\",\"description\":\"æŸ¥è¯¢å¯é¢„çº¦çš„ä¸»æŒäºº\"},\"contact\":{\"visible\":true,\"title\":\"è”ç³»æˆ‘ä»¬\",\"subtitle\":\"éšæ—¶ä¸ºæ‚¨æä¾›å’¨è¯¢\",\"description\":\"å¤šç§æ–¹å¼è”ç³»æˆ‘ä»¬çš„å›¢é˜Ÿ\",\"address\":\"åŒ—äº¬å¸‚æœé˜³åŒºå©šç¤¼å¤§åŽ¦\",\"phone\":\"400-123-4567\",\"email\":\"contact@wedding.com\",\"wechat\":\"wedding_service\",\"xiaohongshu\":\"wedding_xiaohongshu\",\"douyin\":\"wedding_douyin\"}}"
+  },
+  "requestId": "5a5ec522-4f93-494a-980f-830fedb5c2f1"
+}
+2025-08-29 20:50:30 [INFO]: 响应数据: 获取档期日历成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": [],
+  "requestId": "af1f8484-1082-4450-8ef9-bf467a4edcf0"
+}
+2025-08-29 20:50:30 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:12:50:30 +0000] "GET /api/v1/schedules/calendar/86b134d4-829d-11f0-ab42-7a2e4a92be49/2025/8?_t=1756471830187 HTTP/1.1" 200 170 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 20:50:30 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:12:50:30 +0000] "GET /api/v1/settings/site-config?_t=1756471830187 HTTP/1.1" 200 - "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 20:50:31 [INFO]: 响应数据: 获取仪表盘统计成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "bookings": {
+      "total": 0,
+      "confirmed": 0,
+      "pending": 0,
+      "completed": 0,
+      "today": 0
+    },
+    "revenue": {
+      "total": 0,
+      "deposit": 0,
+      "average": 0,
+      "today": 0
+    },
+    "users": {
+      "total": 1,
+      "active": 1
+    },
+    "works": {
+      "total": 0,
+      "published": 0
+    }
+  },
+  "requestId": "a5380a2e-fb51-40b6-83e7-5710396c41bc"
+}
+2025-08-29 20:50:31 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:12:50:31 +0000] "GET /api/v1/dashboard/stats?_t=1756471830187 HTTP/1.1" 200 366 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 20:50:33 [INFO]: ::ffff:172.30.0.7 GET /api/v1/settings/site-config
+2025-08-29 20:50:33 [INFO]: 响应数据: 获取网站配置成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "site": "{\"name\":\"å©šç¤¼æœåŠ¡å¹³å°\",\"description\":\"ä¸“ä¸šçš„å©šç¤¼ç­–åˆ’ä¸ŽæœåŠ¡å¹³å°ï¼Œä¸ºæ‚¨æ‰“é€ å®Œç¾Žçš„å©šç¤¼ä½“éªŒ\",\"keywords\":\"å©šç¤¼ç­–åˆ’,å©šç¤¼æ‘„å½±,å©šç¤¼ä¸»æŒ,å©šç¤¼æœåŠ¡,å©šåº†å…¬å¸\",\"logo\":\"./assets/images/logo.png\",\"favicon\":\"./assets/images/favicon.ico\"}",
+    "contactEmail": "contact@wedding.com",
+    "contactPhone": "400-123-4567",
+    "homepageSections": "{\"hero\":{\"backgroundImage\":\"/images/hero-bg.jpg\",\"visible\":true,\"title\":\"å®Œç¾Žå©šç¤¼ï¼Œä»Žè¿™é‡Œå¼€å§‹\",\"description\":\"ä¸“ä¸šå›¢é˜Ÿä¸ºæ‚¨æ‰“é€ æ¢¦æƒ³ä¸­çš„å©šç¤¼\",\"ctaText\":\"ç«‹å³å’¨è¯¢\",\"ctaLink\":\"/contact\"},\"team\":{\"visible\":true,\"title\":\"ä¸“ä¸šå›¢é˜Ÿ\",\"subtitle\":\"ç»éªŒä¸°å¯Œçš„å©šç¤¼ç­–åˆ’å¸ˆ\",\"description\":\"ä¸“ä¸šå›¢é˜Ÿä¸ºæ‚¨æ‰“é€ æ¢¦æƒ³ä¸­çš„å©šç¤¼\"},\"teamShowcase\":{\"visible\":true,\"title\":\"å›¢é˜Ÿé£Žé‡‡\",\"subtitle\":\"å±•ç¤ºæˆ‘ä»¬çš„ä¸“ä¸šå®žåŠ›\",\"description\":\"æŸ¥çœ‹æˆ‘ä»¬å›¢é˜Ÿçš„ç²¾å½©çž¬é—´\"},\"portfolio\":{\"visible\":true,\"title\":\"ç²¾é€‰ä½œå“\",\"subtitle\":\"è§è¯æ¯ä¸€ä¸ªç¾Žå¥½æ—¶åˆ»\",\"description\":\"æµè§ˆæˆ‘ä»¬çš„å©šç¤¼æ‘„å½±ä½œå“é›†\"},\"schedule\":{\"visible\":true,\"title\":\"æ¡£æœŸæŸ¥è¯¢\",\"subtitle\":\"æŸ¥è¯¢å¯é¢„çº¦çš„ä¸»æŒäºº\",\"description\":\"æŸ¥è¯¢å¯é¢„çº¦çš„ä¸»æŒäºº\"},\"contact\":{\"visible\":true,\"title\":\"è”ç³»æˆ‘ä»¬\",\"subtitle\":\"éšæ—¶ä¸ºæ‚¨æä¾›å’¨è¯¢\",\"description\":\"å¤šç§æ–¹å¼è”ç³»æˆ‘ä»¬çš„å›¢é˜Ÿ\",\"address\":\"åŒ—äº¬å¸‚æœé˜³åŒºå©šç¤¼å¤§åŽ¦\",\"phone\":\"400-123-4567\",\"email\":\"contact@wedding.com\",\"wechat\":\"wedding_service\",\"xiaohongshu\":\"wedding_xiaohongshu\",\"douyin\":\"wedding_douyin\"}}"
+  },
+  "requestId": "d5d61799-b3b7-4232-b0e6-897285b3eb4e"
+}
+2025-08-29 20:50:33 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:12:50:33 +0000] "GET /api/v1/settings/site-config?_t=1756471833140 HTTP/1.1" 200 - "http://localhost/admin/login" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 20:50:41 [INFO]: ::ffff:172.30.0.7 POST /api/v1/auth/login
+2025-08-29 20:50:41 [INFO]: admin
+2025-08-29 20:50:41 [INFO]: [object SequelizeInstance:User]
+2025-08-29 20:50:42 [INFO]: User logged in successfully
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "username": "admin",
+  "ip": "127.0.0.1"
+}
+2025-08-29 20:50:42 [INFO]: User login attempt
+{
+  "username": "admin",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+}
+2025-08-29 20:50:42 [INFO]: 响应数据: 登录成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "user": {
+      "id": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+      "username": "admin",
+      "email": "admin@wedding.com",
+      "phone": null,
+      "role": "super_admin",
+      "status": "active",
+      "avatarUrl": null,
+      "realName": "系统管理员",
+      "nickname": null,
+      "bio": null,
+      "createdAt": "2025-08-27 00:55:52",
+      "updatedAt": "2025-08-29T12:50:42.017Z"
+    },
+    "tokens": {
+      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijg2YjEzNGQ0LTgyOWQtMTFmMC1hYjQyLTdhMmU0YTkyYmU0OSIsInVzZXJuYW1lIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQHdlZGRpbmcuY29tIiwicm9sZSI6InN1cGVyX2FkbWluIiwiaWF0IjoxNzU2NDcxODQyLCJleHAiOjE3NTY0NzI3NDIsImF1ZCI6IndlZGRpbmctY2x1Yi11c2VycyIsImlzcyI6IndlZGRpbmctY2x1YiJ9.W7aFWAm3wzpzQACfn_5xNvDLAs_1OBHIuSWlnSZXqkc",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijg2YjEzNGQ0LTgyOWQtMTFmMC1hYjQyLTdhMmU0YTkyYmU0OSIsInVzZXJuYW1lIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQHdlZGRpbmcuY29tIiwicm9sZSI6InN1cGVyX2FkbWluIiwiaWF0IjoxNzU2NDcxODQyLCJleHAiOjE3NTcwNzY2NDIsImF1ZCI6IndlZGRpbmctY2x1Yi11c2VycyIsImlzcyI6IndlZGRpbmctY2x1YiJ9.avmiQ5FCouYYEVVBHVeojm71tYqafHMZSsDEmXW6lx4",
+      "expiresIn": 3600
+    }
+  },
+  "requestId": "d3e051af-7554-46e5-aa2d-37726dc0acc6"
+}
+2025-08-29 20:50:42 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:12:50:42 +0000] "POST /api/v1/auth/login HTTP/1.1" 200 - "http://localhost/admin/login" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 20:50:42 [INFO]: ::ffff:172.30.0.7 GET /api/v1/dashboard/stats
+2025-08-29 20:50:42 [INFO]: ::ffff:172.30.0.7 GET /api/v1/page-views/admin/stats
+2025-08-29 20:50:42 [INFO]: ::ffff:172.30.0.7 GET /api/v1/page-views/popular/work
+2025-08-29 20:50:42 [INFO]: ::ffff:172.30.0.7 GET /api/v1/page-views/trends/work
+2025-08-29 20:50:42 [INFO]: ::ffff:172.30.0.7 GET /api/v1/schedules/calendar/86b134d4-829d-11f0-ab42-7a2e4a92be49/2025/8
+2025-08-29 20:50:42 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /admin/stats"
+}
+2025-08-29 20:50:42 [INFO]: Role authorization passed
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "role": "super_admin",
+  "allowedRoles": [
+    "admin",
+    "super_admin"
+  ],
+  "endpoint": "GET /admin/stats"
+}
+2025-08-29 20:50:42 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /popular/work"
+}
+2025-08-29 20:50:42 [INFO]: Role authorization passed
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "role": "super_admin",
+  "allowedRoles": [
+    "admin",
+    "super_admin"
+  ],
+  "endpoint": "GET /popular/work"
+}
+2025-08-29 20:50:42 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /trends/work"
+}
+2025-08-29 20:50:42 [INFO]: Role authorization passed
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "role": "super_admin",
+  "allowedRoles": [
+    "admin",
+    "super_admin"
+  ],
+  "endpoint": "GET /trends/work"
+}
+2025-08-29 20:50:42 [INFO]: 响应数据: 获取档期日历成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": [],
+  "requestId": "f879a7b2-c285-4a03-a20d-16a77ae14117"
+}
+2025-08-29 20:50:42 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:12:50:42 +0000] "GET /api/v1/schedules/calendar/86b134d4-829d-11f0-ab42-7a2e4a92be49/2025/8?_t=1756471842392 HTTP/1.1" 200 170 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 20:50:42 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:12:50:42 +0000] "GET /api/v1/page-views/popular/work?limit=10&_t=1756471842392 HTTP/1.1" 200 26 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 20:50:42 [INFO]: 响应数据: 获取仪表盘统计成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "bookings": {
+      "total": 0,
+      "confirmed": 0,
+      "pending": 0,
+      "completed": 0,
+      "today": 0
+    },
+    "revenue": {
+      "total": 0,
+      "deposit": 0,
+      "average": 0,
+      "today": 0
+    },
+    "users": {
+      "total": 1,
+      "active": 1
+    },
+    "works": {
+      "total": 0,
+      "published": 0
+    }
+  },
+  "requestId": "ccd03db9-f05f-4d04-875f-c66f1779dff3"
+}
+2025-08-29 20:50:42 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:12:50:42 +0000] "GET /api/v1/dashboard/stats?_t=1756471842392 HTTP/1.1" 200 366 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 20:50:42 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:12:50:42 +0000] "GET /api/v1/page-views/trends/work?days=7&_t=1756471842392 HTTP/1.1" 200 107 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 20:50:42 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:12:50:42 +0000] "GET /api/v1/page-views/admin/stats?days=7&_t=1756471842392 HTTP/1.1" 200 235 "http://localhost/admin/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 20:50:45 [INFO]: ::ffff:172.30.0.7 GET /api/v1/users/me
+2025-08-29 20:50:45 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "GET /me"
+}
+2025-08-29 20:50:45 [INFO]: 响应数据: 获取当前用户信息成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "id": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+    "username": "admin",
+    "email": "admin@wedding.com",
+    "phone": null,
+    "role": "super_admin",
+    "status": "active",
+    "avatarUrl": null,
+    "realName": "系统管理员",
+    "nickname": null,
+    "bio": null,
+    "specialties": null,
+    "experienceYears": 0,
+    "location": null,
+    "contactInfo": null,
+    "socialLinks": null,
+    "lastLoginAt": "2025-08-29 20:50:42",
+    "lastLoginIp": "127.0.0.1",
+    "emailVerifiedAt": null,
+    "phoneVerifiedAt": null,
+    "createdAt": "2025-08-27 00:55:52",
+    "updatedAt": "2025-08-29 20:50:42",
+    "deletedAt": null
+  },
+  "requestId": "b19c63ee-9f4a-4a6c-927e-4d923f93e3de"
+}
+2025-08-29 20:50:45 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:12:50:45 +0000] "GET /api/v1/users/me?_t=1756471845066 HTTP/1.1" 200 677 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 20:50:45 [INFO]: ::ffff:172.30.0.7 GET /api/v1/profile/media-profiles/86b134d4-829d-11f0-ab42-7a2e4a92be49
+2025-08-29 20:50:45 [INFO]: 获取用户媒体资料列表，用户ID：86b134d4-829d-11f0-ab42-7a2e4a92be49
+2025-08-29 20:50:45 [INFO]: 响应数据: 操作成功
+{
+  "success": true,
+  "statusCode": 200,
+  "data": [],
+  "requestId": "2b47def6-3197-4334-a903-a60b4bf933e7"
+}
+2025-08-29 20:50:45 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:12:50:45 +0000] "GET /api/v1/profile/media-profiles/86b134d4-829d-11f0-ab42-7a2e4a92be49?_t=1756471845650 HTTP/1.1" 200 158 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 20:50:59 [INFO]: ::1 GET /health
+2025-08-29 20:50:59 [INFO]: ::1 - - [29/Aug/2025:12:50:59 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 20:51:04 [INFO]: ::ffff:172.30.0.7 POST /api/v1/files/upload
+2025-08-29 20:51:04 [INFO]: Auth User authenticated
+{
+  "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "endpoint": "POST /upload"
+}
+2025-08-29 20:51:04 [INFO]: 响应数据: 文件上传成功
+{
+  "success": true,
+  "statusCode": 201,
+  "data": {
+    "id": "0d859b0a-2142-4784-8eee-b135b84306b5",
+    "userId": "86b134d4-829d-11f0-ab42-7a2e4a92be49",
+    "originalName": "WechatIMG530.jpg",
+    "filename": "b4b2d246-ef95-4a56-afd2-0dc143b2b100.jpg",
+    "filePath": "images/b4b2d246-ef95-4a56-afd2-0dc143b2b100.jpg",
+    "fileUrl": "http://minio:9000/wedding-media-prod/http://minio:9000/wedding-media-prod/images/b4b2d246-ef95-4a56-afd2-0dc143b2b100.jpg",
+    "fileSize": "196413",
+    "mimeType": "image/jpeg",
+    "fileType": "image",
+    "width": null,
+    "height": null,
+    "duration": null,
+    "thumbnailUrl": null,
+    "hashMd5": "c543757ca7e9f53ec67fc331addc18d4",
+    "hashSha256": null,
+    "storageType": "minio",
+    "bucketName": null,
+    "isPublic": false,
+    "downloadCount": 0,
+    "createdAt": "2025-08-29 20:18:06",
+    "updatedAt": "2025-08-29 20:18:06",
+    "deletedAt": null,
+    "metadata": null,
+    "category": "avatar"
+  },
+  "requestId": "279af65b-a3d6-4fa3-8e6a-42ba02756714"
+}
+2025-08-29 20:51:04 [INFO]: ::ffff:172.30.0.7 - - [29/Aug/2025:12:51:04 +0000] "POST /api/v1/files/upload HTTP/1.1" 201 923 "http://localhost/admin/profile" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+2025-08-29 20:51:29 [INFO]: ::1 GET /health
+2025-08-29 20:51:29 [INFO]: ::1 - - [29/Aug/2025:12:51:29 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 20:51:59 [INFO]: ::1 GET /health
+2025-08-29 20:51:59 [INFO]: ::1 - - [29/Aug/2025:12:51:59 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 20:52:30 [INFO]: ::1 GET /health
+2025-08-29 20:52:30 [INFO]: ::1 - - [29/Aug/2025:12:52:30 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 20:53:00 [INFO]: ::1 GET /health
+2025-08-29 20:53:00 [INFO]: ::1 - - [29/Aug/2025:12:53:00 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 20:53:30 [INFO]: ::1 GET /health
+2025-08-29 20:53:30 [INFO]: ::1 - - [29/Aug/2025:12:53:30 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 20:54:00 [INFO]: ::1 GET /health
+2025-08-29 20:54:00 [INFO]: ::1 - - [29/Aug/2025:12:54:00 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 20:54:30 [INFO]: ::1 GET /health
+2025-08-29 20:54:30 [INFO]: ::1 - - [29/Aug/2025:12:54:30 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 20:55:00 [INFO]: ::1 GET /health
+2025-08-29 20:55:00 [INFO]: ::1 - - [29/Aug/2025:12:55:00 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 20:55:30 [INFO]: ::1 GET /health
+2025-08-29 20:55:30 [INFO]: ::1 - - [29/Aug/2025:12:55:30 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 20:56:00 [INFO]: ::1 GET /health
+2025-08-29 20:56:00 [INFO]: ::1 - - [29/Aug/2025:12:56:00 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 20:56:30 [INFO]: ::1 GET /health
+2025-08-29 20:56:30 [INFO]: ::1 - - [29/Aug/2025:12:56:30 +0000] "GET /health HTTP/1.1" 200 104 "-" "Wget"
+2025-08-29 20:56:45 [INFO]: SIGTERM received, shutting down gracefully
+2025-08-29 20:57:28 [INFO]: Database connection has been established successfully.
+2025-08-29 20:57:28 [INFO]: Database models initialized successfully.
+2025-08-29 20:57:28 [INFO]: ✅ Database connected successfully
+2025-08-29 20:57:28 [INFO]: Redis client connected successfully
+2025-08-29 20:57:28 [INFO]: Redis client ready to use
+2025-08-29 20:57:28 [INFO]: Redis connection established successfully
+2025-08-29 20:57:28 [INFO]: ✅ Redis connected successfully
+2025-08-29 20:57:28 [INFO]: 🚀 Server running on port 3000
+2025-08-29 20:57:28 [INFO]: 📝 Environment: production
+2025-08-29 20:57:28 [INFO]: 🔗 API Base URL: http://localhost:3000/api/v1
+2025-08-29 20:57:31 [INFO]: ::1 GET /health
+2025-08-29 20:57:31 [INFO]: ::1 - - [29/Aug/2025:12:57:31 +0000] "GET /health HTTP/1.1" 200 102 "-" "Wget"
+2025-08-29 20:58:01 [INFO]: ::1 GET /health
+2025-08-29 20:58:01 [INFO]: ::1 - - [29/Aug/2025:12:58:01 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 20:58:31 [INFO]: ::1 GET /health
+2025-08-29 20:58:31 [INFO]: ::1 - - [29/Aug/2025:12:58:31 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 20:58:45 [INFO]: SIGTERM received, shutting down gracefully

@@ -1,0 +1,2 @@
+2025/08/29 20:50:29 [error] 32#32: *7 access forbidden by rule, client: 192.168.65.1, server: _, request: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1", host: "localhost"
+2025/08/29 20:50:32 [error] 32#32: *13 access forbidden by rule, client: 192.168.65.1, server: _, request: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1", host: "localhost"

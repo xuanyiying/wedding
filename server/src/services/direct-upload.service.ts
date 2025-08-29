@@ -45,7 +45,7 @@ const FILE_TYPE_CONFIG = {
     maxSize: 500 * 1024 * 1024, // 500MB
     allowedTypes: [
       'video/mp4',
-      'video/avi', 
+      'video/avi',
       'video/mov',
       'video/wmv',
       'video/quicktime',
@@ -58,7 +58,7 @@ const FILE_TYPE_CONFIG = {
     maxSize: 50 * 1024 * 1024, // 50MB
     allowedTypes: [
       'image/jpeg',
-      'image/jpg', 
+      'image/jpg',
       'image/png',
       'image/gif',
       'image/webp',
@@ -92,9 +92,9 @@ export class DirectUploadService {
 
     // 生成唯一的OSS key
     const ossKey = this.generateOssKey(userId, fileName, fileType, category);
-    
+
     // 获取OSS服务实例
-    
+
     // 生成预签名URL
     const presignedUrl = await this.ossService.getPresignedUploadUrl(
       ossKey,
@@ -169,6 +169,9 @@ export class DirectUploadService {
       session.status = 'uploading';
       await this.saveSession(session);
 
+      // 获取文件的公共访问URL而不是预签名URL
+      const fileAccessUrl = this.ossService.getFileUrl(session.ossKey);
+
       // 创建文件记录
       const fileRecord = await FileService.createFileRecord({
         userId,
@@ -177,7 +180,7 @@ export class DirectUploadService {
         fileSize: actualFileSize || session.fileSize,
         fileType: session.fileType as FileType,
         category: session.category,
-        url: session.presignedUrl,    // OSS URL
+        url: fileAccessUrl,    // 使用文件的公共访问URL
         filePath: session.ossKey,      // OSS Key
         mimeType: session.contentType
       });
@@ -207,7 +210,7 @@ export class DirectUploadService {
       // 更新会话状态为失败
       session.status = 'failed';
       await this.saveSession(session);
-      
+
       logger.error(`确认上传失败: ${uploadSessionId}`, error);
       throw error;
     }
@@ -269,7 +272,7 @@ export class DirectUploadService {
     fileType: 'video' | 'image'
   ) {
     const config = FILE_TYPE_CONFIG[fileType];
-    
+
     // 验证文件大小
     if (fileSize > config.maxSize) {
       throw new Error(`文件大小超过限制: ${Math.round(config.maxSize / 1024 / 1024)}MB`);
@@ -323,7 +326,7 @@ export class DirectUploadService {
     const randomId = uuidv4().substring(0, 8);
     const ext = fileName.split('.').pop();
     const sanitizedName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
-    
+
     return `${fileType}s/${category}/${userId}/${timestamp}_${randomId}_${sanitizedName}_.${ext}`;
   }
 
@@ -341,7 +344,7 @@ export class DirectUploadService {
   private static async getSession(sessionId: string): Promise<UploadSession | null> {
     const key = this.SESSION_PREFIX + sessionId;
     const data = await redisClient.get(key);
-    
+
     if (!data) {
       return null;
     }
@@ -365,7 +368,7 @@ export class DirectUploadService {
     try {
       const pattern = this.SESSION_PREFIX + '*';
       const keys = await redisClient.keys(pattern);
-      
+
       let cleanedCount = 0;
       for (const key of keys) {
         const data = await redisClient.get(key);
@@ -383,7 +386,7 @@ export class DirectUploadService {
           }
         }
       }
-      
+
       if (cleanedCount > 0) {
         logger.info(`清理过期上传会话: ${cleanedCount}个`);
       }
