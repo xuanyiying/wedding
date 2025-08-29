@@ -1,0 +1,19 @@
+2025-08-29 20:43:45 [INFO]: Database connection has been established successfully.
+2025-08-29 20:43:45 [INFO]: Database models initialized successfully.
+2025-08-29 20:43:45 [INFO]: ✅ Database connected successfully
+2025-08-29 20:43:45 [INFO]: Redis client connected successfully
+2025-08-29 20:43:45 [INFO]: Redis client ready to use
+2025-08-29 20:43:45 [INFO]: Redis connection established successfully
+2025-08-29 20:43:45 [INFO]: ✅ Redis connected successfully
+2025-08-29 20:43:45 [INFO]: 🚀 Server running on port 3000
+2025-08-29 20:43:45 [INFO]: 📝 Environment: production
+2025-08-29 20:43:45 [INFO]: 🔗 API Base URL: http://localhost:3000/api/v1
+2025-08-29 20:43:48 [INFO]: ::1 GET /health
+2025-08-29 20:43:48 [INFO]: ::1 - - [29/Aug/2025:12:43:48 +0000] "GET /health HTTP/1.1" 200 102 "-" "Wget"
+2025-08-29 20:44:19 [INFO]: ::1 GET /health
+2025-08-29 20:44:19 [INFO]: ::1 - - [29/Aug/2025:12:44:19 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 20:44:49 [INFO]: ::1 GET /health
+2025-08-29 20:44:49 [INFO]: ::1 - - [29/Aug/2025:12:44:49 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 20:45:19 [INFO]: ::1 GET /health
+2025-08-29 20:45:19 [INFO]: ::1 - - [29/Aug/2025:12:45:19 +0000] "GET /health HTTP/1.1" 200 103 "-" "Wget"
+2025-08-29 20:45:44 [INFO]: SIGTERM received, shutting down gracefully
