@@ -51,13 +51,21 @@ const FILE_TYPE_CONFIG = {
       'video/quicktime',
       'video/flv',
       'video/webm',
-      'video/mkv',
-    ],
+      'video/mkv'
+    ]
   },
   image: {
     maxSize: 50 * 1024 * 1024, // 50MB
-    allowedTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff'],
-  },
+    allowedTypes: [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'image/bmp',
+      'image/tiff'
+    ]
+  }
 };
 
 export class DirectUploadService {
@@ -69,7 +77,15 @@ export class DirectUploadService {
    * 生成预签名上传URL
    */
   static async generatePresignedUrl(request: PresignedUrlRequest) {
-    const { userId, fileName, fileSize, contentType, fileType, category = 'other', expires = 3600 } = request;
+    const {
+      userId,
+      fileName,
+      fileSize,
+      contentType,
+      fileType,
+      category = 'other',
+      expires = 3600
+    } = request;
 
     // 验证文件类型和大小
     this.validateFile(fileName, fileSize, contentType, fileType);
@@ -80,7 +96,11 @@ export class DirectUploadService {
     // 获取OSS服务实例
 
     // 生成预签名URL
-    const presignedUrl = await this.ossService.getPresignedUploadUrl(ossKey, expires, contentType);
+    const presignedUrl = await this.ossService.getPresignedUploadUrl(
+      ossKey,
+      expires,
+      contentType
+    );
 
     // 创建上传会话
     const sessionId = uuidv4();
@@ -96,7 +116,7 @@ export class DirectUploadService {
       presignedUrl,
       status: 'pending',
       createdAt: new Date(),
-      expiresAt: new Date(Date.now() + expires * 1000),
+      expiresAt: new Date(Date.now() + expires * 1000)
     };
 
     // 保存会话到Redis
@@ -106,14 +126,14 @@ export class DirectUploadService {
       userId,
       fileName,
       fileType,
-      fileSize,
+      fileSize
     });
 
     return {
       presignedUrl,
       uploadSessionId: sessionId,
       ossKey,
-      expires,
+      expires
     };
   }
 
@@ -160,9 +180,9 @@ export class DirectUploadService {
         fileSize: actualFileSize || session.fileSize,
         fileType: session.fileType as FileType,
         category: session.category,
-        url: fileAccessUrl, // 使用文件的公共访问URL
-        filePath: session.ossKey, // OSS Key
-        mimeType: session.contentType,
+        url: fileAccessUrl,    // 使用文件的公共访问URL
+        filePath: session.ossKey,      // OSS Key
+        mimeType: session.contentType
       });
 
       // 更新会话状态为完成
@@ -172,7 +192,7 @@ export class DirectUploadService {
       logger.info(`确认上传完成: ${uploadSessionId}`, {
         userId,
         fileId: fileRecord.id,
-        fileName: session.fileName,
+        fileName: session.fileName
       });
 
       return {
@@ -183,8 +203,9 @@ export class DirectUploadService {
         url: fileRecord.fileUrl,
         fileType: fileRecord.fileType,
         uploadedAt: fileRecord.createdAt,
-        category: session.category,
+        category: session.category
       };
+
     } catch (error) {
       // 更新会话状态为失败
       session.status = 'failed';
@@ -237,14 +258,19 @@ export class DirectUploadService {
       fileSize: session.fileSize,
       fileType: session.fileType,
       createdAt: session.createdAt,
-      expiresAt: session.expiresAt,
+      expiresAt: session.expiresAt
     };
   }
 
   /**
    * 验证文件
    */
-  private static validateFile(fileName: string, fileSize: number, contentType: string, fileType: 'video' | 'image') {
+  private static validateFile(
+    fileName: string,
+    fileSize: number,
+    contentType: string,
+    fileType: 'video' | 'image'
+  ) {
     const config = FILE_TYPE_CONFIG[fileType];
 
     // 验证文件大小
@@ -278,7 +304,7 @@ export class DirectUploadService {
       'image/gif': ['gif'],
       'image/webp': ['webp'],
       'image/bmp': ['bmp'],
-      'image/tiff': ['tiff', 'tif'],
+      'image/tiff': ['tiff', 'tif']
     };
 
     const allowedExts = typeExtMap[contentType];
@@ -294,7 +320,7 @@ export class DirectUploadService {
     userId: string,
     fileName: string,
     fileType: 'video' | 'image',
-    category: string,
+    category: string
   ): string {
     const timestamp = Date.now();
     const randomId = uuidv4().substring(0, 8);

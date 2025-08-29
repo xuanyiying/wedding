@@ -26,47 +26,48 @@ const authSlice = createSlice({
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
     },
-    
+
     // 设置错误信息
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
     },
-    
+
     // 登录成功
     loginSuccess: (state, action: PayloadAction<{
       user: User;
       accessToken: string;
+      refreshToken?: string;
     }>) => {
       console.log('🔄 Redux loginSuccess action 被调用:', action.payload);
-      
-      const { user, accessToken } = action.payload;
-      
+
+      const { user, accessToken, refreshToken } = action.payload;
+
       console.log('📝 更新Redux状态前:', {
         currentToken: state.token,
         currentUser: state.user,
         isAuthenticated: state.isAuthenticated
       });
-      
+
       state.user = user;
       state.token = accessToken;
       state.isAuthenticated = true;
       state.isLoading = false;
       state.error = null;
-      
+
       console.log('📝 更新Redux状态后:', {
         newToken: state.token,
         newUser: state.user,
         isAuthenticated: state.isAuthenticated
       });
-      
-      console.log('💾 准备调用 AuthStorage.setAuthData:', { user, accessToken });
-      
+
+      console.log('💾 准备调用 AuthStorage.setAuthData:', { user, accessToken, refreshToken });
+
       // 使用统一的认证存储工具
-      AuthStorage.setAuthData({ user, accessToken });
-      
+      AuthStorage.setAuthData({ user, accessToken, refreshToken });
+
       console.log('✅ AuthStorage.setAuthData 调用完成');
     },
-    
+
     // 登录失败
     loginFailure: (state, action: PayloadAction<string>) => {
       state.user = null;
@@ -74,11 +75,11 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.isLoading = false;
       state.error = action.payload;
-      
+
       // 使用统一的认证存储工具清除数据
       AuthStorage.clearAll();
     },
-    
+
     // 登出
     logout: (state) => {
       state.user = null;
@@ -86,23 +87,39 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.isLoading = false;
       state.error = null;
-      
+
       // 使用统一的认证存储工具清除数据
       AuthStorage.clearAll();
     },
-    
+
     // 更新用户信息
     updateUser: (state, action: PayloadAction<User>) => {
       state.user = action.payload;
       AuthStorage.setUser(action.payload);
     },
-    
 
-    
+    // 刷新令牌成功
+    refreshTokenSuccess: (state, action: PayloadAction<{
+      accessToken: string;
+      refreshToken?: string;
+    }>) => {
+      const { accessToken, refreshToken } = action.payload;
+
+      state.token = accessToken;
+      state.isAuthenticated = true;
+      state.error = null;
+
+      // 更新存储的令牌
+      AuthStorage.setAccessToken(accessToken);
+      if (refreshToken) {
+        AuthStorage.setRefreshToken(refreshToken);
+      }
+    },
+
     // 从存储恢复认证状态
     restoreAuth: (state) => {
       const authData = AuthStorage.getAuthData();
-      
+
       if (AuthStorage.hasValidAuth()) {
         state.user = authData.user;
         state.token = authData.accessToken;
@@ -112,7 +129,7 @@ const authSlice = createSlice({
         AuthStorage.clearAll();
       }
     },
-    
+
     // 清除错误
     clearError: (state) => {
       state.error = null;
@@ -127,6 +144,7 @@ export const {
   loginFailure,
   logout,
   updateUser,
+  refreshTokenSuccess,
   restoreAuth,
   clearError,
 } = authSlice.actions;

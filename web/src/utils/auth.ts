@@ -8,6 +8,7 @@ import { UserRole } from '../types';
 // localStorage键名常量
 const STORAGE_KEYS = {
   ACCESS_TOKEN: 'accessToken',
+  REFRESH_TOKEN: 'refreshToken',
   USER: 'user',
 } as const;
 
@@ -38,7 +39,28 @@ export class AuthStorage {
     }
   }
 
+  /**
+   * 获取刷新令牌
+   */
+  static getRefreshToken(): string | null {
+    try {
+      return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+    } catch (error) {
+      console.error('获取刷新令牌失败:', error);
+      return null;
+    }
+  }
 
+  /**
+   * 设置刷新令牌
+   */
+  static setRefreshToken(token: string): void {
+    try {
+      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, token);
+    } catch (error) {
+      console.error('❌ 设置刷新令牌失败:', error);
+    }
+  }
 
   /**
    * 获取用户信息
@@ -73,10 +95,13 @@ export class AuthStorage {
   static setAuthData(data: {
     user: User;
     accessToken: string;
+    refreshToken?: string;
   }): void {
     this.setUser(data.user);
     this.setAccessToken(data.accessToken);
-
+    if (data.refreshToken) {
+      this.setRefreshToken(data.refreshToken);
+    }
   }
 
   /**
@@ -85,10 +110,12 @@ export class AuthStorage {
   static getAuthData(): {
     user: User | null;
     accessToken: string | null;
+    refreshToken: string | null;
   } {
     return {
       user: this.getUser(),
       accessToken: this.getAccessToken(),
+      refreshToken: this.getRefreshToken(),
     };
   }
 
@@ -103,7 +130,16 @@ export class AuthStorage {
     }
   }
 
-
+  /**
+   * 移除刷新令牌
+   */
+  static removeRefreshToken(): void {
+    try {
+      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+    } catch (error) {
+      console.error('移除刷新令牌失败:', error);
+    }
+  }
 
   /**
    * 移除用户信息
@@ -121,6 +157,7 @@ export class AuthStorage {
    */
   static clearAll(): void {
     this.removeAccessToken();
+    this.removeRefreshToken();
     this.removeUser();
   }
 
@@ -372,6 +409,8 @@ export class AuthChecker {
 export const {
   getAccessToken,
   setAccessToken,
+  getRefreshToken,
+  setRefreshToken,
   getUser,
   setUser,
   setAuthData,

@@ -2,10 +2,11 @@
  * 认证初始化Hook
  * 用于在应用启动时恢复认证状态
  */
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useAppDispatch } from '../store/hooks';
-import { restoreAuth } from '../store/slices/authSlice';
+import { restoreAuth, logout } from '../store/slices/authSlice';
 import { AuthStorage } from '../utils/auth';
+import { refreshTokenService } from '../services/refreshTokenService';
 
 /**
  * 认证初始化Hook
@@ -33,22 +34,49 @@ export const useAuthInit = () => {
 export const useAuthMonitor = () => {
   const dispatch = useAppDispatch();
 
+  // 刷新令牌的回调函数
+  const handleTokenRefresh = useCallback(async () => {
+    try {
+      const newToken = await refreshTokenService.refreshAccessToken();
+      if (newToken) {
+        // 刷新成功，更新Redux状态
+        // 注意：这里我们不直接更新Redux状态，因为Redux状态会在下次页面加载时通过useAuthInit自动恢复
+        console.debug('Token refreshed successfully');
+      } else {
+        // 刷新失败，登出用户
+        dispatch(logout());
+        console.debug('Token refresh failed, user logged out');
+      }
+    } catch (error) {
+      console.error('Token refresh error:', error);
+      dispatch(logout());
+    }
+  }, [dispatch]);
+
   useEffect(() => {
     // 定期检查token是否即将过期
-    const checkTokenExpiry = () => {
+    const checkTokenExpiry = async () => {
       const token = AuthStorage.getAccessToken();
       if (token && AuthStorage.isTokenExpiringSoon(token, 5)) {
-        // Token即将过期，可以在这里触发刷新逻辑
-        console.warn('Token即将过期，建议刷新');
-        // 这里可以调用refresh token的逻辑
+        // Token即将过期，静默刷新
+        try {
+          await handleTokenRefresh();
+        } catch (error) {
+          console.error('Failed to refresh token:', error);
+          // 刷新失败时的错误处理
+          dispatch(logout());
+        }
       }
     };
 
-    // 每分钟检查一次
-    const interval = setInterval(checkTokenExpiry, 60 * 1000);
+    // 每5分钟检查一次token过期情况
+    const interval = setInterval(checkTokenExpiry, 5 * 60 * 1000);
+
+    // 组件挂载时立即检查一次
+    checkTokenExpiry();
 
     return () => {
       clearInterval(interval);
     };
-  }, [dispatch]);
+  }, [dispatch, handleTokenRefresh]);
 };

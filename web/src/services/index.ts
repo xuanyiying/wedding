@@ -22,12 +22,12 @@ import type {
 // 认证相关API
 export const authService = {
   // 用户登录
-  login: (data: LoginForm): Promise<ApiResponse<{ user: User; token: string }>> => {
+  login: (data: LoginForm): Promise<ApiResponse<{ user: User; accessToken: string; refreshToken: string }>> => {
     return http.post('/auth/login', data);
   },
 
   // 用户注册
-  register: (data: RegisterForm): Promise<ApiResponse<{ user: User; token: string }>> => {
+  register: (data: RegisterForm): Promise<ApiResponse<{ user: User; accessToken: string; refreshToken: string }>> => {
     return http.post('/auth/register', data);
   },
 
@@ -36,7 +36,10 @@ export const authService = {
     return http.post('/auth/logout');
   },
 
-
+  // 刷新访问令牌
+  refreshToken: (refreshToken: string): Promise<ApiResponse<{ accessToken: string; refreshToken: string }>> => {
+    return http.post('/auth/refresh-token', { refreshToken });
+  },
 
   // 获取当前用户信息
   getCurrentUser: (): Promise<ApiResponse<User>> => {

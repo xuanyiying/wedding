@@ -141,7 +141,7 @@ uploadRequest.interceptors.response.use(
     switch (status) {
       case 401: {
         // 优化401错误处理 - 避免频繁重定向
-        console.error('🔐 上传请求401错误 - 使用认证管理器处理');
+        console.error('🔐 上传请求401错误 - 认证状态无效');
 
         // 先检查是否是文件上传相关的请求
         const isUploadRequest = error.config?.url?.includes('/upload') ||
@@ -236,8 +236,8 @@ request.interceptors.response.use(
 
     switch (status) {
       case 401: {
-        // 使用认证管理器处理401错误，避免视频封面选择时的误跳转
-        console.error('🔐 401错误 - 使用认证管理器处理:', {
+        // 处理401错误，避免视频封面选择时的误跳转
+        console.error('🔐 401错误 - 认证状态无效:', {
           url: error.config?.url,
           method: error.config?.method,
           currentToken: AuthStorage.getAccessToken(),

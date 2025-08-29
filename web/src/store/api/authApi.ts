@@ -1,12 +1,21 @@
 import { api } from './index';
 import type { User, LoginForm, RegisterForm, ApiResponse } from '../../types';
 
+interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+}
+
 interface LoginResponse {
   user: User;
-  tokens: {
-    accessToken: string;
-    expiresIn: number;
-  };
+  tokens: AuthTokens;
+}
+
+interface RefreshTokenResponse {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
 }
 
 export const authApi = api.injectEndpoints({
@@ -20,16 +29,16 @@ export const authApi = api.injectEndpoints({
       }),
       invalidatesTags: ['User'],
     }),
-    
+
     // 用户注册
-    register: builder.mutation<ApiResponse<User>, RegisterForm>({
+    register: builder.mutation<ApiResponse<LoginResponse>, RegisterForm>({
       query: (userData) => ({
         url: '/auth/register',
         method: 'POST',
         body: userData,
       }),
     }),
-    
+
     // 用户登出
     logout: builder.mutation<ApiResponse<void>, void>({
       query: () => ({
@@ -38,15 +47,23 @@ export const authApi = api.injectEndpoints({
       }),
       invalidatesTags: ['User'],
     }),
-    
 
-    
+    // 刷新访问令牌
+    refreshToken: builder.mutation<ApiResponse<RefreshTokenResponse>, { refreshToken: string }>({
+      query: (data) => ({
+        url: '/auth/refresh-token',
+        method: 'POST',
+        body: data,
+      }),
+    }),
+
+
     // 获取当前用户信息
     getCurrentUser: builder.query<ApiResponse<User>, void>({
       query: () => '/auth/profile',
       providesTags: ['User'],
     }),
-    
+
     // 更新用户资料
     updateProfile: builder.mutation<ApiResponse<User>, Partial<User>>({
       query: (userData) => ({
@@ -56,7 +73,7 @@ export const authApi = api.injectEndpoints({
       }),
       invalidatesTags: ['User'],
     }),
-    
+
     // 修改密码
     changePassword: builder.mutation<ApiResponse<void>, {
       currentPassword: string;
@@ -68,7 +85,7 @@ export const authApi = api.injectEndpoints({
         body: passwordData,
       }),
     }),
-    
+
     // 忘记密码
     forgotPassword: builder.mutation<ApiResponse<void>, { email: string }>({
       query: (data) => ({
@@ -77,7 +94,7 @@ export const authApi = api.injectEndpoints({
         body: data,
       }),
     }),
-    
+
     // 重置密码
     resetPassword: builder.mutation<ApiResponse<void>, {
       token: string;
@@ -96,6 +113,7 @@ export const {
   useLoginMutation,
   useRegisterMutation,
   useLogoutMutation,
+  useRefreshTokenMutation,
   useGetCurrentUserQuery,
   useUpdateProfileMutation,
   useChangePasswordMutation,

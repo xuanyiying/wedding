@@ -158,13 +158,6 @@ deploy_full() {
     # 清理资源，包括 wedding-web 和 wedding-api 镜像和容器
     clean_resources
     
-    # 拉取最新代码
-    log_info "拉取最新代码..."
-    cd "$PROJECT_ROOT"
-    git pull origin main || {
-        log_warning "无法从远程仓库拉取最新代码，使用本地代码继续部署"
-    }
-    
     # 重新构建镜像
     log_info "重新构建镜像..."
     cd "$PROJECT_ROOT"

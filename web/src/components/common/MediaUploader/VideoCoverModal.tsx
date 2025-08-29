@@ -383,7 +383,7 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
 
       // 检查是否是认证相关错误
       if (error?.response?.status === 401) {
-        console.log('检测到401错误，使用认证管理器处理');
+        console.log('检测到401错误，认证状态无效');
       }
 
       // 其他错误

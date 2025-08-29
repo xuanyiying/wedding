@@ -164,10 +164,10 @@ const LoginPage: React.FC = () => {
   const [form] = Form.useForm();
   const [login, { isLoading }] = useLoginMutation();
   const { isAuthenticated, error } = useAppSelector((state) => state.auth);
-  
+
   // 初始化admin主题
   const { initTheme } = useTheme();
-  
+
   useEffect(() => {
     initTheme('admin');
   }, [initTheme]);
@@ -189,15 +189,15 @@ const LoginPage: React.FC = () => {
   const handleLogin = async (values: LoginForm) => {
     try {
       dispatch(setLoading(true));
-      
+
       console.log('🔐 开始登录流程:', values.identifier);
-      
+
       // 调用登录API
       const response = await login({
         identifier: values.identifier,
         password: values.password
       }).unwrap();
-      
+
       console.log('📊 响应数据结构:', {
         success: response.success,
         hasData: !!response.data,
@@ -205,33 +205,38 @@ const LoginPage: React.FC = () => {
         user: response.data?.user,
         tokens: response.data?.tokens,
         tokensKeys: response.data?.tokens ? Object.keys(response.data.tokens) : [],
-        accessToken: response.data?.tokens?.accessToken
+        accessToken: response.data?.tokens?.accessToken,
+        refreshToken: response.data?.tokens?.refreshToken
       });
-      
+
       if (response.success && response.data && response.data.tokens) {
         const loginData = {
           user: response.data.user,
-          accessToken: response.data.tokens.accessToken
+          accessToken: response.data.tokens.accessToken,
+          refreshToken: response.data.tokens.refreshToken
         };
-        
+
         console.log('🔑 Token详情:', {
           accessTokenType: typeof loginData.accessToken,
-          accessTokenValue: loginData.accessToken
+          accessTokenValue: loginData.accessToken,
+          refreshTokenType: typeof loginData.refreshToken,
+          refreshTokenValue: loginData.refreshToken
         });
-        
+
         // 登录成功，更新Redux状态
         dispatch(loginSuccess(loginData));
-        
+
         // 检查localStorage中的值
         setTimeout(() => {
           console.log('💾 localStorage检查:', {
             accessToken: localStorage.getItem('accessToken'),
+            refreshToken: localStorage.getItem('refreshToken'),
             user: localStorage.getItem('user')
           });
         }, 100);
-        
+
         message.success('登录成功！');
-        
+
         // 跳转到仪表板
         navigate('/admin/dashboard');
       } else {
@@ -256,7 +261,7 @@ const LoginPage: React.FC = () => {
           <h1>管理后台</h1>
           <p>婚礼主持俱乐部管理系统</p>
         </Logo>
-        
+
         <Form
           form={form}
           name="login"
@@ -309,26 +314,26 @@ const LoginPage: React.FC = () => {
             </Button>
           </Form.Item>
         </Form>
-        
+
         {error && (
-          <div style={{ 
-            textAlign: 'center', 
-            marginTop: '20px', 
-            padding: '12px', 
-            backgroundColor: 'var(--admin-functional-error-bg)', 
-            border: '1px solid var(--admin-error-color)', 
-            borderRadius: 'var(--admin-border-radius)', 
-            color: 'var(--admin-error-color)', 
-            fontSize: '14px' 
+          <div style={{
+            textAlign: 'center',
+            marginTop: '20px',
+            padding: '12px',
+            backgroundColor: 'var(--admin-functional-error-bg)',
+            border: '1px solid var(--admin-error-color)',
+            borderRadius: 'var(--admin-border-radius)',
+            color: 'var(--admin-error-color)',
+            fontSize: '14px'
           }}>
             {error}
           </div>
         )}
-        
-        <div style={{ 
-          textAlign: 'center', 
-          marginTop: '24px', 
-          color: 'var(--admin-text-tertiary)', 
+
+        <div style={{
+          textAlign: 'center',
+          marginTop: '24px',
+          color: 'var(--admin-text-tertiary)',
           fontSize: '13px',
           fontWeight: '400'
         }}>
