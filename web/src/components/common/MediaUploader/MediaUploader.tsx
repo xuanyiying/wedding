@@ -15,7 +15,6 @@ import type {
 } from './types';
 import { UploadStatus } from './types';
 import { useAppSelector } from '../../../store/hooks';
-import { selectIsAuthenticated } from '../../../store/slices/authSlice';
 
 import './MediaUploader.scss';
 import { fileService } from '../../../services';
@@ -70,7 +69,7 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
   const finalConfig = useMemo(() => ({ ...DEFAULT_CONFIG, ...config }), [config]);
 
   // 从Redux获取认证状态
-  const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const user = useAppSelector(state => state.auth.user);
 
   // 状态管理
   const [uploading, setUploading] = useState(false);
@@ -374,7 +373,7 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
     const attemptUpload = async (): Promise<DirectUploadResult> => {
       try {
         // 在上传前验证认证状态
-        if (!isAuthenticated) {
+        if (!user) {
           console.warn('⚠️ 认证状态可能无效，但继续尝试上传');
         }
 

@@ -5,7 +5,6 @@ import type { VideoCoverSelection } from './types';
 import { VideoFrameExtractor, type VideoFrame } from '../../../utils/video-frame-extractor';
 import './VideoCoverModal.scss';
 import { useAppSelector } from '../../../store/hooks';
-import { selectIsAuthenticated } from '../../../store/slices/authSlice';
 interface VideoCoverModalProps {
   visible: boolean;
   videoFile: File | null;
@@ -39,7 +38,7 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
   const sliderRef = useRef<HTMLDivElement>(null);
   const blobUrlsRef = useRef<Set<string>>(new Set());
   const abortControllerRef = useRef<AbortController | null>(null);
-  const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const user = useAppSelector(state => state.auth.user);
 
   // 初始化视频和清理资源
   useEffect(() => {
@@ -334,9 +333,9 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
         return;
       }
 
-      // 验证认证状态
-      if (!isAuthenticated) {
-        console.warn('⚠️ 认证状态可能无效，但继续尝试操作');
+      // 验证认证状态 
+      if (!user) {
+        console.warn('认证状态可能无效，但继续尝试操作');
       }
 
       if (selectedCover.type === 'frame') {
@@ -384,7 +383,7 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
 
       // 检查是否是认证相关错误
       if (error?.response?.status === 401) {
-        console.log('🔐 检测到401错误，使用认证管理器处理');
+        console.log('检测到401错误，使用认证管理器处理');
       }
 
       // 其他错误
