@@ -152,7 +152,7 @@ export class FileService {
     // 准备文件数据（流或缓冲区）
     let fileData: Buffer | Readable;
     let fileHash: string;
-    
+
     if (data.buffer) {
       // 如果已经是缓冲区，直接使用
       fileData = data.buffer;
@@ -165,7 +165,7 @@ export class FileService {
       console.log('📄 从路径创建文件流:', data.path);
       // 创建文件读取流
       fileData = fsSync.createReadStream(data.path);
-      
+
       // 计算文件哈希 - 需要单独读取文件来计算哈希
       console.log('🔍 计算文件哈希...');
       const tempBuffer = await fs.readFile(data.path);
@@ -680,5 +680,28 @@ export class FileService {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+  /**
+   * 上传视频封面
+   */
+  static async uploadVideoCover(file: Buffer, fileId: string): Promise<File> {
+    const fileRecord = await File.findOne({
+      where: {
+        id: fileId,
+      },
+    });
+    if (!fileRecord) {
+      throw new Error('视频还没有上传成功，请稍后再试！');
+    }
+    const result = await this.ossService.uploadFile(file, `video_cover_${fileId}.jpg`, 'image/jpeg');
+    await File.update({
+      thumbnailUrl: result.url,
+    }, {
+      where: {
+        id: fileId,
+      },
+    });
+    fileRecord.thumbnailUrl = result.url;
+    return fileRecord;
   }
 }

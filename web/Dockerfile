@@ -2,7 +2,7 @@
 # 多阶段构建，优化镜像大小和构建速度
 
 # 构建阶段
-FROM node:18-alpine AS builder
+FROM node:22-alpine AS builder
 
 # 配置Alpine镜像源（提前配置以加速后续包安装）
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
@@ -34,7 +34,7 @@ RUN npm run build --max_old_space_size=4096 && \
     rm -rf node_modules/.cache /tmp/* /var/tmp/* /root/.npm
 
 # 生产阶段 - 使用nginx提供静态文件服务
-FROM nginx:alpine AS development
+FROM nginx:alpine AS production
 
 # 配置Alpine镜像源
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \

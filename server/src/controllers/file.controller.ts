@@ -319,4 +319,22 @@ export const getUserMedia = async (req: Request, res: Response, next: NextFuncti
     logger.error('获取用户媒体文件失败:', error);
     next(error);
   }
-};
+}
+/**
+ *  上传视频封面
+ */
+export const uploadVideoCover = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { fileId } = req.params;
+    const { file } = req.body;
+    if (!fileId || !file) {
+      Resp.badRequest(res, '缺少用户ID或文件参数');
+      return;
+    }
+    const result = await FileService.uploadVideoCover(file, fileId);
+    Resp.success(res, result, '上传视频封面成功');
+  } catch (error) {
+    logger.error('上传视频封面失败:', error);
+    next(error);
+  }
+}

@@ -2,7 +2,6 @@ import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse,
 import { API_BASE_URL, ERROR_MESSAGES } from '../constants';
 import type { ApiResponse } from '../types';
 import { AuthStorage } from './auth';
-import { authManager } from './auth-manager';
 
 // 获取message实例的函数
 let messageApi: {
@@ -152,20 +151,9 @@ uploadRequest.interceptors.response.use(
           // 文件上传401错误，可能是token已过期，但不立即跳转
           console.warn('⚠️ 文件上传认证失败，请重新登录');
           safeMessage.error('登录状态已过期，请重新登录后再试');
-
-          // 延迟清理认证状态，给用户时间看到错误信息
-          setTimeout(() => {
-            const shouldRetry = authManager.handle401Error(error);
-            if (!shouldRetry) {
-              window.location.reload(); // 刻新页面而不是跳转
-            }
-          }, 2000);
         } else {
           // 非文件上传请求的401错误
-          const shouldRetry = await authManager.handle401Error(error);
-          if (!shouldRetry) {
-            safeMessage.error('登录已过期，请重新登录');
-          }
+          safeMessage.error('登录已过期，请重新登录');
         }
         break;
       }
@@ -255,12 +243,7 @@ request.interceptors.response.use(
           currentToken: AuthStorage.getAccessToken(),
           responseData: response.data
         });
-
-        const canRetry = await authManager.handle401Error(error);
-
-        if (!canRetry) {
-          safeMessage.error('登录已过期，请重新登录');
-        }
+        safeMessage.error('登录已过期，请重新登录');
         break;
       }
 

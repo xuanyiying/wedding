@@ -3,7 +3,7 @@
 services:
   # Web前端服务 - 使用本地构建的镜像
   web:
-    image: deployment-web:latest
+    image: wedding-web:latest
     pull_policy: never
     container_name: wedding-web
     restart: unless-stopped
@@ -47,7 +47,7 @@ services:
 
   # API服务器 - 使用本地构建的镜像
   api:
-    image: deployment-api1:latest
+    image: wedding-api:latest
     pull_policy: never
     container_name: wedding-api
     restart: unless-stopped

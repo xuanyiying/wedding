@@ -283,7 +283,11 @@ export class MinIOService implements OssService {
     }
 
     // 默认使用内部MinIO地址
-    return `${this.config.endpoint}/${this.bucket}/${key}`;
+    const endpoint = this.config.endpoint;
+    if (process.env.NODE_ENV === 'development' && endpoint.includes('minio')) {
+      return `${endpoint.replace('minio', '127.0.0.1')}/${this.bucket}/${key}`;
+    }
+    return `${endpoint}/${this.bucket}/${key}`;
   }
 
   /**

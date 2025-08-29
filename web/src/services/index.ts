@@ -82,7 +82,7 @@ export const scheduleService = {
   },
 
   // 创建日程
-    createSchedule: (data: Omit<Schedule, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<Schedule>> => {
+  createSchedule: (data: Omit<Schedule, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<Schedule>> => {
     return http.post('/schedules', data);
   },
 
@@ -126,7 +126,7 @@ export const scheduleService = {
     teamId: string;
     weddingDate: string;
     weddingTime: string;
-  }): Promise<ApiResponse<{ hosts: TeamMember[] , total : number}>> => {
+  }): Promise<ApiResponse<{ hosts: TeamMember[], total: number }>> => {
     return http.get('/schedules/available-hosts', { params });
   },
 
@@ -343,7 +343,7 @@ export const teamService = {
     return http.get('/team', { params });
   },
 
-// 根据团队id获取团队=0 `
+  // 根据团队id获取团队=0 `
   getTeam: (id: string): Promise<ApiResponse<Team>> => {
     return http.get(`/team/${id}`);
   },
@@ -382,7 +382,7 @@ export const teamService = {
     return http.get(`/team/members/${id}`);
   },
 
-// 获取可邀请的用户列表（排除已在团队中的用户）
+  // 获取可邀请的用户列表（排除已在团队中的用户）
   getAvailableUsers: (teamId: string, params?: {
     search?: string;
     page?: number;
@@ -566,6 +566,14 @@ export const fileService = {
   deleteFile: (id: string): Promise<ApiResponse<Boolean>> => {
     return http.delete(`/files/${id}`);
   },
+  uploadVedioCover: (file: File, vedioFileId: string): Promise<ApiResponse<string>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('vedioFileId', vedioFileId);
+    formData.append('fileType', 'image');
+    formData.append('category', 'cover');
+    return http.upload('/files/upload/vedio-cover', formData);
+  },
 };
 export const profileService = {
   // 用户资料相关（包含用户信息和媒体文件）
@@ -575,12 +583,12 @@ export const profileService = {
   getPublicUserProfiles: (params?: any): Promise<ApiResponse<any>> => {
     return http.get('/profile/public', { params });
   },
-  getUserAvailableFiles: (userId :string): Promise<ApiResponse<MediaFile[]>> => {
+  getUserAvailableFiles: (userId: string): Promise<ApiResponse<MediaFile[]>> => {
     return http.get('/profile/available-files', { params: { userId } });
   },
-  
+
   // 媒体资料CRUD操作
-  getUserMediaProfiles: (userId:string): Promise<ApiResponse<MediaFile[]>> => {
+  getUserMediaProfiles: (userId: string): Promise<ApiResponse<MediaFile[]>> => {
     return http.get(`/profile/media-profiles/${userId}`);
   },
   createMediaProfile: (userId: string, data: any): Promise<ApiResponse<any>> => {

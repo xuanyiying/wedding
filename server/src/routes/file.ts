@@ -12,6 +12,7 @@ import {
   downloadFile,
   generateThumbnail,
   getUserMedia,
+  uploadVideoCover
 } from '../controllers/file.controller';
 import { authMiddleware } from '../middlewares/auth';
 import { uploadMiddleware, uploadWithTimeout, handleUploadError } from '../middlewares/upload';
@@ -40,6 +41,13 @@ router.post(
   handleUploadError, // 错误处理
   validateRequest(fileValidators.uploadFiles),
   batchUploadFiles,
+);
+
+// 上传视频封面picture
+router.post(
+  '/files/:id/cover',
+  authMiddleware,
+  uploadVideoCover,
 );
 
 // 获取文件列表

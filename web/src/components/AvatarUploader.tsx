@@ -4,7 +4,6 @@ import { Upload, message } from 'antd';
 import type { GetProp, UploadProps } from 'antd';
 import { fileService } from '../services';
 import { FileType as Type } from '../types';
-
 type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0];
 
 interface AvatarUploaderProps {
@@ -28,7 +27,6 @@ const AvatarUploader: React.FC<AvatarUploaderProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [imageUrl, setImageUrl] = useState<string>(value || '');
-
   React.useEffect(() => {
     setImageUrl(value || '');
   }, [value]);
@@ -69,17 +67,17 @@ const AvatarUploader: React.FC<AvatarUploaderProps> = ({
 
   const customRequest = async (options: any) => {
     const { file, onSuccess, onError, onProgress } = options;
-    
+
     try {
       setLoading(true);
-      
+
       // 模拟上传进度
       onProgress?.({ percent: 10 });
-      
+
       const response = await fileService.uploadFile(file, { fileType: Type.IMAGE, category });
-      
+
       onProgress?.({ percent: 90 });
-      
+
       if (response.success && response.data && response.data.fileUrl) {
         const url = response.data.fileUrl;
         setImageUrl(url);
@@ -93,7 +91,7 @@ const AvatarUploader: React.FC<AvatarUploaderProps> = ({
     } catch (error: any) {
       console.error('Avatar upload error:', error);
       onError?.(error);
-      
+
       // 提供更详细的错误信息
       const errorMessage = error?.response?.data?.message || error?.message || '头像上传失败，请检查网络连接后重试';
       message.error(errorMessage);
@@ -103,25 +101,25 @@ const AvatarUploader: React.FC<AvatarUploaderProps> = ({
   };
 
   const uploadButton = (
-    <button 
-      style={{ 
-        border: 0, 
+    <button
+      style={{
+        border: 0,
         background: 'none',
         cursor: disabled || loading ? 'not-allowed' : 'pointer',
         opacity: disabled || loading ? 0.6 : 1
-      }} 
+      }}
       type="button"
       disabled={disabled || loading}
     >
       {loading ? (
         <>
-          <div className="loading-spinner" style={{ 
-            width: 16, 
-            height: 16, 
-            border: '2px solid #f3f3f3', 
-            borderTop: '2px solid #1890ff', 
-            borderRadius: '50%', 
-            animation: 'spin 1s linear infinite' 
+          <div className="loading-spinner" style={{
+            width: 16,
+            height: 16,
+            border: '2px solid #f3f3f3',
+            borderTop: '2px solid #1890ff',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite'
           }} />
           <div style={{ marginTop: 8 }}>上传中...</div>
         </>
@@ -174,17 +172,17 @@ const AvatarUploader: React.FC<AvatarUploaderProps> = ({
       >
         {imageUrl ? (
           <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden' }}>
-            <img 
-              src={imageUrl} 
-              alt="avatar" 
-              style={{ 
-                width: '100%', 
-                height: '100%', 
+            <img
+              src={imageUrl}
+              alt="avatar"
+              style={{
+                width: '100%',
+                height: '100%',
                 objectFit: 'cover',
                 opacity: loading ? 0.6 : 1,
                 transition: 'opacity 0.3s',
                 borderRadius: '50%'
-              }} 
+              }}
             />
             {loading && (
               <div style={{
@@ -195,12 +193,12 @@ const AvatarUploader: React.FC<AvatarUploaderProps> = ({
                 color: '#1890ff',
                 fontSize: '16px'
               }}>
-                <div className="loading-spinner" style={{ 
-                  width: 20, 
-                  height: 20, 
-                  border: '2px solid #f3f3f3', 
-                  borderTop: '2px solid #1890ff', 
-                  borderRadius: '50%', 
+                <div className="loading-spinner" style={{
+                  width: 20,
+                  height: 20,
+                  border: '2px solid #f3f3f3',
+                  borderTop: '2px solid #1890ff',
+                  borderRadius: '50%',
                   animation: 'spin 1s linear infinite',
                   margin: '0 auto'
                 }} />

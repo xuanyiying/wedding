@@ -274,7 +274,7 @@ const PublicProfileContainer = styled.div`
 
 
 const ProfilePage: React.FC = () => {
-  const  user  = useAppSelector((state) => state.auth.user);
+  const user = useAppSelector((state) => state.auth.user);
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState('basic');
@@ -289,7 +289,7 @@ const ProfilePage: React.FC = () => {
     const virtualFile = new File([], mediaFile.filename || 'unknown', {
       type: mediaFile.fileType === 'image' ? 'image/*' : 'video/*'
     });
-    
+
     return {
       id: mediaFile.fileId,
       file: virtualFile,
@@ -349,6 +349,7 @@ const ProfilePage: React.FC = () => {
       if (prev?.avatarUrl === url) {
         return prev;
       }
+      userService.updateCurrentUserProfile({ ...prev, avatarUrl: url });
       return prev ? { ...prev, avatarUrl: url } : null;
     });
   }, []);
@@ -357,18 +358,18 @@ const ProfilePage: React.FC = () => {
   const handleBasicInfoSave = async (values: any) => {
     try {
       setLoading(true);
-      
+
       // 验证必填字段
       if (!values.realName?.trim() && !values.nickname?.trim()) {
         message.error('请输入真实姓名或昵称');
         return;
       }
-      
+
       if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
         message.error('请输入有效的邮箱地址');
         return;
       }
-      
+
       await userService.updateCurrentUserProfile(values);
       message.success('基本信息保存成功');
       await loadCurrentUser();
@@ -439,18 +440,18 @@ const ProfilePage: React.FC = () => {
         <div className="avatar">
 
           <AvatarUploader
-                value={currentUser?.avatarUrl}
-                onChange={handleAvatarChange}
-                disabled={uploading || loading}
-                size={120}
-                category="avatar"
-                style={{
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  border: '3px solid #f0f0f0',
-                  transition: 'all 0.3s ease'
-                }}
-              />
+            value={currentUser?.avatarUrl}
+            onChange={handleAvatarChange}
+            disabled={uploading || loading}
+            size={120}
+            category="avatar"
+            style={{
+              borderRadius: '50%',
+              overflow: 'hidden',
+              border: '3px solid #f0f0f0',
+              transition: 'all 0.3s ease'
+            }}
+          />
         </div>
         <div className="name">
           {currentUser?.realName || currentUser?.nickname}
@@ -538,17 +539,17 @@ const ProfilePage: React.FC = () => {
             onUploadSuccess={(results: DirectUploadResult[]) => {
               // 将上传结果转换为MediaFileItem格式
               const newFiles = results.map((result, _) => {
-                 const mediaFile: MediaFileItem = {
-                   id: result.fileId,
-                   file: new File([], result.filename || 'uploaded-file'),
-                   type: result.fileType === 'image' ? 'image' : 'video',
-                   status: 'success',
-                   progress: 100,
-                   preview: result.url, // 使用上传结果的文件URL作为预览
-                   uploadedAt: new Date(result.uploadedAt)
-                 };
-                 return mediaFile;
-               });
+                const mediaFile: MediaFileItem = {
+                  id: result.fileId,
+                  file: new File([], result.filename || 'uploaded-file'),
+                  type: result.fileType === 'image' ? 'image' : 'video',
+                  status: 'success',
+                  progress: 100,
+                  preview: result.url, // 使用上传结果的文件URL作为预览
+                  uploadedAt: new Date(result.uploadedAt)
+                };
+                return mediaFile;
+              });
               setMediaFiles(prev => [...prev, ...newFiles]);
               message.success(`成功上传 ${results.length} 个文件`);
             }}
@@ -558,12 +559,12 @@ const ProfilePage: React.FC = () => {
             }}
           />
           <MediaList
-             files={mediaFiles}
-             onRemove={(fileId: string) => {
-               setMediaFiles(prev => prev.filter(f => f.id !== fileId));
-             }}
-             onPreview={handlePreview}
-           />
+            files={mediaFiles}
+            onRemove={(fileId: string) => {
+              setMediaFiles(prev => prev.filter(f => f.id !== fileId));
+            }}
+            onPreview={handlePreview}
+          />
         </div>
       </div>
     </PublicProfileContainer>

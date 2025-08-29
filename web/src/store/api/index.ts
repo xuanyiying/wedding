@@ -43,6 +43,3 @@ export const api = createApi({
   tagTypes: ['User', 'Schedule', 'Work', 'Booking', 'File'],
   endpoints: () => ({}),
 });
-
-// Export API hooks here when endpoints are added
-// export const { } = api;

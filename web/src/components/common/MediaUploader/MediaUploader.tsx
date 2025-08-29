@@ -5,7 +5,6 @@ import type { UploadProps } from 'antd';
 
 import { DirectUploader } from '../../../utils/direct-upload';
 import type { DirectUploadResult, DirectUploadProgress } from '../../../utils/direct-upload';
-import { authManager } from '../../../utils/auth-manager';
 import VideoCoverModal from './VideoCoverModal';
 import type {
   MediaFileItem,
@@ -15,8 +14,11 @@ import type {
   FileValidationResult
 } from './types';
 import { UploadStatus } from './types';
+import { useAppSelector } from '../../../store/hooks';
+import { selectIsAuthenticated } from '../../../store/slices/authSlice';
 
 import './MediaUploader.scss';
+import { fileService } from '../../../services';
 
 const { Dragger } = Upload;
 
@@ -66,7 +68,10 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
 }) => {
   // 合并配置
   const finalConfig = useMemo(() => ({ ...DEFAULT_CONFIG, ...config }), [config]);
-  
+
+  // 从Redux获取认证状态
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
+
   // 状态管理
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState<UploadProgressInfo>({
@@ -80,28 +85,28 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
   const [currentVideoFile, setCurrentVideoFile] = useState<File | null>(null);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [globalError, setGlobalError] = useState<string | null>(null);
-  
+
   // 防止重复上传的引用
   const uploadingRef = useRef(false);
   const lastUploadTimeRef = useRef(0);
   const uploadAbortControllerRef = useRef<AbortController | null>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // 文件验证
   const validateFile = useCallback((file: File): FileValidationResult => {
     const { maxSize, imageMaxSize, videoMaxSize } = finalConfig;
-    
+
     // 检查文件类型
     const isImage = SUPPORTED_IMAGE_TYPES.includes(file.type);
     const isVideo = SUPPORTED_VIDEO_TYPES.includes(file.type);
-    
+
     if (!isImage && !isVideo) {
       return {
         valid: false,
         error: `不支持的文件类型: ${file.type}`
       };
     }
-    
+
     // 检查文件大小
     const maxFileSize = isImage ? (imageMaxSize || maxSize!) : (videoMaxSize || maxSize!);
     if (file.size > maxFileSize) {
@@ -111,14 +116,14 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
         error: `文件大小超过限制 (${sizeMB}MB)`
       };
     }
-    
+
     return { valid: true };
   }, [finalConfig]);
-  
+
   // 创建媒体文件项
   const createMediaFileItem = useCallback((file: File): MediaFileItem => {
     const isVideo = SUPPORTED_VIDEO_TYPES.includes(file.type);
-    
+
     return {
       id: Math.random().toString(36).substr(2, 9),
       file,
@@ -135,13 +140,13 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
-    
+
     // 防止重复上传
     if (uploadingRef.current) {
       console.warn('Upload already in progress, ignoring new file selection');
       return;
     }
-    
+
     // 防抖延迟
     debounceTimerRef.current = setTimeout(() => {
       handleFileSelectInternal(files);
@@ -157,10 +162,10 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
       return;
     }
     lastUploadTimeRef.current = now;
-    
+
     const validFiles: File[] = [];
     const errors: string[] = [];
-    
+
     for (const file of files) {
       const validation = validateFile(file);
       if (validation.valid) {
@@ -169,15 +174,15 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
         errors.push(`${file.name}: ${validation.error}`);
       }
     }
-    
+
     if (errors.length > 0) {
       message.error(errors.join('\n'));
     }
-    
+
     if (validFiles.length > 0) {
       // 检查是否有视频文件需要选择封面
       const videoFiles = validFiles.filter(file => SUPPORTED_VIDEO_TYPES.includes(file.type));
-      
+
       if (videoFiles.length > 0 && finalConfig.requireCover) {
         // 如果有视频文件且需要封面，先处理第一个视频文件
         setCurrentVideoFile(videoFiles[0]);
@@ -186,20 +191,20 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
         setCoverModalVisible(true);
         return;
       }
-      
+
       // 直接开始上传
       await startUpload(validFiles);
     }
   }, [validateFile, finalConfig.requireCover]);
-  
+
 
 
   // 处理视频封面选择
   const handleCoverSelection = useCallback(async (selection: VideoCoverSelection) => {
     setCoverModalVisible(false);
-    
+
     if (!currentVideoFile || pendingFiles.length === 0) return;
-    
+
     try {
       // 开始上传所有文件（包括封面信息）
       await startUpload(pendingFiles, {
@@ -208,19 +213,8 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
       });
     } catch (error: any) {
       console.error('Upload failed after cover selection:', error);
-      
-      // 检查是否是认证相关错误
-      if (error?.response?.status === 401 || error?.message?.includes('认证失败')) {
-        console.log('🔐 检测到封面选择后上传的401错误');
-        const canRetry = await authManager.handle401Error(error);
-        if (!canRetry) {
-          setGlobalError('上传失败：认证已过期，请重新登录后再试');
-        } else {
-          setGlobalError('认证状态已更新，请重新尝试上传');
-        }
-      } else {
-        setGlobalError(error instanceof Error ? error.message : '上传失败');
-      }
+      setGlobalError(error instanceof Error ? error.message : '上传失败');
+
     } finally {
       setCurrentVideoFile(null);
       setPendingFiles([]);
@@ -243,7 +237,7 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
     });
     message.info('已取消上传');
   }, []);
-  
+
   // 指数退避重试函数
   const exponentialBackoff = useCallback((attempt: number, baseDelay: number = 1000): number => {
     return Math.min(baseDelay * Math.pow(2, attempt), 30000); // 最大30秒
@@ -258,33 +252,17 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
       uploading,
       percentage: total > 0 ? Math.round((completed / total) * 100) : 0
     };
-    
+
     setProgress(progressInfo);
     onUploadProgress?.(progressInfo);
   }, [onUploadProgress]);
 
   // 处理上传封面文件
-  const uploadCoverFile = useCallback(async (coverFile: File, category: 'avatar' | 'work' | 'event' | 'profile' | 'cover' | 'favicon' | 'logo' | 'other'): Promise<void> => {
+  const uploadCoverFile = useCallback(async (file: File, videoFileId: string): Promise<void> => {
     try {
-      const coverUploader = new DirectUploader(coverFile, {
-        fileType: 'image',
-        category,
-        onProgress: () => {}
-      });
-      await coverUploader.upload();
+      await fileService.uploadVedioCover(file, videoFileId)
     } catch (coverError: any) {
       console.error('Cover upload failed:', coverError);
-      
-      // 检查封面上传的认证错误
-      if (coverError?.response?.status === 401) {
-        console.log('🔐 检测到封面上传的401错误');
-        const canRetry = await authManager.handle401Error(coverError);
-        if (!canRetry) {
-          setGlobalError('封面上传失败：认证已过期，请重新登录');
-          throw new Error('封面上传失败：认证已过期');
-        }
-      }
-      
       setGlobalError(`封面上传失败: ${coverError instanceof Error ? coverError.message : '未知错误'}`);
       throw coverError;
     }
@@ -292,42 +270,31 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
 
   // 处理视频帧封面
   const processVideoFrameCover = useCallback(async (
-    file: File, 
-    selectedFrame: { dataUrl: string }, 
-    category: 'avatar' | 'work' | 'event' | 'profile' | 'cover' | 'favicon' | 'logo' | 'other'
+    file: File,
+    selectedFrame: { dataUrl: string },
+    videoFileId: string
   ): Promise<void> => {
     return new Promise<void>((resolve, reject) => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d')!;
       const img = new window.Image();
-      
+
       img.onload = async () => {
         try {
           canvas.width = img.width;
           canvas.height = img.height;
           ctx.drawImage(img, 0, 0);
-          
+
           canvas.toBlob(async (blob) => {
             if (blob) {
               const coverFile = new File([blob], `${file.name}_cover.jpg`, {
                 type: 'image/jpeg'
               });
-              
+
               try {
-                await uploadCoverFile(coverFile, category);
+                await uploadCoverFile(coverFile, videoFileId);
               } catch (coverError: any) {
                 console.error('Frame cover upload failed:', coverError);
-                
-                // 检查视频帧封面上传的认证错误
-                if (coverError?.response?.status === 401) {
-                  console.log('🔐 检测到视频帧封面上传的401错误');
-                  const canRetry = await authManager.handle401Error(coverError);
-                  if (!canRetry) {
-                    setGlobalError('视频帧封面上传失败：认证已过期，请重新登录');
-                    return;
-                  }
-                }
-                
                 setGlobalError(`视频帧封面上传失败: ${coverError instanceof Error ? coverError.message : '未知错误'}`);
               }
             }
@@ -337,7 +304,7 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
           reject(error);
         }
       };
-      
+
       img.onerror = reject;
       img.src = selectedFrame.dataUrl;
     });
@@ -345,18 +312,18 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
 
   // 处理视频封面上传
   const handleVideoCoverUpload = useCallback(async (
+    videoFileId: string,
     file: File,
     videoCoverInfo: { videoFile: File; coverSelection: VideoCoverSelection },
-    category: 'avatar' | 'work' | 'event' | 'profile' | 'cover' | 'favicon' | 'logo' | 'other'
   ): Promise<void> => {
     if (file !== videoCoverInfo.videoFile) return;
-    
+
     const { coverSelection } = videoCoverInfo;
-    
+
     if (coverSelection.coverType === 'upload' && coverSelection.coverFile) {
-      await uploadCoverFile(coverSelection.coverFile, category);
+      await uploadCoverFile(coverSelection.coverFile, videoFileId);
     } else if (coverSelection.coverType === 'frame' && coverSelection.selectedFrame) {
-      await processVideoFrameCover(file, coverSelection.selectedFrame, category);
+      await processVideoFrameCover(file, coverSelection.selectedFrame, videoFileId);
     }
   }, [uploadCoverFile, processVideoFrameCover]);
 
@@ -368,22 +335,6 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
     maxRetries: number
   ): Promise<{ shouldRetry: boolean; delay: number }> => {
     console.error(`Upload attempt ${retryCount + 1} failed:`, error);
-    
-    // 检查是否是认证相关错误
-    if (error?.response?.status === 401) {
-      console.log('🔐 检测到上传过程中的401错误，使用认证管理器处理');
-      const canRetry = await authManager.handle401Error(error);
-      
-      if (canRetry && retryCount < maxRetries) {
-        console.log(`认证状态已更新，重试上传 ${file.name} (attempt ${retryCount + 1}/${maxRetries})`);
-        const delay = exponentialBackoff(retryCount);
-        return { shouldRetry: true, delay };
-      } else {
-        // 认证失败，抛出特殊错误
-        throw new Error('认证失败，请重新登录后再试');
-      }
-    }
-    
     if (retryCount < maxRetries - 1) {
       // 检测429错误并使用指数退避
       const is429Error = error && (
@@ -392,19 +343,19 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
         (error instanceof Error && error.message.includes('429')) ||
         (error instanceof Error && error.message.includes('Too Many Requests'))
       );
-      
-      const delay = is429Error 
+
+      const delay = is429Error
         ? exponentialBackoff(retryCount + 1)
         : 1000 * (retryCount + 1);
-      
+
       const warningMessage = is429Error
-        ? `${file.name} 请求过于频繁，等待 ${Math.round(delay/1000)}s 后重试 (${retryCount + 1}/${maxRetries})`
+        ? `${file.name} 请求过于频繁，等待 ${Math.round(delay / 1000)}s 后重试 (${retryCount + 1}/${maxRetries})`
         : `${file.name} 上传失败，正在重试 (${retryCount + 1}/${maxRetries})`;
-      
+
       message.warning(warningMessage);
       return { shouldRetry: true, delay };
     }
-    
+
     // 达到最大重试次数，抛出错误
     const errorMessage = error instanceof Error ? error.message : '上传失败';
     message.error(`${file.name} 上传失败: ${errorMessage}`);
@@ -419,19 +370,18 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
   ): Promise<DirectUploadResult> => {
     const maxRetries = 5;
     let retryCount = 0;
-    
+
     const attemptUpload = async (): Promise<DirectUploadResult> => {
       try {
         // 在上传前验证认证状态
-        const isAuthenticated = await authManager.validateAuth();
         if (!isAuthenticated) {
           console.warn('⚠️ 认证状态可能无效，但继续尝试上传');
         }
-        
+
         const onProgress = (progress: DirectUploadProgress) => {
           onFileProgress?.(fileItem.id, progress);
         };
-        
+
         // 上传主文件
         const fileType = SUPPORTED_VIDEO_TYPES.includes(file.type) ? 'video' : 'image';
         const uploader = new DirectUploader(file, {
@@ -440,28 +390,28 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
           onProgress
         });
         const result = await uploader.upload();
-        
+
         // 如果是视频文件且有封面信息，上传封面
         if (videoCoverInfo) {
-          await handleVideoCoverUpload(file, videoCoverInfo, finalConfig.category!);
+          await handleVideoCoverUpload(result.fileId, file, videoCoverInfo);
         }
-        
+
         message.success(`${file.name} 上传成功`);
         return result;
-        
+
       } catch (error: any) {
         const { shouldRetry, delay } = await handleUploadError(error, file, retryCount, maxRetries);
-        
+
         if (shouldRetry) {
           retryCount++;
           await new Promise(resolve => setTimeout(resolve, delay));
           return attemptUpload();
         }
-        
+
         throw error;
       }
     };
-    
+
     return attemptUpload();
   }, [finalConfig.category, onFileProgress, handleVideoCoverUpload, handleUploadError]);
 
@@ -475,12 +425,12 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
       const fileItem = fileItems.find(item => item.file === file)!;
       return uploadSingleFile(file, fileItem, videoCoverInfo);
     });
-    
+
     const batchResults = await Promise.allSettled(batchPromises);
     const successResults = batchResults
       .filter((r): r is PromiseFulfilledResult<DirectUploadResult> => r.status === 'fulfilled')
       .map(r => r.value);
-    
+
     return successResults;
   }, [uploadSingleFile]);
 
@@ -491,19 +441,19 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
       console.warn('Upload already in progress, ignoring new upload request');
       return false;
     }
-    
+
     // 取消之前的上传
     if (uploadAbortControllerRef.current) {
       uploadAbortControllerRef.current.abort();
     }
-    
+
     // 创建新的取消控制器
     uploadAbortControllerRef.current = new AbortController();
-    
+
     uploadingRef.current = true;
     setUploading(true);
     setGlobalError(null);
-    
+
     return true;
   }, []);
 
@@ -516,34 +466,34 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
 
   // 主上传方法
   const startUpload = useCallback(async (
-    files: File[], 
+    files: File[],
     videoCoverInfo?: { videoFile: File; coverSelection: VideoCoverSelection }
   ) => {
     if (files.length === 0) return;
-    
+
     // 初始化上传状态
     if (!initializeUploadState(files)) return;
-    
+
     try {
       const fileItems = files.map(createMediaFileItem);
       const concurrentLimit = finalConfig.concurrent || 1;
       const results: DirectUploadResult[] = [];
       let completed = 0;
       let failed = 0;
-      
+
       onUploadStart?.(fileItems);
-      
+
       // 分批处理文件上传
       for (let i = 0; i < files.length; i += concurrentLimit) {
         const batch = files.slice(i, i + concurrentLimit);
         updateProgress(completed, failed, batch.length, files.length);
-        
+
         try {
           const batchResults = await processBatchUpload(batch, fileItems, videoCoverInfo);
           results.push(...batchResults);
           completed += batchResults.length;
           failed += batch.length - batchResults.length;
-          
+
           // 批次间添加延迟以避免速率限制
           if (i + concurrentLimit < files.length) {
             const delay = Math.max(2000, 500 * batch.length);
@@ -553,10 +503,10 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
           console.error('Batch upload error:', error);
           failed += batch.length;
         }
-        
+
         updateProgress(completed, failed, 0, files.length);
       }
-      
+
       if (results.length > 0) {
         onUploadSuccess?.(results);
       }
@@ -577,7 +527,7 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
     onUploadError,
     cleanupUploadState
   ]);
-  
+
   // 清除全局错误
   const clearGlobalError = useCallback(() => {
     setGlobalError(null);
@@ -590,17 +540,17 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
-      
+
       // 取消正在进行的上传
       if (uploadAbortControllerRef.current) {
         uploadAbortControllerRef.current.abort();
       }
-      
+
       // 重置状态
       uploadingRef.current = false;
     };
   }, []);
-  
+
   // Upload组件属性
   const uploadProps: UploadProps = {
     multiple: finalConfig.multiple,
@@ -612,7 +562,7 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
         .filter(f => f.status === 'done' || f.status === undefined)
         .map(f => f.originFileObj!)
         .filter(Boolean);
-      
+
       if (newFiles.length > 0 && !uploadingRef.current) {
         debouncedFileSelect(newFiles);
       }
@@ -621,7 +571,7 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
     disabled: disabled || uploading,
     fileList: [] // 清空文件列表，防止重复显示
   };
-  
+
   return (
     <div className={`media-uploader ${className}`} style={style}>
       {globalError && (
@@ -640,7 +590,7 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
           }
         />
       )}
-      
+
       {/* 上传区域 */}
       <Dragger {...uploadProps} className="media-uploader__dragger">
         <p className="ant-upload-drag-icon">
@@ -653,19 +603,19 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
           支持图片和视频文件，单个文件不超过 {Math.round((finalConfig.maxSize || 0) / 1024 / 1024)}MB
         </p>
       </Dragger>
-      
+
       {/* 上传进度 */}
       {showProgress && uploading && (
         <div className="media-uploader__progress">
           <div className="progress-header">
-            <Progress 
-              percent={progress.percentage} 
+            <Progress
+              percent={progress.percentage}
               status={progress.failed > 0 ? 'exception' : 'active'}
               format={() => `${progress.completed}/${progress.total}`}
             />
-            <Button 
-              type="text" 
-              size="small" 
+            <Button
+              type="text"
+              size="small"
               onClick={cancelUpload}
               style={{ marginLeft: 8 }}
             >
@@ -679,7 +629,7 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
           </div>
         </div>
       )}
-      
+
       {/* 视频封面选择弹窗 */}
       <VideoCoverModal
         visible={coverModalVisible}
@@ -691,8 +641,6 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
         }}
         onConfirm={handleCoverSelection}
       />
-       
-      {/* 移除重复的VideoCoverModal实例 */}
     </div>
   );
 };

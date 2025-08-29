@@ -3,9 +3,9 @@ import { Modal, Button, Upload, Slider, message, Spin, Alert } from 'antd';
 import { UploadOutlined, PlayCircleOutlined, PauseCircleOutlined, ReloadOutlined, DragOutlined, ExclamationCircleOutlined, CameraOutlined } from '@ant-design/icons';
 import type { VideoCoverSelection } from './types';
 import { VideoFrameExtractor, type VideoFrame } from '../../../utils/video-frame-extractor';
-import { authManager } from '../../../utils/auth-manager';
 import './VideoCoverModal.scss';
-
+import { useAppSelector } from '../../../store/hooks';
+import { selectIsAuthenticated } from '../../../store/slices/authSlice';
 interface VideoCoverModalProps {
   visible: boolean;
   videoFile: File | null;
@@ -32,20 +32,21 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [showUploadModal, setShowUploadModal] = useState(false);
-  
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const extractorRef = useRef<VideoFrameExtractor | null>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
   const blobUrlsRef = useRef<Set<string>>(new Set());
   const abortControllerRef = useRef<AbortController | null>(null);
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
 
   // 初始化视频和清理资源
   useEffect(() => {
     if (videoFile && visible) {
       initializeVideo();
     }
-    
+
     return () => {
       cleanupResources();
     };
@@ -62,21 +63,21 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
     try {
       setError(null);
       setLoading(true);
-      
+
       // 清理之前的资源
       cleanupResources();
-      
+
       // 创建新的 AbortController
       abortControllerRef.current = new AbortController();
-      
+
       // 创建视频 URL
       const url = URL.createObjectURL(videoFile!);
       blobUrlsRef.current.add(url);
       setVideoUrl(url);
-      
+
       // 初始化提取器
       await initializeExtractor();
-      
+
     } catch (error) {
       console.error('视频初始化失败:', error);
       setError(error instanceof Error ? error.message : '视频初始化失败');
@@ -88,16 +89,16 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
 
   const initializeExtractor = async () => {
     if (!videoFile) return;
-    
+
     try {
       // 销毁旧的提取器
       if (extractorRef.current) {
         extractorRef.current.destroy();
       }
-      
+
       // 创建新的提取器
       extractorRef.current = new VideoFrameExtractor();
-      
+
     } catch (error) {
       console.error('提取器初始化失败:', error);
       throw new Error('视频帧提取器初始化失败');
@@ -110,26 +111,26 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
-    
+
     // 清理视频 URL
     blobUrlsRef.current.forEach(url => {
       URL.revokeObjectURL(url);
     });
     blobUrlsRef.current.clear();
-    
+
     // 清理提取器
     if (extractorRef.current) {
       extractorRef.current.destroy();
       extractorRef.current = null;
     }
-    
+
     // 清理已提取的帧
     extractedFrames.forEach(frame => {
       if ((frame as any).dispose) {
         (frame as any).dispose();
       }
     });
-    
+
     // 清理上传的封面 URL
     if (uploadedCoverUrl) {
       URL.revokeObjectURL(uploadedCoverUrl);
@@ -149,16 +150,16 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
   // 提取关键帧（优化版本 - 快速生成缩略图）
   const extractKeyFrames = async () => {
     if (!videoFile || !extractorRef.current) return;
-    
+
     setIsExtracting(true);
     setError(null);
-    
+
     try {
       // 检查是否被取消
       if (abortControllerRef.current?.signal.aborted) {
         throw new Error('操作已取消');
       }
-      
+
       // 清理之前的帧
       extractedFrames.forEach(frame => {
         if ((frame as any).dispose) {
@@ -166,7 +167,7 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
         }
       });
       setExtractedFrames([]);
-      
+
       // 优化参数：生成8个关键帧，小尺寸快速加载
       const frames = await extractorRef.current.extractFrames(videoFile, {
         frameCount: 8,
@@ -177,19 +178,19 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
         startTime: 0.5, // 跳过开头可能的黑屏
         endTime: undefined // 使用完整视频长度
       });
-      
+
       if (frames.length === 0) {
         throw new Error('未能提取到任何视频帧');
       }
-      
+
       setExtractedFrames(frames);
       // 默认选择中间的帧
       const middleIndex = Math.floor(frames.length / 2);
       handleFrameSelect(frames[middleIndex]);
-      
+
       setRetryCount(0);
       message.success(`成功生成 ${frames.length} 个缩略图`);
-      
+
     } catch (error) {
       console.error('提取视频帧失败:', error);
       const errorMessage = error instanceof Error ? error.message : '提取视频帧失败';
@@ -203,7 +204,7 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
   // 播放/暂停
   const togglePlay = () => {
     if (!videoRef.current) return;
-    
+
     if (isPlaying) {
       videoRef.current.pause();
     } else {
@@ -227,12 +228,12 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isDragging || !sliderRef.current || !videoRef.current) return;
-    
+
     const rect = sliderRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const percentage = Math.max(0, Math.min(1, x / rect.width));
     const newTime = percentage * duration;
-    
+
     setCurrentTime(newTime);
     videoRef.current.currentTime = newTime;
   }, [isDragging, duration]);
@@ -245,12 +246,12 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
     if (isDragging) {
       const handleGlobalMouseMove = (e: MouseEvent) => {
         if (!sliderRef.current || !videoRef.current) return;
-        
+
         const rect = sliderRef.current.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const percentage = Math.max(0, Math.min(1, x / rect.width));
         const newTime = percentage * duration;
-        
+
         setCurrentTime(newTime);
         videoRef.current.currentTime = newTime;
       };
@@ -275,26 +276,26 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
       message.error('视频未准备就绪');
       return;
     }
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       // 检查是否被取消
       if (abortControllerRef.current?.signal.aborted) {
         throw new Error('操作已取消');
       }
-      
+
       const frame = await extractorRef.current.extractSingleFrame(videoFile, currentTime, {
         quality: 0.6,
         format: 'image/jpeg',
         maxWidth: 200,
         maxHeight: 112
       });
-      
+
       handleFrameSelect(frame);
       message.success(`已捕获 ${formatTime(currentTime)} 时刻的帧`);
-      
+
     } catch (error) {
       console.error('捕获当前帧失败:', error);
       const errorMessage = error instanceof Error ? error.message : '捕获当前帧失败';
@@ -334,7 +335,6 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
       }
 
       // 验证认证状态
-      const isAuthenticated = await authManager.validateAuth();
       if (!isAuthenticated) {
         console.warn('⚠️ 认证状态可能无效，但继续尝试操作');
       }
@@ -346,13 +346,13 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
           message.error('选中的视频帧无效，请重新选择');
           return;
         }
-        
+
         // 将VideoFrame转换为File
         const coverFile = new File([frame.blob], `cover_${Date.now()}.jpg`, {
           type: 'image/jpeg',
           lastModified: Date.now()
         });
-        
+
         const selection: VideoCoverSelection = {
           videoFile: videoFile!,
           coverType: 'frame',
@@ -360,9 +360,9 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
           selectedFrame: frame,
           frameTime: frame.time
         };
-        
+
         onConfirm(selection);
-        
+
       } else if (selectedCover.type === 'upload') {
         const file = selectedCover.data as File;
         // 验证上传的封面
@@ -370,32 +370,23 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
           message.error('上传的封面文件无效，请重新上传');
           return;
         }
-        
+
         const selection: VideoCoverSelection = {
           videoFile: videoFile!,
           coverType: 'upload',
           coverFile: file
         };
-        
+
         onConfirm(selection);
       }
     } catch (error: any) {
       console.error('确认选择时出错:', error);
-      
+
       // 检查是否是认证相关错误
       if (error?.response?.status === 401) {
         console.log('🔐 检测到401错误，使用认证管理器处理');
-        const canRetry = await authManager.handle401Error(error);
-        
-        if (canRetry) {
-          message.warning('认证状态已更新，请重试');
-          return;
-        } else {
-          message.error('登录已过期，请重新登录后再试');
-          return;
-        }
       }
-      
+
       // 其他错误
       const errorMessage = error?.message || error?.response?.data?.message || '确认选择失败，请重试';
       message.error(errorMessage);
@@ -408,10 +399,10 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
     if (videoRef.current) {
       videoRef.current.pause();
     }
-    
+
     // 清理资源
     cleanupResources();
-    
+
     // 重置状态
     setCurrentTime(0);
     setIsPlaying(false);
@@ -423,7 +414,7 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
     setLoading(false);
     setIsExtracting(false);
     setShowUploadModal(false);
-    
+
     onCancel();
   };
 
@@ -510,7 +501,7 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
                   size="large"
                   disabled={duration === 0}
                 />
-                <div 
+                <div
                   className={`time-slider ${isDragging ? 'dragging' : ''}`}
                   ref={sliderRef}
                   onMouseDown={handleMouseDown}
@@ -535,8 +526,8 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
                 <span className="time-display">
                   {formatTime(currentTime)} / {formatTime(duration)}
                 </span>
-                <Button 
-                  onClick={captureCurrentFrame} 
+                <Button
+                  onClick={captureCurrentFrame}
                   loading={loading}
                   disabled={duration === 0 || isExtracting}
                 >
@@ -553,7 +544,7 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
               </div>
             </div>
           )}
-          
+
           {/* 提取的帧和相册选择按钮 */}
           <div className="extracted-frames">
             <h4>选择视频帧作为封面：</h4>
@@ -571,9 +562,8 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
                     {extractedFrames.map((frame, index) => (
                       <div
                         key={index}
-                        className={`frame-thumbnail ${
-                          selectedCover?.type === 'frame' && (selectedCover.data as VideoFrame).time === frame.time ? 'selected' : ''
-                        }`}
+                        className={`frame-thumbnail ${selectedCover?.type === 'frame' && (selectedCover.data as VideoFrame).time === frame.time ? 'selected' : ''
+                          }`}
                         onClick={() => handleFrameSelect(frame)}
                       >
                         <div className="thumbnail-image-wrapper">
@@ -594,14 +584,13 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
                       </div>
                     ))}
                   </div>
-                  
+
                   {/* 从相册选择按钮 */}
                   {extractedFrames.length > 0 && (
                     <div className="album-select-wrapper">
-                      <div 
-                        className={`album-select-button ${
-                          selectedCover?.type === 'upload' ? 'selected' : ''
-                        }`}
+                      <div
+                        className={`album-select-button ${selectedCover?.type === 'upload' ? 'selected' : ''
+                          }`}
                         onClick={handleOpenAlbum}
                       >
                         <div className="album-button-content">
@@ -630,7 +619,7 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
                     </div>
                   )}
                 </div>
-                
+
                 {/* 空状态 */}
                 {extractedFrames.length === 0 && !loading && !error && videoUrl && (
                   <div className="empty-state">
@@ -642,7 +631,7 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
               </div>
             )}
           </div>
-          
+
           {/* 选中的封面预览 */}
           {selectedCover && (
             <div className="selected-cover">
@@ -656,7 +645,7 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
                       alt="Selected frame"
                     />
                     <div className="cover-info">
-                      时间: {Math.floor((selectedCover.data as VideoFrame).time / 60)}:{Math.floor((selectedCover.data as VideoFrame).time % 60).toString().padStart(2, '0')} | 
+                      时间: {Math.floor((selectedCover.data as VideoFrame).time / 60)}:{Math.floor((selectedCover.data as VideoFrame).time % 60).toString().padStart(2, '0')} |
                       尺寸: {(selectedCover.data as VideoFrame).width} × {(selectedCover.data as VideoFrame).height}
                     </div>
                   </>
@@ -723,7 +712,7 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
           <p className="ant-upload-hint">支持 JPG、PNG、GIF、WebP 格式，最大 10MB</p>
         </Upload.Dragger>
       </Modal>
-      
+
       {/* 隐藏的canvas用于帧提取 */}
       <canvas ref={canvasRef} style={{ display: 'none' }} />
     </>

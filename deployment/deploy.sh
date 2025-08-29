@@ -186,7 +186,7 @@ rebuild_deploy() {
     # 构建Web镜像
     if [[ -f "web/Dockerfile" ]]; then
         log_info "构建Web镜像..."
-        docker build -t deployment-web:latest web/ || {
+        docker build -t wedding-web:latest web/ || {
             log_error "Web镜像构建失败"
             return 1
         }
@@ -195,7 +195,7 @@ rebuild_deploy() {
     # 构建API镜像
     if [[ -f "server/Dockerfile" ]]; then
         log_info "构建API镜像..."
-        docker build -t deployment-api1:latest server/ || {
+        docker build -t wedding-api:latest server/ || {
             log_error "API镜像构建失败"
             return 1
         }

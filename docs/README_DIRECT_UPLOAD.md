@@ -66,6 +66,70 @@
     └── DIRECT_UPLOAD_SOLUTION.md              # 完整文档
 ```
 
+## 📚 原理解释
+
+### 传统上传 vs 直传OSS
+
+#### 传统上传方式（三段式）
+```
+客户端 → 服务器 → OSS存储
+     ↗      ↘
+   消耗服务器带宽和存储
+```
+
+**问题：**
+1. 服务器带宽瓶颈
+2. 服务器内存/CPU消耗大
+3. 上传超时风险高
+4. 并发处理能力有限
+
+#### 直传OSS方式（两段式）
+```
+客户端 → OSS存储
+    ↗
+直接上传，不经过服务器
+```
+
+**优势：**
+1. 服务器只负责生成预签名URL，不传输文件数据
+2. 客户端直接上传到OSS，充分利用OSS带宽
+3. 服务器资源消耗极小
+4. 支持大文件上传
+5. 并发能力强
+
+### 工作流程
+
+1. **获取预签名URL**
+   - 客户端请求后端API获取预签名URL
+   - 后端验证文件信息并生成预签名URL
+   - 后端将上传会话信息存储到Redis
+
+2. **直接上传到OSS**
+   - 客户端使用预签名URL直接上传文件到OSS
+   - 上传过程中实时监控进度
+   - 支持断点续传和重试机制
+
+3. **确认上传完成**
+   - 客户端通知后端上传完成
+   - 后端验证文件并创建数据库记录
+   - 返回文件信息给客户端
+
+### 安全机制
+
+1. **预签名URL过期控制**
+   - URL具有时效性（默认1小时）
+   - 过期后无法使用
+
+2. **文件验证**
+   - 文件类型白名单检查
+   - 文件大小限制
+   - MIME类型验证
+
+3. **会话管理**
+   - Redis存储上传会话状态
+   - 用户权限验证
+   - 会话过期清理
+
 ## 🚀 快速开始
 
 ### 1. 环境配置
@@ -154,6 +218,75 @@ function VideoUploadComponent() {
       <input type="file" onChange={(e) => handleUpload(e.target.files[0])} />
     </div>
   );
+}
+```
+
+### 5. 完整使用示例
+
+```typescript
+import { DirectUploader } from '@/utils/direct-upload';
+
+// 视频上传示例
+async function uploadVideo(file: File) {
+  const uploader = new DirectUploader(file, {
+    fileType: 'video',
+    category: 'work',
+    maxFileSize: 1024 * 1024 * 1024, // 1GB
+    retryCount: 3,
+    retryDelay: 2000,
+    onProgress: (progress) => {
+      console.log(`上传进度: ${progress.percentage}%`);
+      console.log(`上传速度: ${(progress.speed / 1024 / 1024).toFixed(2)} MB/s`);
+      console.log(`剩余时间: ${Math.round(progress.remainingTime / 60)}分钟`);
+    },
+    onStatusChange: (status) => {
+      console.log(`上传状态: ${status}`);
+    },
+    onSuccess: (result) => {
+      console.log('上传成功:', result);
+      // 更新UI显示上传结果
+    },
+    onError: (error) => {
+      console.error('上传失败:', error);
+      // 显示错误信息
+    },
+    onRetry: (attempt, error) => {
+      console.log(`第${attempt}次重试:`, error.message);
+    }
+  });
+
+  try {
+    const result = await uploader.upload();
+    return result;
+  } catch (error) {
+    console.error('上传失败:', error);
+    throw error;
+  }
+}
+
+// 图片上传示例（带压缩）
+async function uploadImage(file: File) {
+  const uploader = new DirectUploader(file, {
+    fileType: 'image',
+    category: 'avatar',
+    enableCompression: true,
+    compressionQuality: 0.8,
+    maxFileSize: 10 * 1024 * 1024, // 10MB
+    onProgress: (progress) => {
+      console.log(`图片上传进度: ${progress.percentage}%`);
+    },
+    onSuccess: (result) => {
+      console.log('图片上传成功:', result);
+    }
+  });
+
+  try {
+    const result = await uploader.upload();
+    return result;
+  } catch (error) {
+    console.error('图片上传失败:', error);
+    throw error;
+  }
 }
 ```
 
