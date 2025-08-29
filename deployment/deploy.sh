@@ -155,6 +155,38 @@ deploy_full() {
     # 停止现有服务
     stop_services 2>/dev/null || true
     
+    # 清理资源，包括 wedding-web 和 wedding-api 镜像和容器
+    clean_resources
+    
+    # 拉取最新代码
+    log_info "拉取最新代码..."
+    cd "$PROJECT_ROOT"
+    git pull origin main || {
+        log_warning "无法从远程仓库拉取最新代码，使用本地代码继续部署"
+    }
+    
+    # 重新构建镜像
+    log_info "重新构建镜像..."
+    cd "$PROJECT_ROOT"
+    
+    # 构建Web镜像
+    if [[ -f "web/Dockerfile" ]]; then
+        log_info "构建Web镜像..."
+        docker build -t wedding-web:latest web/ || {
+            log_error "Web镜像构建失败"
+            return 1
+        }
+    fi
+    
+    # 构建API镜像
+    if [[ -f "server/Dockerfile" ]]; then
+        log_info "构建API镜像..."
+        docker build -t wedding-api:latest server/ || {
+            log_error "API镜像构建失败"
+            return 1
+        }
+    fi
+    
     # 启动服务
     start_services
     
@@ -176,7 +208,7 @@ rebuild_deploy() {
     # 停止服务
     stop_services 2>/dev/null || true
     
-    # 清理资源
+    # 清理资源，包括 wedding-web 和 wedding-api 镜像和容器
     clean_resources
     
     # 重新构建镜像
@@ -280,7 +312,17 @@ clean_resources() {
     # 停止服务
     stop_services 2>/dev/null || true
     
-    # 清理资源
+    # 停止并移除 wedding-web 和 wedding-api 容器（如果存在）
+    log_info "停止并移除 wedding-web 和 wedding-api 容器..."
+    docker stop wedding-web wedding-api 2>/dev/null || true
+    docker rm wedding-web wedding-api 2>/dev/null || true
+    
+    # 删除 wedding-web 和 wedding-api 镜像（如果存在）
+    log_info "删除 wedding-web 和 wedding-api 镜像..."
+    docker rmi wedding-web:latest 2>/dev/null || true
+    docker rmi wedding-api:latest 2>/dev/null || true
+    
+    # 清理其他资源
     docker system prune -f >/dev/null 2>&1 || true
     docker volume prune -f >/dev/null 2>&1 || true
     docker network prune -f >/dev/null 2>&1 || true
