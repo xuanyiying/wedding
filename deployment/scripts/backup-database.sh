@@ -34,11 +34,11 @@ detect_environment() {
 ENV_TYPE=$(detect_environment)
 
 # 设置配置文件路径
-if [[ "$ENV_TYPE" == "tencent" ]]; then
-    COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.tencent.yml"
+if [[ "$ENV_TYPE" == "development" ]]; then
+    COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.development.yml"
     ENV_FILE="$PROJECT_ROOT/deployment/.env.tencent"
 else
-    COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.prod.yml"
+    COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.production.yml"
     ENV_FILE="$PROJECT_ROOT/deployment/.env.production"
 fi
 

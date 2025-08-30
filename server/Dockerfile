@@ -22,6 +22,10 @@ RUN npm ci --no-audit --no-fund
 
 # 复制源代码并构建（合并构建步骤减少层数）
 COPY . .
+
+# 强制清理可能存在的旧构建产物
+RUN rm -rf dist && mkdir dist
+
 RUN npm run build && \
     npm prune --production && \
     npm cache clean --force && \
@@ -32,9 +36,9 @@ FROM node:22.17.1-alpine AS development
 
 # 设置环境变量
 ENV TZ=Asia/Shanghai \
-    NODE_ENV=development \
-    PORT=3000 \
-    LOG_LEVEL=info
+    NODE_ENV=production \
+    PORT=${API_PORT} \
+    LOG_LEVEL=${LOG_LEVEL}
 
 # 配置Alpine镜像源并快速配置运行环境
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
@@ -55,13 +59,13 @@ COPY --from=builder --chown=wedding:nodejs /app/package*.json ./
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:3000/api/v1/health || exit 1
+    CMD curl -f http://localhost:${API_PORT}/api/v1/health || exit 1
 
 # 切换到非root用户
 USER wedding
 
 # 暴露端口
-EXPOSE 3000 9090
+EXPOSE ${API_PORT} 9090
 
 # 使用dumb-init作为PID 1，处理信号
 ENTRYPOINT ["dumb-init", "--"]
@@ -72,6 +76,6 @@ CMD ["node", "dist/server.js"]
 # 添加标签
 LABEL maintainer="Wedding Club Team" \
     version="1.0.0" \
-    description="Wedding Club Server - Development" \
+    description="Wedding Club Server - Production" \
     com.wedding.service="api" \
-    com.wedding.environment="development"
+    com.wedding.environment="production"

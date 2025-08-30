@@ -317,7 +317,7 @@ jobs:
           echo "compose_file=docker-compose-tencent.yml" >> $GITHUB_OUTPUT
           echo "env_file=.env.tencent" >> $GITHUB_OUTPUT
           echo "image_tag=latest" >> $GITHUB_OUTPUT
-          echo "health_url=http://114.132.225.94" >> $GITHUB_OUTPUT
+          echo "health_url=http://${{ secrets.PRODUCTION_HOST }}" >> $GITHUB_OUTPUT
         fi
     
     - name: Create deployment record

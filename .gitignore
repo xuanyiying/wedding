@@ -22,3 +22,4 @@ dist
  *.lock
  *.local
  package-lock.json
+.codebuddy/.ignored_image/249d1ba6104662ae8450125d41ddd140.png

@@ -338,7 +338,19 @@ export class MinIOService implements OssService {
         ContentType: contentType
       });
 
-      return await getSignedUrl(this.s3Client, command, { expiresIn: expires });
+      let url = await getSignedUrl(this.s3Client, command, { expiresIn: expires });
+
+      // 如果有公网访问地址配置，替换URL中的内网地址
+      const publicEndpoint = process.env.MINIO_PUBLIC_ENDPOINT || process.env.VITE_MINIO_URL;
+      if (publicEndpoint) {
+        // 替换内网地址为公网地址
+        const internalEndpoint = this.config.endpoint;
+        if (url.startsWith(internalEndpoint)) {
+          url = url.replace(internalEndpoint, publicEndpoint);
+        }
+      }
+
+      return url;
     } catch (error) {
       console.error('Error generating presigned upload URL:', error);
       throw new Error('Failed to generate presigned upload URL');

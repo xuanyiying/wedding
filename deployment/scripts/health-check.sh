@@ -693,7 +693,7 @@ check_docker() {
             docker_details="Docker daemon not accessible"
         else
             # Check containers in the project
-            if [[ -f "$PROJECT_ROOT/docker-compose.yml" ]]; then
+            if [[ -f "$PROJECT_ROOT/deployment/docker-compose.dev.yml" ]]; then
                 cd "$PROJECT_ROOT"
                 
                 # Get container status

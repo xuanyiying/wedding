@@ -1,0 +1,512 @@
+2025-08-30 12:13:05 [ERROR]: Unable to connect to the database: connect ECONNREFUSED 172.30.0.5:3306
+SequelizeConnectionRefusedError: connect ECONNREFUSED 172.30.0.5:3306
+    at ConnectionManager.connect (/app/node_modules/sequelize/lib/dialects/mysql/connection-manager.js:92:17)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async ConnectionManager._connect (/app/node_modules/sequelize/lib/dialects/abstract/connection-manager.js:222:24)
+    at async /app/node_modules/sequelize/lib/dialects/abstract/connection-manager.js:174:32
+    at async ConnectionManager.getConnection (/app/node_modules/sequelize/lib/dialects/abstract/connection-manager.js:197:7)
+    at async /app/node_modules/sequelize/lib/sequelize.js:305:26
+    at async Sequelize.authenticate (/app/node_modules/sequelize/lib/sequelize.js:457:5)
+    at async connectDatabase (/app/dist/config/database.js:35:9)
+    at async bootstrap (/app/dist/server.js:32:9)
+{
+  "name": "SequelizeConnectionRefusedError",
+  "parent": {
+    "errno": -111,
+    "code": "ECONNREFUSED",
+    "syscall": "connect",
+    "address": "172.30.0.5",
+    "port": 3306,
+    "fatal": true
+  },
+  "original": {
+    "errno": -111,
+    "code": "ECONNREFUSED",
+    "syscall": "connect",
+    "address": "172.30.0.5",
+    "port": 3306,
+    "fatal": true
+  }
+}
+2025-08-30 12:13:57 [ERROR]: Uncaught Exception: listen EADDRINUSE: address already in use :::3000
+Error: listen EADDRINUSE: address already in use :::3000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (/app/node_modules/express/lib/application.js:635:24)
+    at App.listen (/app/dist/app.js:113:18)
+    at bootstrap (/app/dist/server.js:37:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+{
+  "code": "EADDRINUSE",
+  "errno": -98,
+  "syscall": "listen",
+  "address": "::",
+  "port": 3000
+}
+2025-08-30 12:16:19 [ERROR]: 获取网站配置失败: Table 'wedding_club.system_configs' doesn't exist
+Error
+    at Query.run (/app/node_modules/sequelize/lib/dialects/mysql/query.js:52:25)
+    at /app/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async MySQLQueryInterface.select (/app/node_modules/sequelize/lib/dialects/abstract/query-interface.js:407:12)
+    at async SystemConfig.findAll (/app/node_modules/sequelize/lib/model.js:1140:21)
+    at async SettingsService.getSiteConfig (/app/dist/services/settings.service.js:276:29)
+    at async getSiteConfig (/app/dist/controllers/settings.controller.js:112:24)
+{
+  "name": "SequelizeDatabaseError",
+  "parent": {
+    "code": "ER_NO_SUCH_TABLE",
+    "errno": 1146,
+    "sqlState": "42S02",
+    "sqlMessage": "Table 'wedding_club.system_configs' doesn't exist",
+    "sql": "SELECT `id`, `config_key` AS `configKey`, `config_value` AS `configValue`, `default_value` AS `defaultValue`, `config_type` AS `configType`, `category`, `description`, `validation_rule` AS `validationRule`, `is_public` AS `isPublic`, `is_editable` AS `isEditable`, `sort_order` AS `sortOrder`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt` FROM `system_configs` AS `SystemConfig` WHERE `SystemConfig`.`category` = 'site' AND `SystemConfig`.`is_public` = true ORDER BY `sortOrder` ASC;"
+  },
+  "original": {
+    "code": "ER_NO_SUCH_TABLE",
+    "errno": 1146,
+    "sqlState": "42S02",
+    "sqlMessage": "Table 'wedding_club.system_configs' doesn't exist",
+    "sql": "SELECT `id`, `config_key` AS `configKey`, `config_value` AS `configValue`, `default_value` AS `defaultValue`, `config_type` AS `configType`, `category`, `description`, `validation_rule` AS `validationRule`, `is_public` AS `isPublic`, `is_editable` AS `isEditable`, `sort_order` AS `sortOrder`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt` FROM `system_configs` AS `SystemConfig` WHERE `SystemConfig`.`category` = 'site' AND `SystemConfig`.`is_public` = true ORDER BY `sortOrder` ASC;"
+  },
+  "sql": "SELECT `id`, `config_key` AS `configKey`, `config_value` AS `configValue`, `default_value` AS `defaultValue`, `config_type` AS `configType`, `category`, `description`, `validation_rule` AS `validationRule`, `is_public` AS `isPublic`, `is_editable` AS `isEditable`, `sort_order` AS `sortOrder`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt` FROM `system_configs` AS `SystemConfig` WHERE `SystemConfig`.`category` = 'site' AND `SystemConfig`.`is_public` = true ORDER BY `sortOrder` ASC;",
+  "parameters": {}
+}
+2025-08-30 12:16:19 [ERROR]: 获取网站配置失败: Table 'wedding_club.system_configs' doesn't exist
+Error
+    at Query.run (/app/node_modules/sequelize/lib/dialects/mysql/query.js:52:25)
+    at /app/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async MySQLQueryInterface.select (/app/node_modules/sequelize/lib/dialects/abstract/query-interface.js:407:12)
+    at async SystemConfig.findAll (/app/node_modules/sequelize/lib/model.js:1140:21)
+    at async SettingsService.getSiteConfig (/app/dist/services/settings.service.js:276:29)
+    at async getSiteConfig (/app/dist/controllers/settings.controller.js:112:24)
+{
+  "name": "SequelizeDatabaseError",
+  "parent": {
+    "code": "ER_NO_SUCH_TABLE",
+    "errno": 1146,
+    "sqlState": "42S02",
+    "sqlMessage": "Table 'wedding_club.system_configs' doesn't exist",
+    "sql": "SELECT `id`, `config_key` AS `configKey`, `config_value` AS `configValue`, `default_value` AS `defaultValue`, `config_type` AS `configType`, `category`, `description`, `validation_rule` AS `validationRule`, `is_public` AS `isPublic`, `is_editable` AS `isEditable`, `sort_order` AS `sortOrder`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt` FROM `system_configs` AS `SystemConfig` WHERE `SystemConfig`.`category` = 'site' AND `SystemConfig`.`is_public` = true ORDER BY `sortOrder` ASC;"
+  },
+  "original": {
+    "code": "ER_NO_SUCH_TABLE",
+    "errno": 1146,
+    "sqlState": "42S02",
+    "sqlMessage": "Table 'wedding_club.system_configs' doesn't exist",
+    "sql": "SELECT `id`, `config_key` AS `configKey`, `config_value` AS `configValue`, `default_value` AS `defaultValue`, `config_type` AS `configType`, `category`, `description`, `validation_rule` AS `validationRule`, `is_public` AS `isPublic`, `is_editable` AS `isEditable`, `sort_order` AS `sortOrder`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt` FROM `system_configs` AS `SystemConfig` WHERE `SystemConfig`.`category` = 'site' AND `SystemConfig`.`is_public` = true ORDER BY `sortOrder` ASC;"
+  },
+  "sql": "SELECT `id`, `config_key` AS `configKey`, `config_value` AS `configValue`, `default_value` AS `defaultValue`, `config_type` AS `configType`, `category`, `description`, `validation_rule` AS `validationRule`, `is_public` AS `isPublic`, `is_editable` AS `isEditable`, `sort_order` AS `sortOrder`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt` FROM `system_configs` AS `SystemConfig` WHERE `SystemConfig`.`category` = 'site' AND `SystemConfig`.`is_public` = true ORDER BY `sortOrder` ASC;",
+  "parameters": {}
+}
+2025-08-30 12:16:19 [ERROR]: Server Error: Table does not exist
+{
+  "statusCode": 500,
+  "code": "TABLE_NOT_FOUND",
+  "url": "/api/v1/settings/site-config?_t=1756527378815",
+  "method": "GET",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+}
+2025-08-30 12:16:19 [ERROR]: 获取仪表盘统计失败: Table 'wedding_club.schedules' doesn't exist
+Error
+    at Query.run (/app/node_modules/sequelize/lib/dialects/mysql/query.js:52:25)
+    at /app/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async MySQLQueryInterface.rawSelect (/app/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
+    at async Schedule.aggregate (/app/node_modules/sequelize/lib/model.js:1277:19)
+    at async Schedule.count (/app/node_modules/sequelize/lib/model.js:1306:20)
+    at async Promise.all (index 0)
+    at async DashboardService.getDashboardStats (/app/dist/services/dashboard.service.js:29:92)
+    at async getDashboardStats (/app/dist/controllers/dashboard.controller.js:11:23)
+{
+  "name": "SequelizeDatabaseError",
+  "parent": {
+    "code": "ER_NO_SUCH_TABLE",
+    "errno": 1146,
+    "sqlState": "42S02",
+    "sqlMessage": "Table 'wedding_club.schedules' doesn't exist",
+    "sql": "SELECT count(*) AS `count` FROM `schedules` AS `Schedule` WHERE (`Schedule`.`deleted_at` IS NULL AND `Schedule`.`status` IN ('booked', 'confirmed', 'completed'));"
+  },
+  "original": {
+    "code": "ER_NO_SUCH_TABLE",
+    "errno": 1146,
+    "sqlState": "42S02",
+    "sqlMessage": "Table 'wedding_club.schedules' doesn't exist",
+    "sql": "SELECT count(*) AS `count` FROM `schedules` AS `Schedule` WHERE (`Schedule`.`deleted_at` IS NULL AND `Schedule`.`status` IN ('booked', 'confirmed', 'completed'));"
+  },
+  "sql": "SELECT count(*) AS `count` FROM `schedules` AS `Schedule` WHERE (`Schedule`.`deleted_at` IS NULL AND `Schedule`.`status` IN ('booked', 'confirmed', 'completed'));",
+  "parameters": {}
+}
+2025-08-30 12:16:19 [ERROR]: 获取仪表盘统计失败: Table 'wedding_club.schedules' doesn't exist
+Error
+    at Query.run (/app/node_modules/sequelize/lib/dialects/mysql/query.js:52:25)
+    at /app/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async MySQLQueryInterface.rawSelect (/app/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
+    at async Schedule.aggregate (/app/node_modules/sequelize/lib/model.js:1277:19)
+    at async Schedule.count (/app/node_modules/sequelize/lib/model.js:1306:20)
+    at async Promise.all (index 0)
+    at async DashboardService.getDashboardStats (/app/dist/services/dashboard.service.js:29:92)
+    at async getDashboardStats (/app/dist/controllers/dashboard.controller.js:11:23)
+{
+  "name": "SequelizeDatabaseError",
+  "parent": {
+    "code": "ER_NO_SUCH_TABLE",
+    "errno": 1146,
+    "sqlState": "42S02",
+    "sqlMessage": "Table 'wedding_club.schedules' doesn't exist",
+    "sql": "SELECT count(*) AS `count` FROM `schedules` AS `Schedule` WHERE (`Schedule`.`deleted_at` IS NULL AND `Schedule`.`status` IN ('booked', 'confirmed', 'completed'));"
+  },
+  "original": {
+    "code": "ER_NO_SUCH_TABLE",
+    "errno": 1146,
+    "sqlState": "42S02",
+    "sqlMessage": "Table 'wedding_club.schedules' doesn't exist",
+    "sql": "SELECT count(*) AS `count` FROM `schedules` AS `Schedule` WHERE (`Schedule`.`deleted_at` IS NULL AND `Schedule`.`status` IN ('booked', 'confirmed', 'completed'));"
+  },
+  "sql": "SELECT count(*) AS `count` FROM `schedules` AS `Schedule` WHERE (`Schedule`.`deleted_at` IS NULL AND `Schedule`.`status` IN ('booked', 'confirmed', 'completed'));",
+  "parameters": {}
+}
+2025-08-30 12:16:19 [ERROR]: Server Error: Table does not exist
+{
+  "statusCode": 500,
+  "code": "TABLE_NOT_FOUND",
+  "url": "/api/v1/dashboard/stats?_t=1756527378815",
+  "method": "GET",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+}
+2025-08-30 12:16:19 [ERROR]: 获取仪表盘统计失败: Table 'wedding_club.schedules' doesn't exist
+Error
+    at Query.run (/app/node_modules/sequelize/lib/dialects/mysql/query.js:52:25)
+    at /app/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async MySQLQueryInterface.rawSelect (/app/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
+    at async Schedule.aggregate (/app/node_modules/sequelize/lib/model.js:1277:19)
+    at async Schedule.count (/app/node_modules/sequelize/lib/model.js:1306:20)
+    at async Promise.all (index 1)
+    at async DashboardService.getDashboardStats (/app/dist/services/dashboard.service.js:29:92)
+    at async getDashboardStats (/app/dist/controllers/dashboard.controller.js:11:23)
+{
+  "name": "SequelizeDatabaseError",
+  "parent": {
+    "code": "ER_NO_SUCH_TABLE",
+    "errno": 1146,
+    "sqlState": "42S02",
+    "sqlMessage": "Table 'wedding_club.schedules' doesn't exist",
+    "sql": "SELECT count(*) AS `count` FROM `schedules` AS `Schedule` WHERE (`Schedule`.`deleted_at` IS NULL AND `Schedule`.`status` = 'confirmed');"
+  },
+  "original": {
+    "code": "ER_NO_SUCH_TABLE",
+    "errno": 1146,
+    "sqlState": "42S02",
+    "sqlMessage": "Table 'wedding_club.schedules' doesn't exist",
+    "sql": "SELECT count(*) AS `count` FROM `schedules` AS `Schedule` WHERE (`Schedule`.`deleted_at` IS NULL AND `Schedule`.`status` = 'confirmed');"
+  },
+  "sql": "SELECT count(*) AS `count` FROM `schedules` AS `Schedule` WHERE (`Schedule`.`deleted_at` IS NULL AND `Schedule`.`status` = 'confirmed');",
+  "parameters": {}
+}
+2025-08-30 12:16:19 [ERROR]: 获取仪表盘统计失败: Table 'wedding_club.schedules' doesn't exist
+Error
+    at Query.run (/app/node_modules/sequelize/lib/dialects/mysql/query.js:52:25)
+    at /app/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async MySQLQueryInterface.rawSelect (/app/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
+    at async Schedule.aggregate (/app/node_modules/sequelize/lib/model.js:1277:19)
+    at async Schedule.count (/app/node_modules/sequelize/lib/model.js:1306:20)
+    at async Promise.all (index 1)
+    at async DashboardService.getDashboardStats (/app/dist/services/dashboard.service.js:29:92)
+    at async getDashboardStats (/app/dist/controllers/dashboard.controller.js:11:23)
+{
+  "name": "SequelizeDatabaseError",
+  "parent": {
+    "code": "ER_NO_SUCH_TABLE",
+    "errno": 1146,
+    "sqlState": "42S02",
+    "sqlMessage": "Table 'wedding_club.schedules' doesn't exist",
+    "sql": "SELECT count(*) AS `count` FROM `schedules` AS `Schedule` WHERE (`Schedule`.`deleted_at` IS NULL AND `Schedule`.`status` = 'confirmed');"
+  },
+  "original": {
+    "code": "ER_NO_SUCH_TABLE",
+    "errno": 1146,
+    "sqlState": "42S02",
+    "sqlMessage": "Table 'wedding_club.schedules' doesn't exist",
+    "sql": "SELECT count(*) AS `count` FROM `schedules` AS `Schedule` WHERE (`Schedule`.`deleted_at` IS NULL AND `Schedule`.`status` = 'confirmed');"
+  },
+  "sql": "SELECT count(*) AS `count` FROM `schedules` AS `Schedule` WHERE (`Schedule`.`deleted_at` IS NULL AND `Schedule`.`status` = 'confirmed');",
+  "parameters": {}
+}
+2025-08-30 12:16:19 [ERROR]: Server Error: Table does not exist
+{
+  "statusCode": 500,
+  "code": "TABLE_NOT_FOUND",
+  "url": "/api/v1/dashboard/stats?_t=1756527378816",
+  "method": "GET",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+}
+2025-08-30 12:16:19 [ERROR]: 获取档期日历失败: Table 'wedding_club.schedules' doesn't exist
+Error
+    at Query.run (/app/node_modules/sequelize/lib/dialects/mysql/query.js:52:25)
+    at /app/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async MySQLQueryInterface.select (/app/node_modules/sequelize/lib/dialects/abstract/query-interface.js:407:12)
+    at async Schedule.findAll (/app/node_modules/sequelize/lib/model.js:1140:21)
+    at async ScheduleService.getUserScheduleCalendar (/app/dist/services/schedule.service.js:154:27)
+    at async getUserScheduleCalendar (/app/dist/controllers/schedule.controller.js:141:26)
+{
+  "name": "SequelizeDatabaseError",
+  "parent": {
+    "code": "ER_NO_SUCH_TABLE",
+    "errno": 1146,
+    "sqlState": "42S02",
+    "sqlMessage": "Table 'wedding_club.schedules' doesn't exist",
+    "sql": "SELECT `id`, `title`, `wedding_date` AS `weddingDate`, `wedding_time` AS `weddingTime`, `status`, `event_type` AS `eventType` FROM `schedules` AS `Schedule` WHERE (`Schedule`.`deleted_at` IS NULL AND (`Schedule`.`user_id` = '86b134d4-829d-11f0-ab42-7a2e4a92be49' AND `Schedule`.`wedding_date` BETWEEN '2025-08-01 00:00:00' AND '2025-08-31 23:59:59')) ORDER BY `weddingDate` ASC, `weddingTime` ASC;"
+  },
+  "original": {
+    "code": "ER_NO_SUCH_TABLE",
+    "errno": 1146,
+    "sqlState": "42S02",
+    "sqlMessage": "Table 'wedding_club.schedules' doesn't exist",
+    "sql": "SELECT `id`, `title`, `wedding_date` AS `weddingDate`, `wedding_time` AS `weddingTime`, `status`, `event_type` AS `eventType` FROM `schedules` AS `Schedule` WHERE (`Schedule`.`deleted_at` IS NULL AND (`Schedule`.`user_id` = '86b134d4-829d-11f0-ab42-7a2e4a92be49' AND `Schedule`.`wedding_date` BETWEEN '2025-08-01 00:00:00' AND '2025-08-31 23:59:59')) ORDER BY `weddingDate` ASC, `weddingTime` ASC;"
+  },
+  "sql": "SELECT `id`, `title`, `wedding_date` AS `weddingDate`, `wedding_time` AS `weddingTime`, `status`, `event_type` AS `eventType` FROM `schedules` AS `Schedule` WHERE (`Schedule`.`deleted_at` IS NULL AND (`Schedule`.`user_id` = '86b134d4-829d-11f0-ab42-7a2e4a92be49' AND `Schedule`.`wedding_date` BETWEEN '2025-08-01 00:00:00' AND '2025-08-31 23:59:59')) ORDER BY `weddingDate` ASC, `weddingTime` ASC;",
+  "parameters": {}
+}
+2025-08-30 12:16:19 [ERROR]: Server Error: Table does not exist
+{
+  "statusCode": 500,
+  "code": "TABLE_NOT_FOUND",
+  "url": "/api/v1/schedules/calendar/86b134d4-829d-11f0-ab42-7a2e4a92be49/2025/8?_t=1756527378816",
+  "method": "GET",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+}
+2025-08-30 12:16:51 [ERROR]: 获取网站配置失败: Table 'wedding_club.system_configs' doesn't exist
+Error
+    at Query.run (/app/node_modules/sequelize/lib/dialects/mysql/query.js:52:25)
+    at /app/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async MySQLQueryInterface.select (/app/node_modules/sequelize/lib/dialects/abstract/query-interface.js:407:12)
+    at async SystemConfig.findAll (/app/node_modules/sequelize/lib/model.js:1140:21)
+    at async SettingsService.getSiteConfig (/app/dist/services/settings.service.js:276:29)
+    at async getSiteConfig (/app/dist/controllers/settings.controller.js:112:24)
+{
+  "name": "SequelizeDatabaseError",
+  "parent": {
+    "code": "ER_NO_SUCH_TABLE",
+    "errno": 1146,
+    "sqlState": "42S02",
+    "sqlMessage": "Table 'wedding_club.system_configs' doesn't exist",
+    "sql": "SELECT `id`, `config_key` AS `configKey`, `config_value` AS `configValue`, `default_value` AS `defaultValue`, `config_type` AS `configType`, `category`, `description`, `validation_rule` AS `validationRule`, `is_public` AS `isPublic`, `is_editable` AS `isEditable`, `sort_order` AS `sortOrder`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt` FROM `system_configs` AS `SystemConfig` WHERE `SystemConfig`.`category` = 'site' AND `SystemConfig`.`is_public` = true ORDER BY `sortOrder` ASC;"
+  },
+  "original": {
+    "code": "ER_NO_SUCH_TABLE",
+    "errno": 1146,
+    "sqlState": "42S02",
+    "sqlMessage": "Table 'wedding_club.system_configs' doesn't exist",
+    "sql": "SELECT `id`, `config_key` AS `configKey`, `config_value` AS `configValue`, `default_value` AS `defaultValue`, `config_type` AS `configType`, `category`, `description`, `validation_rule` AS `validationRule`, `is_public` AS `isPublic`, `is_editable` AS `isEditable`, `sort_order` AS `sortOrder`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt` FROM `system_configs` AS `SystemConfig` WHERE `SystemConfig`.`category` = 'site' AND `SystemConfig`.`is_public` = true ORDER BY `sortOrder` ASC;"
+  },
+  "sql": "SELECT `id`, `config_key` AS `configKey`, `config_value` AS `configValue`, `default_value` AS `defaultValue`, `config_type` AS `configType`, `category`, `description`, `validation_rule` AS `validationRule`, `is_public` AS `isPublic`, `is_editable` AS `isEditable`, `sort_order` AS `sortOrder`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt` FROM `system_configs` AS `SystemConfig` WHERE `SystemConfig`.`category` = 'site' AND `SystemConfig`.`is_public` = true ORDER BY `sortOrder` ASC;",
+  "parameters": {}
+}
+2025-08-30 12:16:51 [ERROR]: 获取网站配置失败: Table 'wedding_club.system_configs' doesn't exist
+Error
+    at Query.run (/app/node_modules/sequelize/lib/dialects/mysql/query.js:52:25)
+    at /app/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async MySQLQueryInterface.select (/app/node_modules/sequelize/lib/dialects/abstract/query-interface.js:407:12)
+    at async SystemConfig.findAll (/app/node_modules/sequelize/lib/model.js:1140:21)
+    at async SettingsService.getSiteConfig (/app/dist/services/settings.service.js:276:29)
+    at async getSiteConfig (/app/dist/controllers/settings.controller.js:112:24)
+{
+  "name": "SequelizeDatabaseError",
+  "parent": {
+    "code": "ER_NO_SUCH_TABLE",
+    "errno": 1146,
+    "sqlState": "42S02",
+    "sqlMessage": "Table 'wedding_club.system_configs' doesn't exist",
+    "sql": "SELECT `id`, `config_key` AS `configKey`, `config_value` AS `configValue`, `default_value` AS `defaultValue`, `config_type` AS `configType`, `category`, `description`, `validation_rule` AS `validationRule`, `is_public` AS `isPublic`, `is_editable` AS `isEditable`, `sort_order` AS `sortOrder`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt` FROM `system_configs` AS `SystemConfig` WHERE `SystemConfig`.`category` = 'site' AND `SystemConfig`.`is_public` = true ORDER BY `sortOrder` ASC;"
+  },
+  "original": {
+    "code": "ER_NO_SUCH_TABLE",
+    "errno": 1146,
+    "sqlState": "42S02",
+    "sqlMessage": "Table 'wedding_club.system_configs' doesn't exist",
+    "sql": "SELECT `id`, `config_key` AS `configKey`, `config_value` AS `configValue`, `default_value` AS `defaultValue`, `config_type` AS `configType`, `category`, `description`, `validation_rule` AS `validationRule`, `is_public` AS `isPublic`, `is_editable` AS `isEditable`, `sort_order` AS `sortOrder`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt` FROM `system_configs` AS `SystemConfig` WHERE `SystemConfig`.`category` = 'site' AND `SystemConfig`.`is_public` = true ORDER BY `sortOrder` ASC;"
+  },
+  "sql": "SELECT `id`, `config_key` AS `configKey`, `config_value` AS `configValue`, `default_value` AS `defaultValue`, `config_type` AS `configType`, `category`, `description`, `validation_rule` AS `validationRule`, `is_public` AS `isPublic`, `is_editable` AS `isEditable`, `sort_order` AS `sortOrder`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt` FROM `system_configs` AS `SystemConfig` WHERE `SystemConfig`.`category` = 'site' AND `SystemConfig`.`is_public` = true ORDER BY `sortOrder` ASC;",
+  "parameters": {}
+}
+2025-08-30 12:16:51 [ERROR]: Server Error: Table does not exist
+{
+  "statusCode": 500,
+  "code": "TABLE_NOT_FOUND",
+  "url": "/api/v1/settings/site-config?_t=1756527411112",
+  "method": "GET",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+}
+2025-08-30 12:23:02 [ERROR]: Server Error: Table does not exist
+{
+  "statusCode": 500,
+  "code": "TABLE_NOT_FOUND",
+  "url": "/api/v1/auth/login",
+  "method": "POST",
+  "ip": "::ffff:172.30.0.7",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+}
+2025-08-30 22:31:33 [ERROR]: Redis client error: connect ECONNREFUSED 172.30.0.7:6379
+Error: connect ECONNREFUSED 172.30.0.7:6379
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1637:16)
+{
+  "errno": -111,
+  "code": "ECONNREFUSED",
+  "syscall": "connect",
+  "address": "172.30.0.7",
+  "port": 6379
+}
+2025-08-30 22:31:33 [ERROR]: Redis client error: connect ECONNREFUSED 172.30.0.7:6379
+Error: connect ECONNREFUSED 172.30.0.7:6379
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1637:16)
+{
+  "errno": -111,
+  "code": "ECONNREFUSED",
+  "syscall": "connect",
+  "address": "172.30.0.7",
+  "port": 6379
+}
+2025-08-30 22:31:33 [ERROR]: Redis client error: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+MaxRetriesPerRequestError: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+    at Socket.<anonymous> (/app/node_modules/ioredis/built/redis/event_handler.js:182:37)
+    at Object.onceWrapper (node:events:633:26)
+    at Socket.emit (node:events:518:28)
+    at TCP.<anonymous> (node:net:346:12)
+2025-08-30 22:31:35 [ERROR]: Redis client error: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+MaxRetriesPerRequestError: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+    at Socket.<anonymous> (/app/node_modules/ioredis/built/redis/event_handler.js:182:37)
+    at Object.onceWrapper (node:events:633:26)
+    at Socket.emit (node:events:518:28)
+    at TCP.<anonymous> (node:net:346:12)
+2025-08-30 22:31:38 [ERROR]: Redis client error: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+MaxRetriesPerRequestError: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+    at Socket.<anonymous> (/app/node_modules/ioredis/built/redis/event_handler.js:182:37)
+    at Object.onceWrapper (node:events:633:26)
+    at Socket.emit (node:events:518:28)
+    at TCP.<anonymous> (node:net:346:12)
+2025-08-30 22:31:42 [ERROR]: Redis client error: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+MaxRetriesPerRequestError: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+    at Socket.<anonymous> (/app/node_modules/ioredis/built/redis/event_handler.js:182:37)
+    at Object.onceWrapper (node:events:633:26)
+    at Socket.emit (node:events:518:28)
+    at TCP.<anonymous> (node:net:346:12)
+2025-08-30 22:31:47 [ERROR]: Redis client error: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+MaxRetriesPerRequestError: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+    at Socket.<anonymous> (/app/node_modules/ioredis/built/redis/event_handler.js:182:37)
+    at Object.onceWrapper (node:events:633:26)
+    at Socket.emit (node:events:518:28)
+    at TCP.<anonymous> (node:net:346:12)
+2025-08-30 22:31:52 [ERROR]: Redis client error: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+MaxRetriesPerRequestError: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+    at Socket.<anonymous> (/app/node_modules/ioredis/built/redis/event_handler.js:182:37)
+    at Object.onceWrapper (node:events:633:26)
+    at Socket.emit (node:events:518:28)
+    at TCP.<anonymous> (node:net:346:12)
+2025-08-30 22:31:58 [ERROR]: Redis client error: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+MaxRetriesPerRequestError: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+    at Socket.<anonymous> (/app/node_modules/ioredis/built/redis/event_handler.js:182:37)
+    at Object.onceWrapper (node:events:633:26)
+    at Socket.emit (node:events:518:28)
+    at TCP.<anonymous> (node:net:346:12)
+2025-08-30 22:32:05 [ERROR]: Redis client error: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+MaxRetriesPerRequestError: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+    at Socket.<anonymous> (/app/node_modules/ioredis/built/redis/event_handler.js:182:37)
+    at Object.onceWrapper (node:events:633:26)
+    at Socket.emit (node:events:518:28)
+    at TCP.<anonymous> (node:net:346:12)
+2025-08-30 22:32:13 [ERROR]: Redis client error: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+MaxRetriesPerRequestError: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+    at Socket.<anonymous> (/app/node_modules/ioredis/built/redis/event_handler.js:182:37)
+    at Object.onceWrapper (node:events:633:26)
+    at Socket.emit (node:events:518:28)
+    at TCP.<anonymous> (node:net:346:12)
+2025-08-30 22:32:21 [ERROR]: Redis client error: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+MaxRetriesPerRequestError: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+    at Socket.<anonymous> (/app/node_modules/ioredis/built/redis/event_handler.js:182:37)
+    at Object.onceWrapper (node:events:633:26)
+    at Socket.emit (node:events:518:28)
+    at TCP.<anonymous> (node:net:346:12)
+2025-08-30 22:32:30 [ERROR]: Redis client error: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+MaxRetriesPerRequestError: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+    at Socket.<anonymous> (/app/node_modules/ioredis/built/redis/event_handler.js:182:37)
+    at Object.onceWrapper (node:events:633:26)
+    at Socket.emit (node:events:518:28)
+    at TCP.<anonymous> (node:net:346:12)
+2025-08-30 22:32:39 [ERROR]: Redis client error: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+MaxRetriesPerRequestError: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+    at Socket.<anonymous> (/app/node_modules/ioredis/built/redis/event_handler.js:182:37)
+    at Object.onceWrapper (node:events:633:26)
+    at Socket.emit (node:events:518:28)
+    at TCP.<anonymous> (node:net:346:12)
+2025-08-30 22:32:48 [ERROR]: Redis client error: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+MaxRetriesPerRequestError: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+    at Socket.<anonymous> (/app/node_modules/ioredis/built/redis/event_handler.js:182:37)
+    at Object.onceWrapper (node:events:633:26)
+    at Socket.emit (node:events:518:28)
+    at TCP.<anonymous> (node:net:346:12)
+2025-08-30 22:32:57 [ERROR]: Redis client error: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+MaxRetriesPerRequestError: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+    at Socket.<anonymous> (/app/node_modules/ioredis/built/redis/event_handler.js:182:37)
+    at Object.onceWrapper (node:events:633:26)
+    at Socket.emit (node:events:518:28)
+    at TCP.<anonymous> (node:net:346:12)
+2025-08-30 22:33:06 [ERROR]: Redis client error: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+MaxRetriesPerRequestError: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+    at Socket.<anonymous> (/app/node_modules/ioredis/built/redis/event_handler.js:182:37)
+    at Object.onceWrapper (node:events:633:26)
+    at Socket.emit (node:events:518:28)
+    at TCP.<anonymous> (node:net:346:12)
+2025-08-30 22:33:15 [ERROR]: Redis client error: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+MaxRetriesPerRequestError: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+    at Socket.<anonymous> (/app/node_modules/ioredis/built/redis/event_handler.js:182:37)
+    at Object.onceWrapper (node:events:633:26)
+    at Socket.emit (node:events:518:28)
+    at TCP.<anonymous> (node:net:346:12)
+2025-08-30 22:33:25 [ERROR]: Redis client error: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+MaxRetriesPerRequestError: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+    at Socket.<anonymous> (/app/node_modules/ioredis/built/redis/event_handler.js:182:37)
+    at Object.onceWrapper (node:events:633:26)
+    at Socket.emit (node:events:518:28)
+    at TCP.<anonymous> (node:net:346:12)
+2025-08-30 22:33:34 [ERROR]: Redis client error: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+MaxRetriesPerRequestError: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+    at Socket.<anonymous> (/app/node_modules/ioredis/built/redis/event_handler.js:182:37)
+    at Object.onceWrapper (node:events:633:26)
+    at Socket.emit (node:events:518:28)
+    at TCP.<anonymous> (node:net:346:12)
+2025-08-30 22:33:43 [ERROR]: Redis client error: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+MaxRetriesPerRequestError: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+    at Socket.<anonymous> (/app/node_modules/ioredis/built/redis/event_handler.js:182:37)
+    at Object.onceWrapper (node:events:633:26)
+    at Socket.emit (node:events:518:28)
+    at TCP.<anonymous> (node:net:346:12)
+2025-08-30 22:33:52 [ERROR]: Redis client error: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+MaxRetriesPerRequestError: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+    at Socket.<anonymous> (/app/node_modules/ioredis/built/redis/event_handler.js:182:37)
+    at Object.onceWrapper (node:events:633:26)
+    at Socket.emit (node:events:518:28)
+    at TCP.<anonymous> (node:net:346:12)
+2025-08-30 22:34:01 [ERROR]: Redis client error: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+MaxRetriesPerRequestError: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+    at Socket.<anonymous> (/app/node_modules/ioredis/built/redis/event_handler.js:182:37)
+    at Object.onceWrapper (node:events:633:26)
+    at Socket.emit (node:events:518:28)
+    at TCP.<anonymous> (node:net:346:12)
+2025-08-30 22:34:10 [ERROR]: Redis client error: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+MaxRetriesPerRequestError: Reached the max retries per request limit (which is 3). Refer to "maxRetriesPerRequest" option for details.
+    at Socket.<anonymous> (/app/node_modules/ioredis/built/redis/event_handler.js:182:37)
+    at Object.onceWrapper (node:events:633:26)
+    at Socket.emit (node:events:518:28)
+    at TCP.<anonymous> (node:net:346:12)

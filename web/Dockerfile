@@ -10,27 +10,29 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 # 设置工作目录
 WORKDIR /app
 
-# 复制package文件
-COPY package*.json ./
-
 # 配置npm镜像源（使用可靠的淘宝镜像源）
 RUN npm config set registry https://registry.npmmirror.com && \
     npm config set cache /tmp/.npm
+
+# 复制package文件
+COPY package*.json ./
 
 # 安装依赖（优化参数以提升安装速度）
 RUN npm ci --legacy-peer-deps --no-audit --no-fund --progress=false && \
     rm -rf /tmp/.npm /root/.npm
 
-# 设置生产环境变量（提前设置以优化缓存）
-ENV NODE_ENV=production
-ENV VITE_API_URL=http://127.0.0.1/api
-ENV VITE_UPLOAD_URL=http://127.0.0.1/upload
-
-# 复制源代码（.dockerignore应排除node_modules等不必要文件）
+# 复制所有源代码和配置文件
 COPY . .
 
+# 设置生产环境变量（提前设置以优化缓存）
+ENV NODE_ENV=production
+ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_UPLOAD_URL=${VITE_UPLOAD_URL}
+ENV VITE_MINIO_URL=${VITE_MINIO_URL}
+
 # 构建应用（使用并行构建优化）
-RUN npm run build --max_old_space_size=4096 && \
+# 在构建前强制清理旧的构建产物
+RUN rm -rf dist && npm run build --max_old_space_size=4096 && \
     rm -rf node_modules/.cache /tmp/* /var/tmp/* /root/.npm
 
 # 生产阶段 - 使用nginx提供静态文件服务

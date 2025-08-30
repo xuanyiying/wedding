@@ -89,7 +89,7 @@ jobs:
           echo "key=${{ secrets.PROD_SSH_KEY }}" >> $GITHUB_OUTPUT
           echo "port=${{ secrets.PROD_PORT || 22 }}" >> $GITHUB_OUTPUT
           echo "deploy_path=/opt/wedding-club" >> $GITHUB_OUTPUT
-          echo "compose_file=docker-compose.prod.yml" >> $GITHUB_OUTPUT
+          echo "compose_file=docker-compose.production.yml" >> $GITHUB_OUTPUT
           echo "health_url=https://wedding.example.com" >> $GITHUB_OUTPUT
         fi
     

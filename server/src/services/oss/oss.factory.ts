@@ -24,13 +24,13 @@ export class OssFactory {
           throw new Error('MinIO configuration is required when type is "minio"');
         }
         return new MinIOService(config.minio);
-      
+
       case 'aliyun':
         if (!config.oss) {
           throw new Error('OSS configuration is required when type is "aliyun"');
         }
         return new AliyunOssService(config.oss);
-      
+
       default:
         throw new Error(`Unsupported Oss type: ${config.type}`);
     }
@@ -63,7 +63,7 @@ export class OssFactory {
    */
   static createConfigFromEnv(): OssConfig {
     const OssType = (process.env.OSS_TYPE || 'minio') as OssType;
-    
+
     const config: OssConfig = {
       type: OssType
     };

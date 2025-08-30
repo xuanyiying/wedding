@@ -1,3 +1,7 @@
+# 生产环境 Docker Compose 配置
+# Wedding Client Production Environment
+
+version: '3.8'
 
 services:
   # Web前端服务 - 使用本地构建的镜像
@@ -21,8 +25,7 @@ services:
     container_name: wedding-nginx
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "8080:80"
     volumes:
       - ../web/nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
       - ./logs/nginx:/var/log/nginx
@@ -35,7 +38,7 @@ services:
     environment:
       - TZ=Asia/Shanghai
     healthcheck:
-      test: ["CMD", "sh", "-c", "wget --no-verbose --try=1 --timeout=1 -O /dev/null http://127.0.0.1/health || exit 1"]
+      test: ["CMD", "sh", "-c", "wget --no-verbose --tries=1 --timeout=1 -O /dev/null http://localhost/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -74,6 +77,7 @@ services:
       - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
       - MINIO_BUCKET=${MINIO_BUCKET}
       - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
+      - MINIO_PUBLIC_ENDPOINT=${MINIO_PUBLIC_ENDPOINT}
       
       # JWT配置
       - JWT_SECRET=${JWT_SECRET}
@@ -106,7 +110,7 @@ services:
     networks:
       - wedding-net
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -197,7 +201,7 @@ services:
       - wedding-net
     command: server /data --console-address ":9001"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "curl", "-f", "http://localhost/minio/health/live"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -212,7 +216,7 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.30.0.0/16
+        - subnet: 172.31.0.0/16
     labels:
       - "com.wedding.network=main"
       - "com.wedding.environment=production"

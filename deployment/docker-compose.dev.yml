@@ -1,0 +1,215 @@
+# 开发环境 Docker Compose 配置
+# Wedding Client Development Environment
+
+version: '3.8'
+
+services:
+  # Web前端服务 - 开发模式
+  web:
+    build:
+      context: ../web
+      dockerfile: Dockerfile.dev
+    container_name: wedding-web-dev
+    restart: always
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../web:/app
+      - /app/node_modules
+    networks:
+      - wedding-dev-net
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://$SERVER_IP:3000/api
+      - VITE_UPLOAD_URL=http://$SERVER_IP:3000/upload
+      - VITE_MINIO_URL=http://$SERVER_IP:9000
+    labels:
+      - "com.wedding.service=web"
+      - "com.wedding.environment=development"
+
+  # API服务器 - 开发模式
+  api:
+    build:
+      context: ../server
+      dockerfile: Dockerfile.dev
+    container_name: wedding-api-dev
+    restart: always
+    ports:
+      - "3000:3000"
+      - "9090:9090"
+    volumes:
+      - ../server:/app
+      - /app/node_modules
+      - ./logs/api:/app/logs
+      - ./uploads:/app/uploads
+    depends_on:
+      - mysql
+      - redis
+      - minio
+    networks:
+      - wedding-dev-net
+    environment:
+      # 数据库配置
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=wedding_dev
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+      
+      # Redis配置
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      
+      # MinIO配置
+      - OSS_TYPE=minio
+      - OSS_ENDPOINT=http://minio:9000
+      - OSS_ACCESS_KEY=minioadmin
+      - OSS_SECRET_KEY=minioadmin123
+      - OSS_BUCKET=wedding-media-dev
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin123
+      - MINIO_BUCKET=wedding-media-dev
+      - MINIO_BUCKET_NAME=wedding-media-dev
+      - MINIO_PUBLIC_ENDPOINT=http://$SERVER_IP:9000
+      
+      # JWT配置
+      - JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+      - JWT_REFRESH_SECRET=your-super-secret-refresh-key-change-this-in-production
+      
+      # SMTP邮件配置
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_SECURE=false
+      - SMTP_USER=your-email@gmail.com
+      - SMTP_PASS=your-app-password
+      - SMTP_FROM=Wedding Club Dev <dev@weddingclub.com>
+      
+      # 应用配置
+      - NODE_ENV=development
+      - PORT=3000
+      - LOG_LEVEL=debug
+      - CORS_ORIGIN=http://$SERVER_IP:5173
+      - TZ=Asia/Shanghai
+    labels:
+      - "com.wedding.service=api"
+      - "com.wedding.environment=development"
+
+  # MySQL数据库
+  mysql:
+    image: mysql:8.0
+    container_name: wedding-mysql-dev
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=wedding_dev
+      - MYSQL_USER=wedding_user
+      - MYSQL_PASSWORD=wedding_pass
+      - TZ=Asia/Shanghai
+    volumes:
+      - mysql_dev_data:/var/lib/mysql
+      - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+      - ./logs/mysql:/var/log/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - wedding-dev-net
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    labels:
+      - "com.wedding.service=mysql"
+      - "com.wedding.environment=development"
+
+  # Redis缓存服务
+  redis:
+    image: redis:7-alpine
+    container_name: wedding-redis-dev
+    restart: always
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - redis_dev_data:/data
+      - ./logs/redis:/var/log/redis
+    ports:
+      - "6379:6379"
+    networks:
+      - wedding-dev-net
+    command: redis-server --appendonly yes --appendfsync everysec
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "com.wedding.service=redis"
+      - "com.wedding.environment=development"
+
+  # MinIO对象存储
+  minio:
+    image: minio/minio:latest
+    container_name: wedding-minio-dev
+    restart: always
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin123
+      - TZ=Asia/Shanghai
+    volumes:
+      - minio_dev_data:/data
+      - ./logs/minio:/var/log/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - wedding-dev-net
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "com.wedding.service=minio"
+      - "com.wedding.environment=development"
+
+# 网络配置
+networks:
+  wedding-dev-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.32.0.0/16
+    labels:
+      - "com.wedding.network=main"
+      - "com.wedding.environment=development"
+
+# 数据卷配置
+volumes:
+  # 开发环境数据
+  mysql_dev_data:
+    driver: local
+    labels:
+      - "com.wedding.volume=mysql"
+      - "com.wedding.environment=development"
+  
+  redis_dev_data:
+    driver: local
+    labels:
+      - "com.wedding.volume=redis"
+      - "com.wedding.environment=development"
+  
+  minio_dev_data:
+    driver: local
+    labels:
+      - "com.wedding.volume=minio"
+      - "com.wedding.environment=development"
