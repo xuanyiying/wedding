@@ -1,8 +1,6 @@
 # 开发环境 Docker Compose 配置
 # Wedding Client Development Environment
 
-version: '3.8'
-
 services:
   # Web前端服务 - 开发模式
   web:

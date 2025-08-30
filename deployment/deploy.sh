@@ -17,7 +17,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # 默认环境
-DEFAULT_ENV="tencent"
+DEFAULT_ENV="prod"
 
 # 显示帮助信息
 show_help() {

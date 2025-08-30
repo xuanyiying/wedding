@@ -1,8 +1,6 @@
 # 腾讯云环境 Docker Compose 配置
 # Wedding Client Tencent Cloud Environment
 
-version: '3.8'
-
 services:
   # Web前端服务 - 使用本地构建的镜像
   web:

@@ -248,17 +248,17 @@ build_images() {
     if [[ -f "web/Dockerfile" ]]; then
         log_info "构建Web镜像..."
         # 强制重新构建，不使用缓存
-        docker build --no-cache -t wedding-web:latest --build-arg ENV_FILE="$ENV_FILE" web/ || {
+        docker build --no-cache -t wedding-web:latest web/ || {
             log_error "Web镜像构建失败"
             return 1
         }
     fi
-    
+
     # 构建API镜像
     if [[ -f "server/Dockerfile" ]]; then
         log_info "构建API镜像..."
         # 强制重新构建，不使用缓存
-        docker build --no-cache -t wedding-api:latest --build-arg ENV_FILE="$ENV_FILE" server/ || {
+        docker build --no-cache -t wedding-api:latest server/ || {
             log_error "API镜像构建失败"
             return 1
         }
@@ -320,7 +320,7 @@ rebuild_deploy() {
     if [[ -f "web/Dockerfile" ]]; then
         log_info "构建Web镜像..."
         # 强制重新构建，不使用缓存
-        docker build --no-cache -t wedding-web:latest --build-arg ENV_FILE="$ENV_FILE" web/ || {
+        docker build --no-cache -t wedding-web:latest web/ || {
             log_error "Web镜像构建失败"
             return 1
         }
@@ -330,7 +330,7 @@ rebuild_deploy() {
     if [[ -f "server/Dockerfile" ]]; then
         log_info "构建API镜像..."
         # 强制重新构建，不使用缓存
-        docker build --no-cache -t wedding-api:latest --build-arg ENV_FILE="$ENV_FILE" server/ || {
+        docker build --no-cache -t wedding-api:latest server/ || {
             log_error "API镜像构建失败"
             return 1
         }
