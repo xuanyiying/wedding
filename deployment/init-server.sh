@@ -40,14 +40,11 @@ log_info "检测到环境类型: $ENV_TYPE"
 
 # 设置配置文件路径
 if [[ "$ENV_TYPE" == "development" ]]; then
-    COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.dev.yml"
-    ENV_FILE="$PROJECT_ROOT/deployment/.env.dev"
-elif [[ "$ENV_TYPE" == "tencent" ]]; then
-    COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.tencent.yml"
-    ENV_FILE="$PROJECT_ROOT/deployment/.env.tencent"
+    COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.development.yml"
+    ENV_FILE="$PROJECT_ROOT/deployment/.env.development"
 else
-    COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.prod.yml"
-    ENV_FILE="$PROJECT_ROOT/deployment/.env.prod"
+    COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.production.yml"
+    ENV_FILE="$PROJECT_ROOT/deployment/.env.production"
 fi
 
 # 检查服务状态

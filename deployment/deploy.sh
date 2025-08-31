@@ -16,21 +16,13 @@ NC='\033[0m'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# 默认环境
-DEFAULT_ENV="prod"
-
 # 显示帮助信息
 show_help() {
     echo -e "${BLUE}========================================${NC}"
     echo -e "${BLUE}    Wedding Client 精简部署工具${NC}"
     echo -e "${BLUE}========================================${NC}"
     echo ""
-    echo "使用方法: ./deploy.sh [命令] [环境]"
-    echo ""
-    echo -e "${GREEN}环境选项:${NC}"
-    echo "  tencent    腾讯云环境 (默认)"
-    echo "  prod       生产环境"
-    echo "  dev        开发环境"
+    echo "使用方法: ./deploy.sh [命令]"
     echo ""
     echo -e "${GREEN}核心命令:${NC}"
     echo "  start         启动服务"
@@ -50,9 +42,9 @@ show_help() {
     echo "  diagnose      诊断文件上传问题"
     echo ""
     echo "示例:"
-    echo "  ./deploy.sh deploy tencent    # 腾讯云完整部署"
-    echo "  ./deploy.sh logs api prod     # 查看生产环境API日志"
-    echo "  ./deploy.sh diagnose dev      # 诊断开发环境文件上传问题"
+    echo "  ./deploy.sh deploy    # 完整部署"
+    echo "  ./deploy.sh logs api  # 查看API日志"
+    echo "  ./deploy.sh diagnose  # 诊断文件上传问题"
     echo ""
     echo -e "${GREEN}Swagger文档:${NC} http://YOUR_IP/api/v1/docs"
     echo ""
@@ -66,47 +58,29 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 # 检测环境
 detect_environment() {
-    if [[ -f "$PROJECT_ROOT/deployment/.env.tencent" ]]; then
+    if docker images --format "{{.Repository}}:{{.Tag}}" | grep -q "^deployment-web:latest$"; then
         echo "tencent"
-    elif [[ -f "$PROJECT_ROOT/deployment/.env.prod" ]]; then
-        echo "prod"
     else
-        echo "tencent"
+        echo "prod"
     fi
 }
 
 # 获取配置文件路径
 get_config_files() {
-    local env=${1:-$DEFAULT_ENV}
-    
-    case "$env" in
-        tencent)
-            COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.tencent.yml"
-            ENV_FILE="$PROJECT_ROOT/deployment/.env.tencent"
-            ;;
-        prod)
-            COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.prod.yml"
-            ENV_FILE="$PROJECT_ROOT/deployment/.env.prod"
-            ;;
-        dev)
-            COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.dev.yml"
-            ENV_FILE="$PROJECT_ROOT/deployment/.env.dev"
-            ;;
-        *)
-            COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.tencent.yml"
-            ENV_FILE="$PROJECT_ROOT/deployment/.env.tencent"
-            ;;
-    esac
-    
-    export ENV=$env
+    local env=$(detect_environment)
+    if [[ "$env" == "deployment" ]]; then
+        COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.deployment.yml"
+        ENV_FILE="$PROJECT_ROOT/deployment/.env.deployment"
+    else
+        COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.production.yml"
+        ENV_FILE="$PROJECT_ROOT/deployment/.env.production"
+    fi
 }
 
 # 启动服务
 start_services() {
-    local env=${1:-$DEFAULT_ENV}
-    get_config_files "$env"
-    
-    log_info "启动Wedding Client服务 ($env)..."
+    log_info "启动Wedding Client服务..."
+    get_config_files
     
     cd "$PROJECT_ROOT"
     
@@ -123,16 +97,14 @@ start_services() {
     docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d web nginx
     
     sleep 10
-    show_status "$env"
+    show_status
     log_success "服务启动完成！"
 }
 
 # 停止服务
 stop_services() {
-    local env=${1:-$DEFAULT_ENV}
-    get_config_files "$env"
-    
-    log_info "停止Wedding Client服务 ($env)..."
+    log_info "停止Wedding Client服务..."
+    get_config_files
     
     cd "$PROJECT_ROOT"
     docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" down --remove-orphans
@@ -142,58 +114,46 @@ stop_services() {
 
 # 重启服务
 restart_services() {
-    local env=${1:-$DEFAULT_ENV}
-    log_info "重启Wedding Client服务 ($env)..."
-    stop_services "$env"
+    log_info "重启Wedding Client服务..."
+    stop_services
     sleep 5
-    start_services "$env"
+    start_services
 }
 
 # 显示状态
 show_status() {
-    local env=${1:-$DEFAULT_ENV}
-    get_config_files "$env"
+    get_config_files
     
     echo -e "\n${BLUE}========================================${NC}"
-    echo -e "${BLUE}    服务状态信息 ($env)${NC}"
+    echo -e "${BLUE}    服务状态信息${NC}"
     echo -e "${BLUE}========================================${NC}"
     
     cd "$PROJECT_ROOT"
     docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" ps
     
     echo -e "\n${BLUE}访问地址:${NC}"
-    local server_ip=$(grep "SERVER_IP=" "$ENV_FILE" | cut -d'=' -f2)
+    local server_ip=$(hostname -I | awk '{print $1}' || echo "localhost")
+    local env=$(detect_environment)
     
-    case "$env" in
-        tencent)
-            echo -e "  前端:    ${GREEN}http://$server_ip${NC}"
-            echo -e "  API:     ${GREEN}http://$server_ip/api/v1${NC}"
-            echo -e "  Swagger: ${GREEN}http://$server_ip/api/v1/docs${NC}"
-            ;;
-        prod)
-            local web_port=$(grep "WEB_PORT=" "$ENV_FILE" | cut -d'=' -f2)
-            local api_port=$(grep "API_PORT=" "$ENV_FILE" | cut -d'=' -f2)
-            echo -e "  前端:    ${GREEN}http://$server_ip:$web_port${NC}"
-            echo -e "  API:     ${GREEN}http://$server_ip:$api_port/api/v1${NC}"
-            echo -e "  Swagger: ${GREEN}http://$server_ip:$api_port/api/v1/docs${NC}"
-            ;;
-        dev|*)
-            echo -e "  前端:    ${GREEN}http://$server_ip:5173${NC}"
-            echo -e "  API:     ${GREEN}http://$server_ip:3000/api/v1${NC}"
-            echo -e "  Swagger: ${GREEN}http://$server_ip:3000/api/v1/docs${NC}"
-            ;;
-    esac
+    if [[ "$env" == "tencent" ]]; then
+        echo -e "  前端:    ${GREEN}http://$server_ip${NC}"
+        echo -e "  API:     ${GREEN}http://$server_ip/api/v1${NC}"
+        echo -e "  Swagger: ${GREEN}http://$server_ip/api/v1/docs${NC}"
+    else
+        echo -e "  前端:    ${GREEN}http://$server_ip:8080${NC}"
+        echo -e "  API:     ${GREEN}http://$server_ip:3000/api/v1${NC}"
+        echo -e "  Swagger: ${GREEN}http://$server_ip:3000/api/v1/docs${NC}"
+    fi
     echo -e "  MinIO:   ${GREEN}http://$server_ip:9001${NC}"
     echo ""
 }
 
 # 完整部署
 deploy_full() {
-    local env=${1:-$DEFAULT_ENV}
-    log_info "开始完整部署 ($env)..."
+    log_info "开始完整部署..."
     
     # 停止现有服务
-    stop_services "$env" 2>/dev/null || true
+    stop_services 2>/dev/null || true
     
     # 清理资源，包括 wedding-web 和 wedding-api 镜像和容器
     clean_resources
@@ -234,7 +194,7 @@ deploy_full() {
     fi
     
     # 启动服务
-    start_services "$env"
+    start_services
     
     # 健康检查
     health_check
@@ -249,11 +209,10 @@ deploy_full() {
 
 # 重新构建部署
 rebuild_deploy() {
-    local env=${1:-$DEFAULT_ENV}
-    log_info "开始重新构建并部署 ($env)..."
+    log_info "开始重新构建并部署..."
     
     # 停止服务
-    stop_services "$env" 2>/dev/null || true
+    stop_services 2>/dev/null || true
     
     # 清理资源，包括 wedding-web 和 wedding-api 镜像和容器
     clean_resources
@@ -294,7 +253,7 @@ rebuild_deploy() {
     fi
     
     # 启动服务
-    start_services "$env"
+    start_services
     
     # 健康检查
     health_check
@@ -352,8 +311,7 @@ health_check() {
 # 查看日志
 show_logs() {
     local service="$1"
-    local env=${2:-$DEFAULT_ENV}
-    get_config_files "$env"
+    get_config_files
     
     cd "$PROJECT_ROOT"
     
@@ -368,13 +326,10 @@ show_logs() {
 
 # 清理资源
 clean_resources() {
-    local env=${1:-$DEFAULT_ENV}
-    get_config_files "$env"
-    
-    log_info "清理Docker资源 ($env)..."
+    log_info "清理Docker资源..."
     
     # 停止服务
-    stop_services "$env" 2>/dev/null || true
+    stop_services 2>/dev/null || true
     
     # 停止并移除 wedding-web 和 wedding-api 容器（如果存在）
     log_info "停止并移除 wedding-web 和 wedding-api 容器..."
@@ -414,39 +369,37 @@ test_config() {
 # 主函数
 main() {
     local command="${1:-help}"
-    local env="${2:-$DEFAULT_ENV}"
     
     case $command in
         start)
-            start_services "$env"
+            start_services
             ;;
         stop)
-            stop_services "$env"
+            stop_services
             ;;
         restart)
-            restart_services "$env"
+            restart_services
             ;;
         status)
-            show_status "$env"
+            show_status
             ;;
         deploy)
-            deploy_full "$env"
+            deploy_full
             ;;
         rebuild)
-            rebuild_deploy "$env"
+            rebuild_deploy
             ;;
         logs)
-            local service="$3"
-            show_logs "$service" "$env"
+            show_logs "$2"
             ;;
         clean)
-            clean_resources "$env"
+            clean_resources
             ;;
         health)
-            health_check "$env"
+            health_check
             ;;
         test)
-            test_config "$env"
+            test_config
             ;;
         help|--help|-h)
             show_help

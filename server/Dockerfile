@@ -1,7 +1,7 @@
-# Wedding Club Server - 生产环境 Dockerfile
+# Wedding Club Server - 统一构建 Dockerfile
 # 多阶段构建，优化镜像大小和安全性
 
-# 多阶段构建：构建阶段 + 生产阶段
+# 多阶段构建：构建阶段 + 运行阶段
 
 # 构建阶段 - 使用最新的安全Alpine镜像提升构建速度
 FROM node:22.17.1-alpine AS builder
@@ -31,14 +31,19 @@ RUN npm run build && \
     npm cache clean --force && \
     rm -rf /tmp/.npm /root/.npm
 
-# 生产阶段
-FROM node:22.17.1-alpine AS development
+# 运行阶段 - 根据构建参数选择不同的环境
+FROM node:22.17.1-alpine AS runner
+
+# 构建参数
+ARG ENVIRONMENT=development
+ARG SERVER_IP=localhost
 
 # 设置环境变量
 ENV TZ=Asia/Shanghai \
-    NODE_ENV=production \
-    PORT=${API_PORT} \
-    LOG_LEVEL=${LOG_LEVEL}
+    NODE_ENV=${ENVIRONMENT} \
+    PORT=3000 \
+    LOG_LEVEL=info \
+    SERVER_IP=${SERVER_IP}
 
 # 配置Alpine镜像源并快速配置运行环境
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
@@ -59,13 +64,13 @@ COPY --from=builder --chown=wedding:nodejs /app/package*.json ./
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:${API_PORT}/api/v1/health || exit 1
+    CMD curl -f http://localhost:3000/api/v1/health || exit 1
 
 # 切换到非root用户
 USER wedding
 
 # 暴露端口
-EXPOSE ${API_PORT} 9090
+EXPOSE 3000 9090
 
 # 使用dumb-init作为PID 1，处理信号
 ENTRYPOINT ["dumb-init", "--"]
@@ -76,6 +81,6 @@ CMD ["node", "dist/server.js"]
 # 添加标签
 LABEL maintainer="Wedding Club Team" \
     version="1.0.0" \
-    description="Wedding Club Server - Production" \
+    description="Wedding Club Server - Unified Build" \
     com.wedding.service="api" \
-    com.wedding.environment="production"
+    com.wedding.environment="${ENVIRONMENT}"

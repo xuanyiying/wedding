@@ -906,9 +906,9 @@ disaster_recovery() {
     
     # Stop services
     log_info "Stopping services for disaster recovery"
-    if [[ -f "$PROJECT_ROOT/deployment/docker-compose.dev.yml" ]]; then
+    if [[ -f "$PROJECT_ROOT/docker-compose.yml" ]]; then
         cd "$PROJECT_ROOT"
-        docker-compose -f "$PROJECT_ROOT/deployment/docker-compose.dev.yml" down 2>/dev/null || log_warning "Failed to stop Docker services"
+        docker-compose down 2>/dev/null || log_warning "Failed to stop Docker services"
     fi
     
     # Restore from backup
@@ -916,9 +916,9 @@ disaster_recovery() {
     
     # Start services
     log_info "Starting services after disaster recovery"
-    if [[ -f "$PROJECT_ROOT/deployment/docker-compose.dev.yml" ]]; then
+    if [[ -f "$PROJECT_ROOT/docker-compose.yml" ]]; then
         cd "$PROJECT_ROOT"
-        docker-compose -f "$PROJECT_ROOT/deployment/docker-compose.dev.yml" up -d 2>/dev/null || log_warning "Failed to start Docker services"
+        docker-compose up -d 2>/dev/null || log_warning "Failed to start Docker services"
     fi
     
     log_success "Disaster recovery completed using backup: $latest_backup"

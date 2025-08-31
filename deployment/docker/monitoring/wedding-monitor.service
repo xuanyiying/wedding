@@ -1,0 +1,46 @@
+[Unit]
+Description=Wedding Client Monitoring Service
+Documentation=https://github.com/xuanyiying/wedding
+After=network.target docker.service
+Wants=docker.service
+Requires=network.target
+
+[Service]
+Type=forking
+User=root
+Group=root
+WorkingDirectory=/opt/wedding/deployment/monitoring
+ExecStart=/opt/wedding/deployment/monitoring/monitor.sh start
+ExecStop=/opt/wedding/deployment/monitoring/monitor.sh stop
+ExecReload=/opt/wedding/deployment/monitoring/monitor.sh restart
+PIDFile=/opt/wedding/deployment/monitoring/monitor.pid
+Restart=always
+RestartSec=10
+TimeoutStartSec=60
+TimeoutStopSec=30
+
+# 环境变量
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=HOME=/root
+Environment=SHELL=/bin/bash
+
+# 安全设置
+NoNewPrivileges=false
+PrivateTmp=false
+ProtectSystem=false
+ProtectHome=false
+
+# 资源限制
+LimitNOFILE=65536
+LimitNPROC=4096
+MemoryLimit=512M
+CPUQuota=50%
+
+# 日志设置
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=wedding-monitor
+
+[Install]
+WantedBy=multi-user.target
+Alias=wedding-monitor.service
