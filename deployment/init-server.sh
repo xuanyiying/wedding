@@ -41,10 +41,10 @@ log_info "检测到环境类型: $ENV_TYPE"
 # 设置配置文件路径
 if [[ "$ENV_TYPE" == "development" ]]; then
     COMPOSE_FILE="$PROJECT_ROOT/docker-compose.yml"
-    ENV_FILE="$PROJECT_ROOT/deployment/environments/.env.dev"
+    ENV_FILE="$PROJECT_ROOT/.env"
 else
     COMPOSE_FILE="$PROJECT_ROOT/docker-compose.yml"
-    ENV_FILE="$PROJECT_ROOT/deployment/environments/.env.prod"
+    ENV_FILE="$PROJECT_ROOT/.env"
 fi
 
 # 检查服务状态

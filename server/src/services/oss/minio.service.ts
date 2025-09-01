@@ -332,25 +332,32 @@ export class MinIOService implements OssService {
    */
   async getPresignedUploadUrl(key: string, expires: number = 3600, contentType?: string): Promise<string> {
     try {
+      console.log('=== PRESIGNED URL GENERATION START ===');
+      console.log('Input parameters:', { key, expires, contentType });
+      console.log('MinIO config:', {
+        endpoint: this.config.endpoint,
+        accessKeyId: this.config.accessKeyId,
+        bucket: this.bucket
+      });
+      console.log('Environment variables:', {
+        MINIO_PUBLIC_ENDPOINT: process.env.MINIO_PUBLIC_ENDPOINT,
+        VITE_MINIO_URL: process.env.VITE_MINIO_URL
+      });
+
       const command = new PutObjectCommand({
         Bucket: this.bucket,
         Key: key,
         ContentType: contentType
       });
 
-      let url = await getSignedUrl(this.s3Client, command, { expiresIn: expires });
-
-      // 如果有公网访问地址配置，替换URL中的内网地址
-      const publicEndpoint = process.env.MINIO_PUBLIC_ENDPOINT || process.env.VITE_MINIO_URL;
-      if (publicEndpoint) {
-        // 替换内网地址为公网地址
-        const internalEndpoint = this.config.endpoint;
-        if (url.startsWith(internalEndpoint)) {
-          url = url.replace(internalEndpoint, publicEndpoint);
-        }
-      }
-
-      return url;
+      // 使用内部MinIO地址生成签名
+      const internalUrl = await getSignedUrl(this.s3Client, command, { expiresIn: expires });
+      
+      console.log('=== MinIO Service Debug ===');
+      console.log('Internal URL generated:', internalUrl);
+      
+      // 直接返回内部URL，让nginx代理处理
+      return internalUrl;
     } catch (error) {
       console.error('Error generating presigned upload URL:', error);
       throw new Error('Failed to generate presigned upload URL');

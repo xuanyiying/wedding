@@ -163,7 +163,7 @@ check_changes() {
     api_current_hash=$(find server/src -type f -name "*.ts" -o -name "*.js" | sort | xargs md5sum | md5sum | awk '{print $1}')
     
     # 计算配置文件哈希值
-    config_current_hash=$(find deployment/environments deployment/docker/nginx deployment/docker/mysql deployment/docker/redis -type f | sort | xargs md5sum | md5sum | awk '{print $1}')
+    config_current_hash=$(find deployment/environments deployment/docker/mysql deployment/docker/redis -type f | sort | xargs md5sum | md5sum | awk '{print $1}')
     
     local web_changed=false
     local api_changed=false

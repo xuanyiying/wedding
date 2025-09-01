@@ -52,7 +52,3 @@ pids
 # Temporary folders
 tmp
 temp
-
-# 保留部署配置文件
-!deployment/docker/nginx/nginx.conf
-!deployment/docker/nginx/conf.d/default.conf

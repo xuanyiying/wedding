@@ -129,8 +129,27 @@ export class DirectUploadService {
       fileSize
     });
 
+    console.log('=== DIRECT UPLOAD SERVICE RETURN ===');
+    console.log('Original presignedUrl from OSS service:', presignedUrl);
+    
+    // 检查是否需要替换URL
+    let finalPresignedUrl = presignedUrl;
+    
+    // 如果URL包含localhost:9000，保持不变（直接访问MinIO）
+    // 如果URL包含其他地址，可能需要替换
+    if (presignedUrl.includes('localhost:9000')) {
+      console.log('URL contains localhost:9000, keeping as is for direct MinIO access');
+      finalPresignedUrl = presignedUrl;
+    } else {
+      console.log('URL does not contain localhost:9000, checking for replacement');
+      finalPresignedUrl = presignedUrl;
+    }
+    
+    console.log('Final presignedUrl to return:', finalPresignedUrl);
+    console.log('=== DIRECT UPLOAD SERVICE RETURN END ===');
+
     return {
-      presignedUrl,
+      presignedUrl: finalPresignedUrl,
       uploadSessionId: sessionId,
       ossKey,
       expires
