@@ -198,7 +198,7 @@ mkdir -p "$BACKUP_DIR" "$BACKUP_DIR/database" "$BACKUP_DIR/files" "$BACKUP_DIR/u
 
 # Load environment configuration
 load_env_config() {
-    local env_file="$PROJECT_ROOT/.env.$ENVIRONMENT"
+    local env_file="$PROJECT_ROOT/deployment/environments/.env.$ENVIRONMENT"
     
     if [[ -f "$env_file" ]]; then
         set -a  # automatically export all variables

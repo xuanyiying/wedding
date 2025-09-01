@@ -58,22 +58,20 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 # 检测环境
 detect_environment() {
-    if docker images --format "{{.Repository}}:{{.Tag}}" | grep -q "^deployment-web:latest$"; then
-        echo "tencent"
-    else
-        echo "prod"
-    fi
+    # 默认返回prod环境
+    echo "prod"
 }
 
 # 获取配置文件路径
 get_config_files() {
     local env=$(detect_environment)
+    COMPOSE_FILE="$PROJECT_ROOT/docker-compose.yml"
     if [[ "$env" == "deployment" ]]; then
-        COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.deployment.yml"
-        ENV_FILE="$PROJECT_ROOT/deployment/.env.deployment"
+        ENV_FILE="$PROJECT_ROOT/deployment/environments/.env.dev"
+    elif [[ "$env" == "prod" ]]; then
+        ENV_FILE="$PROJECT_ROOT/deployment/environments/.env.prod"
     else
-        COMPOSE_FILE="$PROJECT_ROOT/deployment/docker-compose.production.yml"
-        ENV_FILE="$PROJECT_ROOT/deployment/.env.production"
+        ENV_FILE="$PROJECT_ROOT/deployment/environments/.env.test"
     fi
 }
 
@@ -146,6 +144,148 @@ show_status() {
     fi
     echo -e "  MinIO:   ${GREEN}http://$server_ip:9001${NC}"
     echo ""
+}
+
+# 检查代码和配置是否发生变化
+check_changes() {
+    local web_hash_file=".deploy_cache/web_code_hash"
+    local api_hash_file=".deploy_cache/api_code_hash"
+    local config_hash_file=".deploy_cache/config_hash"
+    local web_current_hash
+    local api_current_hash
+    local config_current_hash
+    
+    # 创建缓存目录
+    mkdir -p .deploy_cache
+    
+    # 计算当前代码哈希值
+    web_current_hash=$(find web/src -type f -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.css" -o -name "*.html" | sort | xargs md5sum | md5sum | awk '{print $1}')
+    api_current_hash=$(find server/src -type f -name "*.ts" -o -name "*.js" | sort | xargs md5sum | md5sum | awk '{print $1}')
+    
+    # 计算配置文件哈希值
+    config_current_hash=$(find deployment/environments deployment/nginx deployment/mysql deployment/redis -type f | sort | xargs md5sum | md5sum | awk '{print $1}')
+    
+    local web_changed=false
+    local api_changed=false
+    local config_changed=false
+    
+    # 检查前端代码是否变化
+    if [[ -f "$web_hash_file" ]]; then
+        local web_last_hash
+        web_last_hash=$(cat "$web_hash_file")
+        if [[ "$web_current_hash" != "$web_last_hash" ]]; then
+            web_changed=true
+        fi
+    else
+        web_changed=true
+    fi
+    
+    # 检查后端代码是否变化
+    if [[ -f "$api_hash_file" ]]; then
+        local api_last_hash
+        api_last_hash=$(cat "$api_hash_file")
+        if [[ "$api_current_hash" != "$api_last_hash" ]]; then
+            api_changed=true
+        fi
+    else
+        api_changed=true
+    fi
+    
+    # 检查配置文件是否变化
+    if [[ -f "$config_hash_file" ]]; then
+        local config_last_hash
+        config_last_hash=$(cat "$config_hash_file")
+        if [[ "$config_current_hash" != "$config_last_hash" ]]; then
+            config_changed=true
+        fi
+    else
+        config_changed=true
+    fi
+    
+    # 保存当前哈希值
+    echo "$web_current_hash" > "$web_hash_file"
+    echo "$api_current_hash" > "$api_hash_file"
+    echo "$config_current_hash" > "$config_hash_file"
+    
+    # 返回结果
+    if [[ "$web_changed" == true || "$api_changed" == true || "$config_changed" == true ]]; then
+        echo "changed"
+    else
+        echo "unchanged"
+    fi
+}
+
+# 智能部署
+smart_deploy() {
+    log_info "开始智能部署..."
+    
+    # 检查代码和配置变化
+    local change_status
+    change_status=$(check_changes)
+    
+    if [[ "$change_status" == "unchanged" ]]; then
+        log_info "代码和配置未发生变化，跳过构建步骤"
+        # 只重启Web和API服务
+        log_info "重启Web和API服务..."
+        get_config_files
+        cd "$PROJECT_ROOT"
+        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" restart web api
+        sleep 10
+        health_check
+        log_success "服务重启完成！"
+        return 0
+    fi
+    
+    log_info "检测到代码或配置变化，开始重新构建..."
+    
+    # 停止服务
+    stop_services 2>/dev/null || true
+    
+    # 清理资源，包括 wedding-web 和 wedding-api 镜像和容器
+    clean_resources
+    
+    # 重新构建镜像
+    log_info "重新构建镜像..."
+    cd "$PROJECT_ROOT"
+    
+    # 清理前端构建缓存和产物
+    if [[ -d "web/dist" ]]; then
+        log_info "清理前端构建产物..."
+        rm -rf web/dist/*
+    fi
+    
+    if [[ -d "web/node_modules/.vite" ]]; then
+        log_info "清理前端构建缓存..."
+        rm -rf web/node_modules/.vite
+    fi
+    
+    # 构建Web镜像
+    if [[ -f "web/Dockerfile" ]]; then
+        log_info "构建Web镜像..."
+        # 强制重新构建，不使用缓存
+        docker build --no-cache -t wedding-web:latest web/ || {
+            log_error "Web镜像构建失败"
+            return 1
+        }
+    fi
+    
+    # 构建API镜像
+    if [[ -f "server/Dockerfile" ]]; then
+        log_info "构建API镜像..."
+        # 强制重新构建，不使用缓存
+        docker build --no-cache -t wedding-api:latest server/ || {
+            log_error "API镜像构建失败"
+            return 1
+        }
+    fi
+    
+    # 启动服务
+    start_services
+    
+    # 健康检查
+    health_check
+    
+    log_success "智能部署完成！"
 }
 
 # 完整部署
@@ -304,7 +444,7 @@ health_check() {
         ((attempt++))
     done
     
-    log_error "健康检查失败，建议执行重新构建: ./deploy-simple.sh rebuild"
+    log_error "健康检查失败，建议执行重新构建: ./deploy.sh rebuild"
     return 1
 }
 
@@ -331,15 +471,19 @@ clean_resources() {
     # 停止服务
     stop_services 2>/dev/null || true
     
-    # 停止并移除 wedding-web 和 wedding-api 容器（如果存在）
-    log_info "停止并移除 wedding-web 和 wedding-api 容器..."
-    docker stop wedding-web wedding-api 2>/dev/null || true
-    docker rm wedding-web wedding-api 2>/dev/null || true
+    # 停止并移除所有wedding相关的容器（如果存在）
+    log_info "停止并移除所有wedding相关的容器..."
+    docker stop $(docker ps -aq -f name=wedding-) 2>/dev/null || true
+    docker rm $(docker ps -aq -f name=wedding-) 2>/dev/null || true
     
     # 删除 wedding-web 和 wedding-api 镜像（如果存在）
     log_info "删除 wedding-web 和 wedding-api 镜像..."
     docker rmi wedding-web:latest 2>/dev/null || true
     docker rmi wedding-api:latest 2>/dev/null || true
+    
+    # 清理wedding相关的网络和卷
+    docker network rm $(docker network ls -q -f name=wedding-) 2>/dev/null || true
+    docker volume rm $(docker volume ls -q -f name=wedding-) 2>/dev/null || true
     
     # 清理其他资源
     docker system prune -f >/dev/null 2>&1 || true
@@ -384,7 +528,7 @@ main() {
             show_status
             ;;
         deploy)
-            deploy_full
+            smart_deploy  # 使用智能部署作为默认部署方式
             ;;
         rebuild)
             rebuild_deploy

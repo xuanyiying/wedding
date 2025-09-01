@@ -24,11 +24,6 @@ RUN npm ci --legacy-peer-deps --no-audit --no-fund --progress=false && \
 # 复制所有源代码和配置文件
 COPY . .
 
-# 设置生产环境变量（提前设置以优化缓存）
-ENV NODE_ENV=production
-ENV VITE_API_URL=http://127.0.0.1/api
-ENV VITE_UPLOAD_URL=http://127.0.0.1/upload
-
 # 构建应用（使用并行构建优化）
 # 在构建前强制清理旧的构建产物
 RUN rm -rf dist && npm run build --max_old_space_size=4096 && \
@@ -47,7 +42,7 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # 复制nginx配置
-COPY nginx.prod.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # 暴露端口
 EXPOSE 80

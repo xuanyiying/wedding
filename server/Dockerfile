@@ -4,7 +4,7 @@
 # 多阶段构建：构建阶段 + 运行阶段
 
 # 构建阶段 - 使用最新的安全Alpine镜像提升构建速度
-FROM node:22.17.1-alpine AS builder
+FROM node:22-alpine AS builder
 
 # 配置Alpine镜像源并安装必要的系统依赖
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
@@ -31,8 +31,8 @@ RUN npm run build && \
     npm cache clean --force && \
     rm -rf /tmp/.npm /root/.npm
 
-# 运行阶段 - 根据构建参数选择不同的环境
-FROM node:22.17.1-alpine AS runner
+# 生产阶段 - 运行阶段
+FROM node:22-alpine AS production
 
 # 构建参数
 ARG ENVIRONMENT=development

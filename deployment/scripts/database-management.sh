@@ -138,7 +138,7 @@ fi
 # Load environment configuration
 load_env_config() {
     local env="$1"
-    local env_file="$PROJECT_ROOT/.env.$env"
+    local env_file="$PROJECT_ROOT/deployment/environments/.env.$env"
     
     if [[ ! -f "$env_file" ]]; then
         log_error "Environment file not found: $env_file"

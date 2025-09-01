@@ -1,142 +1,331 @@
-# Wedding Client 部署文档
+# Wedding Club 部署系统
 
-## 概述
+## 📋 概述
 
-本项目支持三种环境的部署：
-- **腾讯云环境**: 使用IP 114.132.225.94
-- **生产环境**: 使用 localhost
-- **开发环境**: 本地开发环境
+Wedding Club 采用现代化的容器化部署方案，支持开发、测试、生产三套环境的自动化部署。本系统基于 Docker 和 Docker Compose，提供统一的配置管理、一键部署、完善的错误处理和详细的日志记录。
 
-## 目录结构
+## 🏗️ 系统架构
+
+```
+Wedding Club
+├── 前端服务 (React + Vite)
+├── 后端服务 (Node.js + Express)
+├── 数据库服务 (MySQL 8.0)
+├── 缓存服务 (Redis 7)
+├── 存储服务 (MinIO)
+└── 代理服务 (Nginx)
+```
+
+## 🚀 快速开始
+
+### 环境要求
+
+- Docker >= 20.10
+- Docker Compose >= 2.0
+- 系统内存 >= 4GB
+- 磁盘空间 >= 10GB
+
+### 一键部署
+
+```bash
+# 开发环境
+./deploy-dev.sh
+
+# 测试环境
+./deploy-test.sh
+
+# 生产环境
+./deploy-prod.sh
+```
+
+## 📁 目录结构
 
 ```
 deployment/
-├── environments/          # 环境配置文件
-│   ├── .env.tencent      # 腾讯云环境
-│   ├── .env.production   # 生产环境
-│   └── .env.development  # 开发环境
-├── nginx/                # Nginx配置
-├── scripts/              # 部署脚本
-├── logs/                 # 日志目录
-└── uploads/              # 上传文件目录
+├── environments/           # 环境配置文件
+│   ├── .env.dev           # 开发环境配置
+│   ├── .env.test          # 测试环境配置
+│   └── .env.prod          # 生产环境配置
+├── nginx/                 # Nginx配置
+│   ├── nginx.conf         # 主配置文件
+│   └── conf.d/            # 站点配置
+├── scripts/               # 部署脚本
+│   ├── deploy.sh          # 统一部署脚本
+│   └── cleanup.sh         # 清理脚本
+├── mysql/                 # MySQL配置
+├── redis/                 # Redis配置
+├── supervisor/            # 进程管理配置
+├── ssl/                   # SSL证书
+├── logs/                  # 日志文件
+└── backups/               # 备份文件
 ```
 
-## 快速开始
+## 🔧 环境配置
 
-### 1. 环境准备
+### 开发环境 (dev)
 
-确保已安装：
-- Docker
-- Docker Compose
-
-### 2. 快速部署
+- **用途**: 本地开发，支持热重载
+- **端口**: Web(3000), API(3001), MySQL(3307), Redis(6380)
+- **特性**: 调试模式、Mock数据、详细日志
 
 ```bash
-# 腾讯云环境
-./deploy-tencent.sh
-
-# 生产环境
-./deploy-production.sh
-
-# 开发环境
+# 启动开发环境
 ./deploy-dev.sh
-```
-
-### 3. 手动部署
-
-```bash
-# 初始化环境
-./deployment/scripts/setup.sh [environment]
-
-# 启动服务
-./deployment/scripts/deploy.sh [environment] up
-
-# 停止服务
-./deployment/scripts/deploy.sh [environment] down
-
-# 重启服务
-./deployment/scripts/deploy.sh [environment] restart
 
 # 查看日志
-./deployment/scripts/deploy.sh [environment] logs
+./deployment/scripts/deploy.sh dev logs -f
+
+# 停止服务
+./deployment/scripts/deploy.sh dev down
 ```
 
-## 环境配置
+### 测试环境 (test)
 
-### 腾讯云环境
-- 前端: http://114.132.225.94
-- API: http://114.132.225.94:3000
+- **用途**: CI/CD集成测试
+- **端口**: Web(8080), API(3002), MySQL(3308), Redis(6381)
+- **特性**: 自动化测试、Mock外部API、测试数据
 
-### 生产环境
-- 前端: http://localhost
-- API: http://localhost:3000
+```bash
+# 启动测试环境
+./deploy-test.sh
 
-### 开发环境
-- 前端: http://localhost:3000
-- API: http://localhost:3001
+# 运行测试
+npm run test
 
-## 服务组件
+# 查看状态
+./deployment/scripts/deploy.sh test status
+```
 
-- **Web应用**: Nginx + React前端
-- **API服务**: Node.js后端
-- **数据库**: MySQL 8.0
-- **缓存**: Redis
-- **文件存储**: MinIO
+### 生产环境 (prod)
 
-## 监控和日志
+- **用途**: 腾讯云生产部署
+- **端口**: Web(80), API(3000), MySQL(3306), Redis(6379)
+- **特性**: 高性能、安全加固、监控告警
 
-日志文件位置：
-- Nginx: `deployment/logs/nginx/`
-- API: `deployment/logs/api/`
-- MySQL: `deployment/logs/mysql/`
-- Redis: `deployment/logs/redis/`
-- MinIO: `deployment/logs/minio/`
+```bash
+# 启动生产环境 (需要确认)
+./deploy-prod.sh
 
-## 故障排除
+# 备份数据
+./deployment/scripts/deploy.sh prod backup
+
+# 查看监控
+./deployment/scripts/deploy.sh prod status
+```
+
+## 🛠️ 高级操作
+
+### 环境管理
+
+```bash
+# 查看所有环境状态
+./deployment/scripts/deploy.sh dev status
+./deployment/scripts/deploy.sh test status
+./deployment/scripts/deploy.sh prod status
+
+# 重启特定环境
+./deployment/scripts/deploy.sh prod restart
+
+# 强制重新构建
+./deployment/scripts/deploy.sh dev up --build
+```
+
+### 数据管理
+
+```bash
+# 备份生产数据
+./deployment/scripts/deploy.sh prod backup
+
+# 恢复数据
+./deployment/scripts/deploy.sh prod restore /path/to/backup.tar.gz
+
+# 查看数据库日志
+./deployment/scripts/deploy.sh prod logs mysql
+```
+
+### 日志管理
+
+```bash
+# 查看所有服务日志
+./deployment/scripts/deploy.sh prod logs
+
+# 查看特定服务日志
+./deployment/scripts/deploy.sh prod logs app
+./deployment/scripts/deploy.sh prod logs nginx
+
+# 实时跟踪日志
+./deployment/scripts/deploy.sh prod logs -f --tail=100
+```
+
+### 清理和维护
+
+```bash
+# 清理废弃资源
+./deployment/scripts/cleanup.sh
+
+# 清理特定环境
+./deployment/scripts/deploy.sh dev clean
+
+# 强制清理所有资源
+./deployment/scripts/deploy.sh dev clean --force
+```
+
+## 🔐 安全配置
+
+### 生产环境安全检查清单
+
+- [ ] 修改默认数据库密码
+- [ ] 更新JWT密钥
+- [ ] 配置SMTP设置
+- [ ] 设置SSL证书
+- [ ] 配置防火墙规则
+- [ ] 启用访问日志
+- [ ] 设置备份策略
+
+### 环境变量安全
+
+```bash
+# 生产环境必须修改的变量
+MYSQL_ROOT_PASSWORD=CHANGE_ME_ROOT_PASSWORD_2025
+MYSQL_PASSWORD=CHANGE_ME_PROD_PASSWORD_2025
+JWT_SECRET=CHANGE_ME_JWT_SECRET_PROD_2025_WEDDING
+REDIS_PASSWORD=CHANGE_ME_REDIS_PASSWORD_2025
+MINIO_SECRET_KEY=CHANGE_ME_MINIO_SECRET_2025
+```
+
+## 📊 监控和告警
+
+### 健康检查
+
+```bash
+# 检查服务健康状态
+curl http://localhost/health
+
+# 检查API接口
+curl http://localhost/api/health
+
+# 检查Swagger文档
+curl http://localhost/api/v1/docs
+```
+
+### 性能监控
+
+```bash
+# 查看容器资源使用
+docker stats
+
+# 查看Nginx状态
+curl http://localhost/nginx_status
+
+# 查看系统资源
+htop
+```
+
+## 🐛 故障排查
 
 ### 常见问题
 
 1. **端口冲突**
-   - 检查端口是否被占用
-   - 修改环境配置文件中的端口设置
+   ```bash
+   # 检查端口占用
+   lsof -i :80
+   lsof -i :3000
+   
+   # 修改环境配置中的端口
+   vim deployment/environments/.env.dev
+   ```
 
-2. **权限问题**
-   - 确保脚本有执行权限: `chmod +x deployment/scripts/*.sh`
+2. **容器启动失败**
+   ```bash
+   # 查看容器日志
+   ./deployment/scripts/deploy.sh dev logs app
+   
+   # 检查容器状态
+   docker ps -a
+   ```
 
-3. **Docker问题**
-   - 检查Docker服务状态: `systemctl status docker`
-   - 清理Docker缓存: `docker system prune -f`
+3. **数据库连接失败**
+   ```bash
+   # 检查数据库容器
+   ./deployment/scripts/deploy.sh dev logs mysql
+   
+   # 测试数据库连接
+   docker exec -it wedding-mysql-dev mysql -u root -p
+   ```
 
-### 查看服务状态
+4. **Swagger UI 404错误**
+   ```bash
+   # 检查API服务
+   curl http://localhost:3000/api/v1/docs
+   
+   # 检查Nginx配置
+   nginx -t
+   ```
 
-```bash
-# 查看容器状态
-docker-compose ps
+### 日志位置
 
-# 查看服务日志
-docker-compose logs -f [service_name]
+- **应用日志**: `deployment/logs/`
+- **Nginx日志**: `/var/log/nginx/` (容器内)
+- **MySQL日志**: `/var/log/mysql/` (容器内)
+- **Redis日志**: `/var/log/redis/` (容器内)
 
-# 进入容器
-docker-compose exec app sh
+## 🔄 CI/CD 集成
+
+### GitHub Actions 示例
+
+```yaml
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Deploy to Production
+        run: |
+          ./deploy-prod.sh
+          
+      - name: Health Check
+        run: |
+          sleep 30
+          curl -f http://114.132.225.94/health
 ```
 
-## 配置修改
+## 📚 相关文档
 
-### 修改IP地址
+- [Docker 官方文档](https://docs.docker.com/)
+- [Docker Compose 文档](https://docs.docker.com/compose/)
+- [Nginx 配置指南](https://nginx.org/en/docs/)
+- [MySQL 8.0 文档](https://dev.mysql.com/doc/refman/8.0/en/)
+- [Redis 文档](https://redis.io/documentation)
 
-1. 编辑对应环境的配置文件 `deployment/environments/.env.[environment]`
-2. 修改 `SERVER_HOST` 等相关配置
-3. 重新构建和部署
+## 🤝 贡献指南
 
-### 添加新环境
+1. Fork 项目
+2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 打开 Pull Request
 
-1. 创建新的环境配置文件 `deployment/environments/.env.[new_env]`
-2. 更新构建和部署脚本中的 `VALID_ENVS` 数组
-3. 创建对应的快速部署脚本
+## 📄 许可证
 
-## 安全注意事项
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
 
-- 生产环境请修改默认密码
-- 定期更新JWT密钥
-- 配置防火墙规则
-- 启用HTTPS（生产环境）
+## 📞 支持
+
+如果您遇到问题或需要帮助，请：
+
+1. 查看本文档的故障排查部分
+2. 检查 [Issues](https://github.com/your-repo/issues) 页面
+3. 创建新的 Issue 描述问题
+4. 联系开发团队
+
+---
+
+**Wedding Club DevOps Team**  
+最后更新: 2025-09-01

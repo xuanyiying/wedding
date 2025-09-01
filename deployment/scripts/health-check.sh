@@ -252,7 +252,7 @@ done
 
 # Load environment configuration
 load_env_config() {
-    local env_file="$PROJECT_ROOT/.env.$ENVIRONMENT"
+    local env_file="$PROJECT_ROOT/deployment/environments/.env.$ENVIRONMENT"
     
     if [[ -f "$env_file" ]]; then
         set -a  # automatically export all variables
@@ -921,8 +921,8 @@ check_security() {
     
     # Check for common security files
     local security_files=(
-        "$PROJECT_ROOT/.env"
-        "$PROJECT_ROOT/.env.production"
+        "$PROJECT_ROOT/deployment/environments/.env"
+        "$PROJECT_ROOT/deployment/environments/.env.prod"
         "$PROJECT_ROOT/package-lock.json"
         "$PROJECT_ROOT/yarn.lock"
     )

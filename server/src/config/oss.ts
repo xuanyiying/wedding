@@ -4,32 +4,16 @@ import { OssService } from '../services/oss/oss.service';
 // 如果使用 TypeScript，还需要安装类型定义: npm install @types/aws-sdk/client-s3 --save-dev
 import { S3Client } from '@aws-sdk/client-s3';
 
-export type MinIOConfig = {
-  endpoint: string;
-  region: string;
-  accessKeyId: string;
-  secretAccessKey: string;
-  bucket: string;
-  secure?: boolean;
-};
 
 export interface OSSConfig {
   region: string;
   accessKeyId: string;
   accessKeySecret: string;
   bucket: string;
-  endpoint?: string | undefined;
-  secure?: boolean | undefined;
+  endpoint?: string;
+  secure?: boolean | false;
+  cdnBaseUrl?: string;
 }
-
-// MinIO配置 (兼容S3)
-export const minioConfig: MinIOConfig = {
-  endpoint: process.env.OSS_ENDPOINT || process.env.MINIO_ENDPOINT || 'http://localhost:9000',
-  region: process.env.MINIO_REGION || 'us-east-1',
-  accessKeyId: process.env.OSS_ACCESS_KEY || process.env.MINIO_ACCESS_KEY || 'minioadmin',
-  secretAccessKey: process.env.OSS_SECRET_KEY || process.env.MINIO_SECRET_KEY || 'minioadmin123',
-  bucket: process.env.OSS_BUCKET || process.env.MINIO_BUCKET || 'host-medias',
-};
 
 // 阿里云OSS配置
 export const ossConfig: OSSConfig = {
@@ -37,21 +21,20 @@ export const ossConfig: OSSConfig = {
   accessKeyId: process.env.OSS_ACCESS_KEY_ID || '',
   accessKeySecret: process.env.OSS_ACCESS_KEY_SECRET || '',
   bucket: process.env.OSS_BUCKET || 'wedding-host-bucket',
-  endpoint: process.env.OSS_ENDPOINT,
+  endpoint: process.env.OSS_ENDPOINT || 'oss-cn-hangzhou.aliyuncs.com',
   secure: process.env.OSS_SECURE !== 'false',
+  cdnBaseUrl: process.env.CDN_BASE_URL || 'localhost:9000',
 };
 
-// 为了保持向后兼容性，导出别名
-export const rustfsConfig = minioConfig;
 
 // 创建S3客户端实例（向后兼容）
 export const createS3Client = (): S3Client => {
   return new S3Client({
-    endpoint: minioConfig.endpoint,
-    region: minioConfig.region,
+    endpoint: ossConfig.endpoint || '',
+    region: ossConfig.region,
     credentials: {
-      accessKeyId: minioConfig.accessKeyId,
-      secretAccessKey: minioConfig.secretAccessKey,
+      accessKeyId: ossConfig.accessKeyId,
+      secretAccessKey: ossConfig.accessKeySecret,
     },
     forcePathStyle: true, // MinIO需要路径样式访问
   });
