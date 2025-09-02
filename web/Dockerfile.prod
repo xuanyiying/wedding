@@ -23,8 +23,8 @@ RUN npm ci --legacy-peer-deps --no-audit --no-fund --progress=false && \
 
 # 设置生产环境变量（提前设置以优化缓存）
 ENV NODE_ENV=production
-ENV VITE_API_URL=http://114.132.225.94/api
-ENV VITE_UPLOAD_URL=http://114.132.225.94/upload
+ENV VITE_API_URL=http://150.158.20.143/api
+ENV VITE_UPLOAD_URL=http://150.158.20.143/upload
 
 # 复制源代码（.dockerignore应排除node_modules等不必要文件）
 COPY . .

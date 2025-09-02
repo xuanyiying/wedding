@@ -1,37 +1,95 @@
-# Wedding Club Server - 统一构建 Dockerfile
-# 多阶段构建，优化镜像大小和安全性
+# Wedding Club Server - 高度优化的构建 Dockerfile
+# 多阶段构建，支持构建缓存和并行优化
 
-# 多阶段构建：构建阶段 + 运行阶段
+# syntax=docker/dockerfile:1.4
+# 启用BuildKit语法以支持高级特性
 
-# 构建阶段 - 使用最新的安全Alpine镜像提升构建速度
-FROM node:22-alpine AS builder
+# ============================================================================
+# 基础镜像准备阶段 - 预配置基础环境
+# ============================================================================
+FROM node:22-alpine AS base
 
-# 安装必要的系统依赖
+# 配置Alpine镜像源，使用国内镜像加速
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
+    sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
+
+# 一次性安装所有系统依赖，减少镜像层数
 RUN apk update && \
-    apk add --no-cache python3 make g++ && \
-    npm config set registry https://registry.npmmirror.com && \
+    apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    git \
+    curl \
+    dumb-init && \
+    rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
+
+# 配置多个npm镜像源以确保可用性和速度
+RUN npm config set registry https://registry.npmmirror.com && \
     npm config set cache /tmp/.npm && \
-    npm config set prefer-offline true
+    npm config set prefer-offline true && \
+    npm config set audit false && \
+    npm config set fund false && \
+    npm config set progress false
+
+# ============================================================================
+# 依赖安装阶段 - 利用Docker缓存层优化
+# ============================================================================
+FROM base AS deps
 
 WORKDIR /app
 
-# 优化依赖安装：先安装package.json，利用Docker缓存
+# 复制依赖文件，利用Docker缓存层
 COPY package*.json tsconfig.json ./
-RUN npm install --legacy-peer-deps --no-audit --no-fund --progress=false --registry=https://registry.npmmirror.com
 
-# 复制源代码并构建（合并构建步骤减少层数）
+# 使用mount缓存和并行安装优化依赖安装速度
+RUN --mount=type=cache,target=/tmp/.npm \
+    --mount=type=cache,target=/root/.npm \
+    npm install \
+    --legacy-peer-deps \
+    --no-audit \
+    --no-fund \
+    --progress=false \
+    --prefer-offline \
+    --maxsockets 10 \
+    --registry=https://registry.npmmirror.com || \
+    npm install \
+    --legacy-peer-deps \
+    --no-audit \
+    --no-fund \
+    --progress=false \
+    --registry=https://registry.npm.taobao.org || \
+    npm install \
+    --legacy-peer-deps \
+    --no-audit \
+    --no-fund \
+    --progress=false
+
+# ============================================================================
+# 构建阶段 - 优化构建过程
+# ============================================================================
+FROM deps AS builder
+
+# 复制源代码（.dockerignore 已排除不必要文件）
 COPY . .
 
-# 强制清理可能存在的旧构建产物
-RUN rm -rf dist && mkdir dist
-
-RUN npm run build && \
-    npm prune --production && \
+# 强制清理旧构建产物并优化构建
+RUN rm -rf dist && mkdir -p dist && \
+    # 设置Node.js性能优化参数
+    export NODE_OPTIONS="--max-old-space-size=4096" && \
+    # 并行构建
+    npm run build && \
+    # 清理开发依赖，保留生产依赖
+    npm prune --production --silent && \
+    # 清理缓存和临时文件
     npm cache clean --force && \
-    rm -rf /tmp/.npm /root/.npm
+    rm -rf /tmp/.npm /root/.npm /app/src /app/node_modules/.cache
 
-# 生产阶段 - 运行阶段
-FROM node:22-alpine AS production
+# ============================================================================
+# 生产运行阶段 - 轻量化最终镜像
+# ============================================================================
+
+FROM base AS production
 
 # 构建参数
 ARG ENVIRONMENT=development
@@ -62,7 +120,7 @@ COPY --from=builder --chown=wedding:nodejs /app/package*.json ./
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:3000/api/v1/health || exit 1
+    CMD curl -f http://localhost:3000/health || exit 1
 
 # 切换到非root用户
 USER wedding

@@ -58,20 +58,25 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 # 检测环境
 detect_environment() {
-    # 默认返回prod环境
-    echo "prod"
+    # 检查环境变量
+    if [[ -n "$ENVIRONMENT" ]]; then
+        echo "$ENVIRONMENT"
+    else
+        # 默认返回prod环境
+        echo "prod"
+    fi
 }
 
 # 获取配置文件路径
 get_config_files() {
     local env=$(detect_environment)
     COMPOSE_FILE="$PROJECT_ROOT/docker-compose.yml"
-    if [[ "$env" == "deployment" ]]; then
+    if [[ "$env" == "development" ]] || [[ "$env" == "dev" ]]; then
         ENV_FILE="$PROJECT_ROOT/deployment/environments/.env.dev"
-    elif [[ "$env" == "prod" ]]; then
-        ENV_FILE="$PROJECT_ROOT/deployment/environments/.env.prod"
-    else
+    elif [[ "$env" == "test" ]]; then
         ENV_FILE="$PROJECT_ROOT/deployment/environments/.env.test"
+    else
+        ENV_FILE="$PROJECT_ROOT/deployment/environments/.env.prod"
     fi
 }
 
@@ -130,7 +135,7 @@ show_status() {
     docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" ps
     
     echo -e "\n${BLUE}访问地址:${NC}"
-    local server_ip=$(hostname -I | awk '{print $1}' || echo "localhost")
+    local server_ip=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "localhost")
     local env=$(detect_environment)
     
     if [[ "$env" == "tencent" ]]; then
@@ -138,7 +143,7 @@ show_status() {
         echo -e "  API:     ${GREEN}http://$server_ip/api/v1${NC}"
         echo -e "  Swagger: ${GREEN}http://$server_ip/api/v1/docs${NC}"
     else
-        echo -e "  前端:    ${GREEN}http://$server_ip:8080${NC}"
+        echo -e "  前端:    ${GREEN}http://$server_ip${NC}"
         echo -e "  API:     ${GREEN}http://$server_ip:3000/api/v1${NC}"
         echo -e "  Swagger: ${GREEN}http://$server_ip:3000/api/v1/docs${NC}"
     fi
@@ -262,8 +267,8 @@ smart_deploy() {
     # 构建Web镜像
     if [[ -f "web/Dockerfile" ]]; then
         log_info "构建Web镜像..."
-        # 强制重新构建，不使用缓存
-        docker build --no-cache -t wedding-web:latest web/ || {
+        # 使用正确的构建目标和标签
+        docker build -t wedding-web:$(detect_environment)-latest web/ || {
             log_error "Web镜像构建失败"
             return 1
         }
@@ -272,8 +277,8 @@ smart_deploy() {
     # 构建API镜像
     if [[ -f "server/Dockerfile" ]]; then
         log_info "构建API镜像..."
-        # 强制重新构建，不使用缓存
-        docker build --no-cache -t wedding-api:latest server/ || {
+        # 使用正确的构建目标和标签
+        docker build -t wedding-api:$(detect_environment)-latest server/ || {
             log_error "API镜像构建失败"
             return 1
         }
@@ -316,8 +321,8 @@ deploy_full() {
     # 构建Web镜像
     if [[ -f "web/Dockerfile" ]]; then
         log_info "构建Web镜像..."
-        # 强制重新构建，不使用缓存
-        docker build --no-cache -t wedding-web:latest web/ || {
+        # 使用正确的构建目标和标签
+        docker build -t wedding-web:$(detect_environment)-latest web/ || {
             log_error "Web镜像构建失败"
             return 1
         }
@@ -326,8 +331,8 @@ deploy_full() {
     # 构建API镜像
     if [[ -f "server/Dockerfile" ]]; then
         log_info "构建API镜像..."
-        # 强制重新构建，不使用缓存
-        docker build --no-cache -t wedding-api:latest server/ || {
+        # 使用正确的构建目标和标签
+        docker build -t wedding-api:$(detect_environment)-latest server/ || {
             log_error "API镜像构建失败"
             return 1
         }
@@ -342,8 +347,8 @@ deploy_full() {
     log_success "完整部署完成！"
     echo ""
     echo -e "${YELLOW}重要访问地址:${NC}"
-    local server_ip=$(hostname -I | awk '{print $1}' || echo "localhost") 
-    echo -e "  📖 API文档: ${GREEN}http://$server_ip/api/v1/docs${NC}"
+    local server_ip=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "localhost") 
+    echo -e "  📖 API文档: ${GREEN}http://$server_ip:3000/api/v1/docs${NC}"
     echo ""
 }
 
@@ -375,8 +380,8 @@ rebuild_deploy() {
     # 构建Web镜像
     if [[ -f "web/Dockerfile" ]]; then
         log_info "构建Web镜像..."
-        # 强制重新构建，不使用缓存
-        docker build --no-cache -t wedding-web:latest web/ || {
+        # 使用正确的构建目标和标签
+        docker build -t wedding-web:$(detect_environment)-latest web/ || {
             log_error "Web镜像构建失败"
             return 1
         }
@@ -385,8 +390,8 @@ rebuild_deploy() {
     # 构建API镜像
     if [[ -f "server/Dockerfile" ]]; then
         log_info "构建API镜像..."
-        # 强制重新构建，不使用缓存
-        docker build --no-cache -t wedding-api:latest server/ || {
+        # 使用正确的构建目标和标签
+        docker build -t wedding-api:$(detect_environment)-latest server/ || {
             log_error "API镜像构建失败"
             return 1
         }
@@ -408,27 +413,43 @@ health_check() {
     local max_attempts=5
     local attempt=1
     
+    # 获取环境配置
+    get_config_files
+    if [[ -f "$ENV_FILE" ]]; then
+        source "$ENV_FILE"
+    fi
+    
+    # 使用配置中的端口
+    local web_port=${WEB_PORT:-8080}
+    local api_port=${SERVER_PORT:-3000}
+    
     while [[ $attempt -le $max_attempts ]]; do
         log_info "健康检查尝试 $attempt/$max_attempts"
         
         local healthy=0
         
         # 检查Web服务
-        if curl -f -m 5 -s http://localhost/health >/dev/null 2>&1; then
+        if curl -f -m 5 -s http://localhost:$web_port/health >/dev/null 2>&1; then
             echo -e "${GREEN}✓${NC} Web服务正常"
             healthy=$((healthy + 1))
+        else
+            log_warning "Web服务检查失败"
         fi
         
         # 检查API服务
-        if curl -f -m 5 -s http://localhost:3000/health >/dev/null 2>&1; then
+        if curl -f -m 5 -s http://localhost:$api_port/health >/dev/null 2>&1; then
             echo -e "${GREEN}✓${NC} API服务正常"
             healthy=$((healthy + 1))
+        else
+            log_warning "API服务检查失败"
         fi
         
         # 检查Swagger文档
-        if curl -f -m 5 -s http://localhost/api/v1/docs >/dev/null 2>&1; then
+        if curl -f -m 5 -s http://localhost:$api_port/api/v1/docs >/dev/null 2>&1; then
             echo -e "${GREEN}✓${NC} Swagger文档可访问"
             healthy=$((healthy + 1))
+        else
+            log_warning "Swagger文档检查失败"
         fi
         
         if [[ $healthy -ge 2 ]]; then
@@ -478,8 +499,8 @@ clean_resources() {
     
     # 删除 wedding-web 和 wedding-api 镜像（如果存在）
     log_info "删除 wedding-web 和 wedding-api 镜像..."
-    docker rmi wedding-web:latest 2>/dev/null || true
-    docker rmi wedding-api:latest 2>/dev/null || true
+    docker rmi wedding-web:$(detect_environment)-latest 2>/dev/null || true
+    docker rmi wedding-api:$(detect_environment)-latest 2>/dev/null || true
     
     # 清理wedding相关的网络和卷
     docker network rm $(docker network ls -q -f name=wedding-) 2>/dev/null || true

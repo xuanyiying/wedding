@@ -25,15 +25,14 @@ RUN npm install --legacy-peer-deps --no-audit --no-fund --progress=false --regis
 COPY . .
 
 # 构建应用（使用并行构建优化）
-# 在构建前强制清理旧的构建产物
-RUN rm -rf dist && npm run build --max_old_space_size=4096 && \
+RUN npm run build && \
     rm -rf node_modules/.cache /tmp/* /var/tmp/* /root/.npm
 
 # 生产阶段 - 使用nginx提供静态文件服务
 FROM nginx:1.25.4-alpine AS production
 
 # 安装必要工具并创建缓存目录
-RUN apk add --no-cache wget && \
+RUN apk add --no-cache curl && \
     mkdir -p /var/cache/nginx/static /var/cache/nginx/api && \
     chown -R nginx:nginx /var/cache/nginx && \
     rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
@@ -43,6 +42,10 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 # 复制nginx配置
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost/health || exit 1
 
 # 暴露端口
 EXPOSE 80

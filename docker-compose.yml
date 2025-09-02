@@ -24,7 +24,7 @@ services:
     restart: unless-stopped
     pull_policy: never
     ports:
-      - "${WEB_PORT:-80}:80"
+      - "${WEB_PORT:-8080}:8080"
     networks:
       - wedding-network
     healthcheck:
@@ -53,9 +53,9 @@ services:
       - PORT=${SERVER_PORT:-3000}
       - DB_HOST=${MYSQL_HOST:-mysql}
       - DB_PORT=${MYSQL_PORT:-3306}
-      - DB_NAME=${MYSQL_DATABASE:-wedding_club}
-      - DB_USER=${DB_USER:-root}
-      - DB_PASSWORD=${DB_PASSWORD:-W3dd1ng_R00t_2024_Pr0d_S3cur3!}
+      - DB_NAME=${MYSQL_DATABASE:-wedding_db_prod}
+      - DB_USER=${MYSQL_USER:-root}
+      - DB_PASSWORD=${MYSQL_ROOT_PASSWORD:-W3dd1ng_R00t_P@ssw0rd_2025!}
       - REDIS_HOST=${REDIS_HOST:-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}
       - REDIS_PASSWORD=${REDIS_PASSWORD:-R3d1s_W3dd1ng_2024_Pr0d_S3cur3!}
@@ -68,9 +68,9 @@ services:
       - MINIO_PUBLIC_ENDPOINT=${MINIO_PUBLIC_ENDPOINT:-http://localhost:9000}
       - VITE_MINIO_URL=${VITE_MINIO_URL:-http://localhost:9000}
       - OSS_ENDPOINT=${OSS_ENDPOINT:-http://minio:9000}
-      - OSS_ACCESS_KEY=${OSS_ACCESS_KEY:-weddingadmin}
-      - OSS_SECRET_KEY=${OSS_SECRET_KEY:-M1n10_W3dd1ng_2024_Pr0d_S3cur3!}
-      - OSS_BUCKET=${OSS_BUCKET:-wedding-media-prod}
+      - OSS_ACCESS_KEY=${OSS_ACCESS_KEY:-wedding_minio_access}
+      - OSS_SECRET_KEY=${OSS_SECRET_KEY:-M1n10_Pr0d_S3cr3t_K3y_2025!}
+      - OSS_BUCKET=${OSS_BUCKET:-wedding-prod}
     volumes:
       - ./deployment/uploads:/app/uploads
       - ./deployment/logs/api:/app/logs
@@ -96,10 +96,10 @@ services:
     ports:
       - "${MYSQL_PORT:-3306}:3306"
     environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-W3dd1ng_R00t_2024_Pr0d_S3cur3!}
-      - MYSQL_DATABASE=${MYSQL_DATABASE:-wedding_club}
-      - MYSQL_USER=${MYSQL_USER:-wedding_user}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-W3dd1ng_Us3r_2024_Pr0d_S3cur3!}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-W3dd1ng_R00t_P@ssw0rd_2025!}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-wedding_db_prod}
+      - MYSQL_USER=${MYSQL_USER:-wedding_prod}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-W3dd1ng_Pr0d_P@ssw0rd_2025!}
       - TZ=Asia/Shanghai
     volumes:
       - mysql_data:/var/lib/mysql
@@ -130,11 +130,11 @@ services:
       - redis_data:/data
       - ./deployment/docker/redis/redis.conf:/etc/redis/redis.conf:ro
       - ./deployment/logs/redis:/var/log/redis
-    command: redis-server /etc/redis/redis.conf
+    command: redis-server /etc/redis/redis.conf --requirepass ${REDIS_PASSWORD:-R3d1s_Pr0d_P@ssw0rd_2025!}
     networks:
       - wedding-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-R3d1s_Pr0d_P@ssw0rd_2025!}", "ping"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -151,8 +151,8 @@ services:
       - "${MINIO_PORT:-9000}:9000"
       - "${MINIO_CONSOLE_PORT:-9001}:9001"
     environment:
-      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY:-weddingadmin}
-      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY:-wedding123}
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY:-wedding_minio_access}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY:-M1n10_Pr0d_S3cr3t_K3y_2025!}
       - MINIO_SERVER_URL=http://minio:9000
     volumes:
       - ./deployment/uploads:/data
