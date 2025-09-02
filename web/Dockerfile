@@ -17,8 +17,8 @@ RUN npm config set registry https://registry.npmmirror.com && \
 # 复制package文件
 COPY package*.json ./
 
-# 安装依赖（优化参数以提升安装速度）
-RUN npm ci --legacy-peer-deps --no-audit --no-fund --progress=false && \
+# 安装依赖（使用npm install替代npm ci，因为可能没有package-lock.json）
+RUN npm install --legacy-peer-deps --no-audit --no-fund --progress=false --registry=https://registry.npmmirror.com && \
     rm -rf /tmp/.npm /root/.npm
 
 # 复制所有源代码和配置文件
@@ -30,12 +30,12 @@ RUN rm -rf dist && npm run build --max_old_space_size=4096 && \
     rm -rf node_modules/.cache /tmp/* /var/tmp/* /root/.npm
 
 # 生产阶段 - 使用nginx提供静态文件服务
-FROM nginx:alpine AS production
+FROM nginx:1.25.4-alpine AS production
 
-# 配置Alpine镜像源
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
-    apk update && \
-    apk add --no-cache wget && \
+# 安装必要工具并创建缓存目录
+RUN apk add --no-cache wget && \
+    mkdir -p /var/cache/nginx/static /var/cache/nginx/api && \
+    chown -R nginx:nginx /var/cache/nginx && \
     rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
 
 # 复制构建产物

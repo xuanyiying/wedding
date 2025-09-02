@@ -6,9 +6,8 @@
 # 构建阶段 - 使用最新的安全Alpine镜像提升构建速度
 FROM node:22-alpine AS builder
 
-# 配置Alpine镜像源并安装必要的系统依赖
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
-    apk update && \
+# 安装必要的系统依赖
+RUN apk update && \
     apk add --no-cache python3 make g++ && \
     npm config set registry https://registry.npmmirror.com && \
     npm config set cache /tmp/.npm && \
@@ -18,7 +17,7 @@ WORKDIR /app
 
 # 优化依赖安装：先安装package.json，利用Docker缓存
 COPY package*.json tsconfig.json ./
-RUN npm ci --no-audit --no-fund
+RUN npm install --legacy-peer-deps --no-audit --no-fund --progress=false --registry=https://registry.npmmirror.com
 
 # 复制源代码并构建（合并构建步骤减少层数）
 COPY . .
@@ -45,9 +44,8 @@ ENV TZ=Asia/Shanghai \
     LOG_LEVEL=info \
     SERVER_IP=${SERVER_IP}
 
-# 配置Alpine镜像源并快速配置运行环境
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
-    apk update && \
+# 快速配置运行环境
+RUN apk update && \
     apk add --no-cache dumb-init curl && \
     addgroup -g 1001 nodejs && \
     adduser -u 1001 -G nodejs -s /bin/sh -D wedding && \
