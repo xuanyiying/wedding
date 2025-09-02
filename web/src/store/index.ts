@@ -11,7 +11,7 @@ export const store = configureStore({
   reducer: {
     // API slice
     [api.reducerPath]: api.reducer,
-    
+
     // Feature slices
     auth: authSlice,
     app: appSlice,
@@ -25,7 +25,7 @@ export const store = configureStore({
         ignoredActions: [api.util.resetApiState.type],
       },
     }).concat(api.middleware),
-  devTools: process.env.NODE_ENV !== 'production',
+  devTools: process.env.NODE_ENV !== 'prod',
 });
 
 // 启用查询/缓存生命周期

@@ -31,7 +31,7 @@ detect_environment() {
     if docker images --format "{{.Repository}}:{{.Tag}}" | grep -q "^deployment-web:latest$"; then
         echo "tencent"
     else
-        echo "production"
+        echo "prod"
     fi
 }
 
@@ -86,8 +86,12 @@ wait_for_database() {
     local max_attempts=30
     local attempt=1
     
+    # 从环境文件中获取数据库用户和密码
+    local db_user=$(grep MYSQL_USER "$ENV_FILE" | cut -d'=' -f2)
+    local db_password=$(grep MYSQL_PASSWORD "$ENV_FILE" | cut -d'=' -f2)
+    
     while [[ $attempt -le $max_attempts ]]; do
-        if docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" exec -T mysql mysqladmin ping -h localhost -u root -p"$(grep MYSQL_ROOT_PASSWORD "$ENV_FILE" | cut -d'=' -f2)" >/dev/null 2>&1; then
+        if docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" exec -T mysql mysqladmin ping -h localhost -u "$db_user" -p"$db_password" >/dev/null 2>&1; then
             log_success "数据库连接成功"
             return 0
         fi
@@ -112,8 +116,12 @@ init_database() {
         return 1
     fi
     
+    # 从环境文件中获取数据库用户和密码
+    local db_user=$(grep MYSQL_USER "$ENV_FILE" | cut -d'=' -f2)
+    local db_password=$(grep MYSQL_PASSWORD "$ENV_FILE" | cut -d'=' -f2)
+    
     # 执行数据库初始化脚本
-    if docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" exec -T mysql mysql -u root -p"$(grep MYSQL_ROOT_PASSWORD "$ENV_FILE" | cut -d'=' -f2)" < "$db_script"; then
+    if docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" exec -T mysql mysql -u "$db_user" -p"$db_password" < "$db_script"; then
         log_success "数据库初始化完成"
     else
         log_error "数据库初始化失败"
@@ -132,8 +140,12 @@ init_system_configs() {
         return 0
     fi
     
+    # 从环境文件中获取数据库用户和密码
+    local db_user=$(grep MYSQL_USER "$ENV_FILE" | cut -d'=' -f2)
+    local db_password=$(grep MYSQL_PASSWORD "$ENV_FILE" | cut -d'=' -f2)
+    
     # 执行系统配置初始化脚本
-    if docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" exec -T mysql mysql -u root -p"$(grep MYSQL_ROOT_PASSWORD "$ENV_FILE" | cut -d'=' -f2)" < "$config_script"; then
+    if docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" exec -T mysql mysql -u "$db_user" -p"$db_password" < "$config_script"; then
         log_success "系统配置初始化完成"
     else
         log_warning "系统配置初始化失败，但继续执行"

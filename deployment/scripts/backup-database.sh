@@ -27,7 +27,7 @@ detect_environment() {
     if docker images --format "{{.Repository}}:{{.Tag}}" | grep -q "^deployment-web:latest$"; then
         echo "tencent"
     else
-        echo "production"
+        echo "prod"
     fi
 }
 

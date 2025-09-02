@@ -62,7 +62,7 @@ if (config.nodeEnv === 'development') {
 }
 
 // 文件传输器
-if (config.nodeEnv === 'production') {
+if (config.nodeEnv === 'prod') {
   // 普通日志文件
   transports.push(
     new winston.transports.File({

@@ -41,7 +41,7 @@ RUN apk add --no-cache curl && \
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # 复制nginx配置模板
-COPY nginx.conf /etc/nginx/conf.d/default.conf.template
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
@@ -50,5 +50,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
 # 暴露端口
 EXPOSE 80
 
-# 启动nginx，使用envsubst处理环境变量
-CMD ["/bin/sh", "-c", "envsubst '${ENVIRONMENT}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"]
+# 启动nginx
+CMD ["nginx", "-g", "daemon off;"]

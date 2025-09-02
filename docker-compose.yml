@@ -12,8 +12,8 @@ services:
   # =============================================================================
   web:
     build:
-      context: ./web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./web/Dockerfile
       target: production
     image: wedding-web:${ENVIRONMENT:-prod}-latest
     environment:
@@ -49,13 +49,13 @@ services:
     ports:
       - "${SERVER_PORT:-3000}:3000"
     environment:
-      - NODE_ENV=${NODE_ENV:-production}
+      - NODE_ENV=${NODE_ENV:-prod}
       - PORT=${SERVER_PORT:-3000}
       - DB_HOST=${MYSQL_HOST:-mysql}
       - DB_PORT=${MYSQL_PORT:-3306}
-      - DB_NAME=${MYSQL_DATABASE:-wedding_db_prod}
-      - DB_USER=${MYSQL_USER:-root}
-      - DB_PASSWORD=${MYSQL_ROOT_PASSWORD:-W3dd1ng_R00t_P@ssw0rd_2025!}
+      - DB_NAME=${MYSQL_DATABASE:-wedding_club}
+      - DB_USERNAME=${MYSQL_USER:-wedding_user}
+      - DB_PASSWORD=${MYSQL_PASSWORD:-W3dd1ng_Us3r_2024_Pr0d_S3cur3!}
       - REDIS_HOST=${REDIS_HOST:-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}
       - REDIS_PASSWORD=${REDIS_PASSWORD:-R3d1s_W3dd1ng_2024_Pr0d_S3cur3!}
@@ -96,10 +96,10 @@ services:
     ports:
       - "${MYSQL_PORT:-3306}:3306"
     environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-W3dd1ng_R00t_P@ssw0rd_2025!}
-      - MYSQL_DATABASE=${MYSQL_DATABASE:-wedding_db_prod}
-      - MYSQL_USER=${MYSQL_USER:-wedding_prod}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-W3dd1ng_Pr0d_P@ssw0rd_2025!}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-W3dd1ng_R00t_2024_Pr0d_S3cur3!}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-wedding_club}
+      - MYSQL_USER=${MYSQL_USER:-wedding_user}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-W3dd1ng_Us3r_2024_Pr0d_S3cur3!}
       - TZ=Asia/Shanghai
     volumes:
       - mysql_data:/var/lib/mysql
@@ -180,13 +180,15 @@ services:
       - ./deployment/ssl:/etc/nginx/ssl:ro
       - ./deployment/logs/nginx:/var/log/nginx
       - ./deployment/uploads:/var/www/uploads:ro
+      - ./deployment/docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./deployment/docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - web
       - api
     networks:
       - wedding-network
     profiles:
-      - production
+      - prod
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s

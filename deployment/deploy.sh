@@ -220,9 +220,29 @@ check_changes() {
     fi
 }
 
+# 复制Nginx配置文件到web目录
+copy_nginx_config() {
+    log_info "复制Nginx配置文件..."
+    
+    # 确保web目录存在
+    mkdir -p "$PROJECT_ROOT/web"
+    
+    # 从deployment目录复制Nginx配置文件到web目录（强制覆盖）
+    if [[ -f "$PROJECT_ROOT/deployment/docker/nginx/conf.d/default.conf" ]]; then
+        cp -f "$PROJECT_ROOT/deployment/docker/nginx/conf.d/default.conf" "$PROJECT_ROOT/web/nginx.conf"
+        log_success "Nginx配置文件复制完成"
+    else
+        log_error "未找到Nginx配置文件: $PROJECT_ROOT/deployment/docker/nginx/conf.d/default.conf"
+        return 1
+    fi
+}
+
 # 智能部署
 smart_deploy() {
     log_info "开始智能部署..."
+    
+    # 复制Nginx配置文件到web目录
+    copy_nginx_config
     
     # 检查代码和配置变化
     local change_status
@@ -287,6 +307,19 @@ smart_deploy() {
     # 启动服务
     start_services
     
+    # 执行数据库初始化
+    log_info "执行数据库初始化..."
+    if [[ -f "$PROJECT_ROOT/deployment/init-server.sh" ]]; then
+        cd "$PROJECT_ROOT/deployment"
+        chmod +x init-server.sh
+        ./init-server.sh --skip-checks || {
+            log_warning "数据库初始化脚本执行失败，但继续执行"
+        }
+        cd "$PROJECT_ROOT"
+    else
+        log_warning "数据库初始化脚本不存在: $PROJECT_ROOT/deployment/init-server.sh"
+    fi
+    
     # 健康检查
     health_check
     
@@ -296,6 +329,9 @@ smart_deploy() {
 # 完整部署
 deploy_full() {
     log_info "开始完整部署..."
+    
+    # 复制Nginx配置文件到web目录
+    copy_nginx_config
     
     # 停止现有服务
     stop_services 2>/dev/null || true
@@ -341,6 +377,19 @@ deploy_full() {
     # 启动服务
     start_services
     
+    # 执行数据库初始化
+    log_info "执行数据库初始化..."
+    if [[ -f "$PROJECT_ROOT/deployment/init-server.sh" ]]; then
+        cd "$PROJECT_ROOT/deployment"
+        chmod +x init-server.sh
+        ./init-server.sh --skip-checks || {
+            log_warning "数据库初始化脚本执行失败，但继续执行"
+        }
+        cd "$PROJECT_ROOT"
+    else
+        log_warning "数据库初始化脚本不存在: $PROJECT_ROOT/deployment/init-server.sh"
+    fi
+    
     # 健康检查
     health_check
     
@@ -355,6 +404,9 @@ deploy_full() {
 # 重新构建部署
 rebuild_deploy() {
     log_info "开始重新构建并部署..."
+    
+    # 复制Nginx配置文件到web目录
+    copy_nginx_config
     
     # 停止服务
     stop_services 2>/dev/null || true
@@ -399,6 +451,19 @@ rebuild_deploy() {
     
     # 启动服务
     start_services
+    
+    # 执行数据库初始化
+    log_info "执行数据库初始化..."
+    if [[ -f "$PROJECT_ROOT/deployment/init-server.sh" ]]; then
+        cd "$PROJECT_ROOT/deployment"
+        chmod +x init-server.sh
+        ./init-server.sh --skip-checks || {
+            log_warning "数据库初始化脚本执行失败，但继续执行"
+        }
+        cd "$PROJECT_ROOT"
+    else
+        log_warning "数据库初始化脚本不存在: $PROJECT_ROOT/deployment/init-server.sh"
+    fi
     
     # 健康检查
     health_check

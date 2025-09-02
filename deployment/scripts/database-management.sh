@@ -266,7 +266,7 @@ restore_database() {
     validate_db_connection
     
     # Confirmation for production
-    if [[ "$env" == "production" && "$FORCE" != "true" ]]; then
+    if [[ "$env" == "prod" && "$FORCE" != "true" ]]; then
         log_warning "You are about to restore the PRODUCTION database!"
         read -p "Are you sure you want to continue? (yes/no): " -r
         if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]; then

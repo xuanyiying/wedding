@@ -11,10 +11,10 @@ interface ErrorConfig {
 }
 
 const getErrorConfig = (): ErrorConfig => ({
-  logLevel: process.env.NODE_ENV === 'production' ? 'error' : 'warn',
-  includeStack: process.env.NODE_ENV === 'development',
-  includeDetails: process.env.NODE_ENV === 'development',
-  sanitizeDetails: process.env.NODE_ENV === 'production',
+  logLevel: process.env.NODE_ENV === 'prod' ? 'error' : 'warn',
+  includeStack: process.env.NODE_ENV === 'dev',
+  includeDetails: process.env.NODE_ENV === 'dev',
+  sanitizeDetails: process.env.NODE_ENV === 'prod',
 });
 
 // 敏感信息过滤
