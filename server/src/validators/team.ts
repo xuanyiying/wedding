@@ -44,8 +44,8 @@ export const teamValidators: TeamValidators = {
         'string.min': '搜索关键词长度必须至少1字符',
         'string.max': '搜索关键词长度不能超过50字符',
       }),
-      managerId: Joi.string().uuid().optional().messages({
-        'string.guid': '管理者ID格式无效',
+      managerId: Joi.string().optional().messages({
+        'string.empty': '管理者ID不能为空',
       }),
       _t: Joi.number().optional(), // 允许时间戳参数，用于防止缓存
     }),
@@ -54,8 +54,8 @@ export const teamValidators: TeamValidators = {
   // 获取团队成员详情验证
   getTeamMemberById: {
     params: Joi.object({
-      id: Joi.string().uuid().required().messages({
-        'string.guid': '团队成员ID格式无效',
+      id: Joi.string().required().messages({
+        'string.empty': '团队成员ID不能为空',
         'any.required': '团队成员ID是必填项',
       }),
     }),
@@ -64,8 +64,8 @@ export const teamValidators: TeamValidators = {
   // 创建团队成员验证
   createTeamMember: {
     body: Joi.object({
-      userId: Joi.string().uuid().required().messages({
-        'string.guid': '用户ID格式无效',
+      userId: Joi.string().required().messages({
+        'string.empty': '用户ID不能为空',
         'any.required': '用户ID是必填项',
       }),
       employeeId: Joi.string().min(1).max(20).required().messages({
@@ -93,8 +93,8 @@ export const teamValidators: TeamValidators = {
           'any.only': '角色参数无效',
           'any.required': '角色是必填项',
         }),
-      managerId: Joi.string().uuid().optional().messages({
-        'string.guid': '管理者ID格式无效',
+      managerId: Joi.string().optional().messages({
+        'string.empty': '管理者ID不能为空',
       }),
       hireDate: Joi.date().iso().required().messages({
         'date.format': '入职日期格式无效',
@@ -133,8 +133,8 @@ export const teamValidators: TeamValidators = {
   // 更新团队成员验证
   updateTeamMember: {
     params: Joi.object({
-      id: Joi.string().uuid().required().messages({
-        'string.guid': '团队成员ID格式无效',
+      id: Joi.string().required().messages({
+        'string.empty': '团队成员ID不能为空',
         'any.required': '团队成员ID是必填项',
       }),
     }),
@@ -146,8 +146,8 @@ export const teamValidators: TeamValidators = {
   // 删除团队成员验证
   deleteTeamMember: {
     params: Joi.object({
-      id: Joi.string().uuid().required().messages({
-        'string.guid': '团队成员ID格式无效',
+      id: Joi.string().required().messages({
+        'string.empty': '团队成员ID不能为空',
         'any.required': '团队成员ID是必填项',
       }),
     }),
@@ -156,13 +156,13 @@ export const teamValidators: TeamValidators = {
   // 批量删除团队成员验证
   batchDeleteTeamMembers: {
     body: Joi.object({
-      ids: Joi.array().items(Joi.string().uuid()).required().messages({}),
+      ids: Joi.array().items(Joi.string().required()).required().messages({}),
     }),
   },
   updateTeamMemberStatus: {
     body: Joi.object({
-      id: Joi.string().uuid().required().messages({
-        'string.guid': '团队成员ID格式无效',
+      id: Joi.string().required().messages({
+        'string.empty': '团队成员ID不能为空',
         'any.required': '团队成员ID是必填项',
       }),
       status: Joi.string()
@@ -177,8 +177,8 @@ export const teamValidators: TeamValidators = {
 
   getSubordinates: {
     params: Joi.object({
-      id: Joi.string().uuid().required().messages({
-        'string.guid': '团队成员ID格式无效',
+      id: Joi.string().required().messages({
+        'string.empty': '团队成员ID不能为空',
         'any.required': '团队成员ID是必填项',
       }),
     }),
@@ -193,13 +193,13 @@ export const teamValidators: TeamValidators = {
   },
   transferSubordinates: {
     params: Joi.object({
-      id: Joi.string().uuid().required().messages({
-        'string.guid': '团队成员ID格式无效',
+      id: Joi.string().required().messages({
+        'string.empty': '团队成员ID不能为空',
         'any.required': '团队成员ID是必填项',
       }),
     }),
     body: Joi.object({
-      subordinates: Joi.array().items(Joi.string().uuid()).required().messages({
+      subordinates: Joi.array().items(Joi.string().required()).required().messages({
         'array.base': '下属成员ID必须是数组格式',
         'any.required': '下属成员ID是必填项',
       }),

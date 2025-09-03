@@ -148,7 +148,7 @@ export const updateUserStatusSchema = Joi.object({
 
 // 批量删除用户验证
 export const batchDeleteUsersSchema = Joi.object({
-  ids: Joi.array().items(Joi.string().uuid()).min(1).max(100).required().messages({
+  ids: Joi.array().items(Joi.string().required()).min(1).max(100).required().messages({
     'array.min': '至少选择一个用户',
     'array.max': '一次最多删除100个用户',
     'any.required': '用户ID列表不能为空',

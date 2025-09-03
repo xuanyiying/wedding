@@ -50,6 +50,11 @@ export const connectDatabase = async (): Promise<void> => {
       await sequelize.sync({alter: true});
       logger.info('Database models synchronized successfully (alter mode).');
     }
+    // 在测试环境下也使用alter模式
+    else if (config.nodeEnv === 'test') {
+      await sequelize.sync({alter: true});
+      logger.info('Database models synchronized successfully (test alter mode).');
+    }
   } catch (error) {
     logger.error('Unable to connect to the database:', error);
     throw error;

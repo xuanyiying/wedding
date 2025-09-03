@@ -7,7 +7,7 @@ export const scheduleValidators = {
     query: Joi.object({
       page: Joi.number().integer().min(1).default(1),
       pageSize: Joi.number().integer().min(1).max(100).default(20),
-      userId: Joi.string().uuid().optional(),
+      userId: Joi.string().optional(),
       status: Joi.string()
         .valid(...Object.values(ScheduleStatus))
         .optional(),
@@ -24,7 +24,7 @@ export const scheduleValidators = {
   // 获取档期详情
   getScheduleById: {
     params: Joi.object({
-      id: Joi.string().uuid().required(),
+      id: Joi.string().required(),
     }),
   },
 
@@ -41,7 +41,7 @@ export const scheduleValidators = {
       description: Joi.string().trim().max(2000).optional(),
       price: Joi.number().min(0).optional(),
       deposit: Joi.number().min(0).max(Joi.ref('price')).optional(),
-      clientId: Joi.string().uuid().optional(),
+      clientId: Joi.string().optional(),
       clientName: Joi.string().trim().max(100).optional(),
       clientPhone: Joi.string()
         .trim()
@@ -56,7 +56,7 @@ export const scheduleValidators = {
   // 更新档期
   updateSchedule: {
     params: Joi.object({
-      id: Joi.string().uuid().required(),
+      id: Joi.string().required(),
     }),
     body: Joi.object({
       title: Joi.string().trim().min(1).max(200).optional(),
@@ -69,7 +69,7 @@ export const scheduleValidators = {
       description: Joi.string().trim().max(2000).optional(),
       price: Joi.number().min(0).optional(),
       deposit: Joi.number().min(0).optional(),
-      clientId: Joi.string().uuid().optional(),
+      clientId: Joi.string().optional(),
       clientName: Joi.string().trim().max(100).optional(),
       clientPhone: Joi.string()
         .trim()
@@ -87,14 +87,14 @@ export const scheduleValidators = {
   // 删除档期
   deleteSchedule: {
     params: Joi.object({
-      id: Joi.string().uuid().required(),
+      id: Joi.string().required(),
     }),
   },
 
   // 确认档期
   confirmSchedule: {
     params: Joi.object({
-      id: Joi.string().uuid().required(),
+      id: Joi.string().required(),
     }),
     body: Joi.object({
       notes: Joi.string().trim().max(1000).optional(),
@@ -104,18 +104,18 @@ export const scheduleValidators = {
   // 检查档期冲突
   checkConflict: {
     body: Joi.object({
-      userId: Joi.string().uuid().optional(),
+      userId: Joi.string().optional(),
       startTime: Joi.date().iso().required(),
       endTime: Joi.date().iso().greater(Joi.ref('startTime')).required(),
-      excludeId: Joi.string().uuid().optional(),
+      excludeId: Joi.string().optional(),
     }),
   },
 
   // 获取用户档期日历
   getCalendar: {
     params: Joi.object({
-      userId: Joi.string().uuid().required(),
-      year: Joi.number().integer().min(2020).max(2030).required(),
+      userId: Joi.string().required(),
+      year: Joi.number().integer().min(2020).max(2050).required(),
       month: Joi.number().integer().min(1).max(12).required(),
     }),
   },

@@ -29,7 +29,7 @@ export const fileValidators = {
     query: Joi.object({
       page: Joi.number().integer().min(1).default(1),
       pageSize: Joi.number().integer().min(1).max(100).default(20),
-      userId: Joi.string().uuid().optional(),
+      userId: Joi.string().optional(),
       fileType: Joi.string()
         .valid(...Object.values(FileType))
         .optional(),
@@ -44,21 +44,21 @@ export const fileValidators = {
   // 获取文件详情
   getFileById: {
     params: Joi.object({
-      id: Joi.string().uuid().required(),
+      id: Joi.string().required(),
     }),
   },
 
   // 删除文件
   deleteFile: {
     params: Joi.object({
-      id: Joi.string().uuid().required(),
+      id: Joi.string().required(),
     }),
   },
 
   // 批量删除文件
   deleteFiles: {
     body: Joi.object({
-      ids: Joi.array().items(Joi.string().uuid()).min(1).max(50).required(),
+      ids: Joi.array().items(Joi.string().required()).min(1).max(50).required(),
     }),
   },
 

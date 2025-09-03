@@ -7,7 +7,7 @@ export const workValidators = {
     query: Joi.object({
       page: Joi.number().integer().min(1).default(1),
       pageSize: Joi.number().integer().min(1).max(100).default(20),
-      userId: Joi.string().uuid().optional(),
+      userId: Joi.string().optional(),
       type: Joi.string()
         .valid(...Object.values(WorkType))
         .optional(),
@@ -28,7 +28,7 @@ export const workValidators = {
   // 获取作品详情
   getWorkById: {
     params: Joi.object({
-      id: Joi.string().uuid().required(),
+      id: Joi.string().required(),
     }),
   },
 
@@ -61,7 +61,7 @@ export const workValidators = {
   // 更新作品
   updateWork: {
     params: Joi.object({
-      id: Joi.string().uuid().required(),
+      id: Joi.string().required(),
     }),
     body: Joi.object({
       title: Joi.string().trim().min(1).max(200).optional(),
@@ -98,42 +98,42 @@ export const workValidators = {
   // 删除作品
   deleteWork: {
     params: Joi.object({
-      id: Joi.string().uuid().required(),
+      id: Joi.string().required(),
     }),
   },
 
   // 发布作品
   publishWork: {
     params: Joi.object({
-      id: Joi.string().uuid().required(),
+      id: Joi.string().required(),
     }),
   },
 
   // 取消发布作品
   unpublishWork: {
     params: Joi.object({
-      id: Joi.string().uuid().required(),
+      id: Joi.string().required(),
     }),
   },
 
   // 点赞作品
   likeWork: {
     params: Joi.object({
-      id: Joi.string().uuid().required(),
+      id: Joi.string().required(),
     }),
   },
 
   // 取消点赞作品
   unlikeWork: {
     params: Joi.object({
-      id: Joi.string().uuid().required(),
+      id: Joi.string().required(),
     }),
   },
 
   // 增加作品浏览量
   incrementViewCount: {
     params: Joi.object({
-      id: Joi.string().uuid().required(),
+      id: Joi.string().required(),
     }),
   },
 
@@ -147,7 +147,7 @@ export const workValidators = {
   // 设置作品为精选
   setWorkFeatured: {
     params: Joi.object({
-      id: Joi.string().uuid().required(),
+      id: Joi.string().required(),
     }),
     body: Joi.object({
       isFeatured: Joi.boolean().required(),
@@ -184,7 +184,7 @@ export const workValidators = {
   // 获取相关作品
   getRelatedWorks: {
     params: Joi.object({
-      id: Joi.string().uuid().required(),
+      id: Joi.string().required(),
     }),
     query: Joi.object({
       limit: Joi.number().integer().min(1).max(20).default(6),

@@ -1,5 +1,5 @@
--- 婚礼服务平台数据库初始化脚本
--- 根据模型定义和初始化脚本生成
+-- 婚礼服务平台数据库表结构初始化脚本
+-- 注意：此脚本仅用于手动创建表结构，生产环境建议使用Sequelize自动同步
 -- 创建时间: 2024
 
 -- 设置字符集和排序规则
@@ -9,12 +9,15 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- 使用数据库
 USE wedding_club;
 
+-- 警告：此脚本会删除现有表，请谨慎使用
+-- 建议在生产环境中使用Sequelize的sync({alter: true})来同步表结构
+
 -- ================================
 -- 1. 创建用户表 (users)
 -- ================================
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
-  `id` varchar(36) NOT NULL COMMENT '用户ID',
+  `id` char(36) NOT NULL COMMENT '用户ID',
   `username` varchar(50) NOT NULL COMMENT '用户名',
   `email` varchar(100) NOT NULL COMMENT '邮箱',
   `phone` varchar(20) DEFAULT NULL COMMENT '手机号',
@@ -49,9 +52,9 @@ CREATE TABLE `users` (
 -- ================================
 DROP TABLE IF EXISTS `schedules`;
 CREATE TABLE `schedules` (
-  `id` varchar(36) NOT NULL COMMENT '日程ID',
-  `user_id` varchar(36) NOT NULL COMMENT '用户ID (主持人或团队成员)',
-  `customer_id` varchar(36) DEFAULT NULL COMMENT '客户ID',
+  `id` char(36) NOT NULL COMMENT '日程ID',
+  `user_id` char(36) NOT NULL COMMENT '用户ID (主持人或团队成员)',
+  `customer_id` char(36) DEFAULT NULL COMMENT '客户ID',
   `title` varchar(255) NOT NULL COMMENT '日程标题',
   `description` text COMMENT '详细描述',
   `wedding_date` date NOT NULL COMMENT '婚礼日期',
@@ -111,7 +114,7 @@ CREATE TABLE `system_configs` (
 -- ================================
 DROP TABLE IF EXISTS `contacts`;
 CREATE TABLE `contacts` (
-  `id` varchar(36) NOT NULL COMMENT '联系表单ID',
+  `id` char(36) NOT NULL COMMENT '联系表单ID',
   `name` varchar(100) NOT NULL COMMENT '联系人姓名',
   `phone` varchar(20) NOT NULL COMMENT '联系电话',
   `email` varchar(255) NOT NULL COMMENT '邮箱地址',
@@ -136,8 +139,8 @@ CREATE TABLE `contacts` (
 -- ================================
 DROP TABLE IF EXISTS `files`;
 CREATE TABLE `files` (
-  `id` varchar(36) NOT NULL COMMENT '文件ID',
-  `user_id` varchar(36) NOT NULL COMMENT '上传用户ID',
+  `id` char(36) NOT NULL COMMENT '文件ID',
+  `user_id` char(36) NOT NULL COMMENT '上传用户ID',
   `original_name` varchar(255) NOT NULL COMMENT '原始文件名',
   `filename` varchar(255) NOT NULL COMMENT '存储文件名',
   `file_path` varchar(500) NOT NULL COMMENT '文件路径',
@@ -172,9 +175,9 @@ CREATE TABLE `files` (
 -- ================================
 DROP TABLE IF EXISTS `media_profiles`;
 CREATE TABLE `media_profiles` (
-  `id` varchar(36) NOT NULL COMMENT '用户公开资料ID',
-  `user_id` varchar(36) NOT NULL COMMENT '用户ID',
-  `file_id` varchar(36) NOT NULL COMMENT '文件ID',
+  `id` char(36) NOT NULL COMMENT '用户公开资料ID',
+  `user_id` char(36) NOT NULL COMMENT '用户ID',
+  `file_id` char(36) NOT NULL COMMENT '文件ID',
   `file_type` enum('image','video','audio','document','other') NOT NULL COMMENT '媒体类型',
   `media_order` int NOT NULL COMMENT '媒体排序',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -191,13 +194,13 @@ CREATE TABLE `media_profiles` (
 -- ================================
 DROP TABLE IF EXISTS `operation_logs`;
 CREATE TABLE `operation_logs` (
-  `id` varchar(36) NOT NULL COMMENT '日志ID',
-  `user_id` varchar(36) DEFAULT NULL COMMENT '操作用户ID',
+  `id` char(36) NOT NULL COMMENT '日志ID',
+  `user_id` char(36) DEFAULT NULL COMMENT '操作用户ID',
   `module` varchar(50) NOT NULL COMMENT '模块名称',
   `action` varchar(100) NOT NULL COMMENT '操作动作',
   `level` enum('INFO','WARN','ERROR','DEBUG') NOT NULL DEFAULT 'INFO' COMMENT '日志级别',
   `resource_type` varchar(50) DEFAULT NULL COMMENT '资源类型',
-  `resource_id` varchar(36) DEFAULT NULL COMMENT '资源ID',
+  `resource_id` char(36) DEFAULT NULL COMMENT '资源ID',
   `description` text DEFAULT NULL COMMENT '操作描述',
   `request_method` varchar(10) DEFAULT NULL COMMENT '请求方法',
   `request_url` varchar(500) DEFAULT NULL COMMENT '请求URL',
@@ -222,7 +225,7 @@ CREATE TABLE `operation_logs` (
 -- ================================
 DROP TABLE IF EXISTS `teams`;
 CREATE TABLE `teams` (
-  `id` varchar(36) NOT NULL COMMENT '团队ID',
+  `id` char(36) NOT NULL COMMENT '团队ID',
   `name` varchar(100) NOT NULL COMMENT '团队名称',
   `description` text DEFAULT NULL COMMENT '团队描述',
   `avatar` varchar(500) DEFAULT NULL COMMENT '团队头像',
@@ -235,7 +238,7 @@ CREATE TABLE `teams` (
   `service_areas` text DEFAULT NULL COMMENT 'JSON格式存储服务区域数组',
   `specialties` text DEFAULT NULL COMMENT 'JSON格式存储专业特长数组',
   `price_range` varchar(50) DEFAULT NULL COMMENT '价格区间',
-  `owner_id` varchar(36) NOT NULL COMMENT '团队所有者ID',
+  `owner_id` char(36) NOT NULL COMMENT '团队所有者ID',
   `member_count` int NOT NULL DEFAULT 1 COMMENT '成员数量',
   `status` varchar(20) NOT NULL DEFAULT 'active' COMMENT '状态: disabled-禁用 active-正常 pending-待审核',
   `view_count` int NOT NULL DEFAULT 0 COMMENT '浏览次数',
@@ -274,13 +277,13 @@ CREATE TABLE `teams` (
 -- ================================
 DROP TABLE IF EXISTS `team_members`;
 CREATE TABLE `team_members` (
-  `id` varchar(36) NOT NULL COMMENT '团队成员ID',
-  `team_id` varchar(36) NOT NULL COMMENT '团队ID',
-  `user_id` varchar(36) NOT NULL COMMENT '用户ID',
+  `id` char(36) NOT NULL COMMENT '团队成员ID',
+  `team_id` char(36) NOT NULL COMMENT '团队ID',
+  `user_id` char(36) NOT NULL COMMENT '用户ID',
   `role` tinyint NOT NULL DEFAULT 1 COMMENT '角色: 1-成员 2-管理员 3-所有者',
   `joined_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '加入时间',
   `status` tinyint NOT NULL DEFAULT 1 COMMENT '状态: 0-禁用 1-正常 2-待审核',
-  `inviter_id` varchar(36) NOT NULL COMMENT '邀请人ID',
+  `inviter_id` char(36) NOT NULL COMMENT '邀请人ID',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `deleted_at` datetime DEFAULT NULL COMMENT '删除时间',
@@ -300,12 +303,12 @@ CREATE TABLE `team_members` (
 -- ================================
 DROP TABLE IF EXISTS `user_permissions`;
 CREATE TABLE `user_permissions` (
-  `id` varchar(36) NOT NULL COMMENT '权限ID',
-  `user_id` varchar(36) NOT NULL COMMENT '用户ID',
+  `id` char(36) NOT NULL COMMENT '权限ID',
+  `user_id` char(36) NOT NULL COMMENT '用户ID',
   `permission` varchar(100) NOT NULL COMMENT '权限标识',
   `resource_type` varchar(50) DEFAULT NULL COMMENT '资源类型',
-  `resource_id` varchar(36) DEFAULT NULL COMMENT '资源ID',
-  `granted_by` varchar(36) DEFAULT NULL COMMENT '授权人ID',
+  `resource_id` char(36) DEFAULT NULL COMMENT '资源ID',
+  `granted_by` char(36) DEFAULT NULL COMMENT '授权人ID',
   `expires_at` datetime DEFAULT NULL COMMENT '过期时间',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`),
@@ -323,9 +326,9 @@ CREATE TABLE `user_permissions` (
 -- ================================
 DROP TABLE IF EXISTS `view_stats`;
 CREATE TABLE `view_stats` (
-  `id` varchar(36) NOT NULL COMMENT '访问记录ID',
+  `id` char(36) NOT NULL COMMENT '访问记录ID',
   `page_type` enum('team_member','work','homepage') NOT NULL COMMENT '页面类型',
-  `page_id` varchar(36) DEFAULT NULL COMMENT '页面ID（团队成员ID、作品ID或null表示首页）',
+  `page_id` char(36) DEFAULT NULL COMMENT '页面ID（团队成员ID、作品ID或null表示首页）',
   `action_type` enum('view','play') NOT NULL DEFAULT 'view' COMMENT '行为类型：浏览或播放',
   `visitor_ip` varchar(45) NOT NULL COMMENT '访问者IP地址',
   `user_agent` text DEFAULT NULL COMMENT '用户代理字符串',
@@ -347,8 +350,8 @@ CREATE TABLE `view_stats` (
 -- ================================
 DROP TABLE IF EXISTS `works`;
 CREATE TABLE `works` (
-  `id` varchar(36) NOT NULL COMMENT '作品ID',
-  `user_id` varchar(36) NOT NULL COMMENT '用户ID',
+  `id` char(36) NOT NULL COMMENT '作品ID',
+  `user_id` char(36) NOT NULL COMMENT '用户ID',
   `title` varchar(200) NOT NULL COMMENT '作品标题',
   `description` text DEFAULT NULL COMMENT '作品描述',
   `type` enum('photography','videography','hosting','planning','design','other') NOT NULL COMMENT '作品类型',
@@ -383,9 +386,9 @@ CREATE TABLE `works` (
 -- ================================
 DROP TABLE IF EXISTS `work_likes`;
 CREATE TABLE `work_likes` (
-  `id` varchar(36) NOT NULL COMMENT '点赞ID',
-  `work_id` varchar(36) NOT NULL COMMENT '作品ID',
-  `user_id` varchar(36) DEFAULT NULL COMMENT '用户ID',
+  `id` char(36) NOT NULL COMMENT '点赞ID',
+  `work_id` char(36) NOT NULL COMMENT '作品ID',
+  `user_id` char(36) DEFAULT NULL COMMENT '用户ID',
   `ip_address` varchar(45) DEFAULT NULL COMMENT 'IP地址',
   `user_agent` text DEFAULT NULL COMMENT '用户代理',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',

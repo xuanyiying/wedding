@@ -24,8 +24,8 @@ export const handleValidationErrors = (req: Request, _res: Response, next: NextF
 
 // 通用验证规则
 export const commonValidations = {
-  // ID 验证
-  id: param('id').isUUID().withMessage('Invalid ID format'),
+  // ID 验证 - 移除UUID校验，改为字符串验证
+  id: param('id').isString().notEmpty().withMessage('ID is required'),
 
   // 分页验证
   pagination: [
@@ -279,6 +279,10 @@ export const validateRequest = (
         message: detail.message,
         value: detail.context?.value,
       }));
+      console.log('Validation failed with details:', errorMessages);
+      console.log('Request params:', req.params);
+      console.log('Request query:', req.query);
+      console.log('Request body:', req.body);
       throw new ValidationError('Validation failed', errorMessages);
     }
 
