@@ -293,7 +293,7 @@ jobs:
       - name: Health Check
         run: |
           sleep 30
-          curl -f http://114.132.225.94/health
+          curl -f http://150.158.20.143/health
 ```
 
 ## 📚 相关文档

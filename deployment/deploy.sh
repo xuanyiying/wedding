@@ -289,17 +289,7 @@ smart_deploy() {
     start_services
     
     # 执行数据库初始化
-    log_info "执行数据库初始化..."
-    if [[ -f "$PROJECT_ROOT/deployment/init-server.sh" ]]; then
-        cd "$PROJECT_ROOT/deployment"
-        chmod +x init-server.sh
-        ./init-server.sh --skip-checks || {
-            log_warning "数据库初始化脚本执行失败，但继续执行"
-        }
-        cd "$PROJECT_ROOT"
-    else
-        log_warning "数据库初始化脚本不存在: $PROJECT_ROOT/deployment/init-server.sh"
-    fi
+    initialize_database
     
     # 健康检查
     health_check
@@ -357,17 +347,7 @@ deploy_full() {
     start_services
     
     # 执行数据库初始化
-    log_info "执行数据库初始化..."
-    if [[ -f "$PROJECT_ROOT/deployment/init-server.sh" ]]; then
-        cd "$PROJECT_ROOT/deployment"
-        chmod +x init-server.sh
-        ./init-server.sh --skip-checks || {
-            log_warning "数据库初始化脚本执行失败，但继续执行"
-        }
-        cd "$PROJECT_ROOT"
-    else
-        log_warning "数据库初始化脚本不存在: $PROJECT_ROOT/deployment/init-server.sh"
-    fi
+    initialize_database
     
     # 健康检查
     health_check
@@ -445,6 +425,69 @@ rebuild_deploy() {
     health_check
     
     log_success "重新构建部署完成！"
+}
+
+# 初始化数据库
+initialize_database() {
+    log_info "执行数据库初始化..."
+    
+    # 等待API服务完全启动
+    log_info "等待API服务启动..."
+    sleep 20
+    
+    # 检查API容器是否运行
+    if ! docker ps | grep -q wedding-api; then
+        log_error "API容器未运行，无法执行数据库初始化"
+        log_info "尝试查看API容器日志..."
+        docker logs wedding-api-prod 2>&1 | tail -n 50
+        return 1
+    fi
+    
+    # 执行初始化脚本
+    if [[ -f "$PROJECT_ROOT/deployment/init-server.sh" ]]; then
+        cd "$PROJECT_ROOT/deployment"
+        chmod +x init-server.sh
+        if ./init-server.sh --skip-checks; then
+            log_success "数据库初始化脚本执行成功"
+        else
+            log_warning "数据库初始化脚本执行失败，尝试使用备用方法"
+            
+            # 使用备用方法检查和初始化数据库
+            if [[ -f "$PROJECT_ROOT/deployment/check-db-init.sh" ]]; then
+                chmod +x check-db-init.sh
+                if ./check-db-init.sh; then
+                    log_success "数据库初始化成功"
+                else
+                    log_error "数据库初始化失败，请检查API日志"
+                    docker logs wedding-api-prod 2>&1 | tail -n 50
+                    return 1
+                fi
+            else
+                log_warning "数据库检查脚本不存在: $PROJECT_ROOT/deployment/check-db-init.sh"
+                log_warning "继续执行，但数据库可能未正确初始化"
+            fi
+        fi
+        cd "$PROJECT_ROOT"
+    else
+        log_warning "数据库初始化脚本不存在: $PROJECT_ROOT/deployment/init-server.sh"
+        
+        # 使用备用方法检查和初始化数据库
+        if [[ -f "$PROJECT_ROOT/deployment/check-db-init.sh" ]]; then
+            cd "$PROJECT_ROOT/deployment"
+            chmod +x check-db-init.sh
+            if ./check-db-init.sh; then
+                log_success "数据库初始化成功"
+            else
+                log_error "数据库初始化失败，请检查API日志"
+                docker logs wedding-api-prod 2>&1 | tail -n 50
+                return 1
+            fi
+            cd "$PROJECT_ROOT"
+        else
+            log_warning "数据库检查脚本不存在: $PROJECT_ROOT/deployment/check-db-init.sh"
+            log_warning "继续执行，但数据库可能未正确初始化"
+        fi
+    fi
 }
 
 # 健康检查

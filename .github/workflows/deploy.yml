@@ -289,7 +289,7 @@ jobs:
     
     environment:
       name: ${{ github.event.inputs.environment || 'production' }}
-      url: ${{ github.event.inputs.environment == 'staging' && 'http://staging.wedding.com' || 'http://114.132.225.94' }}
+      url: ${{ github.event.inputs.environment == 'staging' && 'http://staging.wedding.com' || 'http://150.158.20.143' }}
     
     steps:
     - name: Checkout code
@@ -317,7 +317,7 @@ jobs:
           echo "compose_file=docker-compose-tencent.yml" >> $GITHUB_OUTPUT
           echo "env_file=.env.tencent" >> $GITHUB_OUTPUT
           echo "image_tag=latest" >> $GITHUB_OUTPUT
-          echo "health_url=http://114.132.225.94" >> $GITHUB_OUTPUT
+          echo "health_url=http://150.158.20.143" >> $GITHUB_OUTPUT
         fi
     
     - name: Create deployment record

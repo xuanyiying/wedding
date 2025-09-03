@@ -40,10 +40,15 @@ export const connectDatabase = async (): Promise<void> => {
     initModels(sequelize);
     logger.info('Database models initialized successfully.');
 
-    // 在开发环境下同步数据库模型
-    if (config.nodeEnv === 'development') {
+    // 在开发环境下强制同步数据库模型（会删除现有表）
+    if (config.nodeEnv === 'development' || config.nodeEnv === 'dev') {
       await sequelize.sync({force: true });
-      logger.info('Database models synchronized successfully.');
+      logger.info('Database models synchronized successfully (force mode).');
+    } 
+    // 在生产环境下仅同步缺失的表和字段，不删除数据
+    else if (config.nodeEnv === 'production' || config.nodeEnv === 'prod') {
+      await sequelize.sync({alter: true});
+      logger.info('Database models synchronized successfully (alter mode).');
     }
   } catch (error) {
     logger.error('Unable to connect to the database:', error);

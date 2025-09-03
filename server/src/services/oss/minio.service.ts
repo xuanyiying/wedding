@@ -356,8 +356,27 @@ export class MinIOService implements OssService {
       console.log('=== MinIO Service Debug ===');
       console.log('Internal URL generated:', internalUrl);
       
-      // 直接返回内部URL，让nginx代理处理
-      return internalUrl;
+      // 将内部MinIO地址替换为外部可访问的地址
+      // 从环境变量获取外部端点，如果没有则使用当前主机
+      const publicEndpoint = process.env.MINIO_PUBLIC_ENDPOINT || process.env.VITE_MINIO_URL;
+      
+      if (publicEndpoint) {
+        // 从内部URL中提取路径部分
+        const urlObj = new URL(internalUrl);
+        const pathWithQuery = urlObj.pathname + urlObj.search;
+        
+        // 构建新的外部可访问URL
+        const externalUrl = `${publicEndpoint}${pathWithQuery}`;
+        console.log('External URL generated:', externalUrl);
+        return externalUrl;
+      }
+      
+      // 如果没有配置外部端点，则使用请求头中的主机信息
+      // 由于这是服务器端代码，我们无法使用window.location
+      // 默认使用http协议和当前主机名（依赖nginx正确设置X-External-Host和X-External-Proto头）
+      const externalUrl = internalUrl.replace(/http:\/\/minio:9000/g, 'http://localhost');
+      console.log('External URL generated:', externalUrl);
+      return externalUrl;
     } catch (error) {
       console.error('Error generating presigned upload URL:', error);
       throw new Error('Failed to generate presigned upload URL');
@@ -374,7 +393,27 @@ export class MinIOService implements OssService {
         Key: key
       });
 
-      return await getSignedUrl(this.s3Client, command, { expiresIn: expires });
+      // 获取内部URL
+      const internalUrl = await getSignedUrl(this.s3Client, command, { expiresIn: expires });
+      
+      // 将内部MinIO地址替换为外部可访问的地址
+      const publicEndpoint = process.env.MINIO_PUBLIC_ENDPOINT || process.env.VITE_MINIO_URL;
+      
+      if (publicEndpoint) {
+        // 从内部URL中提取路径部分
+        const urlObj = new URL(internalUrl);
+        const pathWithQuery = urlObj.pathname + urlObj.search;
+        
+        // 构建新的外部可访问URL
+        const externalUrl = `${publicEndpoint}${pathWithQuery}`;
+        console.log('External download URL generated:', externalUrl);
+        return externalUrl;
+      }
+      
+      // 如果没有配置外部端点，则使用默认替换
+      const externalUrl = internalUrl.replace(/http:\/\/minio:9000/g, 'http://localhost');
+      console.log('External download URL generated:', externalUrl);
+      return externalUrl;
     } catch (error) {
       console.error('Error generating presigned download URL:', error);
       throw new Error('Failed to generate presigned download URL');

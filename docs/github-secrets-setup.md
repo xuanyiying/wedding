@@ -7,7 +7,7 @@
 ### 1. 生产服务器连接信息
 
 ```
-PRODUCTION_HOST=114.132.225.94
+PRODUCTION_HOST=150.158.20.143
 PRODUCTION_USER=root
 PRODUCTION_PORT=22
 PRODUCTION_SSH_KEY=<私钥内容>
@@ -29,7 +29,7 @@ PRODUCTION_SSH_KEY=<私钥内容>
 
 #### PRODUCTION_HOST
 - **Name**: `PRODUCTION_HOST`
-- **Value**: `114.132.225.94`
+- **Value**: `150.158.20.143`
 
 #### PRODUCTION_USER
 - **Name**: `PRODUCTION_USER`
@@ -52,10 +52,10 @@ PRODUCTION_SSH_KEY=<私钥内容>
 ssh-keygen -t rsa -b 4096 -C "github-actions@wedding-client"
 
 # 将公钥添加到生产服务器的authorized_keys
-ssh-copy-id -i ~/.ssh/id_rsa.pub root@114.132.225.94
+ssh-copy-id -i ~/.ssh/id_rsa.pub root@150.158.20.143
 
 # 或者手动添加
-cat ~/.ssh/id_rsa.pub | ssh root@114.132.225.94 "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+cat ~/.ssh/id_rsa.pub | ssh root@150.158.20.143 "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
 ```
 
 然后将私钥内容（`~/.ssh/id_rsa`）复制到GitHub Secrets中的`PRODUCTION_SSH_KEY`。
@@ -65,7 +65,7 @@ cat ~/.ssh/id_rsa.pub | ssh root@114.132.225.94 "mkdir -p ~/.ssh && cat >> ~/.ss
 在配置完成后，可以测试SSH连接：
 
 ```bash
-ssh -i ~/.ssh/id_rsa root@114.132.225.94
+ssh -i ~/.ssh/id_rsa root@150.158.20.143
 ```
 
 ## 生产服务器准备
@@ -127,7 +127,7 @@ mkdir -p logs
 
 ```bash
 # 检查SSH连接
-ssh -v root@114.132.225.94
+ssh -v root@150.158.20.143
 
 # 检查SSH密钥格式
 ssh-keygen -l -f ~/.ssh/id_rsa
