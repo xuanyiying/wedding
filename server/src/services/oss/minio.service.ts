@@ -67,7 +67,7 @@ export class MinIOService implements OssService {
       }
     }
 
-    // 设置bucket策略，允许公共读取
+    // 设置bucket策略，允许公共读取和上传
     try {
       const bucketPolicy = {
         Version: '2012-10-17',
@@ -75,8 +75,8 @@ export class MinIOService implements OssService {
           {
             Effect: 'Allow',
             Principal: '*',
-            Action: 's3:GetObject',
-            Resource: `arn:aws:s3:::${this.bucket}/*`
+            Action: ['s3:GetObject', 's3:PutObject', 's3:DeleteObject','s3:ListBucket'],
+            Resource: [`arn:aws:s3:::${this.bucket}/*`, `arn:aws:s3:::${this.bucket}`]
           }
         ]
       };
