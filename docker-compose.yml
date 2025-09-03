@@ -24,7 +24,7 @@ services:
     restart: unless-stopped
     pull_policy: never
     ports:
-      - "${WEB_PORT:-8080}:8080"
+      - "${WEB_PORT:-8080}:80"
     networks:
       - wedding-network
     healthcheck:

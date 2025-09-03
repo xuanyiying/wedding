@@ -220,29 +220,10 @@ check_changes() {
     fi
 }
 
-# 复制Nginx配置文件到web目录
-copy_nginx_config() {
-    log_info "复制Nginx配置文件..."
-    
-    # 确保web目录存在
-    mkdir -p "$PROJECT_ROOT/web"
-    
-    # 从deployment目录复制Nginx配置文件到web目录（强制覆盖）
-    if [[ -f "$PROJECT_ROOT/deployment/docker/nginx/conf.d/default.conf" ]]; then
-        cp -f "$PROJECT_ROOT/deployment/docker/nginx/conf.d/default.conf" "$PROJECT_ROOT/web/nginx.conf"
-        log_success "Nginx配置文件复制完成"
-    else
-        log_error "未找到Nginx配置文件: $PROJECT_ROOT/deployment/docker/nginx/conf.d/default.conf"
-        return 1
-    fi
-}
-
 # 智能部署
 smart_deploy() {
     log_info "开始智能部署..."
     
-    # 复制Nginx配置文件到web目录
-    copy_nginx_config
     
     # 检查代码和配置变化
     local change_status
@@ -330,8 +311,6 @@ smart_deploy() {
 deploy_full() {
     log_info "开始完整部署..."
     
-    # 复制Nginx配置文件到web目录
-    copy_nginx_config
     
     # 停止现有服务
     stop_services 2>/dev/null || true
@@ -404,10 +383,7 @@ deploy_full() {
 # 重新构建部署
 rebuild_deploy() {
     log_info "开始重新构建并部署..."
-    
-    # 复制Nginx配置文件到web目录
-    copy_nginx_config
-    
+
     # 停止服务
     stop_services 2>/dev/null || true
     

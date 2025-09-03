@@ -33,15 +33,15 @@ FROM nginx:1.25.4-alpine AS production
 
 # 安装必要工具并创建缓存目录
 RUN apk add --no-cache curl && \
-    mkdir -p /var/cache/nginx/static /var/cache/nginx/api && \
+    mkdir -p /var/cache/nginx && \
     chown -R nginx:nginx /var/cache/nginx && \
     rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
 
 # 复制构建产物
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# 复制nginx配置模板
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# 复制nginx配置文件（使用专为静态文件服务设计的配置）
+COPY nginx-static.conf /etc/nginx/conf.d/default.conf
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
