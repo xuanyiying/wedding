@@ -23,19 +23,26 @@ declare global {
 
 // 从请求头中提取 token
 function extractTokenFromHeader(req: Request): string | null {
-  const authHeader = req.headers.authorization;
+  const authHeader = req.headers.authorization || req.headers.Authorization;
+  
+  console.log('🔍 提取令牌:', { 
+    authHeader: authHeader ? `${String(authHeader).substring(0, 20)}...` : 'undefined',
+    authHeaderType: typeof authHeader,
+    allHeaders: Object.keys(req.headers)
+  });
 
   if (!authHeader) {
     return null;
   }
 
   // 支持 "Bearer token" 格式
-  if (authHeader.startsWith('Bearer ')) {
-    return authHeader.substring(7);
+  const headerStr = String(authHeader);
+  if (headerStr.startsWith('Bearer ')) {
+    return headerStr.substring(7);
   }
 
   // 直接返回 token
-  return authHeader;
+  return headerStr;
 }
 
 // 检查 token 是否在黑名单中 - 增加容错机制

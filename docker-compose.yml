@@ -12,8 +12,8 @@ services:
   # =============================================================================
   web:
     build:
-      context: .
-      dockerfile: ./web/Dockerfile
+      context: ./web
+      dockerfile: Dockerfile
       target: production
     image: wedding-web:${ENVIRONMENT:-prod}-latest
     environment:
@@ -60,7 +60,9 @@ services:
       - REDIS_PORT=${REDIS_PORT:-6379}
       - REDIS_PASSWORD=${REDIS_PASSWORD:-R3d1s_W3dd1ng_2024_Pr0d_S3cur3!}
       - JWT_SECRET=${JWT_SECRET:-JWT_W3dd1ng_S3cr3t_2024_Pr0duct10n_K3y_V3ry_S3cur3_L0ng_Str1ng!}
-      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-JWT_W3dd1ng_R3fr3sh_S3cr3t_2024_Pr0duct10n_K3y_V3ry_S3cur3_L0ng_Str1ng!}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-JWT_R3fr3sh_W3dd1ng_S3cr3t_2024_Pr0duct10n_K3y_V3ry_S3cur3!}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-24h}
+      - JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN:-7d}
       - SMTP_HOST=${SMTP_HOST:-smtp.qq.com}
       - SMTP_PORT=${SMTP_PORT:-587}
       - SMTP_USER=${SMTP_USER:-admin@yourcompany.com}

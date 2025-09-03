@@ -11,12 +11,14 @@ const baseQuery = fetchBaseQuery({
     const token = stateToken || AuthStorage.getAccessToken();
 
     if (token) {
-      headers.set('authorization', `Bearer ${token}`);
+      console.log('🔑 添加认证头:', { tokenPreview: `${token.substring(0, 15)}...` });
+      headers.set('Authorization', `Bearer ${token}`);
     }
 
-    headers.set('content-type', 'application/json');
+    headers.set('Content-Type', 'application/json');
     return headers;
   },
+  credentials: 'include', // 确保跨域请求包含凭证
 });
 
 // 带错误处理的查询
