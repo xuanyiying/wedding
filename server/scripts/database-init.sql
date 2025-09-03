@@ -459,7 +459,7 @@ INSERT INTO users (
   UUID(), 
   'admin', 
   'admin@wedding.com', 
-  '$2a$12$nYmA674JQcRwb2cXB78byesUkCsUWhsQJh.tugP8zd2TR/ykef.wu', -- admin123的bcrypt哈希
+  '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- password的bcrypt哈希
   'default_salt', 
   'super_admin', 
   'active', 
