@@ -8,7 +8,7 @@ import {
   FileCategory,
   ConfigCategory,
   FileType,
-  StorageType,
+  OssType,
 } from '../types';
 // 统计数据类型
 export interface Statistics {
@@ -220,7 +220,7 @@ export interface MediaFile {
   duration: number | null;
   thumbnailUrl: string | null;
   hashMd5: string | null;
-  storageType: StorageType;
+  ossType: OssType;
   bucketName: string | null;
   isPublic: boolean;
   downloadCount: number | null;

@@ -10,7 +10,7 @@ import sharp from 'sharp';
 import { OssService } from './oss/oss.service';
 import { getOssService } from '../config/oss';
 import { createRetryHandler } from '../middlewares/upload';
-import { FileCategory, FileType, StorageType } from '../types';
+import { FileCategory, FileType, OssType } from '../types';
 
 interface GetFilesParams {
   page: number;
@@ -215,7 +215,7 @@ export class FileService {
       hashMd5: fileHash,
       fileType: data.fileType,
       userId: data.userId,
-      storageType: (process.env.OSS_TYPE as StorageType) || StorageType.MINIO,
+      ossType: (process.env.OSS_TYPE as OssType) || OssType.MINIO,
       isPublic: false,
       downloadCount: 0,
       category: data.category as FileCategory,
@@ -405,11 +405,11 @@ export class FileService {
       }
 
       // 验证并设置存储类型
-      const getValidStorageType = (envType: string | undefined): StorageType => {
-        if (envType && Object.values(StorageType).includes(envType as StorageType)) {
-          return envType as StorageType;
+      const getValidStorageType = (envType: string | undefined): OssType => {
+        if (envType && Object.values(OssType).includes(envType as OssType)) {
+          return envType as OssType;
         }
-        return StorageType.MINIO;
+        return OssType.MINIO;
       };
 
       // 创建新的文件记录
@@ -423,7 +423,7 @@ export class FileService {
         hashMd5: fileHash,
         fileType: fileData.fileType,
         userId: fileData.userId,
-        storageType: getValidStorageType(process.env.OSS_TYPE),
+        ossType: getValidStorageType(process.env.OSS_TYPE),
         isPublic: false,
         downloadCount: 0,
         thumbnailUrl: null,

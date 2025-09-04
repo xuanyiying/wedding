@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { OssService, UploadResult, FileInfo } from './oss.service';
 import { Readable } from 'stream';
 
+// 使用统一的OssConfig接口，这里只是为了向后兼容
 export interface OSSConfig {
   region: string;
   accessKeyId: string;
@@ -13,6 +14,7 @@ export interface OSSConfig {
   bucket: string;
   endpoint?: string | undefined;
   secure?: boolean | undefined;
+  cdnBaseUrl?: string;
 }
 
 export class AliyunOssService implements OssService {

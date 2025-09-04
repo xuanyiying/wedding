@@ -11,6 +11,7 @@ import contactRoutes from './contact';
 import settingsRoutes from './settings';
 import pageViewRoutes from './view';
 import profileRoutes from './profile';
+import { enhancedUploadRoutes } from './enhanced-upload.routes';
 
 const router = Router();
 
@@ -28,6 +29,7 @@ router.get('/', (_req, res) => {
       works: '/works',
       files: '/files',
       'direct-upload': '/direct-upload',
+      'enhanced-upload': '/enhanced-upload',
       dashboard: '/dashboard',
       team: '/team',
       contact: '/contact',
@@ -56,6 +58,9 @@ router.use('/files', fileRoutes);
 
 // 直传上传路由
 router.use('/direct-upload', directUploadRoutes);
+
+// 增强上传路由
+router.use('/enhanced-upload', enhancedUploadRoutes);
 
 // 仪表盘路由
 router.use('/dashboard', dashboardRoutes);

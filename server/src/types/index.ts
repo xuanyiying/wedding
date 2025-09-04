@@ -114,11 +114,12 @@ export enum FileType {
   VIDEO = 'video', // 视频
 }
 
-export enum StorageType {
+export enum OssType {
   MINIO = 'minio', // 本地存储
-  OSS = 'oss', // 阿里云OSS
-  S3 = 's3', // AWS S3
+  ALIYUN = 'aliyun', // 阿里云OSS
+  AWS = 'aws', // AWS S3
   CDN = 'cdn', // CDN
+  TENCENT = 'tencent', // 腾讯云COS
 }
 
 // Enums defined according to database-design.md

@@ -6,7 +6,7 @@ import { UserService } from './user.service';
 import { generateId } from '@/utils/id.generator';
 import logger from '@/utils/logger';
 import { FileService } from './file.service';
-import { FileCategory, StorageType } from '@/types';
+import { FileCategory, OssType } from '@/types';
 
 export class MediaProfileService {
   async getMediaProfileById(id: string) {
@@ -59,7 +59,7 @@ export class MediaProfileService {
       ],
       order: [['mediaOrder', 'ASC']],
     });
-;
+    ;
 
     const userObj = {
       id: user.id,
@@ -94,7 +94,7 @@ export class MediaProfileService {
         thumbnailUrl: f.file?.thumbnailUrl || '',
         hashMd5: f.file?.hashMd5 || '',
         hashSha256: f.file?.hashSha256 || '',
-        storageType: f.file?.storageType || StorageType.MINIO,
+        ossType: f.file?.ossType || OssType.MINIO,
         bucketName: f.file?.bucketName || '',
         isPublic: f.file?.isPublic || false,
         downloadCount: f.file?.downloadCount || 0,
@@ -147,7 +147,7 @@ export class MediaProfileService {
     for (const item of orderData) {
       await MediaProfile.update(
         { mediaOrder: item.mediaOrder },
-        { 
+        {
           where: { id: item.id, userId }
         }
       );
@@ -181,7 +181,7 @@ export class MediaProfileService {
     // 删除文件记录
     await File.destroy({ where: { id: fileId } });
     await profile.destroy();
-   
+
     return true;
   }
 
@@ -190,39 +190,39 @@ export class MediaProfileService {
    * 批量创建媒体资料
    */
   async batchCreateMediaProfile(userId: string, mediaProfiles: Partial<MediaProfileCreationAttributes>[]): Promise<MediaProfile[]> {
-     const profilesWithIds = mediaProfiles.map((p, index) => {
-       const profile: MediaProfileCreationAttributes = {
-         id: p.id || generateId(),
-         userId,
-         fileId: p.fileId!,
-         fileType: p.fileType!,
-         mediaOrder: p.mediaOrder ?? index,
-       };
-       return profile;
-     });
-     
-     return await MediaProfile.bulkCreate(profilesWithIds);
-   }
+    const profilesWithIds = mediaProfiles.map((p, index) => {
+      const profile: MediaProfileCreationAttributes = {
+        id: p.id || generateId(),
+        userId,
+        fileId: p.fileId!,
+        fileType: p.fileType!,
+        mediaOrder: p.mediaOrder ?? index,
+      };
+      return profile;
+    });
+
+    return await MediaProfile.bulkCreate(profilesWithIds);
+  }
 
   /**
    * 添加文件到用户资料
    */
   async addFileToProfile(userId: string, fileId: string, options?: {
-     mediaOrder?: number;
-     fileType?: string;
-   }): Promise<MediaProfile> {
-     const existingCount = await MediaProfile.count({ where: { userId } });
-     const mediaOrder = options?.mediaOrder ?? existingCount;
-     
-     const profileData: MediaProfileCreationAttributes = {
-       userId,
-       fileId,
-       mediaOrder,
-       fileType: options?.fileType as any || 'image',
-     };
-     
-     return await this.createMediaProfile(profileData);
-   }
+    mediaOrder?: number;
+    fileType?: string;
+  }): Promise<MediaProfile> {
+    const existingCount = await MediaProfile.count({ where: { userId } });
+    const mediaOrder = options?.mediaOrder ?? existingCount;
+
+    const profileData: MediaProfileCreationAttributes = {
+      userId,
+      fileId,
+      mediaOrder,
+      fileType: options?.fileType as any || 'image',
+    };
+
+    return await this.createMediaProfile(profileData);
+  }
 
   /**
    * 更新单个媒体资料
@@ -232,7 +232,7 @@ export class MediaProfileService {
     if (!profile) {
       throw new Error('媒体资料不存在');
     }
-    
+
     await profile.update(updateData);
     return profile;
   }
@@ -248,11 +248,11 @@ export class MediaProfileService {
    * 获取用户可用的文件列表
    */
   async getUserAvailableFiles(userId: string): Promise<File[]> {
-     return await File.findAll({
-       where: { userId: userId },
-       order: [['createdAt', 'DESC']],
-     });
-   }
+    return await File.findAll({
+      where: { userId: userId },
+      order: [['createdAt', 'DESC']],
+    });
+  }
 
 }
 

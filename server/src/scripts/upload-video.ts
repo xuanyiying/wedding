@@ -9,6 +9,7 @@ import { OssService } from '../services/oss/oss.service';
 import { OssFactory } from '../services/oss/oss.factory';
 import { FileService } from '../services/file.service';
 import '../models'; // 确保模型被加载
+import { ossConfig } from '@/config/oss';
 
 /**
  * 视频上传脚本
@@ -18,7 +19,7 @@ class VideoUploader {
   private ossService: OssService;
 
   constructor() {
-    this.ossService = OssFactory.getInstance(OssFactory.createConfigFromEnv());
+    this.ossService = OssFactory.getInstance(ossConfig);
   }
 
   /**
