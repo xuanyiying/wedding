@@ -23,3 +23,10 @@ dist
  *.local
  package-lock.json
 .codebuddy/.ignored_image/249d1ba6104662ae8450125d41ddd140.png
+deployment/.deploy_cache
+deployment/logs
+deployment/uploads
+deployment/ssl
+
+web/package-lock.json
+server/package-lock.json
