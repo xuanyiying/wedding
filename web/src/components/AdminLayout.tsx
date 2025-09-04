@@ -12,7 +12,8 @@ import {
   MenuUnfoldOutlined,
   BellOutlined,
   LockOutlined,
-  ContactsOutlined
+  ContactsOutlined,
+  CloudUploadOutlined
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
@@ -187,6 +188,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
         label: '系统设置',
         roles: ['super_admin', 'admin'], // 仅管理员可见
       },
+      {
+        key: '/admin/upload-settings',
+        icon: <CloudUploadOutlined />,
+        label: '上传设置',
+        roles: ['super_admin', 'admin'], // 仅管理员可见
+      },
     ];
 
     // 根据用户角色过滤菜单项
@@ -210,6 +217,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
       '/admin/works': '作品管理',
       '/admin/contacts': '联系人管理',
       '/admin/settings': '系统设置',
+      '/admin/upload-settings': '上传设置',
+      '/admin/upload-demo': '上传演示',
     };
 
     const pathSegments = location.pathname.split('/').filter(Boolean);

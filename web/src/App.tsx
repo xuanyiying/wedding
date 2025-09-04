@@ -19,7 +19,9 @@ import SchedulePage from './pages/client/SchedulePage';
 import TeamPage from './pages/client/TeamPage';
 import WorksPage from './pages/client/WorksPage';
 import WorkDetailPage from './pages/client/WorkDetailPage';
+import UploadDemo from './pages/UploadDemo';
 import DashboardPage from './pages/admin/DashboardPage';
+import UploadSettingsPage from './pages/admin/UploadSettingsPage';
 import UsersPage from './pages/admin/UsersPage';
 import SettingsPage from './pages/admin/SettingsPage';
 import AdminSchedulesPage from './pages/admin/SchedulesPage';
@@ -142,6 +144,8 @@ function AppContent() {
           <Route path="works" element={<AdminWorksPage />} />
           <Route path="contacts" element={<ContactsPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="upload-demo" element={<UploadDemo />} />
+          <Route path="upload-settings" element={<UploadSettingsPage />} />
         </Route>
         
         {/* 404 重定向 */}

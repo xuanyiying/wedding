@@ -1,10 +1,23 @@
+import { OssType } from '@/types';
 import { config as dotenvConfig } from 'dotenv';
 import { resolve } from 'path';
 
 // 加载环境变量
 dotenvConfig({ path: resolve(__dirname, '../../.env') });
 
-interface Config {
+// 统一的OSS配置接口
+export interface OssConfig {
+  bucket: string;
+  cdnBaseUrl?: string;
+  endpoint: string;
+  region: string;
+  accessKeyId: string;
+  accessKeySecret: string;
+  ossType: OssType;
+  secure?: boolean | undefined;
+}
+
+export interface Config {
   nodeEnv: string;
   port: number;
   apiPrefix: string;
@@ -91,16 +104,7 @@ interface Config {
   };
 
   // 存储配置
-  storage: {
-    type: 'minio' | 'aws' | 'aliyun';
-    aws?: {
-      accessKeyId: string;
-      secretAccessKey: string;
-      region: string;
-      bucket: string;
-    };
-    cdnBaseUrl?: string;
-  };
+  oss: OssConfig;
 }
 
 const getEnvVar = (key: string, defaultValue?: string): string => {
@@ -212,17 +216,15 @@ export const config: Config = {
     credentials: getEnvBoolean('CORS_CREDENTIALS', true),
   },
 
-  storage: {
-    type: getEnvVar('STORAGE_TYPE', 'minio') as 'minio' | 'aws' | 'aliyun',
-    ...(getEnvVar('STORAGE_TYPE', 'minio') === 'aws' && {
-      aws: {
-        accessKeyId: getEnvVar('AWS_ACCESS_KEY_ID'),
-        secretAccessKey: getEnvVar('AWS_SECRET_ACCESS_KEY'),
-        region: getEnvVar('AWS_REGION'),
-        bucket: getEnvVar('AWS_S3_BUCKET'),
-      },
-    }),
-    ...(process.env.CDN_BASE_URL && { cdnBaseUrl: process.env.CDN_BASE_URL }),
+  oss: {
+    ossType: getEnvVar('OSS_TYPE', 'minio') as OssType,
+    endpoint: getEnvVar('OSS_ENDPOINT', 'http://minio:9000'),
+    region: getEnvVar('OSS_REGION', 'us-east-1'),
+    accessKeyId: getEnvVar('OSS_ACCESS_KEY_ID', getEnvVar('OSS_ACCESS_KEY', '')),
+    accessKeySecret: getEnvVar('OSS_ACCESS_KEY_SECRET', getEnvVar('OSS_SECRET_KEY', '')),
+    bucket: getEnvVar('OSS_BUCKET', 'wedding-media'),
+    cdnBaseUrl: getEnvVar('OSS_CDN_BASE_URL', getEnvVar('CDN_BASE_URL', '')),
+    secure: getEnvBoolean('OSS_SECURE', false),
   },
 };
 

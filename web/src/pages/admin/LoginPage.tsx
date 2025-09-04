@@ -14,7 +14,7 @@ const LoginContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--admin-gradient-primary);
+  background: #f5f5f5; /* 使用浅灰色背景替代蓝色渐变背景 */
   position: fixed;
   top: 0;
   left: 0;
@@ -30,10 +30,7 @@ const LoginContainer = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background-image: 
-      radial-gradient(circle at 20% 80%, var(--admin-overlay-1) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, var(--admin-overlay-2) 0%, transparent 50%),
-      radial-gradient(circle at 40% 40%, var(--admin-overlay-1) 0%, transparent 50%);
+    /* 移除背景图案 */
     pointer-events: none;
   }
   
