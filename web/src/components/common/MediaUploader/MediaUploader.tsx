@@ -259,7 +259,9 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
   // 处理上传封面文件
   const uploadCoverFile = useCallback(async (file: File, videoFileId: string): Promise<void> => {
     try {
-      await fileService.uploadVedioCover(file, videoFileId)
+      const formData = new FormData();
+      formData.append('file', file);
+      await fileService.uploadVedioCover(file, videoFileId);
     } catch (coverError: any) {
       console.error('Cover upload failed:', coverError);
       setGlobalError(`封面上传失败: ${coverError instanceof Error ? coverError.message : '未知错误'}`);

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Button, Image, Modal, Tooltip, Progress, message } from 'antd';
+import { Button, Image, Modal, Tooltip, message } from 'antd';
 import {
   DeleteOutlined,
   EyeOutlined,
@@ -53,7 +53,7 @@ const MediaList: React.FC<MediaListProps> = ({
       cancelText: '取消',
       onOk: () => {
         onRemove?.(fileId);
-        
+
         // 清理预览URL
         if (fileItem.preview) {
           URL.revokeObjectURL(fileItem.preview);
@@ -61,7 +61,7 @@ const MediaList: React.FC<MediaListProps> = ({
         if (fileItem.coverPreview) {
           URL.revokeObjectURL(fileItem.coverPreview);
         }
-        
+
         message.success('文件已删除');
       }
     });
@@ -77,7 +77,7 @@ const MediaList: React.FC<MediaListProps> = ({
   // 处理重试上传
   const handleRetry = useCallback(async (fileId: string) => {
     setRetryingFiles(prev => new Set([...prev, fileId]));
-    
+
     try {
       await onRetry?.(fileId);
     } finally {
@@ -131,60 +131,8 @@ const MediaList: React.FC<MediaListProps> = ({
                 </div>
               )}
             </div>
-            
-            {/* 文件信息 */}
-            <div className="item-info">
-              <div className="item-name" title={fileItem.file.name}>
-                {fileItem.file.name}
-              </div>
-              <div className="item-size">
-                {Math.round(fileItem.file.size / 1024)} KB
-              </div>
-              <div className="item-status">
-                {fileItem.status === UploadStatus.UPLOADING && (
-                  <div className="uploading-status">
-                    <Progress 
-                      percent={Math.round(fileItem.progress)} 
-                      size="small" 
-                      status="active"
-                      format={(percent) => `${percent}%`}
-                    />
-                    <span className="uploading-text">正在...</span>
-                  </div>
-                )}
-                {fileItem.status === UploadStatus.SUCCESS && (
-                  <div className="success-status">
-                    <CheckCircleOutlined className="status-icon success" />
-                    <span className="status-text">上传成功</span>
-                    {fileItem.uploadedAt && (
-                      <span className="upload-time">
-                        {fileItem.uploadedAt.toLocaleTimeString()}
-                      </span>
-                    )}
-                  </div>
-                )}
-                {fileItem.status === UploadStatus.ERROR && (
-                  <div className="error-status">
-                    <CloseCircleOutlined className="status-icon error" />
-                    <span className="status-text error">{fileItem.error}</span>
-                    <Button 
-                      type="link" 
-                      size="small" 
-                      onClick={() => handleRetry(fileItem.id)}
-                      loading={retryingFiles.has(fileItem.id)}
-                    >
-                      重试
-                    </Button>
-                  </div>
-                )}
-                {fileItem.status === UploadStatus.PENDING && (
-                  <div className="pending-status">
-                    <span className="status-text">等待上传</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            
+
+
             {/* 操作按钮 */}
             <div className="item-actions">
               {fileItem.status === UploadStatus.ERROR && (
@@ -197,7 +145,7 @@ const MediaList: React.FC<MediaListProps> = ({
                   />
                 </Tooltip>
               )}
-              
+
               {fileItem.type === 'video' && onSelectCover && (
                 <Tooltip title="选择封面">
                   <Button
@@ -207,7 +155,7 @@ const MediaList: React.FC<MediaListProps> = ({
                   />
                 </Tooltip>
               )}
-              
+
               {previewable && fileItem.status === UploadStatus.SUCCESS && (
                 <Tooltip title="预览">
                   <Button
@@ -217,7 +165,7 @@ const MediaList: React.FC<MediaListProps> = ({
                   />
                 </Tooltip>
               )}
-              
+
               <Tooltip title="删除">
                 <Button
                   type="text"
@@ -230,15 +178,15 @@ const MediaList: React.FC<MediaListProps> = ({
           </div>
         ))}
       </div>
-      
+
       {/* 缩略图显示 */}
       {showThumbnails && files.length > 0 && (
         <div className="media-list__thumbnails">
           <div className="thumbnails-title">缩略图预览</div>
           <div className="thumbnails-container">
             {files.map((fileItem) => (
-              <div 
-                key={`thumb-${fileItem.id}`} 
+              <div
+                key={`thumb-${fileItem.id}`}
                 className={`thumbnail-item ${fileItem.status}`}
                 onClick={() => previewable && handlePreview(fileItem)}
               >
@@ -266,7 +214,7 @@ const MediaList: React.FC<MediaListProps> = ({
                     )}
                   </div>
                 )}
-                
+
                 {/* 状态指示器 */}
                 <div className="thumbnail-status">
                   {fileItem.status === UploadStatus.UPLOADING && (
@@ -284,7 +232,7 @@ const MediaList: React.FC<MediaListProps> = ({
           </div>
         </div>
       )}
-      
+
       {/* 预览弹窗 */}
       <Modal
         open={previewVisible}
@@ -306,7 +254,7 @@ const MediaList: React.FC<MediaListProps> = ({
                 )}
               </div>
             </div>
-            
+
             <div className="preview-content">
               {previewFile.type === 'image' ? (
                 <Image
@@ -325,7 +273,7 @@ const MediaList: React.FC<MediaListProps> = ({
                 </video>
               )}
             </div>
-            
+
             {/* 封面预览 */}
             {previewFile.type === 'video' && previewFile.coverPreview && (
               <div className="cover-preview">

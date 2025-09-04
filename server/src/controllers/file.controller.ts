@@ -325,13 +325,17 @@ export const getUserMedia = async (req: Request, res: Response, next: NextFuncti
  */
 export const uploadVideoCover = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { fileId } = req.params;
-    const { file } = req.body;
+    const fileId = req.params.id;  // 从URL参数获取fileId
+    const file = req.file;  // 从multer获取上传的文件
+
     if (!fileId || !file) {
-      Resp.badRequest(res, '缺少用户ID或文件参数');
+      Resp.badRequest(res, '缺少文件ID或文件参数');
       return;
     }
-    const result = await FileService.uploadVideoCover(file, fileId);
+
+    // 读取文件buffer
+    const fileBuffer = file.buffer;
+    const result = await FileService.uploadVideoCover(fileBuffer, fileId);
     Resp.success(res, result, '上传视频封面成功');
   } catch (error) {
     logger.error('上传视频封面失败:', error);

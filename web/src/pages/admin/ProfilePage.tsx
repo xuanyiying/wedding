@@ -8,23 +8,27 @@ import {
   Button,
   Modal,
   Switch,
+  Image,
+  Popconfirm,
 } from 'antd';
 import {
   UserOutlined,
   CalendarOutlined,
   PictureOutlined,
   GlobalOutlined,
+  PlayCircleOutlined,
+  DeleteOutlined,
+  EyeOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { userService, profileService } from '../../services';
 import { useAppSelector } from '../../store/hooks';
-import type { MediaFile, User } from '../../types';
+import { FileType, type MediaFile, type User } from '../../types';
 import { formatDate } from '../../utils';
 import ProfileEditForm from '../../components/admin/profile/ProfileEditForm';
 import AvatarUploader from '../../components/AvatarUploader';
-import { MediaUploader, MediaList } from '../../components/common/MediaUploader';
-import type { MediaFileItem } from '../../components/common/MediaUploader/types';
-import type { DirectUploadResult } from '../../utils/direct-upload';
+import { MediaUploader } from '../../components/common/MediaUploader';
+import { PlayButton } from '../../components/client/WorkCardStyles';
 
 const { TabPane } = Tabs;
 
@@ -271,34 +275,34 @@ const PublicProfileContainer = styled.div`
     }
   }
 `;
-
+const ProfileMediaItem = styled.div`
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1;
+  cursor: pointer;
+  
+  .ant-image {
+    width: 100%;
+    height: 100%;
+    
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+`;
 
 const ProfilePage: React.FC = () => {
   const user = useAppSelector((state) => state.auth.user);
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState('basic');
-  const [mediaFiles, setMediaFiles] = useState<MediaFileItem[]>([]);
+  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
 
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
 
-  // 转换MediaFile到MediaFileItem的函数（用于显示已上传的文件）
-  const convertMediaFileToMediaFileItem = (mediaFile: MediaFile): MediaFileItem => {
-    // 创建一个虚拟的File对象用于显示
-    const virtualFile = new File([], mediaFile.filename || 'unknown', {
-      type: mediaFile.fileType === 'image' ? 'image/*' : 'video/*'
-    });
-
-    return {
-      id: mediaFile.fileId,
-      file: virtualFile,
-      type: mediaFile.fileType === 'image' ? 'image' : 'video',
-      status: 'success',
-      progress: 100,
-      preview: mediaFile.fileUrl || undefined
-    };
-  };
 
   const [uploading] = useState(false);
 
@@ -322,9 +326,7 @@ const ProfilePage: React.FC = () => {
         try {
           const mediaResponse = await profileService.getUserMediaProfiles(userData.id);
           if (mediaResponse.success && mediaResponse.data) {
-            // 转换为MediaFileItem格式以兼容MediaGallery组件
-            const convertedFiles = mediaResponse.data.map(convertMediaFileToMediaFileItem);
-            setMediaFiles(convertedFiles);
+            setMediaFiles(mediaResponse.data);
           }
         } catch (error) {
           console.error('加载媒体文件失败:', error);
@@ -381,6 +383,18 @@ const ProfilePage: React.FC = () => {
       setLoading(false);
     }
   };
+  const handleOnRemoveMediaFile = async (fileId: string) => {
+    try {
+      // 调用后端API删除文件
+      await profileService.deleteMediaProfile(user?.id || '', fileId);
+      // 更新本地状态
+      setMediaFiles(prev => prev.filter(f => f.id !== fileId));
+      message.success('删除成功');
+    } catch (error) {
+      console.error('Delete error:', error);
+      message.error('删除失败，请重试');
+    }
+  };
 
   // 保存公开资料
   const handleSavePublicProfile = async () => {
@@ -405,10 +419,12 @@ const ProfilePage: React.FC = () => {
       // 保存媒体文件排序
       if (mediaFiles.length > 0 && currentUser?.id) {
         try {
-          const sortData = mediaFiles.map((media, index) => ({
-            fileId: media.id,
-            mediaOrder: index,
-          }));
+          const sortData = mediaFiles
+            .filter(media => media.id) // 过滤掉没有id的媒体文件
+            .map((media, index) => ({
+              fileId: media.id as string, // 类型断言，因为我们已经过滤了undefined的情况
+              mediaOrder: index,
+            }));
 
           await profileService.updateMediaProfilesOrder(currentUser.id, { orderData: sortData });
         } catch (error) {
@@ -425,151 +441,24 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  // 预览图片
-  const handlePreview = (file: MediaFileItem) => {
-    setPreviewImage(file.preview || '');
-    setPreviewVisible(true);
+  const handleUploadSuccess = async () => {
+    if (currentUser?.id) {
+      try {
+        const mediaResponse = await profileService.getUserMediaProfiles(currentUser.id);
+        if (mediaResponse.success && mediaResponse.data) {
+          setMediaFiles(mediaResponse.data);
+        }
+      } catch (error) {
+        console.error('重新加载媒体文件失败:', error);
+      }
+    }
   };
 
-
-
-  // 渲染公开资料页面
-  const renderPublicProfile = () => (
-    <PublicProfileContainer>
-      <div className="profile-header">
-        <div className="avatar">
-
-          <AvatarUploader
-            value={currentUser?.avatarUrl}
-            onChange={handleAvatarChange}
-            disabled={uploading || loading}
-            size={120}
-            category="avatar"
-            style={{
-              borderRadius: '50%',
-              overflow: 'hidden',
-              border: '3px solid #f0f0f0',
-              transition: 'all 0.3s ease'
-            }}
-          />
-        </div>
-        <div className="name">
-          {currentUser?.realName || currentUser?.nickname}
-        </div>
-        <div className="title">
-          {currentUser?.bio || '暂无个人简介'}
-        </div>
-        <div className="stats">
-          <div className="stat-item">
-            <span className="number">{currentUser?.experienceYears || 0}</span>
-            <span className="label">从业年限</span>
-          </div>
-          <div className="stat-item">
-            <span className="number">{mediaFiles.length}</span>
-            <span className="label">作品数量</span>
-          </div>
-          <div className="stat-item">
-            <span className="number">{currentUser?.specialties?.length || 0}</span>
-            <span className="label">专业技能</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="profile-content">
-        {/* 个人介绍 */}
-        {currentUser?.bio && (
-          <div className="section">
-            <div className="section-title">
-              <UserOutlined />
-              个人介绍
-            </div>
-            <p style={{ color: '#666', lineHeight: '1.6' }}>{currentUser.bio}</p>
-          </div>
-        )}
-
-        {/* 专业技能 */}
-        {currentUser?.specialties && currentUser.specialties.length > 0 && (
-          <div className="section">
-            <div className="section-title">
-              <CalendarOutlined />
-              专业技能
-            </div>
-            <Space wrap>
-              {currentUser.specialties.map((skill: string, index: number) => (
-                <Tag key={index} color="blue">{skill}</Tag>
-              ))}
-            </Space>
-          </div>
-        )}
-
-        {/* 作品展示 */}
-        <div className="section">
-          <div className="section-title">
-            <PictureOutlined />
-            作品展示
-            <Space style={{ marginLeft: 'auto' }}>
-              <Switch
-                checkedChildren={<GlobalOutlined />}
-                unCheckedChildren="私有"
-                checked={isPublicProfilePublished}
-                onChange={setIsPublicProfilePublished}
-              />
-              <span style={{ fontSize: '14px', color: '#666' }}>
-                {isPublicProfilePublished ? '公开展示' : '私有状态'}
-              </span>
-
-              <Button
-                type="default"
-                size="small"
-                loading={saving}
-                onClick={handleSavePublicProfile}
-              >
-                保存排序
-              </Button>
-            </Space>
-          </div>
-          <MediaUploader
-            config={{
-              maxCount: 20,
-              accept: ['image/*', 'video/*'],
-              category: 'profile',
-              multiple: true,
-              concurrent: 2
-            }}
-            onUploadSuccess={(results: DirectUploadResult[]) => {
-              // 将上传结果转换为MediaFileItem格式
-              const newFiles = results.map((result, _) => {
-                const mediaFile: MediaFileItem = {
-                  id: result.fileId,
-                  file: new File([], result.filename || 'uploaded-file'),
-                  type: result.fileType === 'image' ? 'image' : 'video',
-                  status: 'success',
-                  progress: 100,
-                  preview: result.url, // 使用上传结果的文件URL作为预览
-                  uploadedAt: new Date(result.uploadedAt)
-                };
-                return mediaFile;
-              });
-              setMediaFiles(prev => [...prev, ...newFiles]);
-              message.success(`成功上传 ${results.length} 个文件`);
-            }}
-            onUploadError={(error: Error) => {
-              console.error('上传失败:', error);
-              message.error('文件上传失败，请重试');
-            }}
-          />
-          <MediaList
-            files={mediaFiles}
-            onRemove={(fileId: string) => {
-              setMediaFiles(prev => prev.filter(f => f.id !== fileId));
-            }}
-            onPreview={handlePreview}
-          />
-        </div>
-      </div>
-    </PublicProfileContainer>
-  );
-
+  // 预览媒体文件
+  const handlePreview = (file: MediaFile) => {
+    setPreviewImage(file.fileUrl || '');
+    setPreviewVisible(true);
+  };
   return (
     <ProfileContainer>
       <Tabs activeKey={activeTab} onChange={setActiveTab}>
@@ -591,7 +480,186 @@ const ProfilePage: React.FC = () => {
         </TabPane>
 
         <TabPane tab="公开资料" key="public">
-          {renderPublicProfile()}
+          <PublicProfileContainer>
+            <div className="profile-header">
+              <div className="avatar">
+
+                <AvatarUploader
+                  value={currentUser?.avatarUrl}
+                  onChange={handleAvatarChange}
+                  disabled={uploading || loading}
+                  size={120}
+                  category="avatar"
+                  style={{
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    border: '3px solid #f0f0f0',
+                    transition: 'all 0.3s ease'
+                  }}
+                />
+              </div>
+              <div className="name">
+                {currentUser?.realName || currentUser?.nickname}
+              </div>
+              <div className="title">
+                {currentUser?.bio || '暂无个人简介'}
+              </div>
+              <div className="stats">
+                <div className="stat-item">
+                  <span className="number">{currentUser?.experienceYears || 0}</span>
+                  <span className="label">从业年限</span>
+                </div>
+                <div className="stat-item">
+                  <span className="number">{mediaFiles.length}</span>
+                  <span className="label">作品数量</span>
+                </div>
+                <div className="stat-item">
+                  <span className="number">{currentUser?.specialties?.length || 0}</span>
+                  <span className="label">专业技能</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="profile-content">
+              {/* 个人介绍 */}
+              {currentUser?.bio && (
+                <div className="section">
+                  <div className="section-title">
+                    <UserOutlined />
+                    个人介绍
+                  </div>
+                  <p style={{ color: '#666', lineHeight: '1.6' }}>{currentUser.bio}</p>
+                </div>
+              )}
+
+              {/* 专业技能 */}
+              {currentUser?.specialties && currentUser.specialties.length > 0 && (
+                <div className="section">
+                  <div className="section-title">
+                    <CalendarOutlined />
+                    专业技能
+                  </div>
+                  <Space wrap>
+                    {currentUser.specialties.map((skill: string, index: number) => (
+                      <Tag key={index} color="blue">{skill}</Tag>
+                    ))}
+                  </Space>
+                </div>
+              )}
+
+              {/* 作品展示 */}
+              <div className="section">
+                <div className="section-title">
+                  <PictureOutlined />
+                  作品展示
+                  <Space style={{ marginLeft: 'auto' }}>
+                    <Switch
+                      checkedChildren={<GlobalOutlined />}
+                      unCheckedChildren="私有"
+                      checked={isPublicProfilePublished}
+                      onChange={setIsPublicProfilePublished}
+                    />
+                    <span style={{ fontSize: '14px', color: '#666' }}>
+                      {isPublicProfilePublished ? '公开展示' : '私有状态'}
+                    </span>
+
+                    <Button
+                      type="default"
+                      size="small"
+                      loading={saving}
+                      onClick={handleSavePublicProfile}
+                    >
+                      保存排序
+                    </Button>
+                  </Space>
+                </div>
+                <MediaUploader
+                  config={{
+                    maxCount: 20,
+                    accept: ['image/*', 'video/*'],
+                    category: 'profile',
+                    multiple: true,
+                    concurrent: 2
+                  }}
+                  onUploadSuccess={handleUploadSuccess}
+                  onUploadError={(error: Error) => {
+                    console.error('上传失败:', error);
+                    message.error('文件上传失败，请重试');
+                  }}
+                />
+                {mediaFiles && Array.isArray(mediaFiles) && mediaFiles.length > 0 ? (
+                  mediaFiles
+                    .filter(m => m && m.id && m.fileUrl) // 过滤掉无效的媒体文件
+                    .map((m) => (
+                      <ProfileMediaItem key={m.id}>
+                        {m.fileType === FileType.VIDEO && m.thumbnailUrl && m.fileUrl ?
+                          <>
+                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+                              <img
+                                src={m.thumbnailUrl as string}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                onError={(e) => {
+                                  // 处理图片加载错误
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                }}
+                              />
+                              <PlayButton>
+                                <PlayCircleOutlined />
+                              </PlayButton>
+                            </div>
+                          </> :
+                          <Image
+                            preview={false}
+                            src={m.fileUrl}
+                            onClick={() => handlePreview(m)}
+                            style={{ cursor: 'pointer' }}
+                            onError={(e) => {
+                              // 处理图片加载错误
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
+                          />
+                        }
+                        <div style={{
+                          position: 'absolute',
+                          top: 8,
+                          right: 8,
+                          display: 'flex',
+                          gap: 4
+                        }}>
+                          <Button
+                            type="primary"
+                            icon={<EyeOutlined />}
+                            size="small"
+                            onClick={() => handlePreview(m)}
+                            style={{ backgroundColor: 'rgba(0,0,0,0.6)', border: 'none' }}
+                          />
+                          <Popconfirm
+                            title="确定要删除这个文件吗？"
+                            onConfirm={() => handleOnRemoveMediaFile(m.id!)}
+                            okText="确定"
+                            cancelText="取消"
+                          >
+                            <Button
+                              type="primary"
+                              icon={<DeleteOutlined />}
+                              size="small"
+                              danger
+                              style={{ backgroundColor: 'rgba(0,0,0,0.6)', border: 'none' }}
+                            />
+                          </Popconfirm>
+                        </div>
+                      </ProfileMediaItem>
+                    ))
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}>
+                    暂无媒体文件
+                  </div>
+                )}
+              </div>
+            </div>
+          </PublicProfileContainer>
         </TabPane>
       </Tabs>
 
@@ -605,11 +673,22 @@ const ProfilePage: React.FC = () => {
         onCancel={() => setPreviewVisible(false)}
         width={800}
       >
-        <img
-          alt="preview"
-          style={{ width: '100%' }}
-          src={previewImage}
-        />
+        {previewImage &&
+          (previewImage.includes('.mp4') || previewImage.includes('.mov') || previewImage.includes('.avi') ? (
+            <video
+              src={previewImage}
+              controls
+              style={{ width: '100%', maxHeight: '600px' }}
+              autoPlay
+            />
+          ) : (
+            <img
+              alt="preview"
+              style={{ width: '100%' }}
+              src={previewImage}
+            />
+          ))
+        }
       </Modal>
     </ProfileContainer>
   );

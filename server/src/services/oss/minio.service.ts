@@ -56,6 +56,7 @@ export class MinIOService implements OssService {
       const command = new CreateBucketCommand({
         Bucket: this.bucket
       });
+      logger.info('Initializing MinIO bucket...', this.config);
       await this.s3Client.send(command);
       console.log(`MinIO Bucket ${this.bucket} created successfully`);
     } catch (error: any) {
@@ -75,7 +76,7 @@ export class MinIOService implements OssService {
           {
             Effect: 'Allow',
             Principal: '*',
-            Action: ['s3:GetObject', 's3:PutObject', 's3:DeleteObject','s3:ListBucket'],
+            Action: ['s3:GetObject', 's3:PutObject', 's3:DeleteObject', 's3:ListBucket'],
             Resource: [`arn:aws:s3:::${this.bucket}/*`, `arn:aws:s3:::${this.bucket}`]
           }
         ]
@@ -332,17 +333,6 @@ export class MinIOService implements OssService {
    */
   async getPresignedUploadUrl(key: string, expires: number = 3600, contentType?: string): Promise<string> {
     try {
-      console.log('=== PRESIGNED URL GENERATION START ===');
-      console.log('Input parameters:', { key, expires, contentType });
-      console.log('MinIO config:', {
-        endpoint: this.config.endpoint,
-        accessKeyId: this.config.accessKeyId,
-        bucket: this.bucket
-      });
-      console.log('Environment variables:', {
-        MINIO_PUBLIC_ENDPOINT: process.env.MINIO_PUBLIC_ENDPOINT,
-        VITE_MINIO_URL: process.env.VITE_MINIO_URL
-      });
 
       const command = new PutObjectCommand({
         Bucket: this.bucket,
@@ -352,28 +342,23 @@ export class MinIOService implements OssService {
 
       // 使用内部MinIO地址生成签名
       const internalUrl = await getSignedUrl(this.s3Client, command, { expiresIn: expires });
-      
-      console.log('=== MinIO Service Debug ===');
+
       console.log('Internal URL generated:', internalUrl);
-      
+
       // 将内部MinIO地址替换为外部可访问的地址
       // 从环境变量获取外部端点，如果没有则使用当前主机
       const publicEndpoint = process.env.MINIO_PUBLIC_ENDPOINT || process.env.VITE_MINIO_URL;
-      
+
       if (publicEndpoint) {
         // 从内部URL中提取路径部分
         const urlObj = new URL(internalUrl);
         const pathWithQuery = urlObj.pathname + urlObj.search;
-        
+
         // 构建新的外部可访问URL
         const externalUrl = `${publicEndpoint}${pathWithQuery}`;
         console.log('External URL generated:', externalUrl);
         return externalUrl;
       }
-      
-      // 如果没有配置外部端点，则使用请求头中的主机信息
-      // 由于这是服务器端代码，我们无法使用window.location
-      // 默认使用http协议和当前主机名（依赖nginx正确设置X-External-Host和X-External-Proto头）
       const externalUrl = internalUrl.replace(/http:\/\/minio:9000/g, 'http://localhost');
       console.log('External URL generated:', externalUrl);
       return externalUrl;
@@ -395,21 +380,21 @@ export class MinIOService implements OssService {
 
       // 获取内部URL
       const internalUrl = await getSignedUrl(this.s3Client, command, { expiresIn: expires });
-      
+
       // 将内部MinIO地址替换为外部可访问的地址
       const publicEndpoint = process.env.MINIO_PUBLIC_ENDPOINT || process.env.VITE_MINIO_URL;
-      
+
       if (publicEndpoint) {
         // 从内部URL中提取路径部分
         const urlObj = new URL(internalUrl);
         const pathWithQuery = urlObj.pathname + urlObj.search;
-        
+
         // 构建新的外部可访问URL
         const externalUrl = `${publicEndpoint}${pathWithQuery}`;
         console.log('External download URL generated:', externalUrl);
         return externalUrl;
       }
-      
+
       // 如果没有配置外部端点，则使用默认替换
       const externalUrl = internalUrl.replace(/http:\/\/minio:9000/g, 'http://localhost');
       console.log('External download URL generated:', externalUrl);

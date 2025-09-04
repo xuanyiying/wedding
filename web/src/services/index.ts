@@ -569,13 +569,13 @@ export const fileService = {
   deleteFile: (id: string): Promise<ApiResponse<Boolean>> => {
     return http.delete(`/files/${id}`);
   },
+
   uploadVedioCover: (file: File, vedioFileId: string): Promise<ApiResponse<string>> => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('vedioFileId', vedioFileId);
     formData.append('fileType', 'image');
     formData.append('category', 'cover');
-    return http.upload('/files/upload/vedio-cover', formData);
+    return http.upload(`/files/${vedioFileId}/cover`, formData);
   },
 };
 export const profileService = {

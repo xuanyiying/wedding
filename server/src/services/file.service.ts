@@ -684,16 +684,22 @@ export class FileService {
   /**
    * 上传视频封面
    */
-  static async uploadVideoCover(file: Buffer, fileId: string): Promise<File> {
+  static async uploadVideoCover(fileBuffer: Buffer, fileId: string): Promise<any> {
+    // 查找文件记录
     const fileRecord = await File.findOne({
       where: {
         id: fileId,
       },
     });
+
     if (!fileRecord) {
-      throw new Error('视频还没有上传成功，请稍后再试！');
+      throw new Error('视频文件不存在，请稍后再试！');
     }
-    const result = await this.ossService.uploadFile(file, `video_cover_${fileId}.jpg`, 'image/jpeg');
+
+    // 上传封面到OSS
+    const result = await this.ossService.uploadFile(fileBuffer, `video_cover_${fileId}.jpg`, 'image/jpeg');
+
+    // 更新文件记录的缩略图URL
     await File.update({
       thumbnailUrl: result.url,
     }, {
@@ -701,8 +707,15 @@ export class FileService {
         id: fileId,
       },
     });
-    fileRecord.thumbnailUrl = result.url;
-    return fileRecord;
+
+    // 返回更新后的文件记录
+    const updatedFileRecord = await File.findOne({
+      where: {
+        id: fileId,
+      },
+    });
+
+    return updatedFileRecord;
   }
 }
 

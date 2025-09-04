@@ -132,7 +132,7 @@ export class DashboardService {
         },
         revenue: {
           total: parseFloat(revenue.totalRevenue || '0'),
-          deposit: parseFloat(revenue.totalDeposit || '0'),
+          deposit: 0,  // 修复：移除不存在的totalDeposit字段
           average: parseFloat(revenue.avgBookingValue || '0'),
           today: todayRevenue || 0,
         },

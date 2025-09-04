@@ -1,9 +1,8 @@
 import 'module-alias/register';
 import dotenv from 'dotenv';
-import { resolve } from 'path';
 
 // 加载环境变量
-dotenv.config({ path: resolve(__dirname, '../.env') });
+dotenv.config();
 
 import App from './app';
 import { logger } from './utils/logger';
