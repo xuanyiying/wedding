@@ -178,12 +178,16 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
+    environment:
+      - SERVER_HOST=${SERVER_HOST:-localhost}
     volumes:
       - ./deployment/ssl:/etc/nginx/ssl:ro
       - ./deployment/logs/nginx:/var/log/nginx
       - ./deployment/uploads:/var/www/uploads:ro
-      - ./deployment/docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./deployment/docker/nginx/conf.d/default.conf.template:/etc/nginx/conf.d/default.conf.template:ro
       - ./deployment/docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deployment/scripts/nginx-entrypoint.sh:/docker-entrypoint.sh:ro
+    command: ["/bin/sh", "/docker-entrypoint.sh"]
     depends_on:
       - web
       - api
