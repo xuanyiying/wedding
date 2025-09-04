@@ -10,7 +10,7 @@ const profileController = new ProfileController();
 router.post('/media-profiles', authMiddleware, profileController.createMediaProfile.bind(profileController));
 
 // 批量创建媒体资料
-router.post('/media-profiles/batch', authMiddleware, profileController.batchCreateMediaProfiles.bind(profileController));
+router.post('/media-profiles/batch/:userId', authMiddleware, profileController.batchCreateMediaProfiles.bind(profileController));
 
 // 获取用户媒体资料列表
 router.get('/media-profiles/:userId', profileController.getUserMediaProfiles.bind(profileController));
@@ -19,7 +19,7 @@ router.get('/media-profiles/:userId', profileController.getUserMediaProfiles.bin
 router.put('/media-profiles/order', authMiddleware, profileController.updateMediaProfilesOrder.bind(profileController));
 
 // 批量删除媒体资料
-router.delete('/media-profiles/batch', authMiddleware, profileController.batchDeleteMediaProfiles.bind(profileController));
+router.delete('/media-profiles/batch/:userId', authMiddleware, profileController.batchDeleteMediaProfiles.bind(profileController));
 
 // 删除单个媒体资料
 router.delete('/media-profiles/:fileId', authMiddleware, profileController.deleteMediaProfile.bind(profileController));

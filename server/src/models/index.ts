@@ -11,7 +11,7 @@ import WorkLike, { initWorkLike } from './WorkLike';
 import { Team, TeamMember, initTeam } from './Team';
 import Contact, { ContactAttributes, initContact } from './Contact';
 import ViewStat, { initViewStat, ViewStatAttributes, ViewStatCreationAttributes } from './ViewStat';
-import { initMediaProfile } from './MediaProfile';
+import MediaProfile, { initMediaProfile } from './MediaProfile';
 const models = {
   User,
   Schedule,
@@ -25,6 +25,7 @@ const models = {
   Team,
   TeamMember,
   Contact,
+  MediaProfile,
 };
 
 export const initModels = (sequelizeInstance: Sequelize): void => {
@@ -43,8 +44,9 @@ export const initModels = (sequelizeInstance: Sequelize): void => {
 
   initViewStat(sequelizeInstance);
   initMediaProfile(sequelizeInstance);
-  // Define associations that are not defined within the init functions
-  // Most associations are already defined in individual model files
+
+  // Initialize associations
+  MediaProfile.associate(models);
 
   // User and Team associations (Team owner)
   User.hasMany(Team, { foreignKey: 'owner_id', as: 'ownedTeams' });
@@ -81,6 +83,7 @@ export {
   Team,
   TeamMember,
   Contact,
+  MediaProfile,
 };
 
 // 导出类型和枚举

@@ -8,17 +8,12 @@ import {
   Button,
   Modal,
   Switch,
-  Image,
-  Popconfirm,
 } from 'antd';
 import {
   UserOutlined,
   CalendarOutlined,
   PictureOutlined,
   GlobalOutlined,
-  PlayCircleOutlined,
-  DeleteOutlined,
-  EyeOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { userService, profileService } from '../../services';
@@ -28,7 +23,8 @@ import { formatDate } from '../../utils';
 import ProfileEditForm from '../../components/admin/profile/ProfileEditForm';
 import AvatarUploader from '../../components/AvatarUploader';
 import { MediaUploader } from '../../components/common/MediaUploader';
-import { PlayButton } from '../../components/client/WorkCardStyles';
+import MediaGallery from '../../components/admin/profile/MediaGallery';
+import type { DirectUploadResult } from '../../utils/direct-upload';
 
 const { TabPane } = Tabs;
 
@@ -275,24 +271,6 @@ const PublicProfileContainer = styled.div`
     }
   }
 `;
-const ProfileMediaItem = styled.div`
-  position: relative;
-  overflow: hidden;
-  aspect-ratio: 1;
-  cursor: pointer;
-  
-  .ant-image {
-    width: 100%;
-    height: 100%;
-    
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-  }
-`;
-
 const ProfilePage: React.FC = () => {
   const user = useAppSelector((state) => state.auth.user);
   const [loading, setLoading] = useState(false);
@@ -309,6 +287,38 @@ const ProfilePage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [isPublicProfilePublished, setIsPublicProfilePublished] = useState(false);
 
+  // 处理媒体文件数据，将嵌套的file对象属性合并到mediaFile中
+  const processMediaFiles = (mediaFiles: any[]): MediaFile[] => {
+    return mediaFiles.map((mediaFile: any) => {
+      if (mediaFile.file) {
+        // 合并file对象的属性到mediaFile中
+        return {
+          ...mediaFile,
+          fileUrl: mediaFile.file.fileUrl,
+          thumbnailUrl: mediaFile.file.thumbnailUrl,
+          originalName: mediaFile.file.originalName,
+          filename: mediaFile.file.filename,
+          filePath: mediaFile.file.filePath,
+          fileSize: mediaFile.file.fileSize,
+          mimeType: mediaFile.file.mimeType,
+          width: mediaFile.file.width,
+          height: mediaFile.file.height,
+          duration: mediaFile.file.duration,
+          hashMd5: mediaFile.file.hashMd5,
+          storageType: mediaFile.file.storageType,
+          bucketName: mediaFile.file.bucketName,
+          isPublic: mediaFile.file.isPublic,
+          downloadCount: mediaFile.file.downloadCount,
+          metadata: mediaFile.file.metadata,
+          category: mediaFile.file.category,
+          // 移除嵌套的file对象
+          file: undefined
+        };
+      }
+      return mediaFile;
+    });
+  };
+
   // 获取当前用户信息
   const loadCurrentUser = async () => {
     try {
@@ -323,14 +333,7 @@ const ProfilePage: React.FC = () => {
 
       // 加载媒体资料
       if (userData?.id) {
-        try {
-          const mediaResponse = await profileService.getUserMediaProfiles(userData.id);
-          if (mediaResponse.success && mediaResponse.data) {
-            setMediaFiles(mediaResponse.data);
-          }
-        } catch (error) {
-          console.error('加载媒体文件失败:', error);
-        }
+        loadMediaFiles(userData.id);
       }
     } catch (error) {
       message.error('加载用户信息失败');
@@ -339,10 +342,22 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  
   useEffect(() => {
     loadCurrentUser();
   }, []);
 
+  const loadMediaFiles = async (userId :string) => {
+    try {
+          const mediaResponse = await profileService.getUserMediaProfiles(userId);
+          if (mediaResponse.success && mediaResponse.data) {
+            const processedMediaFiles = processMediaFiles(mediaResponse.data);
+            setMediaFiles(processedMediaFiles);
+          }
+        } catch (error) {
+          console.error('加载媒体文件失败:', error);
+        }
+  }
   // 处理头像变更（仅更新本地状态，上传由AvatarUploader内部处理）
   const handleAvatarChange = useCallback((url: string) => {
     // 只更新本地状态，避免重复API调用
@@ -441,13 +456,20 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  const handleUploadSuccess = async () => {
+  const handleUploadSuccess = async (results: DirectUploadResult[]) => {
     if (currentUser?.id) {
       try {
-        const mediaResponse = await profileService.getUserMediaProfiles(currentUser.id);
-        if (mediaResponse.success && mediaResponse.data) {
-          setMediaFiles(mediaResponse.data);
+        if (results.length > 0) {
+          await profileService.batchCreateMediaProfiles(currentUser.id, {
+            mediaProfiles: results.map((result, index) => ({
+              fileId: result.fileId,
+              fileType: result.fileType as FileType || FileType.IMAGE,
+              category: 'profile',
+              mediaOrder: index + 1,
+            }))
+          })
         }
+      loadMediaFiles(currentUser.id);
       } catch (error) {
         console.error('重新加载媒体文件失败:', error);
       }
@@ -587,76 +609,12 @@ const ProfilePage: React.FC = () => {
                     message.error('文件上传失败，请重试');
                   }}
                 />
-                {mediaFiles && Array.isArray(mediaFiles) && mediaFiles.length > 0 ? (
-                  mediaFiles
-                    .filter(m => m && m.id && m.fileUrl) // 过滤掉无效的媒体文件
-                    .map((m) => (
-                      <ProfileMediaItem key={m.id}>
-                        {m.fileType === FileType.VIDEO && m.thumbnailUrl && m.fileUrl ?
-                          <>
-                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-                              <img
-                                src={m.thumbnailUrl as string}
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                onError={(e) => {
-                                  // 处理图片加载错误
-                                  const target = e.target as HTMLImageElement;
-                                  target.style.display = 'none';
-                                }}
-                              />
-                              <PlayButton>
-                                <PlayCircleOutlined />
-                              </PlayButton>
-                            </div>
-                          </> :
-                          <Image
-                            preview={false}
-                            src={m.fileUrl}
-                            onClick={() => handlePreview(m)}
-                            style={{ cursor: 'pointer' }}
-                            onError={(e) => {
-                              // 处理图片加载错误
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                            }}
-                          />
-                        }
-                        <div style={{
-                          position: 'absolute',
-                          top: 8,
-                          right: 8,
-                          display: 'flex',
-                          gap: 4
-                        }}>
-                          <Button
-                            type="primary"
-                            icon={<EyeOutlined />}
-                            size="small"
-                            onClick={() => handlePreview(m)}
-                            style={{ backgroundColor: 'rgba(0,0,0,0.6)', border: 'none' }}
-                          />
-                          <Popconfirm
-                            title="确定要删除这个文件吗？"
-                            onConfirm={() => handleOnRemoveMediaFile(m.id!)}
-                            okText="确定"
-                            cancelText="取消"
-                          >
-                            <Button
-                              type="primary"
-                              icon={<DeleteOutlined />}
-                              size="small"
-                              danger
-                              style={{ backgroundColor: 'rgba(0,0,0,0.6)', border: 'none' }}
-                            />
-                          </Popconfirm>
-                        </div>
-                      </ProfileMediaItem>
-                    ))
-                ) : (
-                  <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}>
-                    暂无媒体文件
-                  </div>
-                )}
+                <MediaGallery
+                  mediaFiles={mediaFiles}
+                  onPreview={handlePreview}
+                  onDelete={handleOnRemoveMediaFile}
+                  loading={loading}
+                />
               </div>
             </div>
           </PublicProfileContainer>

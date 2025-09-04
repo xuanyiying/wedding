@@ -31,9 +31,15 @@ export class MediaProfileService {
       throw new Error('用户不存在');
     }
     return await MediaProfile.findAll({
-      where: {
-        userId,
-      },
+      where: { userId },
+      include: [
+        {
+          model: File,
+          as: 'file',
+          attributes: ['id', 'originalName', 'filename', 'filePath', 'fileUrl', 'fileSize', 'mimeType', 'width', 'height', 'duration', 'thumbnailUrl', 'hashMd5', 'hashSha256', 'storageType', 'bucketName', 'isPublic', 'downloadCount', 'metadata', 'category', 'createdAt', 'updatedAt', 'deletedAt'],
+        }
+      ],
+      order: [['mediaOrder', 'ASC']],
     });
   }
 
@@ -59,7 +65,7 @@ export class MediaProfileService {
       ],
       order: [['mediaOrder', 'ASC']],
     });
-;
+    ;
 
     const userObj = {
       id: user.id,
@@ -136,7 +142,14 @@ export class MediaProfileService {
     logger.info(`获取用户媒体资料列表，用户ID：${userId}`);
     return await MediaProfile.findAll({
       where: { userId },
-      order: [['mediaOrder', 'ASC']]
+      include: [
+        {
+          model: File,
+          as: 'file',
+          attributes: ['id', 'originalName', 'filename', 'filePath', 'fileUrl', 'fileSize', 'mimeType', 'width', 'height', 'duration', 'thumbnailUrl', 'hashMd5', 'hashSha256', 'storageType', 'bucketName', 'isPublic', 'downloadCount', 'metadata', 'category', 'createdAt', 'updatedAt'],
+        }
+      ],
+      order: [['mediaOrder', 'ASC']],
     });
   }
 
@@ -147,7 +160,7 @@ export class MediaProfileService {
     for (const item of orderData) {
       await MediaProfile.update(
         { mediaOrder: item.mediaOrder },
-        { 
+        {
           where: { id: item.id, userId }
         }
       );
@@ -181,7 +194,7 @@ export class MediaProfileService {
     // 删除文件记录
     await File.destroy({ where: { id: fileId } });
     await profile.destroy();
-   
+
     return true;
   }
 
@@ -190,39 +203,39 @@ export class MediaProfileService {
    * 批量创建媒体资料
    */
   async batchCreateMediaProfile(userId: string, mediaProfiles: Partial<MediaProfileCreationAttributes>[]): Promise<MediaProfile[]> {
-     const profilesWithIds = mediaProfiles.map((p, index) => {
-       const profile: MediaProfileCreationAttributes = {
-         id: p.id || generateId(),
-         userId,
-         fileId: p.fileId!,
-         fileType: p.fileType!,
-         mediaOrder: p.mediaOrder ?? index,
-       };
-       return profile;
-     });
-     
-     return await MediaProfile.bulkCreate(profilesWithIds);
-   }
+    const profilesWithIds = mediaProfiles.map((p, index) => {
+      const profile: MediaProfileCreationAttributes = {
+        id: p.id || generateId(),
+        userId,
+        fileId: p.fileId!,
+        fileType: p.fileType!,
+        mediaOrder: p.mediaOrder ?? index,
+      };
+      return profile;
+    });
+
+    return await MediaProfile.bulkCreate(profilesWithIds);
+  }
 
   /**
    * 添加文件到用户资料
    */
   async addFileToProfile(userId: string, fileId: string, options?: {
-     mediaOrder?: number;
-     fileType?: string;
-   }): Promise<MediaProfile> {
-     const existingCount = await MediaProfile.count({ where: { userId } });
-     const mediaOrder = options?.mediaOrder ?? existingCount;
-     
-     const profileData: MediaProfileCreationAttributes = {
-       userId,
-       fileId,
-       mediaOrder,
-       fileType: options?.fileType as any || 'image',
-     };
-     
-     return await this.createMediaProfile(profileData);
-   }
+    mediaOrder?: number;
+    fileType?: string;
+  }): Promise<MediaProfile> {
+    const existingCount = await MediaProfile.count({ where: { userId } });
+    const mediaOrder = options?.mediaOrder ?? existingCount;
+
+    const profileData: MediaProfileCreationAttributes = {
+      userId,
+      fileId,
+      mediaOrder,
+      fileType: options?.fileType as any || 'image',
+    };
+
+    return await this.createMediaProfile(profileData);
+  }
 
   /**
    * 更新单个媒体资料
@@ -232,7 +245,7 @@ export class MediaProfileService {
     if (!profile) {
       throw new Error('媒体资料不存在');
     }
-    
+
     await profile.update(updateData);
     return profile;
   }
@@ -248,11 +261,11 @@ export class MediaProfileService {
    * 获取用户可用的文件列表
    */
   async getUserAvailableFiles(userId: string): Promise<File[]> {
-     return await File.findAll({
-       where: { userId: userId },
-       order: [['createdAt', 'DESC']],
-     });
-   }
+    return await File.findAll({
+      where: { userId: userId },
+      order: [['createdAt', 'DESC']],
+    });
+  }
 
 }
 

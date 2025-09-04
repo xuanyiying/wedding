@@ -597,7 +597,7 @@ export const profileService = {
   createMediaProfile: (userId: string, data: any): Promise<ApiResponse<any>> => {
     return http.post(`/profile/media-profiles/${userId}`, data);
   },
-  batchCreateMediaProfiles: (userId: string, data: { mediaFiles: MediaFile[] }): Promise<ApiResponse<any>> => {
+  batchCreateMediaProfiles: (userId: string, data: { mediaProfiles: MediaFile[] }): Promise<ApiResponse<any>> => {
     return http.post(`/profile/media-profiles/batch/${userId}`, data);
   },
   updateSingleMediaProfile: (userId: string, fileId: string, data: any): Promise<ApiResponse<any>> => {

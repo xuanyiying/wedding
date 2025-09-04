@@ -132,7 +132,6 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
       preview: URL.createObjectURL(file)
     };
   }, []);
-  // 移除handleVideoFrameExtraction函数，VideoCoverModal内部会处理帧提取
   // 防抖处理文件选择
   const debouncedFileSelect = useCallback((files: File[]) => {
     // 清除之前的定时器
@@ -507,7 +506,7 @@ const MediaUploader: React.FC<SimpleMediaUploaderProps> = ({
 
         updateProgress(completed, failed, 0, files.length);
       }
-
+      console.log('Upload results:', results);
       if (results.length > 0) {
         onUploadSuccess?.(results);
       }
