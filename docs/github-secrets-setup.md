@@ -2,8 +2,6 @@
 
 为了使自动化部署正常工作，需要在GitHub仓库中配置以下Secrets。
 
-## 必需的Secrets
-
 ### 1. 生产服务器连接信息
 
 ```
@@ -13,9 +11,55 @@ PRODUCTION_PORT=22
 PRODUCTION_SSH_KEY=<私钥内容>
 ```
 
-### 2. GitHub Container Registry (可选，使用GITHUB_TOKEN)
+### 2. Staging环境配置（可选）
 
-如果需要使用私有镜像仓库，GitHub Actions会自动使用`GITHUB_TOKEN`来推送镜像到GitHub Container Registry。
+```
+STAGING_HOST=<staging服务器IP>
+STAGING_USER=<staging用户名>
+STAGING_PORT=22
+STAGING_SSH_KEY=<staging私钥内容>
+```
+
+### 3. Slack通知配置（可选）
+
+```
+SLACK_WEBHOOK_URL=<Slack webhook URL>
+```
+
+### 4. GitHub Container Registry访问权限
+
+GitHub Actions工作流使用`GITHUB_TOKEN`自动进行身份验证，无需额外配置。
+
+### 5. 环境变量文件
+
+确保在服务器上准备好以下环境变量文件：
+- `.env.prod` - 生产环境配置
+- `.env.staging` - Staging环境配置（如果使用）
+
+### 6. 部署后验证
+
+部署完成后，可以通过以下URL验证服务：
+
+- 前端应用: http://150.158.20.143
+- API服务: http://150.158.20.143:3000/api/v1
+- API文档: http://150.158.20.143:3000/api/v1/docs
+- MinIO控制台: http://150.158.20.143:9001
+
+### 7. 常见问题排查
+
+1. 如果部署失败，请检查：
+   - SSH密钥权限是否正确（应为600）
+   - 服务器防火墙是否允许相应端口通信
+   - Docker和Docker Compose是否已正确安装在服务器上
+
+2. 如果健康检查失败：
+   - 检查服务日志: `docker-compose logs <service_name>`
+   - 验证环境变量配置是否正确
+   - 确认数据库连接信息是否正确
+
+3. 回滚操作：
+   - 可以通过GitHub Actions手动触发回滚工作流
+   - 也可以在服务器上执行: `./deployment/deploy.sh rollback`
 
 ## 配置步骤
 
@@ -166,4 +210,3 @@ docker-compose -f deployment/docker-compose-tencent.yml ps
 
 # 查看日志
 docker-compose -f deployment/docker-compose-tencent.yml logs
-```

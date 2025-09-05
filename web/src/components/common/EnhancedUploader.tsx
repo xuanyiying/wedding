@@ -1,11 +1,11 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { DirectUploader } from '../../utils/direct-upload';
 import type { DirectUploadConfig, DirectUploadProgress, DirectUploadResult } from '../../utils/direct-upload';
-import { formatFileSize, formatUploadSpeed, formatRemainingTime } from '../../utils/direct-upload';
+import { formatFileSize } from '../../utils/direct-upload';
 
 interface EnhancedUploaderProps {
   fileType: 'video' | 'image';
-  category?: 'avatar' | 'work' | 'event' | 'profile' | 'cover' | 'favicon'|'logo' | 'other';
+  category?: 'avatar' | 'work' | 'event' | 'profile' | 'cover' | 'favicon' | 'logo' | 'other';
   maxFileSize?: number;
   multiple?: boolean;
   accept?: string;
@@ -48,7 +48,7 @@ export const EnhancedUploader: React.FC<EnhancedUploaderProps> = ({
 
   const createUploadItem = useCallback((file: File): UploadItem => {
     const id = `${file.name}-${Date.now()}-${Math.random()}`;
-    
+
     const config: DirectUploadConfig = {
       fileType,
       category,
@@ -57,19 +57,19 @@ export const EnhancedUploader: React.FC<EnhancedUploaderProps> = ({
       compressionQuality,
       retryCount,
       onProgress: (progress) => {
-        setUploadItems(prev => prev.map(item => 
+        setUploadItems(prev => prev.map(item =>
           item.id === id ? { ...item, progress } : item
         ));
       },
       onRetry: (attempt, error) => {
-        setUploadItems(prev => prev.map(item => 
+        setUploadItems(prev => prev.map(item =>
           item.id === id ? { ...item, retryAttempt: attempt, error } : item
         ));
       }
     };
 
     const uploader = new DirectUploader(file, config);
-    
+
     return {
       id,
       file,
@@ -89,20 +89,20 @@ export const EnhancedUploader: React.FC<EnhancedUploaderProps> = ({
   const handleFileSelect = useCallback(async (files: FileList) => {
     const fileArray = Array.from(files);
     const newItems = fileArray.map(createUploadItem);
-    
+
     setUploadItems(prev => [...prev, ...newItems]);
 
     // 开始上传
     const uploadPromises = newItems.map(async (item) => {
       try {
         const result = await item.uploader.upload();
-        setUploadItems(prev => prev.map(prevItem => 
+        setUploadItems(prev => prev.map(prevItem =>
           prevItem.id === item.id ? { ...prevItem, result } : prevItem
         ));
         return result;
       } catch (error) {
         const uploadError = error instanceof Error ? error : new Error('上传失败');
-        setUploadItems(prev => prev.map(prevItem => 
+        setUploadItems(prev => prev.map(prevItem =>
           prevItem.id === item.id ? { ...prevItem, error: uploadError } : prevItem
         ));
         throw uploadError;
@@ -139,7 +139,7 @@ export const EnhancedUploader: React.FC<EnhancedUploaderProps> = ({
   const handleDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     setIsDragging(false);
-    
+
     const files = event.dataTransfer.files;
     if (files && files.length > 0) {
       handleFileSelect(files);
@@ -150,38 +150,24 @@ export const EnhancedUploader: React.FC<EnhancedUploaderProps> = ({
     fileInputRef.current?.click();
   }, []);
 
-  const handleRetry = useCallback(async (item: UploadItem) => {
-    try {
-      const result = await item.uploader.upload();
-      setUploadItems(prev => prev.map(prevItem => 
-        prevItem.id === item.id ? { ...prevItem, result, error: undefined } : prevItem
-      ));
-    } catch (error) {
-      const uploadError = error instanceof Error ? error : new Error('重试失败');
-      setUploadItems(prev => prev.map(prevItem => 
-        prevItem.id === item.id ? { ...prevItem, error: uploadError } : prevItem
-      ));
+  // 格式化上传状态显示
+  const formatStatus = (status: string) => {
+    switch (status) {
+      case 'pending': return '准备中';
+      case 'uploading': return '上传中';
+      case 'completed': return '已完成';
+      case 'failed': return '失败';
+      case 'cancelled': return '已取消';
+      default: return status;
     }
-  }, []);
-
-  const handleCancel = useCallback(async (item: UploadItem) => {
-    await item.uploader.cancel();
-    setUploadItems(prev => prev.filter(prevItem => prevItem.id !== item.id));
-  }, []);
-
-  const clearCompleted = useCallback(() => {
-    setUploadItems(prev => prev.filter(item => 
-      item.progress.status !== 'completed' && !item.result
-    ));
-  }, []);
+  };
 
   return (
     <div className={`enhanced-uploader ${className}`}>
       {/* 上传区域 */}
       <div
-        className={`upload-zone ${
-          isDragging ? 'dragging' : ''
-        } cursor-pointer border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-colors hover:border-blue-400`}
+        className={`upload-zone ${isDragging ? 'dragging' : ''
+          } cursor-pointer border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-colors hover:border-blue-400`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -195,7 +181,7 @@ export const EnhancedUploader: React.FC<EnhancedUploaderProps> = ({
           onChange={handleInputChange}
           className="hidden"
         />
-        
+
         {children || (
           <div className="space-y-2">
             <div className="text-4xl text-gray-400">📁</div>
@@ -209,6 +195,49 @@ export const EnhancedUploader: React.FC<EnhancedUploaderProps> = ({
           </div>
         )}
       </div>
+
+      {/* 上传进度列表 */}
+      {uploadItems.length > 0 && (
+        <div className="mt-4 space-y-2">
+          {uploadItems.map((item) => (
+            <div key={item.id} className="border rounded-md p-3 bg-gray-50">
+              <div className="flex justify-between items-center">
+                <div className="font-medium text-sm truncate">{item.file.name}</div>
+                <div className="text-xs text-gray-500">
+                  {item.error ? (
+                    <span className="text-red-500">上传失败</span>
+                  ) : item.result ? (
+                    <span className="text-green-500">上传成功</span>
+                  ) : (
+                    <span>{formatStatus(item.progress.status)}</span>
+                  )}
+                </div>
+              </div>
+
+              {!item.result && !item.error && (
+                <div className="mt-2">
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${item.progress.percentage}%` }}
+                    ></div>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>
+                      {formatFileSize(item.progress.loaded)} / {formatFileSize(item.progress.total)}
+                    </span>
+                    <span>{item.progress.percentage}%</span>
+                  </div>
+                </div>
+              )}
+
+              {item.error && (
+                <div className="text-red-500 text-sm mt-1">{item.error.message}</div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

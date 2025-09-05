@@ -1,4 +1,3 @@
-import React from 'react';
 import { message } from 'antd';
 import { CheckCircleOutlined } from '@ant-design/icons';
 
@@ -8,10 +7,10 @@ interface SuccessNotificationProps {
   duration?: number;
 }
 
-export const showSuccessNotification = ({ 
-  title, 
-  description, 
-  duration = 3 
+export const showSuccessNotification = ({
+  title,
+  description,
+  duration = 3
 }: SuccessNotificationProps) => {
   message.success({
     content: (

@@ -33,8 +33,8 @@ import {
 import styled from 'styled-components';
 import { PageHeader } from '../../components/admin/common';
 import { settingsService } from '../../services';
-import { EnhancedUploader } from '../../components/common/EnhancedUploader';
 import { showSuccessNotification } from '../../components/common/SuccessNotification';
+import { SimpleUploader } from '../../components/common/SimpleUploader';
 
 const { TextArea } = Input;
 const { Title, Text } = Typography;
@@ -735,14 +735,12 @@ const SettingsPage: React.FC = () => {
                     <div className="section-title">首页背景图片</div>
                     <div className="section-description">上传一张图片作为网站首页的背景。</div>
                     <Form.Item name="homepageBackgroundImage">
-                      <EnhancedUploader
+                      <SimpleUploader
                         fileType="image"
-                        category="cover"
+                        category="other"
                         maxFileSize={5 * 1024 * 1024} // 5MB
                         accept="image/*"
-                        enableCompression={true}
-                        compressionQuality={0.8}
-                        onUploadSuccess={(results) => handleUploadSuccess(results, 'homepageBackground')}
+                        onUploadSuccess={(result) => handleUploadSuccess([result], 'homepageBackground')}
                         onUploadError={handleUploadError}
                         className="mb-4"
                       >
@@ -764,7 +762,7 @@ const SettingsPage: React.FC = () => {
                             <div className="text-sm text-gray-500 mt-1">建议尺寸：1920x1080px，最大5MB</div>
                           </div>
                         )}
-                      </EnhancedUploader>
+                      </SimpleUploader>
                     </Form.Item>
                   </SettingSection>
 
@@ -802,14 +800,12 @@ const SettingsPage: React.FC = () => {
                   <Row gutter={16}>
                     <Col span={12}>
                       <Form.Item name="logo" label="网站Logo">
-                        <EnhancedUploader
+                        <SimpleUploader
                           fileType="image"
                           category="logo"
                           maxFileSize={2 * 1024 * 1024} // 2MB
                           accept="image/*"
-                          enableCompression={true}
-                          compressionQuality={0.9}
-                          onUploadSuccess={(results) => handleUploadSuccess(results, 'logo')}
+                          onUploadSuccess={(result) => handleUploadSuccess([result], 'logo')}
                           onUploadError={handleUploadError}
                           className="mb-4"
                         >
@@ -831,19 +827,17 @@ const SettingsPage: React.FC = () => {
                               <div className="text-sm text-gray-500 mt-1">建议尺寸：200x60px，格式：PNG/JPG，最大2MB</div>
                             </div>
                           )}
-                        </EnhancedUploader>
+                        </SimpleUploader>
                       </Form.Item>
                     </Col>
                     <Col span={12}>
                       <Form.Item name="favicon" label="网站图标">
-                        <EnhancedUploader
+                        <SimpleUploader
                           fileType="image"
                           category="favicon"
                           maxFileSize={2 * 1024 * 1024} // 2MB
                           accept="image/*"
-                          enableCompression={true}
-                          compressionQuality={0.9}
-                          onUploadSuccess={(results) => handleUploadSuccess(results, 'favicon')}
+                          onUploadSuccess={(result) => handleUploadSuccess([result], 'favicon')}
                           onUploadError={handleUploadError}
                           className="mb-4"
                         >
@@ -865,7 +859,7 @@ const SettingsPage: React.FC = () => {
                               <div className="text-sm text-gray-500 mt-1">建议尺寸：32x32px，格式：ICO/PNG，最大2MB</div>
                             </div>
                           )}
-                        </EnhancedUploader>
+                        </SimpleUploader>
                       </Form.Item>
                     </Col>
                   </Row>
