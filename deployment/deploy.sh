@@ -307,6 +307,24 @@ build_services() {
                     }
                 fi
                 ;;
+            nginx)
+                # 构建Nginx镜像
+                if [[ -f "deployment/docker/nginx/Dockerfile" ]]; then
+                    log_info "构建Nginx镜像..."
+                    docker build -t wedding-nginx:$(detect_environment)-latest -f deployment/docker/nginx/Dockerfile . || {
+                        log_error "Nginx镜像构建失败"
+                        return 1
+                    }
+                elif [[ -f "deployment/docker/nginx/nginx.Dockerfile" ]]; then
+                    log_info "构建Nginx镜像..."
+                    docker build -t wedding-nginx:$(detect_environment)-latest -f deployment/docker/nginx/nginx.Dockerfile . || {
+                        log_error "Nginx镜像构建失败"
+                        return 1
+                    }
+                else
+                    log_warning "未找到Nginx Dockerfile，跳过构建"
+                fi
+                ;;
             *)
                 log_warning "未知服务: $service，跳过构建"
                 ;;
