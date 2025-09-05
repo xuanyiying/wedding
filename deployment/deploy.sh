@@ -22,7 +22,7 @@ show_help() {
     echo -e "${BLUE}    Wedding Client 精简部署工具${NC}"
     echo -e "${BLUE}========================================${NC}"
     echo ""
-    echo "使用方法: ./deploy.sh [命令]"
+    echo "使用方法: ./deploy.sh [命令] [选项]"
     echo ""
     echo -e "${GREEN}核心命令:${NC}"
     echo "  start         启动服务"
@@ -32,7 +32,7 @@ show_help() {
     echo ""
     echo -e "${YELLOW}部署命令:${NC}"
     echo "  deploy        完整部署（推荐）"
-    echo "  rebuild       重新构建并部署"
+    echo "  redeploy       重新构建并部署"
     echo ""
     echo -e "${BLUE}管理命令:${NC}"
     echo "  logs [服务]   查看日志"
@@ -41,10 +41,15 @@ show_help() {
     echo "  test          测试配置"
     echo "  diagnose      诊断文件上传问题"
     echo ""
+    echo -e "${YELLOW}选项:${NC}"
+    echo "  --services <服务列表>  指定要构建和部署的服务（web,api）"
+    echo ""
     echo "示例:"
-    echo "  ./deploy.sh deploy    # 完整部署"
-    echo "  ./deploy.sh logs api  # 查看API日志"
-    echo "  ./deploy.sh diagnose  # 诊断文件上传问题"
+    echo "  ./deploy.sh deploy                     # 完整部署"
+    echo "  ./deploy.sh deploy --services web      # 只部署web服务"
+    echo "  ./deploy.sh deploy --services web,api  # 部署web和api服务"
+    echo "  ./deploy.sh logs api                   # 查看API日志"
+    echo "  ./deploy.sh diagnose                   # 诊断文件上传问题"
     echo ""
     echo -e "${GREEN}Swagger文档:${NC} http://YOUR_IP/api/v1/docs"
     echo ""
@@ -236,6 +241,81 @@ check_changes() {
     fi
 }
 
+# 解析命令行参数
+parse_args() {
+    SERVICES_TO_BUILD=""
+    
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --services)
+                SERVICES_TO_BUILD="$2"
+                shift 2
+                ;;
+            *)
+                # 其他参数保持不变
+                break
+                ;;
+        esac
+    done
+}
+
+# 构建指定服务
+build_services() {
+    local services="$1"
+    
+    if [[ -z "$services" ]]; then
+        log_info "未指定服务，跳过构建步骤"
+        return 0
+    fi
+    
+    log_info "构建指定服务: $services"
+    cd "$PROJECT_ROOT"
+    
+    # 解析服务列表
+    IFS=',' read -ra SERVICE_ARRAY <<< "$services"
+    
+    for service in "${SERVICE_ARRAY[@]}"; do
+        case $service in
+            web)
+                # 清理前端构建缓存和产物
+                if [[ -d "web/dist" ]]; then
+                    log_info "清理前端构建产物..."
+                    rm -rf web/dist/*
+                fi
+                
+                if [[ -d "web/node_modules/.vite" ]]; then
+                    log_info "清理前端构建缓存..."
+                    rm -rf web/node_modules/.vite
+                fi
+                
+                # 构建Web镜像
+                if [[ -f "web/Dockerfile" ]]; then
+                    log_info "构建Web镜像..."
+                    docker build -t wedding-web:$(detect_environment)-latest web/ || {
+                        log_error "Web镜像构建失败"
+                        return 1
+                    }
+                fi
+                ;;
+            api)
+                # 构建API镜像
+                if [[ -f "server/Dockerfile" ]]; then
+                    log_info "构建API镜像..."
+                    docker build -t wedding-api:$(detect_environment)-latest server/ || {
+                        log_error "API镜像构建失败"
+                        return 1
+                    }
+                fi
+                ;;
+            *)
+                log_warning "未知服务: $service，跳过构建"
+                ;;
+        esac
+    done
+    
+    log_success "指定服务构建完成"
+}
+
 # 智能部署
 smart_deploy() {
     log_info "开始智能部署..."
@@ -269,40 +349,8 @@ smart_deploy() {
     # 复制环境文件
     copy_env_file
     
-    # 重新构建镜像
-    log_info "重新构建镜像..."
-    cd "$PROJECT_ROOT"
-    
-    # 清理前端构建缓存和产物
-    if [[ -d "web/dist" ]]; then
-        log_info "清理前端构建产物..."
-        rm -rf web/dist/*
-    fi
-    
-    if [[ -d "web/node_modules/.vite" ]]; then
-        log_info "清理前端构建缓存..."
-        rm -rf web/node_modules/.vite
-    fi
-    
-    # 构建Web镜像
-    if [[ -f "web/Dockerfile" ]]; then
-        log_info "构建Web镜像..."
-        # 使用正确的构建目标和标签
-        docker build -t wedding-web:$(detect_environment)-latest web/ || {
-            log_error "Web镜像构建失败"
-            return 1
-        }
-    fi
-    
-    # 构建API镜像
-    if [[ -f "server/Dockerfile" ]]; then
-        log_info "构建API镜像..."
-        # 使用正确的构建目标和标签
-        docker build -t wedding-api:$(detect_environment)-latest server/ || {
-            log_error "API镜像构建失败"
-            return 1
-        }
-    fi
+    # 构建指定服务
+    build_services "$SERVICES_TO_BUILD"
     
     # 启动服务
     start_services
@@ -330,40 +378,12 @@ deploy_full() {
     # 复制环境文件
     copy_env_file
     
+    # 构建指定服务
+    build_services "$SERVICES_TO_BUILD"
+    
     # 重新构建镜像
     log_info "重新构建镜像..."
     cd "$PROJECT_ROOT"
-    
-    # 清理前端构建缓存和产物
-    if [[ -d "web/dist" ]]; then
-        log_info "清理前端构建产物..."
-        rm -rf web/dist/*
-    fi
-    
-    if [[ -d "web/node_modules/.vite" ]]; then
-        log_info "清理前端构建缓存..."
-        rm -rf web/node_modules/.vite
-    fi
-    
-    # 构建Web镜像
-    if [[ -f "web/Dockerfile" ]]; then
-        log_info "构建Web镜像..."
-        # 使用正确的构建目标和标签
-        docker build -t wedding-web:$(detect_environment)-latest web/ || {
-            log_error "Web镜像构建失败"
-            return 1
-        }
-    fi
-    
-    # 构建API镜像
-    if [[ -f "server/Dockerfile" ]]; then
-        log_info "构建API镜像..."
-        # 使用正确的构建目标和标签
-        docker build -t wedding-api:$(detect_environment)-latest server/ || {
-            log_error "API镜像构建失败"
-            return 1
-        }
-    fi
     
     # 启动服务
     start_services
@@ -383,7 +403,7 @@ deploy_full() {
 }
 
 # 重新构建部署
-rebuild_deploy() {
+redeploy() {
     log_info "开始重新构建并部署..."
 
     # 停止服务
@@ -395,40 +415,12 @@ rebuild_deploy() {
     # 复制环境文件
     copy_env_file
     
+    # 构建指定服务
+    build_services "$SERVICES_TO_BUILD"
+    
     # 重新构建镜像
     log_info "重新构建镜像..."
     cd "$PROJECT_ROOT"
-    
-    # 清理前端构建缓存和产物
-    if [[ -d "web/dist" ]]; then
-        log_info "清理前端构建产物..."
-        rm -rf web/dist/*
-    fi
-    
-    if [[ -d "web/node_modules/.vite" ]]; then
-        log_info "清理前端构建缓存..."
-        rm -rf web/node_modules/.vite
-    fi
-    
-    # 构建Web镜像
-    if [[ -f "web/Dockerfile" ]]; then
-        log_info "构建Web镜像..."
-        # 使用正确的构建目标和标签
-        docker build -t wedding-web:$(detect_environment)-latest web/ || {
-            log_error "Web镜像构建失败"
-            return 1
-        }
-    fi
-    
-    # 构建API镜像
-    if [[ -f "server/Dockerfile" ]]; then
-        log_info "构建API镜像..."
-        # 使用正确的构建目标和标签
-        docker build -t wedding-api:$(detect_environment)-latest server/ || {
-            log_error "API镜像构建失败"
-            return 1
-        }
-    fi
     
     # 启动服务
     start_services
@@ -522,7 +514,7 @@ health_check() {
         ((attempt++))
     done
     
-    log_error "健康检查失败，建议执行重新构建: ./deploy.sh rebuild"
+    log_error "健康检查失败，建议执行重新构建: ./deploy.sh redeploy"
     return 1
 }
 
@@ -592,6 +584,9 @@ test_config() {
 main() {
     local command="${1:-help}"
     
+    # 解析参数
+    parse_args "$@"
+    
     case $command in
         start)
             start_services
@@ -606,10 +601,10 @@ main() {
             show_status
             ;;
         deploy)
-            smart_deploy  # 使用智能部署作为默认部署方式
+            smart_deploy
             ;;
-        rebuild)
-            rebuild_deploy
+        redeploy)
+            redeploy
             ;;
         logs)
             show_logs "$2"
