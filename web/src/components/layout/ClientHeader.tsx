@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Layout, Menu, Button, Drawer } from 'antd';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { MenuOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import { ThemeMode } from '../../types';
+import { scrollToElement, scrollToTop } from '../../utils/scroll';
 
 const { Header } = Layout;
 
@@ -132,26 +133,59 @@ const MobileMenuButton = styled(Button)`
 
 const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, logoUrl }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
 
   const menuItems = [
-    { key: '/', label: '首页' },
-    { key: '/team', label: '团队' },
-    { key: '/works', label: '作品' },
-    { key: '/schedule', label: '档期' },
-    { key: '/contact', label: '联系' },
+    { key: '/', label: '首页', sectionId: 'hero' },
+    { key: '/team', label: '团队', sectionId: 'team' },
+    { key: '/works', label: '作品', sectionId: 'portfolio' },
+    { key: '/schedule', label: '档期', sectionId: 'schedule' },
+    { key: '/contact', label: '联系', sectionId: 'contact' },
   ];
+
+  // 处理菜单点击
+  const handleMenuClick = (path: string, sectionId?: string) => {
+    // 如果当前在首页且目标section存在，则滚动到对应section
+    if (location.pathname === '/' && sectionId) {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        if (sectionId === 'hero') {
+          scrollToTop();
+        } else {
+          scrollToElement(sectionId, 64);
+        }
+        return;
+      }
+    }
+    
+    // 否则导航到对应页面
+    if (path !== location.pathname) {
+      navigate(path);
+    }
+  };
 
   const sectionToPath: Record<string, string> = {
     hero: '/',
-    team: '/',
+    team: '/team',
     portfolio: '/works',
     schedule: '/schedule',
     contact: '/contact',
   };
 
-  const activePath = activeSection ? sectionToPath[activeSection] : location.pathname;
-  const selectedKey = menuItems.find(item => item.key === activePath)?.key || '/';
+  // 优化导航高亮逻辑
+  const getSelectedKey = () => {
+    // 如果在首页且有activeSection，根据section映射到对应的菜单项
+    if (location.pathname === '/' && activeSection) {
+      const mappedPath = sectionToPath[activeSection];
+      return menuItems.find(item => item.key === mappedPath)?.key || '/';
+    }
+    
+    // 非首页或没有activeSection时，使用当前路径
+    return menuItems.find(item => item.key === location.pathname)?.key || '/';
+  };
+
+  const selectedKey = getSelectedKey();
 
   return (
     <StyledHeader>
@@ -167,7 +201,17 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
           selectedKeys={[selectedKey]}
           items={menuItems.map(item => ({
             key: item.key,
-            label: <Link to={item.key}>{item.label}</Link>,
+            label: (
+              <span 
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleMenuClick(item.key, item.sectionId);
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                {item.label}
+              </span>
+            ),
           }))}
         />
       </NavContainer>
@@ -190,12 +234,16 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
           items={menuItems.map(item => ({
             key: item.key,
             label: (
-              <Link 
-                to={item.key} 
-                onClick={() => setMobileMenuVisible(false)}
+              <span 
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleMenuClick(item.key, item.sectionId);
+                  setMobileMenuVisible(false);
+                }}
+                style={{ cursor: 'pointer' }}
               >
                 {item.label}
-              </Link>
+              </span>
             ),
           }))}
         />

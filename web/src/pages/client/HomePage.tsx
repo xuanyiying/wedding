@@ -19,14 +19,47 @@ interface OutletContextType {
   setActiveSection: (sectionId: string) => void;
 }
 
+const PageContainer = styled.div`
+  position: relative;
+`;
+
 const SectionWrapper = styled.section`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 4rem 2rem;
+  min-height: 60vh;
+  scroll-margin-top: 64px; /* 为固定导航栏预留空间 */
+  
+  /* 确保section有足够的高度用于滚动检测 */
+  &:first-child {
+    padding-top: 0;
+    min-height: 100vh;
+  }
+  
+  &:last-child {
+    min-height: 80vh;
+    padding-bottom: 6rem;
+  }
 
   @media (max-width: 768px) {
-    padding: 1rem;
+    padding: 3rem 1rem;
+    min-height: 50vh;
+    
+    &:first-child {
+      min-height: 90vh;
+    }
+    
+    &:last-child {
+      min-height: 70vh;
+      padding-bottom: 4rem;
+    }
   }
+`;
+
+const HeroSectionWrapper = styled.section`
+  scroll-margin-top: 64px;
+  min-height: 100vh;
+  position: relative;
 `;
 
 const HomePage: React.FC = () => {
@@ -54,27 +87,28 @@ const HomePage: React.FC = () => {
   const contactSectionSettings = settings?.homepageSections?.contact;
 
   return (
-    <div>
+    <PageContainer>
       <ScrollNavigation
         sections={[
           { id: 'hero', path: '/' },
           { id: 'team', path: '/' },
-          { id: 'schedule', path: '/schedule' },
           { id: 'portfolio', path: '/works' },
+          { id: 'schedule', path: '/schedule' },
           { id: 'contact', path: '/contact' }
         ]}
         onSectionChange={setActiveSection}
+        headerHeight={64}
       />
 
       {/* Hero Section */}
-      <section id="hero">
+      <HeroSectionWrapper id="hero">
         <HeroSection
           title={heroSectionSettings?.title || '完美婚礼，从这里开始'}
           description={heroSectionSettings?.description || '专业的婚礼策划团队，为您打造独一无二的梦想婚礼'}
           ctaText={heroSectionSettings?.ctaText || '开始策划您的婚礼'}
           ctaLink={heroSectionSettings?.ctaLink || '/contact'}
         />
-      </section>
+      </HeroSectionWrapper>
 
       {/* Team Section */}
       {settings?.homepageSections?.team?.visible && (
@@ -143,7 +177,7 @@ const HomePage: React.FC = () => {
           onClose={handleCloseModal}
         />
       )}
-    </div>
+    </PageContainer>
   );
 };
 

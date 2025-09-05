@@ -132,8 +132,8 @@ const DashboardPage: React.FC = () => {
           viewTrendsResponse = results[3];
         }
 
-        const statsData = statsResponse.data;
-        const adminStats = adminStatsResponse;
+        const statsData = statsResponse?.data || {};
+        const adminStats = adminStatsResponse || {};
 
         // 根据用户角色设置不同的统计数据
         const formattedStats: StatData[] = [];
@@ -143,28 +143,28 @@ const DashboardPage: React.FC = () => {
           formattedStats.push(
             {
               title: '总用户数',
-              value: statsData?.totalUsers || 0,
+              value: Number(statsData.totalUsers) || 0,
               prefix: <UserOutlined />,
-              trend: (statsData?.userTrend || 0) >= 0 ? TrendType.UP : TrendType.DOWN,
-              trendValue: Math.abs(statsData?.userTrend || 0)
+              trend: (statsData.userTrend || 0) >= 0 ? TrendType.UP : TrendType.DOWN,
+              trendValue: Math.abs(statsData.userTrend || 0)
             },
             {
               title: '本月预订',
-              value: statsData?.monthlyBookings || 0,
+              value: Number(statsData.monthlyBookings) || 0,
               prefix: <CalendarOutlined />,
-              trend: (statsData?.bookingTrend || 0) >= 0 ? TrendType.UP : TrendType.DOWN,
-              trendValue: Math.abs(statsData?.bookingTrend || 0)
+              trend: (statsData.bookingTrend || 0) >= 0 ? TrendType.UP : TrendType.DOWN,
+              trendValue: Math.abs(statsData.bookingTrend || 0)
             },
             {
               title: '作品数量',
-              value: statsData?.totalWorks || 0,
+              value: Number(statsData.totalWorks) || 0,
               prefix: <PictureOutlined />,
-              trend: (statsData?.workTrend || 0) >= 0 ? TrendType.UP : TrendType.DOWN,
-              trendValue: Math.abs(statsData?.workTrend || 0)
+              trend: (statsData.workTrend || 0) >= 0 ? TrendType.UP : TrendType.DOWN,
+              trendValue: Math.abs(statsData.workTrend || 0)
             },
             {
               title: '总浏览量',
-              value: adminStats?.popularWorks?.reduce((sum: number, page: PopularPage) => sum + page.totalViews, 0) || 0,
+              value: Number(adminStats.totalViews) || 0,
               prefix: <EyeOutlined />,
               trend: TrendType.UP,
               trendValue: 0
@@ -175,27 +175,29 @@ const DashboardPage: React.FC = () => {
           formattedStats.push(
             {
               title: '我的档期',
-              value: statsData?.totalSchedules || 0,
+              value: Number(statsData.totalSchedules) || 0,
               prefix: <CalendarOutlined />,
-              trend: (statsData?.bookingTrend || 0) >= 0 ? TrendType.UP : TrendType.DOWN,
-              trendValue: Math.abs(statsData?.bookingTrend || 0)
+              trend: (statsData.bookingTrend || 0) >= 0 ? TrendType.UP : TrendType.DOWN,
+              trendValue: Math.abs(statsData.bookingTrend || 0)
             },
             {
               title: '我的作品',
-              value: statsData?.totalWorks || 0,
+              value: Number(statsData.totalWorks) || 0,
               prefix: <PictureOutlined />,
-              trend: (statsData?.workTrend || 0) >= 0 ? TrendType.UP : TrendType.DOWN,
-              trendValue: Math.abs(statsData?.workTrend || 0)
+              trend: (statsData.workTrend || 0) >= 0 ? TrendType.UP : TrendType.DOWN,
+              trendValue: Math.abs(statsData.workTrend || 0)
             },
             {
               title: '作品浏览量',
-              value: adminStats?.popularWorks?.reduce((sum: number, page: PopularPage) => sum + page.totalViews, 0) || 0,
+              value: Number(adminStats.totalViews) || 0,
               prefix: <EyeOutlined />,
               trend: TrendType.UP,
               trendValue: 0
             }
           );
         }
+
+        console.log('Formatted Stats:', formattedStats);
 
         setStats(formattedStats);
         

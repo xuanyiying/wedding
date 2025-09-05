@@ -98,8 +98,13 @@ const SchedulesPage: React.FC = () => {
       if (queryFilters?.teamId) {
         params.teamId = queryFilters.teamId;
       }
+      console.log('Loading schedules with params:', params);
       const response = await scheduleService.getSchedules(params);
+      console.log('Schedules API response:', response);
+      
       const scheduleData = response.data?.schedules || [];
+      console.log('Schedule data:', scheduleData);
+      
       setSchedules(scheduleData);
     } catch (error) {
       console.error('加载档期数据失败:', error);

@@ -122,7 +122,7 @@ export const useTeamData = (options?: {
     }
   }, [teamId, fetchTeamMembers]);
 
-  // 初始化数据 - 移除refetch依赖，直接调用fetchTeams和fetchTeamMembers
+  // 初始化数据
   useEffect(() => {
     const initializeData = async () => {
       setLoading(true);
@@ -142,7 +142,7 @@ export const useTeamData = (options?: {
     };
     
     initializeData();
-  }, [activeOnly, limit, includeMembers]); // 只依赖于实际的配置参数
+  }, [activeOnly, limit, includeMembers, fetchTeams, fetchTeamMembers]);
 
   // 显示错误消息
   useEffect(() => {

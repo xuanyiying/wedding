@@ -174,7 +174,7 @@ export class AuthStorage {
   /**
    * 检查token是否即将过期（可选功能，需要JWT解析）
    */
-  static isTokenExpiringSoon(token: string, thresholdMinutes: number = 5): boolean {
+  static isTokenExpiringSoon(token: string, thresholdMinutes: number = 24 * 60): boolean {
     try {
       // 简单的JWT解析（仅用于获取过期时间）
       const payload = JSON.parse(atob(token.split('.')[1]));

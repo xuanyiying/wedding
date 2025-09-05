@@ -12,4 +12,7 @@ router.get('/activities', DashboardController.getRecentActivities);
 // 获取收入统计
 router.get('/revenue', DashboardController.getRevenueStats);
 
+// 获取档期统计
+router.get('/schedule-stats', DashboardController.getScheduleStats);
+
 export default router;

@@ -122,7 +122,74 @@ export class DashboardService {
         Schedule.sum('price', { where: { ...todayWhere, status: ScheduleStatus.COMPLETED } }),
       ]);
 
+      // 计算趋势数据（与上个月对比）
+      const lastMonth = new Date();
+      lastMonth.setMonth(lastMonth.getMonth() - 1);
+      const lastMonthStart = new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1);
+      const lastMonthEnd = new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 0, 23, 59, 59);
+
+      const lastMonthWhere = {
+        ...bookingWhere,
+        createdAt: {
+          [Op.gte]: lastMonthStart,
+          [Op.lte]: lastMonthEnd,
+        },
+      };
+
+      const [lastMonthBookings, lastMonthUsers, lastMonthWorks] = await Promise.all([
+        Schedule.count({ where: lastMonthWhere }),
+        userId ? 0 : User.count({
+          where: {
+            createdAt: {
+              [Op.gte]: lastMonthStart,
+              [Op.lte]: lastMonthEnd,
+            },
+          },
+        }),
+        Work.count({
+          where: {
+            ...(userId ? { userId } : {}),
+            createdAt: {
+              [Op.gte]: lastMonthStart,
+              [Op.lte]: lastMonthEnd,
+            },
+          },
+        }),
+      ]);
+
+      // 计算趋势百分比
+      const bookingTrend = lastMonthBookings > 0 ? ((totalBookings - lastMonthBookings) / lastMonthBookings) * 100 : 0;
+      const userTrend = lastMonthUsers > 0 ? (((userStats?.total || 0) - lastMonthUsers) / lastMonthUsers) * 100 : 0;
+      const workTrend = lastMonthWorks > 0 ? ((totalWorks - lastMonthWorks) / lastMonthWorks) * 100 : 0;
+
+      // 返回前端期望的扁平结构
       return {
+        // 基础统计
+        totalUsers: userStats?.total || 0,
+        activeUsers: userStats?.active || 0,
+        monthlyBookings: totalBookings,
+        totalSchedules: totalBookings,
+        totalWorks: totalWorks,
+        publishedWorks: publishedWorks,
+        
+        // 预订统计
+        totalBookings: totalBookings,
+        confirmedBookings: confirmedBookings,
+        pendingBookings: pendingBookings,
+        completedBookings: completedBookings,
+        todayBookings: todayBookings,
+        
+        // 收入统计
+        totalRevenue: parseFloat(revenue.totalRevenue || '0'),
+        averageBookingValue: parseFloat(revenue.avgBookingValue || '0'),
+        todayRevenue: todayRevenue || 0,
+        
+        // 趋势数据
+        bookingTrend: Math.round(bookingTrend * 100) / 100,
+        userTrend: Math.round(userTrend * 100) / 100,
+        workTrend: Math.round(workTrend * 100) / 100,
+        
+        // 兼容旧结构
         bookings: {
           total: totalBookings,
           confirmed: confirmedBookings,
@@ -132,7 +199,6 @@ export class DashboardService {
         },
         revenue: {
           total: parseFloat(revenue.totalRevenue || '0'),
-          deposit: 0,  // 修复：移除不存在的totalDeposit字段
           average: parseFloat(revenue.avgBookingValue || '0'),
           today: todayRevenue || 0,
         },
@@ -585,6 +651,93 @@ export class DashboardService {
       };
     } catch (error) {
       logger.error('获取客户统计失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 获取档期统计数据
+   */
+  static async getScheduleStats(params: DashboardStatsParams = {}) {
+    try {
+      const { startDate, endDate, userId } = params;
+
+      const where: WhereOptions = {};
+
+      if (userId) {
+        where.userId = userId;
+      }
+
+      if (startDate || endDate) {
+        where.createdAt = {};
+        if (startDate) {
+          (where.createdAt as any)[Op.gte] = new Date(startDate);
+        }
+        if (endDate) {
+          (where.createdAt as any)[Op.lte] = new Date(endDate);
+        }
+      }
+
+      // 档期状态统计
+      const [
+        totalSchedules,
+        availableSchedules,
+        bookedSchedules,
+        confirmedSchedules,
+        completedSchedules,
+        cancelledSchedules,
+      ] = await Promise.all([
+        Schedule.count({ where }),
+        Schedule.count({ where: { ...where, status: ScheduleStatus.AVAILABLE } }),
+        Schedule.count({ where: { ...where, status: ScheduleStatus.BOOKED } }),
+        Schedule.count({ where: { ...where, status: ScheduleStatus.CONFIRMED } }),
+        Schedule.count({ where: { ...where, status: ScheduleStatus.COMPLETED } }),
+        Schedule.count({ where: { ...where, status: ScheduleStatus.CANCELLED } }),
+      ]);
+
+      // 按月统计（最近12个月）
+      const monthlyStats = [];
+      for (let i = 11; i >= 0; i--) {
+        const date = new Date();
+        date.setMonth(date.getMonth() - i);
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        
+        const monthStart = new Date(year, month - 1, 1);
+        const monthEnd = new Date(year, month, 0, 23, 59, 59);
+        
+        const monthWhere = {
+          ...where,
+          createdAt: {
+            [Op.gte]: monthStart,
+            [Op.lte]: monthEnd,
+          },
+        };
+
+        const [monthTotal, monthCompleted] = await Promise.all([
+          Schedule.count({ where: monthWhere }),
+          Schedule.count({ where: { ...monthWhere, status: ScheduleStatus.COMPLETED } }),
+        ]);
+
+        monthlyStats.push({
+          month: `${year}-${month.toString().padStart(2, '0')}`,
+          total: monthTotal,
+          completed: monthCompleted,
+        });
+      }
+
+      return {
+        totalSchedules,
+        availableSchedules,
+        bookedSchedules,
+        confirmedSchedules,
+        completedSchedules,
+        cancelledSchedules,
+        pendingSchedules: bookedSchedules, // 待确认的档期
+        monthlyStats,
+      };
+    } catch (error) {
+      logger.error('获取档期统计失败:', error);
       throw error;
     }
   }

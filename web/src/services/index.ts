@@ -144,6 +144,24 @@ export const scheduleService = {
   }>> => {
     return http.get('/schedules/check-conflict', { params });
   },
+
+  // 获取档期统计
+  getScheduleStats: (): Promise<ApiResponse<{
+    totalSchedules: number;
+    availableSchedules: number;
+    bookedSchedules: number;
+    confirmedSchedules: number;
+    completedSchedules: number;
+    cancelledSchedules: number;
+    pendingSchedules: number;
+    monthlyStats: Array<{
+      month: string;
+      total: number;
+      completed: number;
+    }>;
+  }>> => {
+    return http.get('/dashboard/schedule-stats');
+  },
 };
 
 // 作品相关API

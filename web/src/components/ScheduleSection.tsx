@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Typography, Empty, Col, Row } from 'antd';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Typography, Empty, Col, Row, message } from 'antd';
 import styled from 'styled-components';
 import dayjs from 'dayjs';
 import { scheduleService } from '../services';
@@ -88,35 +88,92 @@ interface ScheduleSectionProps {
 const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, team }) => {
   const [availableMembers, setAvailableMembers] = useState<ClientTeamMember[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [hasQueried, setHasQueried] = useState(false);
   const [selectedMember, setSelectedMember] = useState<ClientTeamMember | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const { teamMembers } = useTeamData();
-  const today = dayjs();
+  
+  // 使用useMemo确保today对象不会在每次渲染时重新创建
+  const today = useMemo(() => dayjs(), []);
+  
+  // 使用ref跟踪请求状态，避免重复请求
+  const isRequestingRef = useRef(false);
+
+  // 稳定initialFilters对象，避免每次渲染时创建新对象
+  const initialFilters = useMemo(() => ({
+    teamId: 'all',
+    date: today,
+    mealType: 'lunch' as const
+  }), [today]);
 
   // 处理查询
   const handleQuery = useCallback(async (filters: QueryFilters) => {
-    try {
-      setLoading(true);
+    // 防止重复请求
+    if (isRequestingRef.current) {
+      return;
+    }
 
-      const result = await scheduleService.getAvailableHosts({
+    try {
+      isRequestingRef.current = true;
+      setLoading(true);
+      setError(null);
+      setAvailableMembers([]);
+
+      const queryParams = {
         teamId: team?.id || 'all',
         weddingDate: filters.date?.format('YYYY-MM-DD') || today.format('YYYY-MM-DD'),
-        weddingTime: filters.mealType as string || '',
-      });
-      const available = result.data?.hosts.map(m => transformTeamMember(m)) || [];
-      setAvailableMembers(available);
-    } catch {
+        weddingTime: filters.mealType as string || 'lunch',
+      };
+
+      const result = await scheduleService.getAvailableHosts(queryParams);
+
+      if (result.data && Array.isArray(result.data.hosts)) {
+        const available = result.data.hosts.map(host => transformTeamMember(host));
+        setAvailableMembers(available);
+        setHasQueried(true);
+        
+        if (available.length === 0) {
+          message.info('当前时间段暂无可用主持人');
+        }
+      } else {
+        setAvailableMembers([]);
+        setError('数据格式异常');
+        message.error('获取数据失败，请稍后重试');
+      }
+    } catch (error: any) {
       setAvailableMembers([]);
+      setError(error?.message || '查询失败');
+      message.error('查询可用主持人失败，请检查网络连接后重试');
     } finally {
       setLoading(false);
+      isRequestingRef.current = false;
     }
-  }, [team?.id, today]);
+  }, [team?.id]);
 
   // 页面加载时自动查询当天可预约的团队成员
   useEffect(() => {
+    let isMounted = true;
+    
+    const initQuery = async () => {
+      if (!isMounted) return;
+      await handleQuery({ date: today, mealType: 'lunch' });
+    };
+    
+    const timer = setTimeout(initQuery, 100);
+    
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, []);
 
-    handleQuery({ date: today, mealType: 'lunch' });
-  }, [teamMembers, handleQuery, today]);
+  // 当team变化时重新查询
+  useEffect(() => {
+    if (team?.id && hasQueried) {
+      handleQuery({ date: today, mealType: 'lunch' });
+    }
+  }, [team?.id]);
 
   // 处理团队成员卡片点击
   const handleMemberClick = (member: ClientTeamMember) => {
@@ -153,16 +210,19 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, t
           showMealFilter={true}
           showMemberFilter={false}
           loading={loading}
-          initialFilters={{
-            teamId: 'all', // 全部团队
-            date: dayjs(), // 今天
-            mealType: 'lunch' // 午宴
-          }}
+          initialFilters={initialFilters}
         />
 
         {loading ? (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
             <Typography.Text>正在查询可用主持人...</Typography.Text>
+          </div>
+        ) : error ? (
+          <div style={{ textAlign: 'center', padding: '60px 0' }}>
+            <Empty
+              description={`查询失败: ${error}`}
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            />
           </div>
         ) : availableMembers.length > 0 ? (
           <Row gutter={[30, 30]}>
@@ -182,12 +242,16 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, t
               </Col>
             ))}
           </Row>
-        ) : (
+        ) : hasQueried ? (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
             <Empty
               description="当前日期所有团队成员都已有档期安排"
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '60px 0' }}>
+            <Typography.Text type="secondary">请选择日期和时段查询可用主持人</Typography.Text>
           </div>
         )}
 

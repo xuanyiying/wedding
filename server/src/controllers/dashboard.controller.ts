@@ -147,6 +147,28 @@ export const getCustomerStats = async (req: AuthenticatedRequest, res: Response,
   }
 };
 
+export const getScheduleStats = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { startDate, endDate } = req.query;
+    const userId = req.user?.id || undefined;
+
+    const stats = await DashboardService.getScheduleStats({
+      startDate: startDate as string,
+      endDate: endDate as string,
+      userId,
+    });
+
+    Resp.success(res, stats, '获取档期统计成功');
+  } catch (error) {
+    logger.error('获取档期统计失败:', error);
+    next(error);
+  }
+};
+
 export const getPerformanceMetrics = async (
   req: AuthenticatedRequest,
   res: Response,

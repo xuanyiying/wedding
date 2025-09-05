@@ -508,9 +508,6 @@ const SettingsPage: React.FC = () => {
               </SettingSection>
               
               <SettingSection>
-                <div className="section-title">品牌资源</div>
-                <div className="section-description">上传网站Logo和图标</div>
-                
                 <Row gutter={16}>
                   <Col span={12}>
                     <Form.Item name="logo" label="网站Logo">
@@ -533,7 +530,7 @@ const SettingsPage: React.FC = () => {
                               className="w-full h-full object-contain rounded" 
                             />
                             <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center text-white opacity-0 hover:opacity-100 transition-opacity rounded">
-                              重新上传Logo
+                              重新上传
                             </div>
                           </div>
                         ) : (
@@ -567,7 +564,7 @@ const SettingsPage: React.FC = () => {
                               className="w-full h-full object-contain rounded" 
                             />
                             <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center text-white opacity-0 hover:opacity-100 transition-opacity rounded">
-                              重新上传图标
+                              重新上传
                             </div>
                           </div>
                         ) : (

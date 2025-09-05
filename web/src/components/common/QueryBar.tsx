@@ -185,7 +185,22 @@ const QueryBar: React.FC<QueryBarProps> = ({
   // 初始化数据
   useEffect(() => {
     fetchTeams();
+    
+    // 如果有初始筛选条件，设置到state中
+    if (initialFilters) {
+      setFilters(initialFilters);
+    }
   }, []);
+
+  // 当初始筛选条件变化时，更新filters - 使用JSON.stringify避免对象引用问题
+  useEffect(() => {
+    if (initialFilters) {
+      setFilters(prev => ({
+        ...prev,
+        ...initialFilters
+      }));
+    }
+  }, [JSON.stringify(initialFilters)]);
 
   // 当选择团队时，获取对应的成员列表
   useEffect(() => {

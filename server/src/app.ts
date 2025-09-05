@@ -4,7 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
-import rateLimit from 'express-rate-limit';
+// import rateLimit from 'express-rate-limit'; // 已临时注释以解决频繁刷新token导致的429错误
 import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec, swaggerUiOptions } from './config/swagger';
@@ -69,20 +69,20 @@ class App {
       }));
     }
 
-    // 速率限制
-    const limiter = rateLimit({
-      windowMs: config.rateLimit.windowMs,
-      max: config.rateLimit.maxRequests,
-      message: {
-        error: 'Too many requests from this IP, please try again later.',
-      },
-      standardHeaders: true,
-      legacyHeaders: false,
-    });
-    this.app.use(limiter);
+    // 速率限制 (已临时注释以解决频繁刷新token导致的429错误)
+    // const limiter = rateLimit({
+    //   windowMs: config.rateLimit.windowMs,
+    //   max: config.rateLimit.maxRequests,
+    //   message: {
+    //     error: 'Too many requests from this IP, please try again later.',
+    //   },
+    //   standardHeaders: true,
+    //   legacyHeaders: false,
+    // });
+    // this.app.use(limiter);
 
     // 解析请求体 - 增加到100MB以支持大文件上传
-    this.app.use(express.json({ limit: '100mb' }));
+    this.app.use(express.json({ limit: '200mb' }));
     this.app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 
     // 静态文件服务
@@ -111,7 +111,7 @@ class App {
     // Swagger API 文档路由
     this.app.use(`${apiPrefix}/docs`, swaggerUi.serve);
     this.app.get(`${apiPrefix}/docs`, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
-    
+
     // API 规范 JSON 端点
     this.app.get(`${apiPrefix}/docs.json`, (_req, res) => {
       res.setHeader('Content-Type', 'application/json');
@@ -128,12 +128,12 @@ class App {
     try {
       await connectDatabase();
       await connectRedis();
-      
+
       // 初始化文件存储服务
       const fsService = new FSService();
       await fsService.initializeBucket();
       logger.info('File storage service initialized successfully');
-      
+
       this.listen();
     } catch (error) {
       logger.error('Failed to start server:', error as Error);
