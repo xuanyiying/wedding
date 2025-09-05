@@ -7,6 +7,7 @@ export interface SiteSettings {
       secondary: string; // 次主题色
       background: string;
       text: string;
+      accent?: string; // 强调色
     };
     fonts: {
       primary: string;

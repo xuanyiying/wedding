@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 
 import { type Team } from '../../types';
@@ -14,6 +14,8 @@ import { type ClientTeamMember } from '../../hooks/useTeamData';
 import TeamList from '../../components/client/TeamList';
 import TeamShowcaseSection from '../../components/client/TeamShowcaseSection';
 import { useSiteSettings } from '../../hooks';
+import { useTheme } from '../../hooks/useTheme';
+import { applyThemeSettings } from '../../utils/themeUtils';
 
 interface OutletContextType {
   setActiveSection: (sectionId: string) => void;
@@ -67,10 +69,30 @@ const HomePage: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedMember, setSelectedMember] = useState<ClientTeamMember | null>(null);
 
-  // 使用站点设置钩子
+  // 使用站点设置和主题钩子
   const { settings } = useSiteSettings();
+  const { initTheme } = useTheme();
 
   const { setActiveSection } = useOutletContext<OutletContextType>();
+
+  // 应用主题设置
+  useEffect(() => {
+    // 初始化客户端主题
+    initTheme('client');
+    
+    // 如果有自定义主题设置，应用它们
+    if (settings?.theme) {
+      // 确保 theme 对象包含所有必需的属性
+      const themeWithDefaults = {
+        ...settings.theme,
+        colors: settings.theme.colors ? {
+          ...settings.theme.colors,
+          accent: settings.theme.colors.accent || settings.theme.colors.primary || '#D4A574'
+        } : undefined
+      };
+      applyThemeSettings(themeWithDefaults);
+    }
+  }, [settings?.theme, initTheme]);
 
   const handleTeamSelect = (team: Team) => {
     setSelectedTeam(team);

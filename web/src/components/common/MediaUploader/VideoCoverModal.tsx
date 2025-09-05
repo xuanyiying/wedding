@@ -444,7 +444,7 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
         }}
         maskClosable={false}
         keyboard={false}
-        destroyOnClose={true}
+        destroyOnHidden={true}
       >
         <div className="video-cover-content">
           {/* 错误提示 */}

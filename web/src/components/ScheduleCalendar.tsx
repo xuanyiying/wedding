@@ -300,7 +300,7 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
             <div style={{ maxHeight: '80px', overflowY: 'auto' }}>
               {events.map((event, index) => (
                 <div
-                  key={event.id || index}
+                  key={`${event.id || 'event'}-${index}`}
                   className={styles.scheduleEvent}
                   style={{
                     background: getStatusBackground(event.status),

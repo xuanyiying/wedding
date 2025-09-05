@@ -263,7 +263,6 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
                 ),
                 children: (
                   <div>
-
                     <DetailSection>
                       {worksLoading ? (
                         <LoadingContainer>
@@ -273,14 +272,14 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
                         mediaProfiles.map((m) => (
                           <WorkItem key={m.id}>
                             {m.fileType === FileType.VIDEO && m.thumbnailUrl && m.fileUrl ?
-                                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-                                  <img
-                                    src={m.thumbnailUrl}
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                  />
-                                  <PlayButton>
-                                    <PlayCircleOutlined />
-                                  </PlayButton>
+                              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+                                <img
+                                  src={m.thumbnailUrl}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                                <PlayButton>
+                                  <PlayCircleOutlined />
+                                </PlayButton>
                               </div> :
                               <Image preview={false}
                                 src={m.fileUrl}
