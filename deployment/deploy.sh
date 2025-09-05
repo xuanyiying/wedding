@@ -80,6 +80,22 @@ get_config_files() {
     fi
 }
 
+# 复制环境文件到项目根目录
+copy_env_file() {
+    log_info "复制环境文件到项目根目录..."
+    
+    # 确保目标目录存在
+    mkdir -p "$PROJECT_ROOT"
+    
+    # 复制对应的环境文件到项目根目录
+    if [[ -f "$ENV_FILE" ]]; then
+        cp "$ENV_FILE" "$PROJECT_ROOT/.env"
+        log_success "已将 $ENV_FILE 复制到项目根目录"
+    else
+        log_warning "环境文件 $ENV_FILE 不存在，跳过复制"
+    fi
+}
+
 # 启动服务
 start_services() {
     log_info "启动Wedding Client服务..."
@@ -250,6 +266,9 @@ smart_deploy() {
     # 清理资源，包括 wedding-web 和 wedding-api 镜像和容器
     clean_resources
     
+    # 复制环境文件
+    copy_env_file
+    
     # 重新构建镜像
     log_info "重新构建镜像..."
     cd "$PROJECT_ROOT"
@@ -307,6 +326,9 @@ deploy_full() {
     
     # 清理资源，包括 wedding-web 和 wedding-api 镜像和容器
     clean_resources
+    
+    # 复制环境文件
+    copy_env_file
     
     # 重新构建镜像
     log_info "重新构建镜像..."
@@ -369,6 +391,9 @@ rebuild_deploy() {
     
     # 清理资源，包括 wedding-web 和 wedding-api 镜像和容器
     clean_resources
+    
+    # 复制环境文件
+    copy_env_file
     
     # 重新构建镜像
     log_info "重新构建镜像..."
