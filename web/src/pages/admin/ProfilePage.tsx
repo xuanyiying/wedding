@@ -26,7 +26,6 @@ import { MediaUploader } from '../../components/common/MediaUploader';
 import MediaGallery from '../../components/admin/profile/MediaGallery';
 import type { DirectUploadResult } from '../../utils/direct-upload';
 
-const { TabPane } = Tabs;
 
 const ProfileContainer = styled.div`
   padding: 12px;
@@ -342,21 +341,21 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  
+
   useEffect(() => {
     loadCurrentUser();
   }, []);
 
-  const loadMediaFiles = async (userId :string) => {
+  const loadMediaFiles = async (userId: string) => {
     try {
-          const mediaResponse = await profileService.getUserMediaProfiles(userId);
-          if (mediaResponse.success && mediaResponse.data) {
-            const processedMediaFiles = processMediaFiles(mediaResponse.data);
-            setMediaFiles(processedMediaFiles);
-          }
-        } catch (error) {
-          console.error('加载媒体文件失败:', error);
-        }
+      const mediaResponse = await profileService.getUserMediaProfiles(userId);
+      if (mediaResponse.success && mediaResponse.data) {
+        const processedMediaFiles = processMediaFiles(mediaResponse.data);
+        setMediaFiles(processedMediaFiles);
+      }
+    } catch (error) {
+      console.error('加载媒体文件失败:', error);
+    }
   }
   // 处理头像变更（仅更新本地状态，上传由AvatarUploader内部处理）
   const handleAvatarChange = useCallback((url: string) => {
@@ -469,7 +468,7 @@ const ProfilePage: React.FC = () => {
             }))
           })
         }
-      loadMediaFiles(currentUser.id);
+        loadMediaFiles(currentUser.id);
       } catch (error) {
         console.error('重新加载媒体文件失败:', error);
       }
@@ -483,142 +482,149 @@ const ProfilePage: React.FC = () => {
   };
   return (
     <ProfileContainer>
-      <Tabs activeKey={activeTab} onChange={setActiveTab}>
-        <TabPane tab="基本信息" key="basic">
-          <Card>
-            <ProfileEditForm
-              initialValues={{
-                ...currentUser,
-                createdAt: formatDate(currentUser?.createdAt || new Date()),
-                updatedAt: formatDate(currentUser?.updatedAt || new Date()),
-              }}
-              onSubmit={handleBasicInfoSave}
-              onCancel={() => { }}
-              loading={loading}
-              avatarUrl={currentUser?.avatarUrl}
-              onAvatarChange={handleAvatarChange}
-            />
-          </Card>
-        </TabPane>
-
-        <TabPane tab="公开资料" key="public">
-          <PublicProfileContainer>
-            <div className="profile-header">
-              <div className="avatar">
-
-                <AvatarUploader
-                  value={currentUser?.avatarUrl}
-                  onChange={handleAvatarChange}
-                  disabled={uploading || loading}
-                  size={120}
-                  category="avatar"
-                  style={{
-                    borderRadius: '50%',
-                    overflow: 'hidden',
-                    border: '3px solid #f0f0f0',
-                    transition: 'all 0.3s ease'
-                  }}
-                />
-              </div>
-              <div className="name">
-                {currentUser?.realName || currentUser?.nickname}
-              </div>
-              <div className="title">
-                {currentUser?.bio || '暂无个人简介'}
-              </div>
-              <div className="stats">
-                <div className="stat-item">
-                  <span className="number">{currentUser?.experienceYears || 0}</span>
-                  <span className="label">从业年限</span>
+      <Tabs activeKey={activeTab} onChange={setActiveTab} items={[
+        {
+          key: 'basic',
+          label: '基本信息',
+          children: (
+            <Card>
+              <ProfileEditForm
+                initialValues={{
+                  ...currentUser,
+                  createdAt: formatDate(currentUser?.createdAt || new Date()),
+                  updatedAt: formatDate(currentUser?.updatedAt || new Date()),
+                }}
+                onSubmit={handleBasicInfoSave}
+                onCancel={() => { }}
+                loading={loading}
+                avatarUrl={currentUser?.avatarUrl}
+                onAvatarChange={handleAvatarChange}
+              />
+            </Card>
+          )
+        },
+        {
+          key: 'public',
+          label: '公开资料',
+          children: (
+            <PublicProfileContainer>
+              <div className="profile-header">
+                <div className="avatar">
+                  <AvatarUploader
+                    value={currentUser?.avatarUrl}
+                    onChange={handleAvatarChange}
+                    disabled={uploading || loading}
+                    size={120}
+                    category="avatar"
+                    style={{
+                      borderRadius: '50%',
+                      overflow: 'hidden',
+                      border: '3px solid #f0f0f0',
+                      transition: 'all 0.3s ease'
+                    }}
+                  />
                 </div>
-                <div className="stat-item">
-                  <span className="number">{mediaFiles.length}</span>
-                  <span className="label">作品数量</span>
+                <div className="name">
+                  {currentUser?.realName || currentUser?.nickname}
                 </div>
-                <div className="stat-item">
-                  <span className="number">{currentUser?.specialties?.length || 0}</span>
-                  <span className="label">专业技能</span>
+                <div className="title">
+                  {currentUser?.bio || '暂无个人简介'}
+                </div>
+                <div className="stats">
+                  <div className="stat-item">
+                    <span className="number">{currentUser?.experienceYears || 0}</span>
+                    <span className="label">从业年限</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="number">{mediaFiles.length}</span>
+                    <span className="label">作品数量</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="number">{currentUser?.specialties?.length || 0}</span>
+                    <span className="label">专业技能</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="profile-content">
-              {/* 个人介绍 */}
-              {currentUser?.bio && (
+              <div className="profile-content">
+                {/* 个人介绍 */}
+                {currentUser?.bio && (
+                  <div className="section">
+                    <div className="section-title">
+                      <UserOutlined />
+                      个人介绍
+                    </div>
+                    <p style={{ color: '#666', lineHeight: '1.6' }}>{currentUser.bio}</p>
+                  </div>
+                )}
+
+                {/* 专业技能 */}
+                {currentUser?.specialties && currentUser.specialties.length > 0 && (
+                  <div className="section">
+                    <div className="section-title">
+                      <CalendarOutlined />
+                      专业技能
+                    </div>
+                    <Space wrap>
+                      {currentUser.specialties.map((skill: string, index: number) => (
+                        <Tag key={index} color="blue">{skill}</Tag>
+                      ))}
+                    </Space>
+                  </div>
+                )}
+
+                {/* 作品展示 */}
                 <div className="section">
                   <div className="section-title">
-                    <UserOutlined />
-                    个人介绍
+                    <PictureOutlined />
+                    作品展示
+                    <Space style={{ marginLeft: 'auto' }}>
+                      <Switch
+                        checkedChildren={<GlobalOutlined />}
+                        unCheckedChildren="私有"
+                        checked={isPublicProfilePublished}
+                        onChange={setIsPublicProfilePublished}
+                      />
+                      <span style={{ fontSize: '14px', color: '#666' }}>
+                        {isPublicProfilePublished ? '公开展示' : '私有状态'}
+                      </span>
+
+                      <Button
+                        type="default"
+                        size="small"
+                        loading={saving}
+                        onClick={handleSavePublicProfile}
+                      >
+                        保存排序
+                      </Button>
+                    </Space>
                   </div>
-                  <p style={{ color: '#666', lineHeight: '1.6' }}>{currentUser.bio}</p>
+                  <MediaUploader
+                    config={{
+                      maxCount: 20,
+                      accept: ['image/*', 'video/*'],
+                      category: 'profile',
+                      multiple: true,
+                      concurrent: 2
+                    }}
+                    onUploadSuccess={handleUploadSuccess}
+                    onUploadError={(error: Error) => {
+                      console.error('上传失败:', error);
+                      message.error('文件上传失败，请重试');
+                    }}
+                  />
+                  <MediaGallery
+                    mediaFiles={mediaFiles}
+                    onPreview={handlePreview}
+                    onDelete={handleOnRemoveMediaFile}
+                    loading={loading}
+                  />
                 </div>
-              )}
-
-              {/* 专业技能 */}
-              {currentUser?.specialties && currentUser.specialties.length > 0 && (
-                <div className="section">
-                  <div className="section-title">
-                    <CalendarOutlined />
-                    专业技能
-                  </div>
-                  <Space wrap>
-                    {currentUser.specialties.map((skill: string, index: number) => (
-                      <Tag key={index} color="blue">{skill}</Tag>
-                    ))}
-                  </Space>
-                </div>
-              )}
-
-              {/* 作品展示 */}
-              <div className="section">
-                <div className="section-title">
-                  <PictureOutlined />
-                  作品展示
-                  <Space style={{ marginLeft: 'auto' }}>
-                    <Switch
-                      checkedChildren={<GlobalOutlined />}
-                      unCheckedChildren="私有"
-                      checked={isPublicProfilePublished}
-                      onChange={setIsPublicProfilePublished}
-                    />
-                    <span style={{ fontSize: '14px', color: '#666' }}>
-                      {isPublicProfilePublished ? '公开展示' : '私有状态'}
-                    </span>
-
-                    <Button
-                      type="default"
-                      size="small"
-                      loading={saving}
-                      onClick={handleSavePublicProfile}
-                    >
-                      保存排序
-                    </Button>
-                  </Space>
-                </div>
-                <MediaUploader
-                  config={{
-                    maxCount: 20,
-                    accept: ['image/*', 'video/*'],
-                    category: 'profile',
-                    multiple: true,
-                    concurrent: 2
-                  }}
-                  onUploadSuccess={handleUploadSuccess}
-                  onUploadError={(error: Error) => {
-                    console.error('上传失败:', error);
-                    message.error('文件上传失败，请重试');
-                  }}
-                />
-                <MediaGallery
-                  mediaFiles={mediaFiles}
-                  onPreview={handlePreview}
-                  onDelete={handleOnRemoveMediaFile}
-                  loading={loading}
-                />
               </div>
-            </div>
-          </PublicProfileContainer>
-        </TabPane>
+            </PublicProfileContainer>
+          )
+        }
+      ]}>
       </Tabs>
 
 
