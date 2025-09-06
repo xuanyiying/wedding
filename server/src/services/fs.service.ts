@@ -6,7 +6,7 @@ export { UploadResult, FileInfo };
 
 /**
  * 文件存储服务
- * 现在使用抽象存储层，支持MinIO和阿里云OSS
+ * 现在使用抽象存储层，支持各种OSS服务
  */
 export class FSService {
   private storageService: OssService;

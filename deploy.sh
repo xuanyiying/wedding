@@ -111,7 +111,7 @@ validate_env_variables() {
     source "$PROJECT_ROOT/.env"
     
     # 检查必需的环境变量
-    local required_vars=("SERVER_HOST" "MYSQL_PASSWORD" "REDIS_PASSWORD" "JWT_SECRET" "MINIO_ACCESS_KEY" "MINIO_SECRET_KEY")
+    local required_vars=("SERVER_HOST" "MYSQL_PASSWORD" "REDIS_PASSWORD" "JWT_SECRET" "OSS_ACCESS_KEY" "OSS_SECRET_KEY")
     local missing_vars=()
     
     for var in "${required_vars[@]}"; do
@@ -214,6 +214,10 @@ start_services() {
     wait_for_service "redis" 15
     wait_for_service "minio" 20
     
+    # 初始化MinIO bucket
+    log_info "初始化MinIO存储桶..."
+    initialize_minio_buckets
+    
     log_info "2. 启动API服务..."
     docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d api
     wait_for_service "api" 30
@@ -297,6 +301,44 @@ wait_for_service() {
     
     log_warning "$service_name 服务启动超时，继续执行..."
     return 1
+}
+
+# 初始化MinIO存储桶
+initialize_minio_buckets() {
+    log_info "初始化MinIO存储桶..."
+    
+    # 等待MinIO完全启动
+    sleep 5
+    
+    # 设置MinIO客户端别名 (使用统一的OSS配置)
+    if ! docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" exec -T minio mc alias set local http://localhost:9000 "${OSS_ACCESS_KEY:-wedding_minio_access}" "${OSS_SECRET_KEY:-M1n10_Pr0d_S3cr3t_K3y_2025!}" 2>/dev/null; then
+        log_warning "MinIO客户端别名设置失败，尝试重新设置..."
+        sleep 3
+        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" exec -T minio mc alias set local http://localhost:9000 "${OSS_ACCESS_KEY:-wedding_minio_access}" "${OSS_SECRET_KEY:-M1n10_Pr0d_S3cr3t_K3y_2025!}" || {
+            log_error "MinIO客户端别名设置失败"
+            return 1
+        }
+    fi
+    
+    # 创建主要存储桶
+    local buckets=("wedding-prod" "wedding-media-prod" "documents" "images")
+    
+    for bucket in "${buckets[@]}"; do
+        if ! docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" exec -T minio mc ls "local/$bucket" >/dev/null 2>&1; then
+            log_info "创建存储桶: $bucket"
+            if docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" exec -T minio mc mb "local/$bucket"; then
+                # 设置公共读取权限
+                docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" exec -T minio mc anonymous set public "local/$bucket"
+                log_success "存储桶 $bucket 创建成功并设置为公共访问"
+            else
+                log_warning "存储桶 $bucket 创建失败"
+            fi
+        else
+            log_info "存储桶 $bucket 已存在"
+        fi
+    done
+    
+    log_success "MinIO存储桶初始化完成"
 }
 
 # 验证nginx配置生成

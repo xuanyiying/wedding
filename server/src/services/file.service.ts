@@ -10,7 +10,7 @@ import sharp from 'sharp';
 import { OssService } from './oss/oss.service';
 import { getOssService } from '../config/oss';
 import { createRetryHandler } from '../middlewares/upload';
-import { FileCategory, FileType, StorageType } from '../types';
+import { FileCategory, FileType, OssType } from '../types';
 
 interface GetFilesParams {
   page: number;
@@ -215,7 +215,7 @@ export class FileService {
       hashMd5: fileHash,
       fileType: data.fileType,
       userId: data.userId,
-      storageType: (process.env.OSS_TYPE as StorageType) || StorageType.MINIO,
+      ossType: OssType.minio,
       isPublic: false,
       downloadCount: 0,
       category: data.category as FileCategory,
@@ -233,7 +233,7 @@ export class FileService {
       filename: file.filename,
       url: file.fileUrl
     });
-    logger.info(`文件上传成功: ${data.filename}, 用户: ${data.userId}, OSS Key: ${uploadResult.key}`);
+    logger.info(`文件上传成功: ${data.originalName}, 用户: ${data.userId}, OSS Key: ${uploadResult.key}`);
 
     return this.getFileById(file.id);
   }
@@ -295,7 +295,7 @@ export class FileService {
 
     // 异步删除OSS文件
     this.deleteOssFile(file.filePath, file.thumbnailUrl || undefined).catch(error => {
-      logger.error(`删除OSS文件失败: ${file.filePath}`, error);
+      logger.error(`删除OSS文件失败: ${file.filePath}`, error instanceof Error ? error : new Error(String(error)));
     });
 
     logger.info(`文件已删除: ${id}, 操作用户: ${currentUserId}`);
@@ -329,7 +329,7 @@ export class FileService {
         await file.destroy();
         // 异步删除OSS文件
         this.deleteOssFile(file.filePath, file.thumbnailUrl || undefined).catch(error => {
-          logger.error(`删除OSS文件失败: ${file.filePath}`, error);
+          logger.error(`删除OSS文件失败: ${file.filePath}`, error instanceof Error ? error : new Error(String(error)));
         });
 
         results.push(file.id);
@@ -404,13 +404,6 @@ export class FileService {
         return existingFile;
       }
 
-      // 验证并设置存储类型
-      const getValidStorageType = (envType: string | undefined): StorageType => {
-        if (envType && Object.values(StorageType).includes(envType as StorageType)) {
-          return envType as StorageType;
-        }
-        return StorageType.MINIO;
-      };
 
       // 创建新的文件记录
       const file = await File.create({
@@ -423,7 +416,7 @@ export class FileService {
         hashMd5: fileHash,
         fileType: fileData.fileType,
         userId: fileData.userId,
-        storageType: getValidStorageType(process.env.OSS_TYPE),
+        ossType: (process.env.OSS_TYPE as OssType) || OssType.minio,
         isPublic: false,
         downloadCount: 0,
         thumbnailUrl: null,
@@ -437,32 +430,8 @@ export class FileService {
   }
 
   /**
-   * 异步生成视频缩略图
-   */
-  /** private static async generateVideoThumbnailAsync(fileId: string, filePath: string): Promise<void> {
-    try {
-      const retryHandler = createRetryHandler();
-
-      await retryHandler(async () => {
-
-        // 从OSS下载视频文件
-        const videoBuffer = await this.ossService.downloadFile(filePath);
-
-        // 生成缩略图
-        const thumbnailUrl = await this.generateVideoThumbnail(videoBuffer, path.basename(filePath));
-
-        // 更新文件记录，添加缩略图URL
-        await File.update({ thumbnailUrl }, { where: { id: fileId } });
-      }, `异步生成视频缩略图: ${filePath}`);
-    } catch (error) {
-      logger.error(`生成视频缩略图失败 (文件ID: ${fileId}):`, error);
-      // 不抛出错误，避免影响主流程
-    }
-  }
-*/
-  /**
-   * 更新文件信息
-   */
+     * 更新文件信息
+     */
   static async updateFile(id: string, data: Partial<FileAttributes>, currentUserId: string) {
     const file = await File.findOne({
       where: { id },
@@ -544,7 +513,7 @@ export class FileService {
     try {
       fileBuffer = await this.ossService.downloadFile(file.filePath); // filePath存储的是OSS key
     } catch (error) {
-      logger.error(`从OSS下载文件失败: ${file.filePath}`, error);
+      logger.error(`从OSS下载文件失败: ${file.filePath}`, error instanceof Error ? error : new Error(String(error)));
       throw new Error('文件下载失败');
     }
 
@@ -628,11 +597,11 @@ export class FileService {
         try {
           await this.ossService.deleteFile(file.thumbnailUrl);
         } catch (error) {
-          logger.warn(`删除缩略图失败: ${thumbnailUrl}`, error);
+          logger.warn(`删除缩略图失败: ${thumbnailUrl}`, error instanceof Error ? error : new Error(String(error)));
         }
       }
     } catch (error) {
-      logger.error(`删除OSS文件失败: ${fileId}`, error);
+      logger.error(`删除OSS文件失败: ${fileId}`, error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }

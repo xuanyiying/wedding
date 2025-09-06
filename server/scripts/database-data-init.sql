@@ -1,3 +1,4 @@
+-- Active: 1757153926451@@150.158.20.143@3306@wedding_club
 -- 婚礼服务平台数据初始化脚本
 -- 仅负责插入初始化数据，不创建表结构
 -- 表结构由Sequelize模型自动同步创建
@@ -13,7 +14,7 @@ USE wedding_club;
 -- 插入系统管理员用户
 -- ================================
 -- 设置管理员用户ID为固定值，便于后续权限分配
-SET @admin_user_id = 'admin-001';
+SET @admin_user_id = '1';
 
 INSERT IGNORE INTO `users` (
   `id`, 

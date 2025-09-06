@@ -51,9 +51,18 @@ export const uploadFile = async (req: AuthenticatedRequest, res: Response, next:
       url: result.fileUrl
     });
 
-    Resp.created(res, result, '文件上传成功');
+    // 格式化响应数据以匹配前端期望的格式
+    const responseData = {
+      fileId: result.id,
+      filename: result.filename,
+      url: result.fileUrl,
+      originalName: result.originalName,
+      mimeType: result.mimeType,
+      size: result.fileSize,
+      category: result.category
+    };
+    Resp.created(res, responseData, '文件上传成功');
   } catch (error) {
-    console.error('💥 文件上传失败:', error);
     logger.error('文件上传失败:', error);
     next(error);
   }
@@ -83,7 +92,25 @@ export const batchUploadFiles = async (req: AuthenticatedRequest, res: Response,
     }));
 
     const results = await FileService.uploadFiles(filesData);
-    Resp.created(res, results, '批量上传成功');
+
+    // 格式化批量上传响应数据
+    const responseData = {
+      success: results.success.map((result) => ({
+        fileId: result.id,
+        filename: result.filename,
+        url: result.fileUrl,
+        originalName: result.originalName,
+        mimeType: result.mimeType,
+        size: result.fileSize,
+        category: result.category
+      })),
+      errors: results.errors,
+      total: results.total,
+      successCount: results.successCount,
+      errorCount: results.errorCount
+    };
+
+    Resp.created(res, responseData, '批量上传成功');
   } catch (error) {
     logger.error('批量上传失败:', error);
     next(error);

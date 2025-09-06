@@ -355,7 +355,7 @@ export interface MediaFile {
   duration?: number | null;
   thumbnailUrl?: string | null;
   hashMd5?: string | null;
-  storageType?: string;
+  ossType?: string;
   bucketName?: string | null;
   isPublic?: boolean;
   downloadCount?: number | null;

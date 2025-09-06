@@ -304,7 +304,7 @@ const ProfilePage: React.FC = () => {
           height: mediaFile.file.height,
           duration: mediaFile.file.duration,
           hashMd5: mediaFile.file.hashMd5,
-          storageType: mediaFile.file.storageType,
+          ossType: mediaFile.file.ossType,
           bucketName: mediaFile.file.bucketName,
           isPublic: mediaFile.file.isPublic,
           downloadCount: mediaFile.file.downloadCount,

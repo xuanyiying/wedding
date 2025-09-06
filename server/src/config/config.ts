@@ -90,16 +90,17 @@ interface Config {
     credentials: boolean;
   };
 
-  // 存储配置
-  storage: {
-    type: 'minio' | 'aws' | 'aliyun';
-    aws?: {
-      accessKeyId: string;
-      secretAccessKey: string;
-      region: string;
-      bucket: string;
-    };
-    cdnBaseUrl?: string;
+  // OSS存储配置
+  oss: {
+    type: 'minio' | 'aws' | 'aliyun' | 'tencent';
+    endpoint: string;
+    region: string;
+    accessKey: string;
+    secretKey: string;
+    bucket: string;
+    publicEndpoint?: string;
+    useSSL: boolean;
+    pathStyle: boolean;
   };
 }
 
@@ -212,17 +213,16 @@ export const config: Config = {
     credentials: getEnvBoolean('CORS_CREDENTIALS', true),
   },
 
-  storage: {
-    type: getEnvVar('STORAGE_TYPE', 'minio') as 'minio' | 'aws' | 'aliyun',
-    ...(getEnvVar('STORAGE_TYPE', 'minio') === 'aws' && {
-      aws: {
-        accessKeyId: getEnvVar('AWS_ACCESS_KEY_ID'),
-        secretAccessKey: getEnvVar('AWS_SECRET_ACCESS_KEY'),
-        region: getEnvVar('AWS_REGION'),
-        bucket: getEnvVar('AWS_S3_BUCKET'),
-      },
-    }),
-    ...(process.env.CDN_BASE_URL && { cdnBaseUrl: process.env.CDN_BASE_URL }),
+  oss: {
+    type: getEnvVar('OSS_TYPE', 'minio') as 'minio' | 'aws' | 'aliyun' | 'tencent',
+    endpoint: getEnvVar('OSS_ENDPOINT', 'http://localhost:9000'),
+    region: getEnvVar('OSS_REGION', 'us-east-1'),
+    accessKey: getEnvVar('OSS_ACCESS_KEY', 'ossadmin'),
+    secretKey: getEnvVar('OSS_SECRET_KEY', 'osspassword'),
+    bucket: getEnvVar('OSS_BUCKET', 'wedding-prod'),
+    publicEndpoint: getEnvVar('OSS_PUBLIC_ENDPOINT'),
+    useSSL: getEnvBoolean('OSS_USE_SSL', false),
+    pathStyle: getEnvBoolean('OSS_PATH_STYLE', true),
   },
 };
 

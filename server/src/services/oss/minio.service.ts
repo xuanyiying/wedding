@@ -9,10 +9,6 @@ import {
   PutBucketPolicyCommand
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-// 如果找不到模块，请先安装:
-// npm install @aws-sdk/client-s3
-// 或
-// yarn add @aws-sdk/client-s3
 import { Readable } from 'stream';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -44,7 +40,7 @@ export class MinIOService implements OssService {
         accessKeyId: config.accessKeyId,
         secretAccessKey: config.secretAccessKey
       },
-      forcePathStyle: true, // MinIO需要路径样式访问
+      forcePathStyle: process.env.OSS_PATH_STYLE === 'true',
     });
   }
 
@@ -56,14 +52,14 @@ export class MinIOService implements OssService {
       const command = new CreateBucketCommand({
         Bucket: this.bucket
       });
-      logger.info('Initializing MinIO bucket...', this.config);
+      logger.info('Initializing OSS bucket...', this.config);
       await this.s3Client.send(command);
-      console.log(`MinIO Bucket ${this.bucket} created successfully`);
+      console.log(`OSS Bucket ${this.bucket} created successfully`);
     } catch (error: any) {
       if (error.name === 'BucketAlreadyOwnedByYou' || error.name === 'BucketAlreadyExists') {
-        console.log(`MinIO Bucket ${this.bucket} already exists`);
+        console.log(`OSS Bucket ${this.bucket} already exists`);
       } else {
-        console.error('Error creating MinIO bucket:', error);
+        console.error('Error creating OSS bucket:', error);
         throw error;
       }
     }
@@ -88,9 +84,9 @@ export class MinIOService implements OssService {
       });
 
       await this.s3Client.send(policyCommand);
-      console.log(`MinIO Bucket ${this.bucket} policy set successfully`);
+      console.log(`OSS Bucket ${this.bucket} policy set successfully`);
     } catch (error) {
-      console.error('Error setting MinIO bucket policy:', error);
+      console.error('Error setting OSS bucket policy:', error);
       // 不抛出错误，因为策略设置失败不应该阻止服务启动
     }
   }
@@ -136,8 +132,8 @@ export class MinIOService implements OssService {
         contentType
       };
     } catch (error) {
-      console.error('Error uploading file to MinIO:', error);
-      throw new Error('Failed to upload file to MinIO');
+      console.error('Error uploading file to OSS:', error);
+      throw new Error('Failed to upload file to OSS');
     }
   }
 
@@ -167,8 +163,8 @@ export class MinIOService implements OssService {
         stream.on('error', reject);
       });
     } catch (error) {
-      console.error('Error downloading file from MinIO:', error);
-      throw new Error('Failed to download file from MinIO');
+      console.error('Error downloading file from OSS:', error);
+      throw new Error('Failed to download file from OSS');
     }
   }
 
@@ -184,8 +180,8 @@ export class MinIOService implements OssService {
 
       await this.s3Client.send(command);
     } catch (error) {
-      console.error('Error deleting file from MinIO:', error);
-      throw new Error('Failed to delete file from MinIO');
+      console.error('Error deleting file from OSS:', error);
+      throw new Error('Failed to delete file from OSS');
     }
   }
 
@@ -209,8 +205,8 @@ export class MinIOService implements OssService {
         url: this.getFileUrl(key)
       };
     } catch (error) {
-      console.error('Error getting file info from MinIO:', error);
-      throw new Error('Failed to get file info from MinIO');
+      console.error('Error getting file info from OSS:', error);
+      throw new Error('Failed to get file info from OSS');
     }
   }
 
@@ -239,8 +235,8 @@ export class MinIOService implements OssService {
         url: this.getFileUrl(obj.Key || '')
       }));
     } catch (error) {
-      console.error('Error listing files from MinIO:', error);
-      throw new Error('Failed to list files from MinIO');
+      console.error('Error listing files from OSS:', error);
+      throw new Error('Failed to list files from OSS');
     }
   }
 
@@ -262,25 +258,13 @@ export class MinIOService implements OssService {
   getFileUrl(key: string): string {
     // 检查key是否已经包含了完整的URL，避免重复拼接
     if (key.startsWith('http://') || key.startsWith('https://')) {
-      // 如果key已经是完整URL，直接返回
       return key;
     }
 
-    // 检查是否有CDN_BASE_URL环境变量，如果有则使用CDN地址
-    const cdnBaseUrl = process.env.CDN_BASE_URL;
-    logger.info(`CDN_BASE_URL: ${cdnBaseUrl}`);
-    if (cdnBaseUrl) {
-      // 确保URL格式正确
-      const baseUrl = cdnBaseUrl.endsWith('/') ? cdnBaseUrl.slice(0, -1) : cdnBaseUrl;
-      const bucketPath = this.bucket;
-      const keyPath = key.startsWith('/') ? key.substring(1) : key;
-      return `${baseUrl}/${bucketPath}/${keyPath}`;
-    }
-
-    // 如果没有CDN配置，检查是否有外部访问URL配置
-    logger.info(`MINIO_PUBLIC_ENDPOINT: ${process.env.MINIO_PUBLIC_ENDPOINT}`);
-    logger.info(`VITE_MINIO_URL: ${process.env.VITE_MINIO_URL}`);
-    const publicEndpoint = process.env.MINIO_PUBLIC_ENDPOINT || process.env.VITE_MINIO_URL;
+    // 使用OSS公网端点
+    const publicEndpoint = process.env.OSS_PUBLIC_ENDPOINT;
+    logger.info(`OSS_PUBLIC_ENDPOINT: ${publicEndpoint}`);
+    
     if (publicEndpoint) {
       // 确保URL格式正确
       const baseUrl = publicEndpoint.endsWith('/') ? publicEndpoint.slice(0, -1) : publicEndpoint;
@@ -289,10 +273,10 @@ export class MinIOService implements OssService {
       return `${baseUrl}/${bucketPath}/${keyPath}`;
     }
 
-    // 默认使用内部MinIO地址
+    // 默认使用内部OSS地址
     const endpoint = this.config.endpoint;
-    if (process.env.NODE_ENV === 'development' && endpoint.includes('minio')) {
-      return `${endpoint.replace('minio', '127.0.0.1')}/${this.bucket}/${key}`;
+    if (process.env.NODE_ENV === 'development' && endpoint.includes(':9000')) {
+      return `${endpoint.replace(/http:\/\/[^:]+:/, 'http://127.0.0.1:')}/${this.bucket}/${key}`;
     }
 
     return `${endpoint}/${this.bucket}/${key}`;
@@ -306,8 +290,8 @@ export class MinIOService implements OssService {
       const deletePromises = keys.map(key => this.deleteFile(key));
       await Promise.all(deletePromises);
     } catch (error) {
-      console.error('Error deleting files from MinIO:', error);
-      throw new Error('Failed to delete files from MinIO');
+      console.error('Error deleting files from OSS:', error);
+      throw new Error('Failed to delete files from OSS');
     }
   }
 
@@ -323,8 +307,8 @@ export class MinIOService implements OssService {
       // 再上传到目标位置
       await this.uploadFile(fileBuffer, path.basename(targetKey), fileInfo.contentType, path.dirname(targetKey));
     } catch (error) {
-      console.error('Error copying file in MinIO:', error);
-      throw new Error('Failed to copy file in MinIO');
+      console.error('Error copying file in OSS:', error);
+      throw new Error('Failed to copy file in OSS');
     }
   }
 
@@ -333,21 +317,18 @@ export class MinIOService implements OssService {
    */
   async getPresignedUploadUrl(key: string, expires: number = 3600, contentType?: string): Promise<string> {
     try {
-
       const command = new PutObjectCommand({
         Bucket: this.bucket,
         Key: key,
         ContentType: contentType
       });
 
-      // 使用内部MinIO地址生成签名
+      // 使用内部OSS地址生成签名
       const internalUrl = await getSignedUrl(this.s3Client, command, { expiresIn: expires });
-
       console.log('Internal URL generated:', internalUrl);
 
-      // 将内部MinIO地址替换为外部可访问的地址
-      // 从环境变量获取外部端点，如果没有则使用当前主机
-      const publicEndpoint = process.env.MINIO_PUBLIC_ENDPOINT || process.env.VITE_MINIO_URL;
+      // 将内部OSS地址替换为外部可访问的地址
+      const publicEndpoint = process.env.OSS_PUBLIC_ENDPOINT;
 
       if (publicEndpoint) {
         // 从内部URL中提取路径部分
@@ -359,7 +340,8 @@ export class MinIOService implements OssService {
         console.log('External URL generated:', externalUrl);
         return externalUrl;
       }
-      const externalUrl = internalUrl.replace(/http:\/\/minio:9000/g, 'http://localhost');
+      
+      const externalUrl = internalUrl.replace(/http:\/\/[^:]+:9000/g, 'http://localhost:9000');
       console.log('External URL generated:', externalUrl);
       return externalUrl;
     } catch (error) {
@@ -381,8 +363,8 @@ export class MinIOService implements OssService {
       // 获取内部URL
       const internalUrl = await getSignedUrl(this.s3Client, command, { expiresIn: expires });
 
-      // 将内部MinIO地址替换为外部可访问的地址
-      const publicEndpoint = process.env.MINIO_PUBLIC_ENDPOINT || process.env.VITE_MINIO_URL;
+      // 将内部OSS地址替换为外部可访问的地址
+      const publicEndpoint = process.env.OSS_PUBLIC_ENDPOINT;
 
       if (publicEndpoint) {
         // 从内部URL中提取路径部分
@@ -396,7 +378,7 @@ export class MinIOService implements OssService {
       }
 
       // 如果没有配置外部端点，则使用默认替换
-      const externalUrl = internalUrl.replace(/http:\/\/minio:9000/g, 'http://localhost');
+      const externalUrl = internalUrl.replace(/http:\/\/[^:]+:9000/g, 'http://localhost:9000');
       console.log('External download URL generated:', externalUrl);
       return externalUrl;
     } catch (error) {

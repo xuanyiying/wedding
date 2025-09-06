@@ -6,7 +6,7 @@ import { UserService } from './user.service';
 import { generateId } from '@/utils/id.generator';
 import logger from '@/utils/logger';
 import { FileService } from './file.service';
-import { FileCategory, StorageType } from '@/types';
+import { FileCategory, OssType } from '@/types';
 
 export class MediaProfileService {
   async getMediaProfileById(id: string) {
@@ -36,7 +36,7 @@ export class MediaProfileService {
         {
           model: File,
           as: 'file',
-          attributes: ['id', 'originalName', 'filename', 'filePath', 'fileUrl', 'fileSize', 'mimeType', 'width', 'height', 'duration', 'thumbnailUrl', 'hashMd5', 'hashSha256', 'storageType', 'bucketName', 'isPublic', 'downloadCount', 'metadata', 'category', 'createdAt', 'updatedAt', 'deletedAt'],
+          attributes: ['id', 'originalName', 'filename', 'filePath', 'fileUrl', 'fileSize', 'mimeType', 'width', 'height', 'duration', 'thumbnailUrl', 'hashMd5', 'hashSha256', 'ossType', 'bucketName', 'isPublic', 'downloadCount', 'metadata', 'category', 'createdAt', 'updatedAt', 'deletedAt'],
         }
       ],
       order: [['mediaOrder', 'ASC']],
@@ -60,7 +60,7 @@ export class MediaProfileService {
         {
           model: File,
           as: 'file',
-          attributes: ['id', 'originalName', 'filename', 'filePath', 'fileUrl', 'fileSize', 'mimeType', 'width', 'height', 'duration', 'thumbnailUrl', 'hashMd5', 'hashSha256', 'storageType', 'bucketName', 'isPublic', 'downloadCount', 'metadata', 'category', 'createdAt', 'updatedAt', 'deletedAt'],
+          attributes: ['id', 'originalName', 'filename', 'filePath', 'fileUrl', 'fileSize', 'mimeType', 'width', 'height', 'duration', 'thumbnailUrl', 'hashMd5', 'hashSha256', 'ossType', 'bucketName', 'isPublic', 'downloadCount', 'metadata', 'category', 'createdAt', 'updatedAt', 'deletedAt'],
         }
       ],
       order: [['mediaOrder', 'ASC']],
@@ -100,7 +100,7 @@ export class MediaProfileService {
         thumbnailUrl: f.file?.thumbnailUrl || '',
         hashMd5: f.file?.hashMd5 || '',
         hashSha256: f.file?.hashSha256 || '',
-        storageType: f.file?.storageType || StorageType.MINIO,
+        ossType: f.file?.ossType || OssType.minio,
         bucketName: f.file?.bucketName || '',
         isPublic: f.file?.isPublic || false,
         downloadCount: f.file?.downloadCount || 0,
@@ -146,7 +146,7 @@ export class MediaProfileService {
         {
           model: File,
           as: 'file',
-          attributes: ['id', 'originalName', 'filename', 'filePath', 'fileUrl', 'fileSize', 'mimeType', 'width', 'height', 'duration', 'thumbnailUrl', 'hashMd5', 'hashSha256', 'storageType', 'bucketName', 'isPublic', 'downloadCount', 'metadata', 'category', 'createdAt', 'updatedAt'],
+          attributes: ['id', 'originalName', 'filename', 'filePath', 'fileUrl', 'fileSize', 'mimeType', 'width', 'height', 'duration', 'thumbnailUrl', 'hashMd5', 'hashSha256', 'ossType', 'bucketName', 'isPublic', 'downloadCount', 'metadata', 'category', 'createdAt', 'updatedAt'],
         }
       ],
       order: [['mediaOrder', 'ASC']],

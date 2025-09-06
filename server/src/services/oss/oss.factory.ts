@@ -2,12 +2,11 @@ import { OssService } from './oss.service';
 import { MinIOService, MinIOConfig } from './minio.service';
 import { AliyunOssService, OSSConfig } from './aliyun-oss.service';
 
-export type OssType = 'minio' | 'aliyun';
+export type OssType = 'minio' | 'aliyun' | 'tencent' | 'aws';
 
 export interface OssConfig {
   type: OssType;
-  minio?: MinIOConfig;
-  oss?: OSSConfig;
+  config: MinIOConfig | OSSConfig;
 }
 
 export class OssFactory {
@@ -20,19 +19,13 @@ export class OssFactory {
   static createOssService(config: OssConfig): OssService {
     switch (config.type) {
       case 'minio':
-        if (!config.minio) {
-          throw new Error('MinIO configuration is required when type is "minio"');
-        }
-        return new MinIOService(config.minio);
+        return new MinIOService(config.config as MinIOConfig);
 
       case 'aliyun':
-        if (!config.oss) {
-          throw new Error('OSS configuration is required when type is "aliyun"');
-        }
-        return new AliyunOssService(config.oss);
+        return new AliyunOssService(config.config as OSSConfig);
 
       default:
-        throw new Error(`Unsupported Oss type: ${config.type}`);
+        throw new Error(`Unsupported OSS type: ${config.type}`);
     }
   }
 
@@ -42,7 +35,7 @@ export class OssFactory {
   static getInstance(config?: OssConfig): OssService {
     if (!this.instance || (config && JSON.stringify(config) !== JSON.stringify(this.config))) {
       if (!config) {
-        throw new Error('Oss configuration is required for first initialization');
+        throw new Error('OSS configuration is required for first initialization');
       }
       this.instance = this.createOssService(config);
       this.config = config;
@@ -62,31 +55,33 @@ export class OssFactory {
    * 从环境变量创建存储配置
    */
   static createConfigFromEnv(): OssConfig {
-    const OssType = (process.env.OSS_TYPE || 'minio') as OssType;
+    const ossType = (process.env.OSS_TYPE || 'minio') as OssType;
 
-    const config: OssConfig = {
-      type: OssType
-    };
-
-    if (OssType === 'minio') {
-      config.minio = {
-        endpoint: process.env.OSS_ENDPOINT || process.env.MINIO_ENDPOINT || 'http://minio:9000',
-        region: process.env.MINIO_REGION || 'us-east-1',
-        accessKeyId: process.env.OSS_ACCESS_KEY || process.env.MINIO_ACCESS_KEY || 'rustfsadmin',
-        secretAccessKey: process.env.OSS_SECRET_KEY || process.env.MINIO_SECRET_KEY || 'rustfssecret123',
-        bucket: process.env.OSS_BUCKET || process.env.MINIO_BUCKET || 'wedding-media'
+    if (ossType === 'minio') {
+      return {
+        type: ossType,
+        config: {
+          endpoint: process.env.OSS_ENDPOINT || 'http://localhost:9000',
+          region: process.env.OSS_REGION || 'us-east-1',
+          accessKeyId: process.env.OSS_ACCESS_KEY || 'ossadmin',
+          secretAccessKey: process.env.OSS_SECRET_KEY || 'osspassword',
+          bucket: process.env.OSS_BUCKET || 'wedding-prod'
+        } as MinIOConfig
       };
-    } else if (OssType === 'aliyun') {
-      config.oss = {
-        region: process.env.OSS_REGION || 'oss-cn-hangzhou',
-        accessKeyId: process.env.OSS_ACCESS_KEY_ID || '',
-        accessKeySecret: process.env.OSS_ACCESS_KEY_SECRET || '',
-        bucket: process.env.OSS_BUCKET || 'wedding-host-bucket',
-        endpoint: process.env.OSS_ENDPOINT,
-        secure: process.env.OSS_SECURE !== 'false'
+    } else if (ossType === 'aliyun') {
+      return {
+        type: ossType,
+        config: {
+          region: process.env.OSS_REGION || 'oss-cn-hangzhou',
+          accessKeyId: process.env.OSS_ACCESS_KEY || '',
+          accessKeySecret: process.env.OSS_SECRET_KEY || '',
+          bucket: process.env.OSS_BUCKET || 'wedding-prod',
+          endpoint: process.env.OSS_ENDPOINT,
+          secure: process.env.OSS_USE_SSL === 'true'
+        } as OSSConfig
       };
     }
 
-    return config;
+    throw new Error(`Unsupported OSS type: ${ossType}`);
   }
 }

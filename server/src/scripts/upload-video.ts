@@ -12,7 +12,7 @@ import '../models'; // 确保模型被加载
 
 /**
  * 视频上传脚本
- * 用于将本地视频文件上传到MinIO存储
+ * 用于将本地视频文件上传到OSS存储
  */
 class VideoUploader {
   private ossService: OssService;
@@ -33,7 +33,7 @@ class VideoUploader {
   ): Promise<{
     fileId: string;
     url: string;
-    minioKey: string;
+    ossKey: string;
   }> {
     try {
       // 检查文件是否存在
@@ -55,7 +55,7 @@ class VideoUploader {
       logger.info(`开始上传视频文件: ${fileName}`);
       logger.info(`文件大小: ${(fileBuffer.length / 1024 / 1024).toFixed(2)} MB`);
 
-      // 上传到MinIO
+      // 上传到OSS
       const uploadResult = await this.ossService.uploadFile(
         fileBuffer,
         fileName,
@@ -63,7 +63,7 @@ class VideoUploader {
         'videos', // 存储在videos文件夹下
       );
 
-      logger.info(`MinIO上传成功: ${uploadResult.url}`);
+      logger.info(`OSS上传成功: ${uploadResult.url}`);
 
       // 尝试保存文件记录到数据库（如果失败则跳过）
       let fileId = 'uploaded-' + Date.now();
@@ -81,13 +81,13 @@ class VideoUploader {
         fileId = fileRecord.id;
         logger.info(`数据库记录创建成功: ${fileRecord.id}`);
       } catch (dbError) {
-        logger.warn('数据库记录创建失败，但文件已成功上传到MinIO:', dbError);
+        logger.warn('数据库记录创建失败，但文件已成功上传到OSS:', dbError);
       }
 
       return {
         fileId,
         url: uploadResult.url,
-        minioKey: uploadResult.key,
+        ossKey: uploadResult.key,
       };
     } catch (error) {
       logger.error('视频上传失败:', error);
@@ -122,7 +122,7 @@ class VideoUploader {
       filePath: string;
       fileId: string;
       url: string;
-      minioKey: string;
+      ossKey: string;
     }>
   > {
     const results = [];
@@ -175,7 +175,7 @@ async function main() {
     console.log('\n=== 上传成功 ===');
     console.log(`文件ID: ${result.fileId}`);
     console.log(`访问URL: ${result.url}`);
-    console.log(`MinIO Key: ${result.minioKey}`);
+    console.log(`OSS Key: ${result.ossKey}`);
     console.log('================\n');
   } catch (error) {
     logger.error('脚本执行失败:', error);

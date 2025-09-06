@@ -2,7 +2,7 @@ import stream from 'stream';
 
 /**
  * 存储服务接口
- * 定义统一的存储操作接口，支持MinIO和阿里云OSS
+ * 定义统一的存储操作接口，支持各种OSS服务
  */
 export interface UploadResult {
   key: string;

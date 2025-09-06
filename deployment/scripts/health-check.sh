@@ -25,7 +25,8 @@ DB_PORT="${DB_PORT:-3306}"
 REDIS_HOST="${REDIS_HOST:-localhost}"
 REDIS_PORT="${REDIS_PORT:-6379}"
 NGINX_URL="${NGINX_URL:-http://localhost:80}"
-MINIO_URL="${MINIO_URL:-http://localhost:9000}"
+OSS_URL="${OSS_URL:-${OSS_PUBLIC_ENDPOINT:-http://localhost:9000}}"
+MINIO_URL="${OSS_URL}"  # 兼容性保留
 
 # Health check thresholds
 CPU_THRESHOLD="${CPU_THRESHOLD:-80}"
@@ -121,7 +122,8 @@ Options:
     --redis-host HOST          Redis host (default: localhost)
     --redis-port PORT          Redis port (default: 6379)
     --nginx-url URL            Nginx URL (default: http://localhost:80)
-    --minio-url URL            MinIO URL (default: http://localhost:9000)
+    --oss-url URL              OSS URL (default: http://localhost:9000)
+    --minio-url URL            MinIO URL (alias for --oss-url, deprecated)
     --timeout SECONDS          Health check timeout (default: 30)
     --retries COUNT            Number of retries (default: 3)
     --interval SECONDS         Interval between retries (default: 5)
@@ -182,8 +184,14 @@ while [[ $# -gt 0 ]]; do
             NGINX_URL="$2"
             shift 2
             ;;
+        --oss-url)
+            OSS_URL="$2"
+            MINIO_URL="$2"  # 兼容性保留
+            shift 2
+            ;;
         --minio-url)
-            MINIO_URL="$2"
+            OSS_URL="$2"
+            MINIO_URL="$2"  # 兼容性保留
             shift 2
             ;;
         --timeout)

@@ -20,7 +20,7 @@ import {
   TeamMemberStatus,
   FileCategory,
   FileType,
-  StorageType,
+  OssType,
 } from '../types';
 import { initializeSystemConfig } from './init-system-config';
 import sequelize from '../config/database';
@@ -695,7 +695,7 @@ export class DatabaseInitializer {
               fileSize: 1024,
               mimeType: 'image/png',
               category: FileCategory.WORK,
-              storageType: StorageType.MINIO,
+              ossType: OssType.minio,
               userId: userId,
               thumbnailUrl: 'http://localhost:9000/wedding-media/images/1639df43-3cc5-410a-89d9-e799a10d07bd.png',
             }));
@@ -713,7 +713,7 @@ export class DatabaseInitializer {
             fileSize: 1024 * 1024 * 100,
             mimeType: 'video/mp4',
             category: FileCategory.WORK,
-            storageType: StorageType.MINIO,
+            ossType: OssType.minio,
             userId: userId,
             thumbnailUrl: 'http://localhost:9000/wedding-media/images/1639df43-3cc5-410a-89d9-e799a10d07bd.png',
           });

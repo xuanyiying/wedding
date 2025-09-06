@@ -9,7 +9,9 @@ echo "初始化 ${ENVIRONMENT} 环境..."
 
 # 创建必要的目录结构
 echo "创建目录结构..."
-mkdir -p deployment/{logs/{api,mysql,nginx,redis,minio},uploads/images}
+mkdir -p deployment/{logs/{api,mysql,nginx,redis,oss},uploads/images}
+# 兼容性：创建minio日志目录的软链接
+ln -sf oss deployment/logs/minio 2>/dev/null || true
 mkdir -p server/dist
 mkdir -p web/build
 

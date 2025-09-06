@@ -1,6 +1,6 @@
 import { Model, DataTypes, Sequelize, Optional } from 'sequelize';
 import User from './User';
-import { FileType, StorageType, FileCategory } from '../types';
+import { FileType, FileCategory, OssType } from '../types';
 
 // File attributes interface
 export interface FileAttributes {
@@ -20,7 +20,7 @@ export interface FileAttributes {
   thumbnailUrl: string | null;
   hashMd5: string | null;
   hashSha256: string | null;
-  storageType: StorageType;
+  ossType: OssType;
   bucketName: string | null;
   isPublic: boolean;
   downloadCount: number;
@@ -49,7 +49,7 @@ export interface FileCreationAttributes
     | 'updatedAt'
     | 'deletedAt'
     | 'category'
-  > {}
+  > { }
 
 // File model class
 class File extends Model<FileAttributes, FileCreationAttributes> implements FileAttributes {
@@ -68,7 +68,7 @@ class File extends Model<FileAttributes, FileCreationAttributes> implements File
   public thumbnailUrl!: string | null;
   public hashMd5!: string | null;
   public hashSha256!: string | null;
-  public storageType!: StorageType;
+  public ossType!: OssType;
   public bucketName!: string | null;
   public isPublic!: boolean;
   public downloadCount!: number;
@@ -178,10 +178,10 @@ export const initFile = (sequelize: Sequelize): void => {
         field: 'hash_sha256',
         comment: 'SHA256哈希值',
       },
-      storageType: {
-        type: DataTypes.ENUM(...Object.values(StorageType)),
+      ossType: {
+        type: DataTypes.ENUM(...Object.values(OssType)),
         allowNull: false,
-        defaultValue: StorageType.MINIO,
+        defaultValue: 'minio',
         field: 'storage_type',
         comment: '存储类型',
       },
