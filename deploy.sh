@@ -39,7 +39,7 @@ show_help() {
     echo "  clean         清理资源"
     echo "  health        健康检查"
     echo "  test          测试配置"
-    echo "  diagnose      诊断文件上传问题"
+    echo "  diagnose      诊断nginx配置问题"
     echo ""
     echo -e "${YELLOW}选项:${NC}"
     echo "  --services <服务列表>  指定要构建和部署的服务（web,api）"
@@ -153,11 +153,22 @@ validate_nginx_config() {
     
     # 确保脚本有执行权限
     chmod +x "$entrypoint_script"
+    log_info "已设置nginx entrypoint脚本执行权限"
     
     # 检查模板中是否包含环境变量占位符
     if ! grep -q '${SERVER_HOST}' "$nginx_template"; then
         log_error "nginx配置模板中缺少SERVER_HOST变量"
         return 1
+    fi
+    
+    # 验证环境变量是否已设置
+    if [[ -f "$PROJECT_ROOT/.env" ]]; then
+        source "$PROJECT_ROOT/.env"
+        if [[ -n "$SERVER_HOST" ]]; then
+            log_info "SERVER_HOST环境变量已设置: $SERVER_HOST"
+        else
+            log_warning "SERVER_HOST环境变量未设置，将使用默认值localhost"
+        fi
     fi
     
     log_success "nginx配置验证通过"
@@ -186,9 +197,12 @@ start_services() {
     
     cd "$PROJECT_ROOT"
     
-    # 预检查
+    # 预检查和准备
     validate_nginx_config
     setup_directories
+    
+    # 确保环境文件已复制
+    copy_env_file
     
     # 分层启动 - 确保依赖顺序
     log_info "1. 启动基础服务 (MySQL, Redis, MinIO)..."
@@ -208,12 +222,56 @@ start_services() {
     docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d web
     wait_for_service "web" 20
     
-    log_info "4. 启动Nginx服务..."
-    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d nginx
-    wait_for_service "nginx" 15
+    log_info "4. 准备并启动Nginx服务..."
+    
+    # 确保nginx entrypoint脚本有执行权限
+    local entrypoint_script="$PROJECT_ROOT/deployment/scripts/nginx-entrypoint.sh"
+    chmod +x "$entrypoint_script"
+    log_info "已设置nginx entrypoint脚本执行权限"
+    
+    # 清理可能存在的旧nginx容器
+    log_info "清理旧的nginx容器..."
+    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" stop nginx 2>/dev/null || true
+    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" rm -f nginx 2>/dev/null || true
+    
+    # 启动nginx服务
+    log_info "启动nginx服务..."
+    if ! docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d nginx; then
+        log_error "nginx服务启动失败"
+        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" logs nginx
+        return 1
+    fi
+    
+    # 等待nginx容器启动并验证
+    log_info "等待nginx容器完全启动..."
+    local nginx_ready=false
+    local max_attempts=30
+    local attempt=1
+    
+    while [[ $attempt -le $max_attempts ]]; do
+        if docker ps | grep -q "wedding-nginx.*Up"; then
+            log_info "nginx容器已启动，等待配置生成..."
+            sleep 5
+            nginx_ready=true
+            break
+        fi
+        
+        log_info "等待nginx容器启动... ($attempt/$max_attempts)"
+        sleep 2
+        ((attempt++))
+    done
+    
+    if [[ "$nginx_ready" != true ]]; then
+        log_error "nginx容器启动超时"
+        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" logs nginx
+        return 1
+    fi
     
     # 验证nginx配置生成
-    verify_nginx_config_generation
+    if ! verify_nginx_config_generation; then
+        log_error "nginx配置生成验证失败"
+        return 1
+    fi
     
     show_status
     log_success "服务启动完成！"
@@ -245,28 +303,75 @@ wait_for_service() {
 verify_nginx_config_generation() {
     log_info "验证nginx配置生成..."
     
-    # 检查nginx容器是否正在运行
-    if ! docker ps | grep -q "wedding-nginx-prod"; then
+    # 获取nginx容器名称
+    local nginx_container=$(docker ps | grep "wedding-nginx" | awk '{print $NF}')
+    
+    if [[ -z "$nginx_container" ]]; then
         log_error "nginx容器未运行"
         return 1
     fi
     
-    # 检查配置文件是否正确生成
-    if docker exec wedding-nginx-prod test -f /etc/nginx/conf.d/default.conf; then
-        log_success "nginx配置文件已生成"
-        
-        # 测试nginx配置语法
-        if docker exec wedding-nginx-prod nginx -t >/dev/null 2>&1; then
-            log_success "nginx配置语法正确"
-        else
-            log_error "nginx配置语法错误"
-            docker exec wedding-nginx-prod nginx -t
-            return 1
+    log_info "找到nginx容器: $nginx_container"
+    
+    # 等待配置文件生成
+    local max_wait=30
+    local count=0
+    
+    while [[ $count -lt $max_wait ]]; do
+        if docker exec "$nginx_container" test -f /etc/nginx/conf.d/default.conf 2>/dev/null; then
+            log_success "nginx配置文件已生成"
+            break
         fi
-    else
-        log_error "nginx配置文件未生成"
+        
+        log_info "等待nginx配置文件生成... ($((count+1))/$max_wait)"
+        sleep 1
+        ((count++))
+    done
+    
+    if [[ $count -eq $max_wait ]]; then
+        log_error "nginx配置文件生成超时"
+        log_info "查看nginx容器日志:"
+        docker logs "$nginx_container" --tail 20
         return 1
     fi
+    
+    # 验证配置文件内容
+    log_info "验证nginx配置文件内容..."
+    
+    # 检查SERVER_HOST是否正确替换
+    local server_host_in_config=$(docker exec "$nginx_container" grep -o "http://[^:]*:9000" /etc/nginx/conf.d/default.conf 2>/dev/null | head -1 | sed 's|http://||; s|:9000||' || echo "")
+    
+    if [[ -n "$server_host_in_config" ]]; then
+        log_info "配置中的SERVER_HOST: $server_host_in_config"
+        
+        # 验证是否使用了正确的SERVER_HOST
+        source "$PROJECT_ROOT/.env" 2>/dev/null || true
+        if [[ "$server_host_in_config" == "$SERVER_HOST" ]]; then
+            log_success "SERVER_HOST环境变量正确替换"
+        else
+            log_warning "SERVER_HOST可能未正确替换，期望: $SERVER_HOST, 实际: $server_host_in_config"
+        fi
+    fi
+    
+    # 测试nginx配置语法
+    log_info "测试nginx配置语法..."
+    if docker exec "$nginx_container" nginx -t >/dev/null 2>&1; then
+        log_success "nginx配置语法正确"
+    else
+        log_error "nginx配置语法错误:"
+        docker exec "$nginx_container" nginx -t
+        return 1
+    fi
+    
+    # 重新加载nginx配置
+    log_info "重新加载nginx配置..."
+    if docker exec "$nginx_container" nginx -s reload >/dev/null 2>&1; then
+        log_success "nginx配置重新加载成功"
+    else
+        log_warning "nginx配置重新加载失败，但服务可能仍然正常"
+    fi
+    
+    log_success "nginx配置生成验证完成"
 }
 
 # 诊断nginx问题
@@ -386,17 +491,31 @@ diagnose_nginx() {
     if ! docker ps | grep -q "wedding-nginx"; then
         echo -e "${BLUE}→${NC} 启动nginx容器: ./deploy.sh start"
     elif ! docker exec $(docker ps | grep "wedding-nginx" | awk '{print $NF}') test -f /etc/nginx/conf.d/default.conf 2>/dev/null; then
-        echo -e "${BLUE}→${NC} 配置文件未生成，重启nginx容器: docker-compose restart nginx"
+        echo -e "${BLUE}→${NC} 配置文件未生成，执行以下步骤:"
+        echo -e "   1. 确保entrypoint脚本有执行权限: chmod +x deployment/scripts/nginx-entrypoint.sh"
+        echo -e "   2. 重启nginx容器: docker-compose restart nginx"
+        echo -e "   3. 或者重新部署: ./deploy.sh restart"
     elif [[ -f "$PROJECT_ROOT/.env" ]]; then
         source "$PROJECT_ROOT/.env"
         if [[ "$SERVER_HOST" == "localhost" || "$SERVER_HOST" == "127.0.0.1" ]]; then
             echo -e "${BLUE}→${NC} 建议在.env中设置正确的SERVER_HOST IP地址"
+            echo -e "   当前值: $SERVER_HOST"
+            echo -e "   建议值: 您的服务器实际IP地址"
         else
             echo -e "${GREEN}✓${NC} nginx配置正常，无需修复"
         fi
     else
         echo -e "${BLUE}→${NC} 创建.env文件并设置SERVER_HOST环境变量"
+        echo -e "   1. 复制环境文件: cp deployment/environments/.env.prod .env"
+        echo -e "   2. 编辑.env文件，设置正确的SERVER_HOST值"
     fi
+    
+    # 7. 推荐解决方案
+    echo -e "\n${YELLOW}7. 推荐解决方案:${NC}"
+    echo -e "${BLUE}→${NC} 重启所有服务（推荐）: ./deploy.sh restart"
+    echo -e "${BLUE}→${NC} 仅重启nginx服务: docker-compose restart nginx"
+    echo -e "${BLUE}→${NC} 查看nginx详细日志: docker-compose logs nginx -f"
+    echo -e "${BLUE}→${NC} 完全重新部署: ./deploy.sh redeploy"
     
     echo -e "\n${BLUE}=== 诊断完成 ===${NC}"
 }
@@ -670,8 +789,11 @@ quick_restart() {
     # 复制环境文件
     copy_env_file
     
+    # 确保nginx entrypoint脚本权限正确
+    chmod +x "$PROJECT_ROOT/deployment/scripts/nginx-entrypoint.sh"
+    
     # 重启关键服务
-    log_info "重启Web和API服务..."
+    log_info "重启Web、API和Nginx服务..."
     docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" restart web api nginx
     
     # 等待服务就绪
@@ -680,7 +802,14 @@ quick_restart() {
     wait_for_service "nginx" 15
     
     # 验证nginx配置
-    verify_nginx_config_generation
+    if ! verify_nginx_config_generation; then
+        log_warning "nginx配置验证失败，尝试重新创建nginx容器..."
+        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" stop nginx
+        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" rm -f nginx
+        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d nginx
+        wait_for_service "nginx" 15
+        verify_nginx_config_generation
+    fi
     
     # 健康检查
     if health_check; then
@@ -705,6 +834,10 @@ execute_full_deploy() {
     
     # 复制环境文件
     copy_env_file
+    
+    # 确保nginx相关文件权限正确
+    log_info "设置nginx相关文件权限..."
+    chmod +x "$PROJECT_ROOT/deployment/scripts/nginx-entrypoint.sh"
     
     # 构建指定服务
     if [[ -n "$SERVICES_TO_BUILD" ]]; then
@@ -919,6 +1052,7 @@ test_config() {
         return 1
     fi
 }
+
 
 # 主函数
 main() {
