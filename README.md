@@ -11,10 +11,10 @@ git clone <repository-url>
 cd wedding-client
 
 # 2. 一键启动（推荐）
-./start.sh deploy
+./deploy.sh deploy
 
 # 3. 查看服务状态
-./start.sh status
+./deploy.sh status
 ```
 
 ### 访问地址
@@ -31,12 +31,16 @@ cd wedding-client
 
 ```
 wedding-client/
+├── deploy.sh              # 🚀 主部署脚本（根目录）
 ├── 📂 deployment/          # 🚀 部署配置文件
-│   ├── deploy.sh          #    核心部署脚本
-│   ├── init-server.sh     #    服务器初始化
 │   ├── docker/            #    Docker配置
-│   ├── monitoring/        #    监控配置
-│   └── scripts/           #    工具脚本
+│   ├── environments/      #    环境配置
+│   └── scripts/           #    工具脚本集合
+│       ├── check-db-init.sh      #    数据库状态检查
+│       ├── database-management.sh #    数据库管理
+│       ├── health-check.sh       #    系统健康检查
+│       ├── nginx-entrypoint.sh   #    Nginx启动脚本
+│       └── setup.sh              #    环境初始化
 ├── 📂 docs/               # 📚 项目文档
 ├── 📂 server/             # 🔧 后端服务
 └── 📂 web/                # 🎨 前端应用
@@ -83,28 +87,27 @@ wedding-client/
 
 ### 服务管理
 ```bash
-./start.sh start      # 启动所有服务
-./start.sh stop       # 停止所有服务  
-./start.sh restart    # 重启所有服务
-./start.sh status     # 查看服务状态
+./deploy.sh start      # 启动所有服务
+./deploy.sh stop       # 停止所有服务  
+./deploy.sh restart    # 重启所有服务
+./deploy.sh status     # 查看服务状态
 ```
 
 ### 部署操作
 ```bash
-./start.sh deploy     # 完整部署
-./start.sh init       # 服务器初始化
+./deploy.sh deploy     # 完整部署
+./deploy.sh init       # 数据库初始化
 ```
 
 ### 工具脚本
 ```bash
-./start.sh backup     # 数据库备份
-./start.sh health     # 健康检查
-./start.sh diagnose   # 问题诊断
+./deployment/scripts/database-management.sh backup    # 数据库备份
+./deployment/scripts/health-check.sh                  # 健康检查
+./deploy.sh diagnose                                  # nginx问题诊断
 ```
 
 ### 文档查看
 ```bash
-./start.sh docs       # 查看文档列表
 cat docs/README.md     # 文档索引
 ```
 
@@ -142,10 +145,10 @@ npm run dev
 ### 数据库初始化
 ```bash
 # 自动初始化（推荐）
-./start.sh init
+./deploy.sh init
 
 # 手动初始化
-./deployment/init-server.sh
+./deployment/scripts/database-management.sh init
 ```
 
 ## 🛡️ 安全建议
@@ -165,8 +168,9 @@ npm run dev
 
 ### 获取帮助
 ```bash
-./start.sh help       # 查看帮助信息
-./start.sh diagnose   # 自动诊断问题
+./deploy.sh help       # 查看帮助信息
+./deploy.sh diagnose   # nginx问题诊断
+./deployment/scripts/health-check.sh  # 系统健康检查
 ```
 
 ## 📄 许可证
@@ -183,6 +187,6 @@ npm run dev
 
 ---
 
-**快速体验**: `./start.sh deploy` 一键部署，几分钟内即可访问完整系统！
+**快速体验**: `./deploy.sh deploy` 一键部署，几分钟内即可访问完整系统！
 
 *最后更新: 2025-08-27*

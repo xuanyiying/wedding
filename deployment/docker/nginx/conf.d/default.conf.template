@@ -24,7 +24,7 @@ add_header X-Frame-Options "SAMEORIGIN" always;
 add_header X-XSS-Protection "1; mode=block" always;
 add_header X-Content-Type-Options "nosniff" always;
 add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http://${SERVER_HOST}:9000; font-src 'self' data:; connect-src 'self' https: http://localhost:9000 http://127.0.0.1:9000 http://${SERVER_HOST}:9000 blob:; media-src 'self' blob: https: http://${SERVER_HOST}:9000; object-src 'none'; child-src 'self' blob:; frame-ancestors 'self'; base-uri 'self'; form-action 'self' http://${SERVER_HOST}:9000;" always;
+add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http://${SERVER_HOST}:9000; font-src 'self' data:; connect-src 'self' https: http://${SERVER_HOST}:9000 blob:; media-src 'self' blob: https: http://${SERVER_HOST}:9000; object-src 'none'; child-src 'self' blob:; frame-ancestors 'self'; base-uri 'self'; form-action 'self' http://${SERVER_HOST}:9000;" always;
 add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
 add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
 
@@ -84,11 +84,6 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        
-        # 添加错误处理
-        proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
-        proxy_next_upstream_timeout 10s;
-        proxy_next_upstream_tries 3;
     }
 
     # 前端健康检查端点
@@ -145,14 +140,7 @@ server {
         proxy_buffer_size 8k;
         proxy_buffers 16 8k;
         proxy_busy_buffers_size 16k;
-        
-        # 添加错误处理
-        proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
-        proxy_next_upstream_timeout 10s;
-        proxy_next_upstream_tries 3;
     }
-    
-  
 
     # 登录API特殊限流
     location /api/v1/auth/login {
@@ -181,11 +169,6 @@ server {
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
-        
-        # 添加错误处理
-        proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
-        proxy_next_upstream_timeout 10s;
-        proxy_next_upstream_tries 3;
     }
 
     # Swagger UI 静态资源 - 解决404问题
@@ -205,11 +188,6 @@ server {
         proxy_buffer_size 4k;
         proxy_buffers 8 4k;
         proxy_busy_buffers_size 8k;
-        
-        # 添加错误处理
-        proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
-        proxy_next_upstream_timeout 10s;
-        proxy_next_upstream_tries 3;
     }
 
     # Swagger UI 静态资源文件 - 确保所有相关资源都能正确加载
@@ -229,11 +207,6 @@ server {
         proxy_buffer_size 4k;
         proxy_buffers 8 4k;
         proxy_busy_buffers_size 8k;
-        
-        # 添加错误处理
-        proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
-        proxy_next_upstream_timeout 10s;
-        proxy_next_upstream_tries 3;
     }
 
     # 前端直传OSS签名URL路由 - 处理预签名URL请求

@@ -176,7 +176,7 @@ main() {
     
     # 获取脚本目录
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+    PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
     
     # 加载环境变量
     local env_file="$PROJECT_ROOT/deployment/environments/.env.prod"

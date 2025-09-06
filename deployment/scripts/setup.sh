@@ -29,15 +29,15 @@ fi
 
 # 构建项目
 echo "构建项目..."
-./deployment/deploy.sh deploy
+./deploy.sh deploy
 
 echo "环境初始化完成!"
 echo ""
 echo "使用方法:"
-echo "  启动服务: ./deployment/deploy.sh start"
-echo "  停止服务: ./deployment/deploy.sh stop"
-echo "  重启服务: ./deployment/deploy.sh restart"
-echo "  查看日志: ./deployment/deploy.sh logs"
-echo "  停止服务: ./deployment/scripts/deploy.sh $ENVIRONMENT down"
-echo "  重启服务: ./deployment/scripts/deploy.sh $ENVIRONMENT restart"
-echo "  查看日志: ./deployment/scripts/deploy.sh $ENVIRONMENT logs"
+echo "  启动服务: ./deploy.sh start"
+echo "  停止服务: ./deploy.sh stop"
+echo "  重启服务: ./deploy.sh restart"
+echo "  查看日志: ./deploy.sh logs"
+echo "  查看状态: ./deploy.sh status"
+echo "  健康检查: ./deploy.sh health"
+echo "  诊断问题: ./deploy.sh diagnose"

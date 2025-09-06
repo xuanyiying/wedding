@@ -14,7 +14,7 @@ NC='\033[0m'
 
 # 获取脚本目录
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$SCRIPT_DIR"
 
 # 显示帮助信息
 show_help() {
@@ -96,9 +96,87 @@ copy_env_file() {
     if [[ -f "$ENV_FILE" ]]; then
         cp "$ENV_FILE" "$PROJECT_ROOT/.env"
         log_success "已将 $ENV_FILE 复制到项目根目录"
+        
+        # 验证关键环境变量
+        validate_env_variables
     else
         log_warning "环境文件 $ENV_FILE 不存在，跳过复制"
     fi
+}
+
+# 验证环境变量
+validate_env_variables() {
+    log_info "验证关键环境变量..."
+    
+    source "$PROJECT_ROOT/.env"
+    
+    # 检查必需的环境变量
+    local required_vars=("SERVER_HOST" "MYSQL_PASSWORD" "REDIS_PASSWORD" "JWT_SECRET" "MINIO_ACCESS_KEY" "MINIO_SECRET_KEY")
+    local missing_vars=()
+    
+    for var in "${required_vars[@]}"; do
+        if [[ -z "${!var}" ]]; then
+            missing_vars+=("$var")
+        fi
+    done
+    
+    if [[ ${#missing_vars[@]} -gt 0 ]]; then
+        log_error "缺少必需的环境变量: ${missing_vars[*]}"
+        return 1
+    fi
+    
+    # 验证SERVER_HOST不是localhost（生产环境）
+    if [[ "$ENVIRONMENT" == "prod" && "$SERVER_HOST" == "localhost" ]]; then
+        log_warning "生产环境SERVER_HOST不应为localhost，请检查配置"
+    fi
+    
+    log_success "环境变量验证通过"
+}
+
+# 验证nginx配置
+validate_nginx_config() {
+    log_info "验证nginx配置..."
+    
+    # 检查nginx配置模板是否存在
+    local nginx_template="$PROJECT_ROOT/deployment/docker/nginx/conf.d/default.conf.template"
+    if [[ ! -f "$nginx_template" ]]; then
+        log_error "nginx配置模板不存在: $nginx_template"
+        return 1
+    fi
+    
+    # 检查entrypoint脚本
+    local entrypoint_script="$PROJECT_ROOT/deployment/scripts/nginx-entrypoint.sh"
+    if [[ ! -f "$entrypoint_script" ]]; then
+        log_error "nginx entrypoint脚本不存在: $entrypoint_script"
+        return 1
+    fi
+    
+    # 确保脚本有执行权限
+    chmod +x "$entrypoint_script"
+    
+    # 检查模板中是否包含环境变量占位符
+    if ! grep -q '${SERVER_HOST}' "$nginx_template"; then
+        log_error "nginx配置模板中缺少SERVER_HOST变量"
+        return 1
+    fi
+    
+    log_success "nginx配置验证通过"
+}
+
+# 创建必要的目录和权限
+setup_directories() {
+    log_info "创建必要的目录..."
+    
+    # 创建必要的目录
+    mkdir -p deployment/logs/{nginx,api,mysql,redis,minio}
+    mkdir -p deployment/uploads/{images,documents}
+    mkdir -p deployment/ssl
+    
+    # 设置正确的权限
+    chmod -R 755 deployment/logs
+    chmod -R 755 deployment/uploads
+    
+    log_success "目录创建完成"
 }
 
 # 启动服务
@@ -108,21 +186,219 @@ start_services() {
     
     cd "$PROJECT_ROOT"
     
+    # 预检查
+    validate_nginx_config
+    setup_directories
+    
     # 分层启动 - 确保依赖顺序
     log_info "1. 启动基础服务 (MySQL, Redis, MinIO)..."
     docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d mysql redis minio
-    sleep 30
+    
+    # 等待基础服务就绪
+    log_info "等待基础服务就绪..."
+    wait_for_service "mysql" 30
+    wait_for_service "redis" 15
+    wait_for_service "minio" 20
     
     log_info "2. 启动API服务..."
     docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d api
-    sleep 20
+    wait_for_service "api" 30
     
-    log_info "3. 启动Web和Nginx服务..."
-    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d web nginx
+    log_info "3. 启动Web服务..."
+    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d web
+    wait_for_service "web" 20
     
-    sleep 10
+    log_info "4. 启动Nginx服务..."
+    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d nginx
+    wait_for_service "nginx" 15
+    
+    # 验证nginx配置生成
+    verify_nginx_config_generation
+    
     show_status
     log_success "服务启动完成！"
+}
+
+# 等待服务就绪
+wait_for_service() {
+    local service_name="$1"
+    local timeout="$2"
+    local count=0
+    
+    log_info "等待 $service_name 服务就绪..."
+    
+    while [[ $count -lt $timeout ]]; do
+        if docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" ps "$service_name" | grep -q "Up"; then
+            log_success "$service_name 服务已就绪"
+            return 0
+        fi
+        
+        sleep 1
+        ((count++))
+    done
+    
+    log_warning "$service_name 服务启动超时，继续执行..."
+    return 1
+}
+
+# 验证nginx配置生成
+verify_nginx_config_generation() {
+    log_info "验证nginx配置生成..."
+    
+    # 检查nginx容器是否正在运行
+    if ! docker ps | grep -q "wedding-nginx-prod"; then
+        log_error "nginx容器未运行"
+        return 1
+    fi
+    
+    # 检查配置文件是否正确生成
+    if docker exec wedding-nginx-prod test -f /etc/nginx/conf.d/default.conf; then
+        log_success "nginx配置文件已生成"
+        
+        # 测试nginx配置语法
+        if docker exec wedding-nginx-prod nginx -t >/dev/null 2>&1; then
+            log_success "nginx配置语法正确"
+        else
+            log_error "nginx配置语法错误"
+            docker exec wedding-nginx-prod nginx -t
+            return 1
+        fi
+    else
+        log_error "nginx配置文件未生成"
+        return 1
+    fi
+}
+
+# 诊断nginx问题
+diagnose_nginx() {
+    log_info "诊断nginx配置问题..."
+    
+    echo -e "\n${BLUE}=== Nginx 诊断报告 ===${NC}"
+    
+    # 1. 检查容器状态
+    echo -e "\n${YELLOW}1. 容器状态:${NC}"
+    if docker ps | grep -q "wedding-nginx"; then
+        echo -e "${GREEN}✓${NC} nginx容器正在运行"
+        docker ps | grep "wedding-nginx"
+    else
+        echo -e "${RED}✗${NC} nginx容器未运行"
+        docker ps -a | grep "wedding-nginx" || echo "未找到nginx容器"
+    fi
+    
+    # 2. 检查配置文件
+    echo -e "\n${YELLOW}2. 配置文件检查:${NC}"
+    local nginx_template="$PROJECT_ROOT/deployment/docker/nginx/conf.d/default.conf.template"
+    local nginx_entrypoint="$PROJECT_ROOT/deployment/scripts/nginx-entrypoint.sh"
+    
+    if [[ -f "$nginx_template" ]]; then
+        echo -e "${GREEN}✓${NC} nginx配置模板存在: $nginx_template"
+        
+        # 检查模板是否使用环境变量
+        if grep -q '${SERVER_HOST}' "$nginx_template"; then
+            echo -e "${GREEN}✓${NC} 模板正确使用SERVER_HOST环境变量"
+        else
+            echo -e "${RED}✗${NC} 模板缺少SERVER_HOST环境变量"
+        fi
+        
+        # 检查是否有硬编码的localhost
+        if grep -q "localhost:9000\|127.0.0.1:9000" "$nginx_template"; then
+            echo -e "${RED}✗${NC} 模板中发现硬编码的localhost/127.0.0.1配置"
+        else
+            echo -e "${GREEN}✓${NC} 模板无硬编码问题"
+        fi
+    else
+        echo -e "${RED}✗${NC} nginx配置模板不存在: $nginx_template"
+    fi
+    
+    if [[ -f "$nginx_entrypoint" ]]; then
+        echo -e "${GREEN}✓${NC} nginx entrypoint脚本存在: $nginx_entrypoint"
+        if [[ -x "$nginx_entrypoint" ]]; then
+            echo -e "${GREEN}✓${NC} entrypoint脚本有执行权限"
+        else
+            echo -e "${YELLOW}⚠${NC} entrypoint脚本缺少执行权限，正在修复..."
+            chmod +x "$nginx_entrypoint"
+        fi
+    else
+        echo -e "${RED}✗${NC} nginx entrypoint脚本不存在: $nginx_entrypoint"
+    fi
+    
+    # 3. 检查环境变量
+    echo -e "\n${YELLOW}3. 环境变量检查:${NC}"
+    if [[ -f "$PROJECT_ROOT/.env" ]]; then
+        source "$PROJECT_ROOT/.env"
+        if [[ -n "$SERVER_HOST" ]]; then
+            echo -e "${GREEN}✓${NC} SERVER_HOST已设置: $SERVER_HOST"
+            
+            # 验证SERVER_HOST不是localhost（生产环境）
+            if [[ "$SERVER_HOST" == "localhost" || "$SERVER_HOST" == "127.0.0.1" ]]; then
+                echo -e "${YELLOW}⚠${NC} 生产环境建议使用实际IP地址而非localhost"
+            fi
+        else
+            echo -e "${RED}✗${NC} SERVER_HOST未设置"
+        fi
+        
+        # 检查MinIO相关配置
+        if [[ -n "$MINIO_ENDPOINT" ]]; then
+            echo -e "${GREEN}✓${NC} MINIO_ENDPOINT已设置: $MINIO_ENDPOINT"
+        else
+            echo -e "${YELLOW}⚠${NC} MINIO_ENDPOINT未设置"
+        fi
+    else
+        echo -e "${RED}✗${NC} .env文件不存在"
+    fi
+    
+    # 4. 检查容器内配置
+    echo -e "\n${YELLOW}4. 容器内配置检查:${NC}"
+    if docker ps | grep -q "wedding-nginx"; then
+        local container_name=$(docker ps | grep "wedding-nginx" | awk '{print $NF}')
+        
+        if docker exec "$container_name" test -f /etc/nginx/conf.d/default.conf; then
+            echo -e "${GREEN}✓${NC} 容器内配置文件已生成"
+            
+            # 检查生成的配置是否正确使用了环境变量
+            local server_host_in_config=$(docker exec "$container_name" grep -o "http://[^:]*:9000" /etc/nginx/conf.d/default.conf 2>/dev/null | head -1 | sed 's|http://||; s|:9000||')
+            if [[ -n "$server_host_in_config" && "$server_host_in_config" != "localhost" && "$server_host_in_config" != "127.0.0.1" ]]; then
+                echo -e "${GREEN}✓${NC} 配置正确使用了SERVER_HOST: $server_host_in_config"
+            elif [[ "$server_host_in_config" == "localhost" || "$server_host_in_config" == "127.0.0.1" ]]; then
+                echo -e "${YELLOW}⚠${NC} 配置使用了localhost，检查SERVER_HOST环境变量"
+            else
+                echo -e "${YELLOW}⚠${NC} 无法检测配置中的主机设置"
+            fi
+            
+            if docker exec "$container_name" nginx -t >/dev/null 2>&1; then
+                echo -e "${GREEN}✓${NC} nginx配置语法正确"
+            else
+                echo -e "${RED}✗${NC} nginx配置语法错误:"
+                docker exec "$container_name" nginx -t
+            fi
+        else
+            echo -e "${RED}✗${NC} 容器内配置文件未生成"
+            echo -e "${BLUE}→${NC} 检查entrypoint脚本是否正确执行"
+        fi
+        
+        # 检查日志
+        echo -e "\n${YELLOW}5. 最近的nginx日志:${NC}"
+        docker logs "$container_name" --tail 10
+    fi
+    
+    # 6. 自动修复建议
+    echo -e "\n${YELLOW}6. 修复建议:${NC}"
+    if ! docker ps | grep -q "wedding-nginx"; then
+        echo -e "${BLUE}→${NC} 启动nginx容器: ./deploy.sh start"
+    elif ! docker exec $(docker ps | grep "wedding-nginx" | awk '{print $NF}') test -f /etc/nginx/conf.d/default.conf 2>/dev/null; then
+        echo -e "${BLUE}→${NC} 配置文件未生成，重启nginx容器: docker-compose restart nginx"
+    elif [[ -f "$PROJECT_ROOT/.env" ]]; then
+        source "$PROJECT_ROOT/.env"
+        if [[ "$SERVER_HOST" == "localhost" || "$SERVER_HOST" == "127.0.0.1" ]]; then
+            echo -e "${BLUE}→${NC} 建议在.env中设置正确的SERVER_HOST IP地址"
+        else
+            echo -e "${GREEN}✓${NC} nginx配置正常，无需修复"
+        fi
+    else
+        echo -e "${BLUE}→${NC} 创建.env文件并设置SERVER_HOST环境变量"
+    fi
+    
+    echo -e "\n${BLUE}=== 诊断完成 ===${NC}"
 }
 
 # 停止服务
@@ -338,70 +614,106 @@ build_services() {
 smart_deploy() {
     log_info "开始智能部署..."
     
+    # 预检查
+    pre_deploy_check
     
     # 检查代码和配置变化
     local change_status
     change_status=$(check_changes)
     
     if [[ "$change_status" == "unchanged" ]]; then
-        log_info "代码和配置未发生变化，跳过构建步骤"
-        # 只重启Web和API服务
-        log_info "重启Web和API服务..."
-        get_config_files
-        cd "$PROJECT_ROOT"
-        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" restart web api
-        sleep 10
-        health_check
-        log_success "服务重启完成！"
-        return 0
+        log_info "代码和配置未发生变化，执行快速重启..."
+        quick_restart
+        return $?
     fi
     
-    log_info "检测到代码或配置变化，开始重新构建..."
+    log_info "检测到代码或配置变化，开始完整部署..."
     
-    # 停止服务
-    stop_services 2>/dev/null || true
-    
-    # 清理资源，包括 wedding-web 和 wedding-api 镜像和容器
-    clean_resources
-    
-    # 复制环境文件
-    copy_env_file
-    
-    # 构建指定服务
-    build_services "$SERVICES_TO_BUILD"
-    
-    # 启动服务
-    start_services
-    
-    # 执行数据库初始化
-    initialize_database
-    
-    # 健康检查
-    health_check
+    # 执行完整部署流程
+    execute_full_deploy
     
     log_success "智能部署完成！"
 }
 
-# 完整部署
-deploy_full() {
-    log_info "开始完整部署..."
+# 预部署检查
+pre_deploy_check() {
+    log_info "执行预部署检查..."
     
+    # 检查Docker是否运行
+    if ! docker info >/dev/null 2>&1; then
+        log_error "Docker未运行，请启动Docker服务"
+        exit 1
+    fi
     
-    # 停止现有服务
+    # 检查Docker Compose是否可用
+    if ! command -v docker-compose >/dev/null 2>&1; then
+        log_error "docker-compose未安装"
+        exit 1
+    fi
+    
+    # 检查磁盘空间
+    local available_space=$(df . | tail -1 | awk '{print $4}')
+    if [[ $available_space -lt 2097152 ]]; then  # 2GB in KB
+        log_warning "磁盘空间不足2GB，可能影响部署"
+    fi
+    
+    log_success "预部署检查通过"
+}
+
+# 快速重启
+quick_restart() {
+    log_info "执行快速重启..."
+    
+    get_config_files
+    cd "$PROJECT_ROOT"
+    
+    # 复制环境文件
+    copy_env_file
+    
+    # 重启关键服务
+    log_info "重启Web和API服务..."
+    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" restart web api nginx
+    
+    # 等待服务就绪
+    wait_for_service "web" 20
+    wait_for_service "api" 20
+    wait_for_service "nginx" 15
+    
+    # 验证nginx配置
+    verify_nginx_config_generation
+    
+    # 健康检查
+    if health_check; then
+        log_success "快速重启完成！"
+        return 0
+    else
+        log_warning "快速重启后健康检查失败，执行完整部署..."
+        execute_full_deploy
+        return $?
+    fi
+}
+
+# 执行完整部署
+execute_full_deploy() {
+    log_info "执行完整部署流程..."
+    
+    # 停止服务
     stop_services 2>/dev/null || true
     
-    # 清理资源，包括 wedding-web 和 wedding-api 镜像和容器
+    # 清理资源
     clean_resources
     
     # 复制环境文件
     copy_env_file
     
     # 构建指定服务
-    build_services "$SERVICES_TO_BUILD"
-    
-    # 重新构建镜像
-    log_info "重新构建镜像..."
-    cd "$PROJECT_ROOT"
+    if [[ -n "$SERVICES_TO_BUILD" ]]; then
+        build_services "$SERVICES_TO_BUILD"
+    else
+        log_info "未指定构建服务，使用Docker Compose构建"
+        cd "$PROJECT_ROOT"
+        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build --no-cache
+    fi
     
     # 启动服务
     start_services
@@ -412,15 +724,41 @@ deploy_full() {
     # 健康检查
     health_check
     
-    log_success "完整部署完成！"
-    echo ""
-    echo -e "${YELLOW}重要访问地址:${NC}"
-    local server_ip=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "localhost") 
-    echo -e "  📖 API文档: ${GREEN}http://$server_ip:3000/api/v1/docs${NC}"
+    # 显示部署结果
+    show_deployment_result
+}
+
+# 显示部署结果
+show_deployment_result() {
+    echo -e "\n${GREEN}========================================${NC}"
+    echo -e "${GREEN}    部署完成！${NC}"
+    echo -e "${GREEN}========================================${NC}"
+    
+    # 获取服务器IP
+    local server_ip
+    if [[ -f "$PROJECT_ROOT/.env" ]]; then
+        source "$PROJECT_ROOT/.env"
+        server_ip="$SERVER_HOST"
+    else
+        server_ip=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "localhost")
+    fi
+    
+    echo -e "\n${BLUE}🌐 访问地址:${NC}"
+    echo -e "  前端应用:    ${GREEN}http://$server_ip/${NC}"
+    echo -e "  API文档:     ${GREEN}http://$server_ip/api/v1/docs/${NC}"
+    echo -e "  MinIO控制台: ${GREEN}http://$server_ip:9001/${NC}"
+    
+    echo -e "\n${BLUE}📊 服务状态:${NC}"
+    show_status
+    
+    echo -e "\n${YELLOW}💡 提示:${NC}"
+    echo -e "  - 如遇问题，可执行: ${GREEN}./deploy.sh diagnose${NC}"
+    echo -e "  - 查看日志: ${GREEN}./deploy.sh logs [服务名]${NC}"
+    echo -e "  - 重新部署: ${GREEN}./deploy.sh redeploy${NC}"
     echo ""
 }
 
-# 重新构建部署
+# 重新构建部署（完全清理后重新部署）
 redeploy() {
     log_info "开始重新构建并部署..."
 
@@ -430,24 +768,8 @@ redeploy() {
     # 清理资源，包括 wedding-web 和 wedding-api 镜像和容器
     clean_resources
     
-    # 复制环境文件
-    copy_env_file
-    
-    # 构建指定服务
-    build_services "$SERVICES_TO_BUILD"
-    
-    # 重新构建镜像
-    log_info "重新构建镜像..."
-    cd "$PROJECT_ROOT"
-    
-    # 启动服务
-    start_services
-    
-    # 执行数据库初始化
-    initialize_database
-    
-    # 健康检查
-    health_check
+    # 执行完整部署
+    execute_full_deploy
     
     log_success "重新构建部署完成！"
 }
@@ -456,11 +778,11 @@ redeploy() {
 initialize_database() {
     log_info "执行优化的数据库初始化..."
     
-    # 使用新的优化初始化脚本
-    if [[ -f "$PROJECT_ROOT/deployment/init-database.sh" ]]; then
-        cd "$PROJECT_ROOT/deployment"
-        chmod +x init-database.sh
-        if ./init-database.sh; then
+    # 使用database-management.sh进行数据库初始化
+    if [[ -f "$PROJECT_ROOT/deployment/scripts/database-management.sh" ]]; then
+        cd "$PROJECT_ROOT/deployment/scripts"
+        chmod +x database-management.sh
+        if ./database-management.sh init; then
             log_success "数据库初始化完成"
             return 0
         else
@@ -468,7 +790,7 @@ initialize_database() {
             return 1
         fi
     else
-        log_error "优化的数据库初始化脚本不存在: $PROJECT_ROOT/deployment/init-database.sh"
+        log_error "数据库管理脚本不存在: $PROJECT_ROOT/deployment/scripts/database-management.sh"
         return 1
     fi
 }
@@ -635,6 +957,9 @@ main() {
             ;;
         test)
             test_config
+            ;;
+        diagnose)
+            diagnose_nginx
             ;;
         help|--help|-h)
             show_help
