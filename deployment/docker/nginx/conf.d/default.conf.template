@@ -1,48 +1,16 @@
 # Wedding Club - 生产环境 Nginx 配置模板
 # 高性能、安全、负载均衡优化版本
 
-# 注意：这个配置文件将被复制到 /etc/nginx/conf.d/default.conf
-# 在这个位置只能包含 server 块，不能包含 http 块
-
-# 客户端配置
-client_max_body_size 100M;
-client_body_buffer_size 1M;
-client_header_buffer_size 4k;
-large_client_header_buffers 4 8k;
-client_body_timeout 60s;
-client_header_timeout 60s;
-send_timeout 60s;
-
-# 文件描述符缓存
-open_file_cache max=10000 inactive=20s;
-open_file_cache_valid 30s;
-open_file_cache_min_uses 2;
-open_file_cache_errors on;
-
-# 安全头配置
-add_header X-Frame-Options "SAMEORIGIN" always;
-add_header X-XSS-Protection "1; mode=block" always;
-add_header X-Content-Type-Options "nosniff" always;
-add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http://${SERVER_HOST}:9000; font-src 'self' data:; connect-src 'self' https: http://${SERVER_HOST}:9000 blob:; media-src 'self' blob: https: http://${SERVER_HOST}:9000; object-src 'none'; child-src 'self' blob:; frame-ancestors 'self'; base-uri 'self'; form-action 'self' http://${SERVER_HOST}:9000;" always;
-add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
-add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
-
 # 上游服务器配置
 upstream api_backend {
     server wedding-api-prod:3000 max_fails=3 fail_timeout=30s;
-
-    # 连接池优化
     keepalive 32;
     keepalive_requests 1000;
     keepalive_timeout 60s;
 }
 
-# 添加前端Web服务上游
 upstream web_backend {
     server wedding-web-prod:80 max_fails=3 fail_timeout=30s;
-
-    # 连接池优化
     keepalive 32;
     keepalive_requests 1000;
     keepalive_timeout 60s;
@@ -50,31 +18,22 @@ upstream web_backend {
 
 upstream minio_backend {
     server wedding-minio-prod:9000 weight=1 max_fails=2 fail_timeout=20s;
-
     keepalive 64;
     keepalive_requests 500;
     keepalive_timeout 60s;
 }
 
-# 缓存配置
-proxy_cache_path /var/cache/nginx/api levels=1:2 keys_zone=api_cache:50m max_size=1g inactive=60m use_temp_path=off;
-proxy_cache_path /var/cache/nginx/static levels=1:2 keys_zone=static_cache:100m max_size=5g inactive=7d use_temp_path=off;
-proxy_cache_path /var/cache/nginx/images levels=1:2 keys_zone=image_cache:100m max_size=2g inactive=30d use_temp_path=off;
-proxy_temp_path /var/cache/nginx/temp;
-
-# 限流配置 - 生产环境
-limit_req_zone $binary_remote_addr zone=api_limit:20m rate=20r/s;
-limit_req_zone $binary_remote_addr zone=upload_limit:10m rate=5r/s;
-limit_req_zone $binary_remote_addr zone=login_limit:10m rate=1r/s;
-limit_conn_zone $binary_remote_addr zone=conn_limit:20m;
-
 # HTTP主服务器
 server {
     listen 80;
     server_name _;
-    # 移除默认root，强制所有请求通过代理处理
-    # root /usr/share/nginx/html;
-    # index index.html index.htm;
+
+    # 安全头配置
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http://${SERVER_HOST}:9000; font-src 'self' data:; connect-src 'self' https: http://${SERVER_HOST}:9000 blob:; media-src 'self' blob: https: http://${SERVER_HOST}:9000; object-src 'none'; child-src 'self' blob:; frame-ancestors 'self'; base-uri 'self'; form-action 'self' http://${SERVER_HOST}:9000;" always;
 
     # 健康检查端点 - 直接代理到API服务
     location /health {
@@ -251,10 +210,16 @@ server {
     # 静态文件缓存 - 生产环境分层策略
     # 字体文件 - 长期缓存
     location ~* \.(woff|woff2|ttf|eot|otf)$ {
+        proxy_pass http://web_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
         expires 1y;
         add_header Cache-Control "public, immutable";
         add_header Vary "Accept-Encoding";
-        try_files $uri =404;
 
         # 启用静态文件缓存
         proxy_cache static_cache;
@@ -263,10 +228,16 @@ server {
 
     # 图片资源 - 中期缓存
     location ~* \.(png|jpg|jpeg|gif|ico|svg|webp|avif)$ {
+        proxy_pass http://web_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
         expires 6M;
         add_header Cache-Control "public";
         add_header Vary "Accept-Encoding";
-        try_files $uri =404;
 
         # 启用图片缓存
         proxy_cache image_cache;
@@ -311,12 +282,19 @@ server {
 
     # 其他静态资源
     location ~* \.(pdf|doc|docx|zip|tar|gz|mp4|mp3|avi)$ {
+        proxy_pass http://web_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
         expires 7d;
         add_header Cache-Control "public";
-        try_files $uri =404;
 
         # 大文件流式传输
         proxy_max_temp_file_size 0;
+        proxy_buffering off;
     }
 
     # SPA路由支持

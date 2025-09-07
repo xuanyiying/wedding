@@ -191,8 +191,9 @@ services:
       - ./deployment/uploads:/var/www/uploads:ro
       - ./deployment/docker/nginx/conf.d/default.conf.template:/etc/nginx/conf.d/default.conf.template:ro
       - ./deployment/docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./deployment/scripts/nginx-entrypoint.sh:/docker-entrypoint.sh:ro
-    command: ["/bin/sh", "/docker-entrypoint.sh"]
+      - ./deployment/scripts/nginx-entrypoint.sh:/usr/local/bin/nginx-entrypoint.sh:ro
+      - nginx_cache:/var/cache/nginx
+    command: ["/bin/sh", "/usr/local/bin/nginx-entrypoint.sh"]
     depends_on:
       web:
         condition: service_healthy
@@ -229,3 +230,5 @@ volumes:
     name: wedding-redis-${ENVIRONMENT:-prod}-data
   minio_data:
     name: wedding-minio-${ENVIRONMENT:-prod}-data
+  nginx_cache:
+    name: wedding-nginx-${ENVIRONMENT:-prod}-cache
