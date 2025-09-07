@@ -1,16 +1,19 @@
 import { Op, WhereOptions } from 'sequelize';
 import { File, FileAttributes, User } from '../models';
 import { logger } from '../utils/logger';
-import path from 'path';
-import fs from 'fs/promises';
+import * as path from 'path';
+import * as fs from 'fs/promises';
 import * as fsSync from 'fs';
 import { Readable } from 'stream';
-import crypto from 'crypto';
-import sharp from 'sharp';
+import * as crypto from 'crypto';
+import * as sharp from 'sharp';
 import { OssService } from './oss/oss.service';
 import { getOssService } from '../config/oss';
 import { createRetryHandler } from '../middlewares/upload';
-import { FileCategory, FileType, OssType } from '../types';
+import { CHUNK_SESSION_EXPIRE_TIME, CHUNK_UPLOAD_PREFIX, FileCategory, FileType, OssType } from '../types';
+import { generateId } from '../utils/id.generator';
+import { redisClient } from '../config/redis';
+import { config } from '../config/config';
 
 interface GetFilesParams {
   page: number;
@@ -33,6 +36,19 @@ interface UploadFileData {
   fileType: FileType;
   description?: string;
   category?: string;
+}
+
+// 分块上传会话接口
+interface ChunkUploadSession {
+  uploadId: string;
+  filename: string;
+  fileSize: number;
+  mimeType: string;
+  category: string;
+  totalChunks: number;
+  userId: string;
+  uploadedChunks: number[];
+  createdAt: number; // 时间戳
 }
 
 export class FileService {
@@ -125,17 +141,8 @@ export class FileService {
 
     // 验证文件类型
     const allowedTypes = {
-      [FileType.IMAGE]: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-      [FileType.VIDEO]: [
-        'video/mp4',
-        'video/avi',
-        'video/mov',
-        'video/wmv',
-        'video/quicktime',
-        'video/flv',
-        'video/webm',
-        'video/mkv',
-      ],
+      [FileType.IMAGE]: config.upload.allowedImageTypes,
+      [FileType.VIDEO]: config.upload.allowedVideoTypes,
     };
 
     if (data.fileType && allowedTypes[data.fileType]) {
@@ -559,7 +566,7 @@ export class FileService {
     }
 
     // 生成缩略图
-    await sharp(file.filePath)
+    await sharp.default(file.filePath)
       .resize(width, height, {
         fit: 'cover',
         position: 'center',
@@ -623,17 +630,8 @@ export class FileService {
    */
   private static getAllowedMimeTypes(type: FileType): string[] {
     const types = {
-      [FileType.IMAGE]: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-      [FileType.VIDEO]: [
-        'video/mp4',
-        'video/avi',
-        'video/mov',
-        'video/wmv',
-        'video/quicktime',
-        'video/flv',
-        'video/webm',
-        'video/mkv',
-      ],
+      [FileType.IMAGE]: config.upload.allowedImageTypes,
+      [FileType.VIDEO]: config.upload.allowedVideoTypes,
     };
     return types[type] || types[FileType.IMAGE];
   }
@@ -686,7 +684,283 @@ export class FileService {
 
     return updatedFileRecord;
   }
+
+  /**
+   * 初始化分块上传
+   */
+  static async initChunkUpload(params: {
+    filename: string;
+    fileSize: number;
+    mimeType: string;
+    category: string;
+    totalChunks: number;
+    userId: string;
+  }) {
+
+    const { filename, fileSize, mimeType, category, totalChunks, userId } = params;
+
+    // 生成唯一的上传ID
+    const uploadId = generateId();
+
+    // 创建上传会话对象
+    const session: ChunkUploadSession = {
+      uploadId,
+      filename,
+      fileSize,
+      mimeType,
+      category,
+      totalChunks,
+      userId,
+      uploadedChunks: [],
+      createdAt: Date.now()
+    };
+
+    // 保存会话到Redis
+    const sessionKey = `${CHUNK_UPLOAD_PREFIX}${uploadId}`;
+    await redisClient.setex(
+      sessionKey,
+      CHUNK_SESSION_EXPIRE_TIME,
+      JSON.stringify(session)
+    );
+
+    logger.info('分块上传会话创建成功:', {
+      uploadId,
+      filename,
+      fileSize,
+      totalChunks,
+      userId
+    });
+
+    return {
+      uploadId,
+      uploadUrl: `/api/v1/files/chunk/upload` // 返回完整的API路径
+    };
+  }
+
+  /**
+   * 上传分块
+   */
+  static async uploadChunk(params: {
+    uploadId: string;
+    chunkIndex: number;
+    chunkData: Buffer;
+    userId: string;
+  }) {
+    const { uploadId, chunkIndex, chunkData, userId } = params;
+
+    // 从Redis获取上传会话
+    const sessionKey = `${CHUNK_UPLOAD_PREFIX}${uploadId}`;
+    const sessionStr = await redisClient.get(sessionKey);
+
+    if (!sessionStr) {
+      throw new Error('上传会话不存在或已过期');
+    }
+
+    const session: ChunkUploadSession = JSON.parse(sessionStr);
+
+    // 验证用户权限
+    if (session.userId !== userId) {
+      throw new Error('无权限访问此上传会话');
+    }
+
+    // 验证分块索引
+    if (chunkIndex < 0 || chunkIndex >= session.totalChunks) {
+      throw new Error('无效的分块索引');
+    }
+
+    // 检查分块是否已上传
+    if (session.uploadedChunks.includes(chunkIndex)) {
+      // 分块已上传，直接返回
+      logger.info('分块已存在，跳过上传:', {
+        uploadId,
+        chunkIndex,
+        uploadedChunks: session.uploadedChunks.length,
+        totalChunks: session.totalChunks
+      });
+
+      return {
+        success: true,
+        uploadedChunks: session.uploadedChunks.length,
+        totalChunks: session.totalChunks
+      };
+    }
+
+    // 存储分块数据到临时文件系统（避免在Redis中存储大文件数据）
+    const chunkKey = `${CHUNK_UPLOAD_PREFIX}${uploadId}:chunk:${chunkIndex}`;
+    await redisClient.setex(
+      chunkKey,
+      CHUNK_SESSION_EXPIRE_TIME,
+      chunkData.toString('base64') // 将Buffer转换为base64字符串存储
+    );
+
+    // 更新已上传的分块列表
+    session.uploadedChunks.push(chunkIndex);
+
+    // 保存更新后的会话
+    await redisClient.setex(
+      sessionKey,
+      CHUNK_SESSION_EXPIRE_TIME,
+      JSON.stringify(session)
+    );
+
+    logger.info('分块上传成功:', {
+      uploadId,
+      chunkIndex,
+      chunkSize: chunkData.length,
+      uploadedChunks: session.uploadedChunks.length,
+      totalChunks: session.totalChunks
+    });
+
+    return {
+      success: true,
+      uploadedChunks: session.uploadedChunks.length,
+      totalChunks: session.totalChunks
+    };
+  }
+
+  /**
+   * 完成分块上传
+   */
+  static async completeChunkUpload(params: {
+    uploadId: string;
+    fileId: string;
+    userId: string;
+  }) {
+
+    const { uploadId, fileId, userId } = params;
+
+    // 从Redis获取上传会话
+    const sessionKey = `${CHUNK_UPLOAD_PREFIX}${uploadId}`;
+    const sessionStr = await redisClient.get(sessionKey);
+
+    if (!sessionStr) {
+      throw new Error('上传会话不存在或已过期');
+    }
+
+    const session: ChunkUploadSession = JSON.parse(sessionStr);
+
+    // 验证用户权限
+    if (session.userId !== userId) {
+      throw new Error('无权限访问此上传会话');
+    }
+
+    // 验证所有分块都已上传
+    if (session.uploadedChunks.length !== session.totalChunks) {
+      throw new Error(`分块上传不完整，已上传 ${session.uploadedChunks.length}/${session.totalChunks} 个分块`);
+    }
+
+    try {
+      // 按顺序获取所有分块数据
+      const chunkPromises = [];
+      for (let i = 0; i < session.totalChunks; i++) {
+        const chunkKey = `${CHUNK_UPLOAD_PREFIX}${uploadId}:chunk:${i}`;
+        chunkPromises.push(redisClient.get(chunkKey));
+      }
+
+      const chunkResults = await Promise.all(chunkPromises);
+
+      // 将base64字符串转换回Buffer
+      const chunks = chunkResults.map(result => {
+        if (!result) {
+          throw new Error(`分块数据丢失: ${result}`);
+        }
+        return Buffer.from(result, 'base64');
+      });
+
+      // 合并所有分块
+      const completeBuffer = Buffer.concat(chunks);
+
+      // 验证文件大小
+      if (completeBuffer.length !== session.fileSize) {
+        throw new Error(`文件大小不匹配，期望 ${session.fileSize} 字节，实际 ${completeBuffer.length} 字节`);
+      }
+
+      // 生成文件名和路径
+      const fileExtension = path.extname(session.filename);
+      const uniqueFilename = `${crypto.randomUUID()}${fileExtension}`;
+
+      // 确定文件类型
+      const fileType = this.getFileTypeFromMimeType(session.mimeType);
+
+      // 上传到OSS
+      const ossResult = await this.ossService.uploadFile(
+        completeBuffer,
+        uniqueFilename,
+        session.mimeType,
+        fileType
+      );
+
+      // 保存文件记录到数据库
+      const fileRecord = await File.create({
+        id: fileId,
+        filename: ossResult.key,
+        originalName: session.filename,
+        mimeType: session.mimeType,
+        fileSize: session.fileSize,
+        fileUrl: ossResult.url,
+        filePath: ossResult.key,
+        userId: session.userId,
+        fileType: fileType,
+        category: session.category as FileCategory,
+        ossType: 'minio' as any,
+        isPublic: true,
+        downloadCount: 0
+      });
+
+      // 清理Redis中的上传会话和分块数据
+      const cleanupKeys = [sessionKey];
+      for (let i = 0; i < session.totalChunks; i++) {
+        cleanupKeys.push(`${CHUNK_UPLOAD_PREFIX}${uploadId}:chunk:${i}`);
+      }
+      await redisClient.del(...cleanupKeys);
+
+      logger.info('分块上传完成:', {
+        uploadId,
+        fileId: fileRecord.id,
+        filename: fileRecord.filename,
+        size: fileRecord.fileSize,
+        url: fileRecord.fileUrl
+      });
+
+      return {
+        fileId: fileRecord.id,
+        filename: fileRecord.filename,
+        url: fileRecord.fileUrl,
+        originalName: fileRecord.originalName,
+        mimeType: fileRecord.mimeType,
+        size: fileRecord.fileSize,
+        category: fileRecord.category
+      };
+
+    } catch (error) {
+      // 上传失败时清理Redis数据
+      const cleanupKeys = [sessionKey];
+      for (let i = 0; i < session.totalChunks; i++) {
+        cleanupKeys.push(`${CHUNK_UPLOAD_PREFIX}${uploadId}:chunk:${i}`);
+      }
+      await redisClient.del(...cleanupKeys);
+
+      logger.error('分块上传完成失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 根据MIME类型确定文件类型
+   */
+  private static getFileTypeFromMimeType(mimeType: string): FileType {
+    if (mimeType.startsWith('image/')) {
+      return FileType.IMAGE;
+    } else if (mimeType.startsWith('video/')) {
+      return FileType.VIDEO;
+    } else {
+      // 由于当前FileType只有IMAGE和VIDEO，其他类型默认为IMAGE
+      return FileType.IMAGE;
+    }
+  }
 }
+
+
 
 
 

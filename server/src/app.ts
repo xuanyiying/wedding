@@ -1,6 +1,5 @@
 require('module-alias/register');
 import express from 'express';
-import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
@@ -13,6 +12,13 @@ import { config } from './config/config';
 import { logger } from './utils/logger';
 import { errorHandler } from './middlewares/error';
 import { requestLogger } from './middlewares/request-logger';
+import { 
+  enhancedCors, 
+  preflightHandler, 
+  requestLogger as corsRequestLogger, 
+  securityHeaders, 
+  corsErrorHandler 
+} from './middlewares/cors';
 import { connectDatabase } from './config/database';
 import { connectRedis } from './config/redis';
 import { FSService } from './services/fs.service';
@@ -34,6 +40,15 @@ class App {
   }
 
   private initializeMiddlewares(): void {
+    // 预检请求处理（必须在其他中间件之前）
+    this.app.use(preflightHandler);
+
+    // 增强的CORS配置
+    this.app.use(enhancedCors);
+
+    // 安全头中间件
+    this.app.use(securityHeaders);
+
     // 安全中间件
     this.app.use(helmet({
       crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -47,18 +62,13 @@ class App {
       },
     }));
 
-    // CORS 配置
-    this.app.use(cors({
-      origin: config.cors.origin,
-      credentials: config.cors.credentials,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    }));
-
     // 压缩响应
     this.app.use(compression());
 
-    // 请求日志
+    // 增强的请求日志
+    this.app.use(corsRequestLogger);
+
+    // 原有的请求日志
     if (config.nodeEnv === 'development') {
       this.app.use(morgan('dev'));
     } else {
@@ -120,6 +130,9 @@ class App {
   }
 
   private initializeErrorHandling(): void {
+    // CORS错误处理
+    this.app.use(corsErrorHandler);
+    
     // 全局错误处理
     this.app.use(errorHandler);
   }

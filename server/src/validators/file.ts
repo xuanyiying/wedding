@@ -98,4 +98,32 @@ export const fileValidators = {
       height: Joi.number().integer().min(50).max(1000).default(200),
     }),
   },
+
+  // 分块上传相关验证器
+  // 初始化分块上传
+  initChunkUpload: {
+    body: Joi.object({
+      filename: Joi.string().trim().min(1).max(255).required(),
+      fileSize: Joi.number().integer().min(1).max(5 * 1024 * 1024 * 1024).required(), // 最大5GB
+      mimeType: Joi.string().trim().min(1).max(100).required(),
+      category: Joi.string().valid('avatar', 'cover', 'event', 'work', 'profile', 'other').required(),
+      totalChunks: Joi.number().integer().min(1).max(1000).required(), // 最多1000个分块
+    }),
+  },
+
+  // 上传分块
+  uploadChunk: {
+    body: Joi.object({
+      uploadId: Joi.string().uuid().required(),
+      chunkIndex: Joi.string().pattern(/^\d+$/).required(), // 字符串形式的数字
+    }),
+  },
+
+  // 完成分块上传
+  completeChunkUpload: {
+    body: Joi.object({
+      uploadId: Joi.string().uuid().required(),
+      fileId: Joi.string().required(),
+    }),
+  },
 };

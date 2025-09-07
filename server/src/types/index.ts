@@ -149,3 +149,8 @@ export enum FileCategory {
   FAVICON = 'favicon',
   LOGO = 'logo',
 }
+
+// Redis键前缀
+export const CHUNK_UPLOAD_PREFIX = 'chunk_upload_session:';
+// 会话过期时间（秒）
+export const CHUNK_SESSION_EXPIRE_TIME = 24 * 60 * 60; // 24小时

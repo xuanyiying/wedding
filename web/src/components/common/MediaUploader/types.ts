@@ -88,6 +88,9 @@ export interface MediaUploaderCallbacks {
   onFileProgress?: (fileId: string, progress: DirectUploadProgress) => void;
   onUploadSuccess?: (results: DirectUploadResult[]) => void;
   onUploadError?: (error: Error, fileId?: string) => void;
+  onUploadPause?: (fileId: string) => void;
+  onUploadResume?: (fileId: string) => void;
+  onUploadCancel?: (fileId: string) => void;
   onFileRemove?: (fileId: string) => void;
   onPreview?: (file: MediaFileItem) => void;
   onChange?: (files: MediaFileItem[]) => void;
@@ -165,4 +168,39 @@ export type BatchActionType = 'retry' | 'remove' | 'cancel';
 export interface BatchActionData {
   action: BatchActionType;
   fileIds: string[];
+}
+
+// 上传队列管理
+export interface UploadQueue {
+  items: UploadQueueItem[];
+  maxConcurrent: number;
+  running: number;
+}
+
+// 网络状态
+export interface NetworkStatus {
+  online: boolean;
+  speed: number; // bytes per second
+  latency: number; // milliseconds
+}
+
+// 上传统计
+export interface UploadStats {
+  totalFiles: number;
+  totalSize: number;
+  uploadedFiles: number;
+  uploadedSize: number;
+  failedFiles: number;
+  averageSpeed: number;
+  totalTime: number;
+}
+
+// 错误信息
+export interface UploadError {
+  code: string;
+  message: string;
+  file?: File;
+  fileId?: string;
+  retryable: boolean;
+  timestamp: number;
 }

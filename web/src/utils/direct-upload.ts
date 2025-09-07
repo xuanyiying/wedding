@@ -572,8 +572,10 @@ export function formatUploadSpeed(bytesPerSecond: number): string {
  * 工具函数：验证文件类型
  */
 export function validateFileType(file: File, fileType: 'video' | 'image'): boolean {
-  const typeConfig = {
-    video: [
+  // 从环境变量获取支持的文件类型，如果没有配置则使用默认值
+  const supportedVideoTypes = import.meta.env.VITE_ALLOWED_VIDEO_TYPES
+    ? import.meta.env.VITE_ALLOWED_VIDEO_TYPES.split(',').map((type: string) => type.trim())
+    : [
       'video/mp4',
       'video/avi',
       'video/mov',
@@ -582,8 +584,11 @@ export function validateFileType(file: File, fileType: 'video' | 'image'): boole
       'video/flv',
       'video/webm',
       'video/mkv'
-    ],
-    image: [
+    ];
+
+  const supportedImageTypes = import.meta.env.VITE_ALLOWED_IMAGE_TYPES
+    ? import.meta.env.VITE_ALLOWED_IMAGE_TYPES.split(',').map((type: string) => type.trim())
+    : [
       'image/jpeg',
       'image/jpg',
       'image/png',
@@ -591,7 +596,11 @@ export function validateFileType(file: File, fileType: 'video' | 'image'): boole
       'image/webp',
       'image/bmp',
       'image/tiff'
-    ]
+    ];
+
+  const typeConfig = {
+    video: supportedVideoTypes,
+    image: supportedImageTypes
   };
 
   return typeConfig[fileType].includes(file.type);

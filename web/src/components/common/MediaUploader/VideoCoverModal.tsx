@@ -5,6 +5,8 @@ import type { VideoCoverSelection } from './types';
 import { VideoFrameExtractor, type VideoFrame } from '../../../utils/video-frame-extractor';
 import './VideoCoverModal.scss';
 import { useAppSelector } from '../../../store/hooks';
+import { SUPPORTED_IMAGE_TYPES } from './FileValidator';
+
 interface VideoCoverModalProps {
   visible: boolean;
   videoFile: File | null;
@@ -676,13 +678,12 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
         className="album-select-modal"
       >
         <Upload.Dragger
-          accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+          accept={SUPPORTED_IMAGE_TYPES.join(',')}
           beforeUpload={(file) => {
             try {
               // 验证文件类型
-              const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-              if (!validTypes.includes(file.type)) {
-                message.error('不支持的文件格式，请上传 JPG、PNG、GIF 或 WebP 格式的图片');
+              if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) {
+                message.error('不支持的文件格式，请上传支持的图片格式');
                 return false;
               }
 

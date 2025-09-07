@@ -369,3 +369,121 @@ export const uploadVideoCover = async (req: AuthenticatedRequest, res: Response,
     next(error);
   }
 }
+
+/**
+ * 初始化分块上传
+ */
+export const initChunkUpload = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { filename, fileSize, mimeType, category, totalChunks } = req.body;
+    const userId = req.user!.id;
+
+    console.log('📥 初始化分块上传:', {
+      userId,
+      filename,
+      fileSize,
+      mimeType,
+      category,
+      totalChunks
+    });
+
+    const result = await FileService.initChunkUpload({
+      filename,
+      fileSize,
+      mimeType,
+      category,
+      totalChunks,
+      userId
+    });
+
+    console.log('✅ 分块上传初始化成功:', {
+      uploadId: result.uploadId,
+      uploadUrl: result.uploadUrl
+    });
+
+    Resp.success(res, result, '分块上传初始化成功');
+  } catch (error) {
+    logger.error('初始化分块上传失败:', error);
+    next(error);
+  }
+};
+
+/**
+ * 上传分块
+ */
+export const uploadChunk = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { uploadId, chunkIndex } = req.body;
+    const userId = req.user!.id;
+
+    if (!req.file) {
+      Resp.badRequest(res, '请选择要上传的分块文件');
+      return;
+    }
+
+    console.log('📤 接收分块上传请求:', {
+      userId,
+      uploadId,
+      chunkIndex,
+      hasFile: !!req.file,
+      fileSize: req.file?.size,
+      fileName: req.file?.originalname,
+      mimeType: req.file?.mimetype,
+      headers: {
+        contentType: req.headers['content-type'],
+        contentLength: req.headers['content-length']
+      }
+    });
+
+    const result = await FileService.uploadChunk({
+      uploadId,
+      chunkIndex: parseInt(chunkIndex),
+      chunkData: req.file.buffer,
+      userId
+    });
+
+    console.log('✅ 分块上传成功:', {
+      uploadId,
+      chunkIndex,
+      success: result.success
+    });
+
+    Resp.success(res, result, '分块上传成功');
+  } catch (error) {
+    logger.error('上传分块失败:', error);
+    next(error);
+  }
+};
+
+/**
+ * 完成分块上传
+ */
+export const completeChunkUpload = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { uploadId, fileId } = req.body;
+    const userId = req.user!.id;
+
+    console.log('🔄 完成分块上传:', {
+      userId,
+      uploadId,
+      fileId
+    });
+
+    const result = await FileService.completeChunkUpload({
+      uploadId,
+      fileId,
+      userId
+    });
+
+    console.log('✅ 分块上传完成:', {
+      fileId: result.fileId,
+      filename: result.filename,
+      url: result.url
+    });
+
+    Resp.success(res, result, '分块上传完成');
+  } catch (error) {
+    logger.error('完成分块上传失败:', error);
+    next(error);
+  }
+};

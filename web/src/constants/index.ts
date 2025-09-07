@@ -9,9 +9,15 @@ export const MAX_PAGE_SIZE = 100;
 
 // 文件上传常量
 export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-export const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg'];
-export const ALLOWED_DOCUMENT_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+export const ALLOWED_IMAGE_TYPES = import.meta.env.VITE_ALLOWED_IMAGE_TYPES
+  ? import.meta.env.VITE_ALLOWED_IMAGE_TYPES.split(',').map((type: string) => type.trim())
+  : ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+export const ALLOWED_VIDEO_TYPES = import.meta.env.VITE_ALLOWED_VIDEO_TYPES
+  ? import.meta.env.VITE_ALLOWED_VIDEO_TYPES.split(',').map((type: string) => type.trim())
+  : ['video/mp4', 'video/webm', 'video/ogg'];
+export const ALLOWED_DOCUMENT_TYPES = import.meta.env.VITE_ALLOWED_DOCUMENT_TYPES
+  ? import.meta.env.VITE_ALLOWED_DOCUMENT_TYPES.split(',').map((type: string) => type.trim())
+  : ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
 
 // 用户角色常量
 export const USER_ROLES = {
@@ -178,10 +184,18 @@ export const PRICE_RANGES = [
   { min: 3000, max: 5000, label: '3000-5000元' },
   { min: 5000, max: 99999, label: '5000元以上' },
 ] as const;
-export const PRICE_RANGE_OPTIONS = PRICE_RANGES.map((range) => ({
-  value: `${range.min}-${range.max}`,
-  label: range.label,
-}));
+
+interface PriceRange {
+  min: number;
+  max: number;
+  label: string;
+}
+
+export const PRICE_RANGE_OPTIONS: Array<{ value: string; label: string }> =
+  PRICE_RANGES.map((range: PriceRange) => ({
+    value: `${range.min}-${range.max}`,
+    label: range.label,
+  }));
 // 动画持续时间常量
 export const ANIMATION_DURATION = {
   FAST: 200,

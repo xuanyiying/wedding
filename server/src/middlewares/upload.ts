@@ -48,6 +48,13 @@ const storage = multer.diskStorage({
 
 // 文件过滤器
 const fileFilter = (_: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  console.log('🔍 文件类型检查:', {
+    fieldname: file.fieldname,
+    originalname: file.originalname,
+    mimetype: file.mimetype,
+    size: file.size
+  });
+
   // 允许的文件类型
   const allowedMimeTypes = [
     // 图片
@@ -62,6 +69,7 @@ const fileFilter = (_: any, file: Express.Multer.File, cb: multer.FileFilterCall
     'video/mov',
     'video/wmv',
     'video/quicktime',
+    'video/x-msvideo', // AVI的另一种MIME类型
     // 文档
     'application/pdf',
     'application/msword',
@@ -74,11 +82,15 @@ const fileFilter = (_: any, file: Express.Multer.File, cb: multer.FileFilterCall
     'text/plain',
     'application/zip',
     'application/x-rar-compressed',
+    // 分块上传时可能出现的类型
+    'application/octet-stream', // 二进制数据
   ];
 
   if (allowedMimeTypes.includes(file.mimetype)) {
+    console.log('✅ 文件类型验证通过:', file.mimetype);
     cb(null, true);
   } else {
+    console.error('❌ 不支持的文件类型:', file.mimetype);
     cb(new Error(`不支持的文件类型: ${file.mimetype}`));
   }
 };

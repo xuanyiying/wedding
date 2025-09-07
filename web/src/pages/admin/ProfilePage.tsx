@@ -310,8 +310,6 @@ const ProfilePage: React.FC = () => {
           downloadCount: mediaFile.file.downloadCount,
           metadata: mediaFile.file.metadata,
           category: mediaFile.file.category,
-          // 移除嵌套的file对象
-          file: undefined
         };
       }
       return mediaFile;
@@ -334,7 +332,7 @@ const ProfilePage: React.FC = () => {
       if (userData?.id) {
         loadMediaFiles(userData.id);
       }
-    } catch (error) {
+    } catch (error: any) {
       message.error('加载用户信息失败');
     } finally {
       setLoading(false);
@@ -400,7 +398,7 @@ const ProfilePage: React.FC = () => {
   const handleOnRemoveMediaFile = async (fileId: string) => {
     try {
       // 调用后端API删除文件
-      await profileService.deleteMediaProfile(user?.id || '', fileId);
+      await profileService.deleteMediaProfile(fileId);
       // 更新本地状态
       setMediaFiles(prev => prev.filter(f => f.id !== fileId));
       message.success('删除成功');
@@ -440,7 +438,7 @@ const ProfilePage: React.FC = () => {
               mediaOrder: index,
             }));
 
-          await profileService.updateMediaProfilesOrder(currentUser.id, { orderData: sortData });
+          await profileService.updateMediaProfilesOrder({ orderData: sortData });
         } catch (error) {
           console.error('保存排序失败:', error);
         }

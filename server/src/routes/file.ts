@@ -12,7 +12,10 @@ import {
   downloadFile,
   generateThumbnail,
   getUserMedia,
-  uploadVideoCover
+  uploadVideoCover,
+  initChunkUpload,
+  uploadChunk,
+  completeChunkUpload
 } from '../controllers/file.controller';
 import { authMiddleware } from '../middlewares/auth';
 import { uploadMiddleware, uploadWithTimeout, handleUploadError } from '../middlewares/upload';
@@ -45,7 +48,7 @@ router.post(
 
 // 上传视频封面picture
 router.post(
-  '/files/:id/cover',
+  '/:id/cover',
   authMiddleware,
   uploadVideoCover,
 );
@@ -79,5 +82,10 @@ router.post('/:id/thumbnail', authMiddleware, validateRequest(fileValidators.gen
 
 // 获取用户媒体文件
 router.get('/user/:userId/:type', getUserMedia);
+
+// 分块上传相关路由
+router.post('/chunk/init', authMiddleware, validateRequest(fileValidators.initChunkUpload), initChunkUpload);
+router.post('/chunk/upload', authMiddleware, uploadMiddleware.single('chunk'), validateRequest(fileValidators.uploadChunk), uploadChunk);
+router.post('/chunk/complete', authMiddleware, validateRequest(fileValidators.completeChunkUpload), completeChunkUpload);
 
 export default router;

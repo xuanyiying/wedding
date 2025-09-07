@@ -26,22 +26,29 @@ function extractTokenFromHeader(req: Request): string | null {
   const authHeader = req.headers.authorization || req.headers.Authorization;
   
   console.log('🔍 提取令牌:', { 
+    url: req.url,
+    method: req.method,
     authHeader: authHeader ? `${String(authHeader).substring(0, 20)}...` : 'undefined',
     authHeaderType: typeof authHeader,
-    allHeaders: Object.keys(req.headers)
+    contentType: req.headers['content-type'],
+    userAgent: req.headers['user-agent']?.substring(0, 50)
   });
 
   if (!authHeader) {
+    console.log('❌ 未找到Authorization头');
     return null;
   }
 
   // 支持 "Bearer token" 格式
   const headerStr = String(authHeader);
   if (headerStr.startsWith('Bearer ')) {
-    return headerStr.substring(7);
+    const token = headerStr.substring(7);
+    console.log('✅ 成功提取Bearer token:', token.substring(0, 10) + '...');
+    return token;
   }
 
   // 直接返回 token
+  console.log('✅ 提取直接token:', headerStr.substring(0, 10) + '...');
   return headerStr;
 }
 
