@@ -327,7 +327,7 @@ initialize_minio_buckets() {
     fi
     
     # 创建主要存储桶
-    local buckets=("wedding-prod" "wedding-media-prod" "documents" "images")
+    local buckets=( "wedding-media-prod")
     
     for bucket in "${buckets[@]}"; do
         if ! docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" exec -T minio mc ls "local/$bucket" >/dev/null 2>&1; then
