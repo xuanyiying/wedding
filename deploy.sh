@@ -31,8 +31,8 @@ show_help() {
     echo "  status        查看状态"
     echo ""
     echo -e "${YELLOW}部署命令:${NC}"
-    echo "  deploy        完整部署（推荐）"
-    echo "  redeploy       重新构建并部署"
+    echo "  deploy        智能部署（检测变化后部署）"
+    echo "  redeploy      强制重新构建并部署"
     echo ""
     echo -e "${BLUE}管理命令:${NC}"
     echo "  logs [服务]   查看日志"
@@ -42,14 +42,20 @@ show_help() {
     echo "  diagnose      诊断nginx配置问题"
     echo ""
     echo -e "${YELLOW}选项:${NC}"
-    echo "  --services <服务列表>  指定要构建和部署的服务（web,api）"
+    echo "  --services <服务列表>  指定要构建和部署的服务（web,api,nginx）"
+    echo ""
+    echo -e "${GREEN}部署模式说明:${NC}"
+    echo "  deploy        - 智能检测代码变化，无变化时快速重启"
+    echo "  redeploy      - 强制重新构建指定服务（或全部服务）"
     echo ""
     echo "示例:"
-    echo "  ./deploy.sh deploy                     # 完整部署"
-    echo "  ./deploy.sh deploy --services web      # 只部署web服务"
-    echo "  ./deploy.sh deploy --services web,api  # 部署web和api服务"
-    echo "  ./deploy.sh logs api                   # 查看API日志"
-    echo "  ./deploy.sh diagnose                   # 诊断文件上传问题"
+    echo "  ./deploy.sh deploy                        # 智能部署（推荐）"
+    echo "  ./deploy.sh redeploy                      # 强制重新构建所有服务"
+    echo "  ./deploy.sh redeploy --services web       # 只重新构建web服务"
+    echo "  ./deploy.sh redeploy --services web,api   # 重新构建web和api服务"
+    echo "  ./deploy.sh deploy --services web         # 智能部署，仅构建web服务（如有变化）"
+    echo "  ./deploy.sh logs api                      # 查看API日志"
+    echo "  ./deploy.sh diagnose                      # 诊断nginx配置问题"
     echo ""
     echo -e "${GREEN}Swagger文档:${NC} http://YOUR_IP/api/v1/docs"
     echo ""
@@ -708,6 +714,13 @@ build_services() {
     log_info "构建指定服务: $services"
     cd "$PROJECT_ROOT"
     
+    # 设置构建参数
+    local build_args=""
+    if [[ "$FORCE_REBUILD" == "true" ]]; then
+        build_args="--no-cache --pull"
+        log_info "强制重新构建模式（无缓存）"
+    fi
+    
     # 解析服务列表
     IFS=',' read -ra SERVICE_ARRAY <<< "$services"
     
@@ -728,36 +741,40 @@ build_services() {
                 # 构建Web镜像
                 if [[ -f "web/Dockerfile" ]]; then
                     log_info "构建Web镜像..."
-                    docker build -t wedding-web:$(detect_environment)-latest web/ || {
+                    docker build $build_args -t wedding-web:$(detect_environment)-latest web/ || {
                         log_error "Web镜像构建失败"
                         return 1
                     }
+                    log_success "Web镜像构建完成"
                 fi
                 ;;
             api)
                 # 构建API镜像
                 if [[ -f "server/Dockerfile" ]]; then
                     log_info "构建API镜像..."
-                    docker build -t wedding-api:$(detect_environment)-latest server/ || {
+                    docker build $build_args -t wedding-api:$(detect_environment)-latest server/ || {
                         log_error "API镜像构建失败"
                         return 1
                     }
+                    log_success "API镜像构建完成"
                 fi
                 ;;
             nginx)
                 # 构建Nginx镜像
                 if [[ -f "deployment/docker/nginx/Dockerfile" ]]; then
                     log_info "构建Nginx镜像..."
-                    docker build -t wedding-nginx:$(detect_environment)-latest -f deployment/docker/nginx/Dockerfile . || {
+                    docker build $build_args -t wedding-nginx:$(detect_environment)-latest -f deployment/docker/nginx/Dockerfile . || {
                         log_error "Nginx镜像构建失败"
                         return 1
                     }
+                    log_success "Nginx镜像构建完成"
                 elif [[ -f "deployment/docker/nginx/nginx.Dockerfile" ]]; then
                     log_info "构建Nginx镜像..."
-                    docker build -t wedding-nginx:$(detect_environment)-latest -f deployment/docker/nginx/nginx.Dockerfile . || {
+                    docker build $build_args -t wedding-nginx:$(detect_environment)-latest -f deployment/docker/nginx/nginx.Dockerfile . || {
                         log_error "Nginx镜像构建失败"
                         return 1
                     }
+                    log_success "Nginx镜像构建完成"
                 else
                     log_warning "未找到Nginx Dockerfile，跳过构建"
                 fi
@@ -777,6 +794,14 @@ smart_deploy() {
     
     # 预检查
     pre_deploy_check
+    
+    # 如果指定了服务，强制执行完整部署
+    if [[ -n "$SERVICES_TO_BUILD" ]]; then
+        log_info "指定了构建服务 ($SERVICES_TO_BUILD)，执行完整部署..."
+        execute_full_deploy
+        log_success "智能部署完成！"
+        return $?
+    fi
     
     # 检查代码和配置变化
     local change_status
@@ -885,9 +910,7 @@ execute_full_deploy() {
     if [[ -n "$SERVICES_TO_BUILD" ]]; then
         build_services "$SERVICES_TO_BUILD"
     else
-        log_info "未指定构建服务，使用Docker Compose构建"
-        cd "$PROJECT_ROOT"
-        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build --no-cache
+        log_info "未指定构建服务，跳过构建步骤"
     fi
     
     # 启动服务
@@ -933,6 +956,62 @@ show_deployment_result() {
     echo ""
 }
 
+# 清理指定服务的资源
+clean_specific_services() {
+    local services="$1"
+    
+    if [[ -z "$services" ]]; then
+        log_warning "未指定服务，跳过清理"
+        return 0
+    fi
+    
+    log_info "清理指定服务资源: $services"
+    
+    # 解析服务列表
+    IFS=',' read -ra SERVICE_ARRAY <<< "$services"
+    
+    for service in "${SERVICE_ARRAY[@]}"; do
+        case $service in
+            web)
+                log_info "清理Web服务资源..."
+                # 停止并删除Web容器
+                docker stop wedding-web-$(detect_environment) 2>/dev/null || true
+                docker rm wedding-web-$(detect_environment) 2>/dev/null || true
+                # 删除Web镜像
+                docker rmi wedding-web:$(detect_environment)-latest 2>/dev/null || true
+                # 清理构建缓存
+                if [[ -d "web/dist" ]]; then
+                    rm -rf web/dist/*
+                fi
+                if [[ -d "web/node_modules/.vite" ]]; then
+                    rm -rf web/node_modules/.vite
+                fi
+                ;;
+            api)
+                log_info "清理API服务资源..."
+                # 停止并删除API容器
+                docker stop wedding-api-$(detect_environment) 2>/dev/null || true
+                docker rm wedding-api-$(detect_environment) 2>/dev/null || true
+                # 删除API镜像
+                docker rmi wedding-api:$(detect_environment)-latest 2>/dev/null || true
+                ;;
+            nginx)
+                log_info "清理Nginx服务资源..."
+                # 停止并删除Nginx容器
+                docker stop wedding-nginx-$(detect_environment) 2>/dev/null || true
+                docker rm wedding-nginx-$(detect_environment) 2>/dev/null || true
+                # 删除Nginx镜像（如果存在自定义镜像）
+                docker rmi wedding-nginx:$(detect_environment)-latest 2>/dev/null || true
+                ;;
+            *)
+                log_warning "未知服务: $service，跳过清理"
+                ;;
+        esac
+    done
+    
+    log_success "指定服务资源清理完成"
+}
+
 # 重新构建部署（完全清理后重新部署）
 redeploy() {
     log_info "开始重新构建并部署..."
@@ -940,8 +1019,16 @@ redeploy() {
     # 停止服务
     stop_services 2>/dev/null || true
     
-    # 清理资源，包括 wedding-web 和 wedding-api 镜像和容器
-    clean_resources
+    # 清理指定服务的资源
+    if [[ -n "$SERVICES_TO_BUILD" ]]; then
+        clean_specific_services "$SERVICES_TO_BUILD"
+    else
+        # 清理所有资源
+        clean_resources
+    fi
+    
+    # 强制设置构建标志，确保重新构建
+    FORCE_REBUILD=true
     
     # 执行完整部署
     execute_full_deploy
