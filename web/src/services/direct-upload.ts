@@ -30,7 +30,7 @@ export class DirectUploadService {
   /**
    * 上传单个文件
    */
-  async uploadFile(file: File, fileType: FileType, category?: 'avatar' | 'work' | 'event' | 'profile' | 'other'): Promise<DirectUploadResult> {
+  async uploadFile(file: File, fileType: FileType, category?: "other" | "avatar" | "work" | "event" | "profile" | "cover" | "favicon" | "logo"): Promise<DirectUploadResult> {
     const config: DirectUploadConfig = {
       fileType: this.mapFileType(fileType),
       category: category || 'other',
@@ -47,7 +47,7 @@ export class DirectUploadService {
     const results: DirectUploadResult[] = [];
     const maxConcurrent = 3; // 最大并发数
     const delay = 500; // 请求间隔（毫秒）
-    
+
     for (let i = 0; i < files.length; i += maxConcurrent) {
       const batch = files.slice(i, i + maxConcurrent);
       const batchPromises = batch.map(async (file) => {
@@ -59,10 +59,10 @@ export class DirectUploadService {
         const uploader = new DirectUploader(file, config);
         return uploader.upload();
       });
-      
+
       const batchResults = await Promise.all(batchPromises);
       results.push(...batchResults);
-      
+
       // 如果不是最后一批，添加延迟
       if (i + maxConcurrent < files.length) {
         await new Promise(resolve => setTimeout(resolve, delay));
@@ -91,7 +91,7 @@ export class DirectUploadService {
     const results: DirectUploadResult[] = [];
     const maxConcurrent = 3; // 最大并发数
     const delay = 500; // 请求间隔（毫秒）
-    
+
     for (let i = 0; i < files.length; i += maxConcurrent) {
       const batch = files.slice(i, i + maxConcurrent);
       const batchPromises = batch.map(async (file) => {
@@ -103,10 +103,10 @@ export class DirectUploadService {
         const uploader = new DirectUploader(file, config);
         return uploader.upload();
       });
-      
+
       const batchResults = await Promise.all(batchPromises);
       results.push(...batchResults);
-      
+
       // 如果不是最后一批，添加延迟
       if (i + maxConcurrent < files.length) {
         await new Promise(resolve => setTimeout(resolve, delay));
@@ -135,7 +135,7 @@ export class DirectUploadService {
     const results: DirectUploadResult[] = [];
     const maxConcurrent = 3; // 最大并发数
     const delay = 500; // 请求间隔（毫秒）
-    
+
     for (let i = 0; i < files.length; i += maxConcurrent) {
       const batch = files.slice(i, i + maxConcurrent);
       const batchPromises = batch.map(async (file) => {
@@ -148,10 +148,10 @@ export class DirectUploadService {
         const uploader = new DirectUploader(file, config);
         return uploader.upload();
       });
-      
+
       const batchResults = await Promise.all(batchPromises);
       results.push(...batchResults);
-      
+
       // 如果不是最后一批，添加延迟
       if (i + maxConcurrent < files.length) {
         await new Promise(resolve => setTimeout(resolve, delay));
