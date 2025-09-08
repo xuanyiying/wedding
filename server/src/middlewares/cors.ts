@@ -5,32 +5,40 @@
 
 import { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import { config } from '../config/config';
+
+// 在服务启动时计算一次允许的源
+const allowedOrigins = config.cors.origin
+  ? (Array.isArray(config.cors.origin)
+    ? config.cors.origin
+    : config.cors.origin.split(',').map(o => o.trim()))
+  : ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173', 'http://127.0.0.1:3000'];
+
+// 开发环境下，额外允许所有来源，便于调试
+if (process.env.NODE_ENV === 'development') {
+  // 使用 Set 来避免重复
+  const originSet = new Set(allowedOrigins);
+  originSet.add('*'); // 添加通配符以允许所有来源
+}
 
 // CORS配置选项
 const corsOptions: cors.CorsOptions = {
   origin: function (origin, callback) {
-    // 从环境变量解析多个源
-    const envOrigins = process.env.CORS_ORIGIN
-      ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
-      : ['http://' + process.env.SERVER_HOST + ':80', 'http://' + process.env.SERVER_HOST + ':3000'];
-
-    // 允许的源列表
-    const allowedOrigins = [process.env.FRONTEND_URL, process.env.CLIENT_URL, ...envOrigins].filter(Boolean);
-
-    // 开发环境允许所有源
+    // 开发环境始终允许
     if (process.env.NODE_ENV === 'development') {
       return callback(null, true);
     }
 
-    // 生产环境检查源 - 允许同源请求和undefined origin
-    if (!origin || allowedOrigins.includes(origin)) {
+    // 生产环境检查源
+    // 允许列表中的源或服务器到服务器的请求（origin为undefined）
+    if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       console.warn('🚫 CORS blocked origin:', origin, 'Allowed origins:', allowedOrigins);
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true,
+  credentials: config.cors.credentials,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: [
     'Origin',
@@ -43,15 +51,31 @@ const corsOptions: cors.CorsOptions = {
     'X-Chunk-Index',
     'X-File-ID',
     'X-Upload-ID',
+    // 添加在Nginx配置中看到的额外头部
+    'DNT',
+    'User-Agent',
+    'If-Modified-Since',
+    'Range',
+    'X-Request-ID',
+    'X-External-Host',
+    'X-External-Proto',
   ],
-  exposedHeaders: ['Content-Length', 'Content-Range', 'X-Upload-Progress', 'X-Upload-Status'],
+  exposedHeaders: [
+    'Content-Length',
+    'Content-Range',
+    'X-Upload-Progress',
+    'X-Upload-Status',
+    // 添加在Nginx配置中看到的额外头部
+    'X-Request-ID',
+    'X-Cache-Status',
+    'ETag',
+  ],
   maxAge: 86400, // 24小时预检缓存
 };
 
-/**
- * 增强的CORS中间件
- */
-export const enhancedCors = cors(corsOptions);
+const corsMiddleware = cors(corsOptions);
+
+export default corsMiddleware;
 
 /**
  * 预检请求处理中间件

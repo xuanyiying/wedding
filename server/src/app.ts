@@ -12,8 +12,7 @@ import { config } from './config/config';
 import { logger } from './utils/logger';
 import { errorHandler } from './middlewares/error';
 import { requestLogger } from './middlewares/request-logger';
-import { 
-  enhancedCors, 
+import enhancedCors,{ 
   preflightHandler, 
   requestLogger as corsRequestLogger, 
   securityHeaders, 

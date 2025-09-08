@@ -117,7 +117,7 @@ validate_env_variables() {
     source "$PROJECT_ROOT/.env"
     
     # 检查必需的环境变量
-    local required_vars=("SERVER_HOST" "MYSQL_PASSWORD" "REDIS_PASSWORD" "JWT_SECRET" "OSS_ACCESS_KEY" "OSS_SECRET_KEY")
+    local required_vars=("SERVER_HOST" "MYSQL_PASSWORD" "REDIS_PASSWORD" "JWT_SECRET" "OSS_ACCESS_KEY" "OSS_SECRET_KEY","CORS_ORIGIN")
     local missing_vars=()
     
     for var in "${required_vars[@]}"; do
