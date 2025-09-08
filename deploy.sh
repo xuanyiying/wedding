@@ -81,7 +81,7 @@ detect_environment() {
 # 获取配置文件路径
 get_config_files() {
     local env=$(detect_environment)
-    COMPOSE_FILE="$PROJECT_ROOT/docker-compose.yml"
+    COMPOSE_FILE="$PROJECT_ROOT/docker-compose.env.yml"
     if [[ "$env" == "development" ]] || [[ "$env" == "dev" ]]; then
         ENV_FILE="$PROJECT_ROOT/deployment/environments/.env.dev"
     elif [[ "$env" == "test" ]]; then
@@ -117,7 +117,7 @@ validate_env_variables() {
     source "$PROJECT_ROOT/.env"
     
     # 检查必需的环境变量
-    local required_vars=("SERVER_HOST" "MYSQL_PASSWORD" "REDIS_PASSWORD" "JWT_SECRET" "OSS_ACCESS_KEY" "OSS_SECRET_KEY","CORS_ORIGIN")
+    local required_vars=("SERVER_HOST" "MYSQL_PASSWORD" "REDIS_PASSWORD" "JWT_SECRET" "OSS_ACCESS_KEY" "OSS_SECRET_KEY" "CORS_ORIGIN")
     local missing_vars=()
     
     for var in "${required_vars[@]}"; do

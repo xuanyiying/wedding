@@ -55,7 +55,7 @@ export const uploadFile = async (req: AuthenticatedRequest, res: Response, next:
     const responseData = {
       fileId: result.id,
       filename: result.filename,
-      url: result.fileUrl,
+      fileUrl: result.fileUrl,
       originalName: result.originalName,
       mimeType: result.mimeType,
       size: result.fileSize,
@@ -98,7 +98,7 @@ export const batchUploadFiles = async (req: AuthenticatedRequest, res: Response,
       success: results.success.map((result) => ({
         fileId: result.id,
         filename: result.filename,
-        url: result.fileUrl,
+        fileUrl: result.fileUrl,
         originalName: result.originalName,
         mimeType: result.mimeType,
         size: result.fileSize,
