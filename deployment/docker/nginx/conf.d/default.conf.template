@@ -71,6 +71,7 @@ server {
         limit_conn conn_limit 20;
 
         # 直接传递路径，不重写
+        client_max_body_size 500M;
 
         # 代理配置
         proxy_pass http://api_backend;

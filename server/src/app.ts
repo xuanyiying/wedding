@@ -91,9 +91,9 @@ class App {
     // });
     // this.app.use(limiter);
 
-    // 解析请求体 - 增加到100MB以支持大文件上传
-    this.app.use(express.json({ limit: '200mb' }));
-    this.app.use(express.urlencoded({ extended: true, limit: '100mb' }));
+    // 解析请求体 - 增加到500MB以支持大文件上传
+    this.app.use(express.json({ limit: '500mb' }));
+    this.app.use(express.urlencoded({ extended: true, limit: '500mb' }));
 
     // 静态文件服务
     this.app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

@@ -175,7 +175,7 @@ export const config: Config = {
 
   upload: {
     dir: getEnvVar('UPLOAD_DIR', 'uploads'),
-    maxFileSize: getEnvNumber('MAX_FILE_SIZE', 104857600), // 100MB (增加到100MB)
+    maxFileSize: getEnvNumber('MAX_FILE_SIZE', 524288000), // 500MB (支持大文件上传)
     allowedImageTypes: getEnvArray('ALLOWED_IMAGE_TYPES', ['image/jpeg', 'image/png', 'image/gif', 'image/webp']),
     allowedVideoTypes: getEnvArray('ALLOWED_VIDEO_TYPES', ['video/mp4', 'video/avi', 'video/mov', 'video/wmv']),
     allowedAudioTypes: getEnvArray('ALLOWED_AUDIO_TYPES', ['audio/mp3', 'audio/wav', 'audio/aac']),
@@ -219,7 +219,7 @@ export const config: Config = {
     region: getEnvVar('OSS_REGION', 'us-east-1'),
     accessKey: getEnvVar('OSS_ACCESS_KEY', 'ossadmin'),
     secretKey: getEnvVar('OSS_SECRET_KEY', 'osspassword'),
-    bucket: getEnvVar('OSS_BUCKET', 'wedding-prod'),
+    bucket: getEnvVar('OSS_BUCKET', 'wedding-media-prod'),
     publicEndpoint: getEnvVar('OSS_PUBLIC_ENDPOINT'),
     useSSL: getEnvBoolean('OSS_USE_SSL', false),
     pathStyle: getEnvBoolean('OSS_PATH_STYLE', true),

@@ -72,7 +72,7 @@ services:
       - OSS_PUBLIC_ENDPOINT=${OSS_PUBLIC_ENDPOINT:-http://localhost:9000}
       - OSS_ACCESS_KEY=${OSS_ACCESS_KEY:-wedding_minio_access}
       - OSS_SECRET_KEY=${OSS_SECRET_KEY:-M1n10_Pr0d_S3cr3t_K3y_2025!}
-      - OSS_BUCKET=${OSS_BUCKET:-wedding-prod}
+      - OSS_BUCKET=${OSS_BUCKET:-wedding-media-prod}
       - OSS_REGION=${OSS_REGION:-us-east-1}
       - OSS_USE_SSL=${OSS_USE_SSL:-false}
       - OSS_PATH_STYLE=${OSS_PATH_STYLE:-true}
