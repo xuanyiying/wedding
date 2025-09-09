@@ -74,22 +74,22 @@ export class ProfileController {
       Resp.badRequest(res, '用户ID不存在');
       return;
     }
-    const { fileId } = req.params;
-    if (!fileId) {
+    const { id } = req.params;
+    if (!id) {
       Resp.badRequest(res, '请提供文件ID');
       return;
     }
-    await ProfileService.deleteMediaProfile(userId, fileId);
+    await ProfileService.deleteMediaProfile(userId, id);
     Resp.success(res, '删除成功');
   }
 
   async getMediaProfileById(req: Request, res: Response): Promise<void> {
-    const { fileId } = req.params;
-    if (!fileId) {
+    const { id } = req.params;
+    if (!id) {
       Resp.badRequest(res, '请提供文件ID');
       return;
     }
-    const mediaProfile = await ProfileService.getMediaProfileById(fileId);
+    const mediaProfile = await ProfileService.getMediaProfileById(id);
     Resp.success(res, mediaProfile);
   }
 
@@ -232,13 +232,13 @@ export class ProfileController {
       return;
     }
 
-    const { fileIds } = req.body;
-    if (!fileIds || !Array.isArray(fileIds) || fileIds.length === 0) {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
       Resp.badRequest(res, '请提供要删除的文件ID列表');
       return;
     }
 
-    const result = await ProfileService.deleteMediaProfiles(userId, fileIds);
+    const result = await ProfileService.deleteMediaProfiles(userId, ids);
     if (result) {
       Resp.success(res, '批量删除成功');
     } else {

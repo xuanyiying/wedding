@@ -27,18 +27,17 @@ export const uploadFile = async (req: AuthenticatedRequest, res: Response, next:
     const { fileType, category } = req.body;
     const userId = req.user!.id;
     const fileData = {
-      filename: req.file.filename,
+      buffer: req.file.buffer, // 使用内存存储的 buffer
       originalName: req.file.originalname,
       mimetype: req.file.mimetype,
       size: req.file.size,
-      path: req.file.path,
       userId: userId,
       fileType: fileType as FileType,
       category: category,
     };
 
     console.log('📤 开始上传到OSS:', {
-      filename: fileData.filename,
+      originalName: fileData.originalName,
       size: fileData.size,
       fileType: fileData.fileType
     });
@@ -47,7 +46,7 @@ export const uploadFile = async (req: AuthenticatedRequest, res: Response, next:
 
     console.log('✅ 文件上传成功:', {
       fileId: result.id,
-      filename: result.filename,
+      originalName: result.originalName,
       url: result.fileUrl
     });
     Resp.created(res, result, '文件上传成功');
@@ -70,11 +69,10 @@ export const batchUploadFiles = async (req: AuthenticatedRequest, res: Response,
     const { fileType, category } = req.query;
     const userId = req.user!.id;
     const filesData = (req.files as Express.Multer.File[]).map(file => ({
-      filename: file.filename,
+      buffer: file.buffer, // 使用内存存储的 buffer
       originalName: file.originalname,
       mimetype: file.mimetype,
       size: file.size,
-      path: file.path,
       userId: userId,
       fileType: fileType as FileType,
       category: category as string,

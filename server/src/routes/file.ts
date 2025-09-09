@@ -18,7 +18,7 @@ import {
   completeChunkUpload
 } from '../controllers/file.controller';
 import { authMiddleware } from '../middlewares/auth';
-import { uploadMiddleware, chunkUploadMiddleware, uploadWithTimeout, handleUploadError } from '../middlewares/upload';
+import { uploadMiddleware, uploadWithTimeout, handleUploadError } from '../middlewares/upload';
 import { validateRequest } from '../middlewares/validation';
 import { fileValidators } from '../validators/file';
 
@@ -86,7 +86,7 @@ router.get('/user/:userId/:type', getUserMedia);
 
 // 分块上传相关路由
 router.post('/chunk/init', authMiddleware, validateRequest(fileValidators.initChunkUpload), initChunkUpload);
-router.post('/chunk/upload', authMiddleware, chunkUploadMiddleware.single('chunk'), validateRequest(fileValidators.uploadChunk), uploadChunk);
+router.post('/chunk/upload', authMiddleware, uploadMiddleware.single('chunk'), validateRequest(fileValidators.uploadChunk), uploadChunk);
 router.post('/chunk/complete', authMiddleware, validateRequest(fileValidators.completeChunkUpload), completeChunkUpload);
 
 export default router;

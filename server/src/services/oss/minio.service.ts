@@ -11,9 +11,9 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Readable } from 'stream';
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
 import { OssService, UploadResult, FileInfo } from './oss.service';
 import logger from '@/utils/logger';
+import { generateId } from '@/utils/id.generator';
 
 export interface MinIOConfig {
   endpoint: string;
@@ -103,7 +103,7 @@ export class MinIOService implements OssService {
     try {
       // 生成唯一文件名
       const fileExtension = path.extname(originalName);
-      const fileName = `${uuidv4()}${fileExtension}`;
+      const fileName = `${generateId()}${fileExtension}`;
       const key = folder ? `${folder}/${fileName}` : fileName;
 
       const command = new PutObjectCommand({

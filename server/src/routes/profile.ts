@@ -22,13 +22,13 @@ router.put('/media-profiles/order', authMiddleware, profileController.updateMedi
 router.delete('/media-profiles/batch/:userId', authMiddleware, profileController.batchDeleteMediaProfiles.bind(profileController));
 
 // 删除单个媒体资料
-router.delete('/media-profiles/:fileId', authMiddleware, profileController.deleteMediaProfile.bind(profileController));
+router.delete('/media-profiles/:id', authMiddleware, profileController.deleteMediaProfile.bind(profileController));
 
 // 更新单个媒体资料
-router.put('/media-profiles/:fileId', authMiddleware, profileController.updateSingleMediaProfile.bind(profileController));
+router.put('/media-profiles/:id', authMiddleware, profileController.updateSingleMediaProfile.bind(profileController));
 
 // 获取单个媒体资料详情
-router.get('/media-profiles/:fileId', profileController.getMediaProfileById.bind(profileController));
+router.get('/media-profiles/:id', profileController.getMediaProfileById.bind(profileController));
 
 // 用户资料相关（包含用户信息和媒体文件）
 // 获取用户完整资料（用户信息 + 媒体文件）

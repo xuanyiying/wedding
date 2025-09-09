@@ -106,7 +106,9 @@ const AvatarUploader: React.FC<AvatarUploaderProps> = ({
         border: 0,
         background: 'none',
         cursor: disabled || loading ? 'not-allowed' : 'pointer',
-        opacity: disabled || loading ? 0.6 : 1
+        opacity: disabled || loading ? 0.6 : 1,
+        outline: 'none',
+        boxShadow: 'none'
       }}
       type="button"
       disabled={disabled || loading}
@@ -144,13 +146,43 @@ const AvatarUploader: React.FC<AvatarUploaderProps> = ({
             border-radius: 50% !important;
             border: 3px solid #f0f0f0 !important;
             transition: all 0.3s ease !important;
+            outline: none !important;
           }
           .avatar-uploader .ant-upload:hover {
             border-color: #1890ff !important;
             box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
           }
+          .avatar-uploader .ant-upload:focus {
+            outline: none !important;
+            box-shadow: none !important;
+          }
           .avatar-uploader .ant-upload-select {
             border-radius: 50% !important;
+            outline: none !important;
+          }
+          .avatar-uploader .ant-upload-select:focus {
+            outline: none !important;
+            box-shadow: none !important;
+          }
+          .avatar-uploader button {
+            outline: none !important;
+            border: none !important;
+            box-shadow: none !important;
+          }
+          .avatar-uploader button:focus {
+            outline: none !important;
+            border: none !important;
+            box-shadow: none !important;
+          }
+          .avatar-uploader button:active {
+            outline: none !important;
+            border: none !important;
+            box-shadow: none !important;
+          }
+          .avatar-uploader button:focus-visible {
+            outline: none !important;
+            border: none !important;
+            box-shadow: none !important;
           }
         `}
       </style>

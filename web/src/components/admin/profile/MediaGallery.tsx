@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, useMemo } from 'react';
 import { Button, Popconfirm } from 'antd';
 import { EyeOutlined, DeleteOutlined, PlayCircleOutlined } from '@ant-design/icons';
-import styled, { keyframes } from 'styled-components';
+import styled from 'styled-components';
 import { type MediaFile, FileType } from '../../../types';
 import { useResponsive, useTouchDevice } from '../../../hooks/useResponsive';
 
@@ -12,37 +12,6 @@ interface MediaGalleryProps {
   loading?: boolean;
 }
 
-// 动画定义
-const fadeIn = keyframes`
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-`;
-
-const scaleIn = keyframes`
-  from {
-    transform: scale(0.8);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-`;
-
-const shimmer = keyframes`
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-`;
 
 // 响应式媒体容器 - 单行居中布局
 const MediaGalleryContainer = styled.div<{ $isMobile: boolean; $isTablet: boolean }>`
@@ -76,7 +45,6 @@ const MediaGalleryContainer = styled.div<{ $isMobile: boolean; $isTablet: boolea
     padding: ${props => props.$isMobile ? '40px 20px' : '60px 20px'};
     color: #999;
     font-size: ${props => props.$isMobile ? '14px' : '16px'};
-    animation: ${fadeIn} 0.3s ease-out;
     min-height: 200px;
     
     .empty-icon {
@@ -106,15 +74,10 @@ const MediaItem = styled.div<{ $isMobile: boolean; $isTouchDevice: boolean }>`
   cursor: pointer;
   background: #f5f5f5;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: ${scaleIn} 0.4s ease-out;
-  
-  /* 阴影效果 */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   
   /* 悬停效果 - 仅在非触摸设备上启用 */
   ${props => !props.$isTouchDevice && `
     &:hover {
-      transform: translateY(-6px) scale(1.03);
       box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
       
       .media-overlay {
@@ -124,10 +87,6 @@ const MediaItem = styled.div<{ $isMobile: boolean; $isTouchDevice: boolean }>`
       .media-actions {
         opacity: 1;
         transform: translateY(0);
-      }
-      
-      .media-image {
-        transform: scale(1.05);
       }
     }
   `}
@@ -275,7 +234,6 @@ const LoadingPlaceholder = styled.div<{ $isMobile: boolean }>`
   height: 100%;
   background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
   background-size: 200% 100%;
-  animation: ${shimmer} 1.5s infinite;
   border-radius: 0;
   position: relative;
   

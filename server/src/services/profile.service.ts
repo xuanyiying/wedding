@@ -7,6 +7,7 @@ import { generateId } from '@/utils/id.generator';
 import logger from '@/utils/logger';
 import { FileService } from './file.service';
 import { FileCategory, OssType } from '@/types';
+import { Op } from 'sequelize';
 
 export class MediaProfileService {
   async getMediaProfileById(id: string) {
@@ -171,30 +172,29 @@ export class MediaProfileService {
   /**
    * 批量删除用户公开资料
    */
-  async deleteMediaProfiles(userId: string, fileIds: string[]): Promise<boolean> {
-    const profiles = await MediaProfile.findAll({ where: { userId, fileId: fileIds } });
+  async deleteMediaProfiles(userId: string, ids: string[]): Promise<boolean> {
+    const profiles = await MediaProfile.findAll({ where: { userId, id: { [Op.in]: ids} }});
     if (!profiles || profiles.length === 0) {
       return false;
     }
 
-    await FileService.deleteFiles(fileIds, userId);
-    await MediaProfile.destroy({ where: { userId, fileId: fileIds } });
+    await FileService.deleteFiles(profiles.map(p => p.fileId), userId);
+    await MediaProfile.destroy({ where: { userId, id: ids } });
     return true;
   }
 
   /**
    * 删除用户公开资料
    */
-  async deleteMediaProfile(userId: string, fileId: string): Promise<boolean> {
-    const profile = await MediaProfile.findOne({ where: { userId, fileId } });
+  async deleteMediaProfile(userId: string, id: string): Promise<boolean> {
+    const profile = await MediaProfile.findByPk(id);
     if (!profile) {
       return false;
     }
+    const fileId = profile.fileId;
     // 1. 删除关联记录，确保从用户资料中移除
     await profile.destroy();
 
-    // 2. 委托 FileService 删除文件实体和记录
-    // FileService 内部应处理文件是否被其他地方引用的逻辑
     await FileService.deleteFile(fileId, userId);
 
     return true;

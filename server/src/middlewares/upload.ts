@@ -1,99 +1,5 @@
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
-import crypto from 'crypto';
 import { config } from '../config/config';
-
-// 确保上传目录存在
-const uploadDir = path.join(process.cwd(), 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// 根据文件类型创建子目录
-const createTypeDirectory = (type: string) => {
-  const typeDir = path.join(uploadDir, type);
-  if (!fs.existsSync(typeDir)) {
-    fs.mkdirSync(typeDir, { recursive: true });
-  }
-  return typeDir;
-};
-
-// 存储配置
-const storage = multer.diskStorage({
-  destination: (_, file, cb) => {
-    // 根据文件MIME类型确定存储目录
-    let type = 'other';
-
-    if (file.mimetype.startsWith('image/')) {
-      type = 'images';
-    } else if (file.mimetype.startsWith('video/')) {
-      type = 'videos';
-    } else if (file.mimetype.includes('pdf') || file.mimetype.includes('document')) {
-      type = 'documents';
-    }
-
-    const typeDir = createTypeDirectory(type);
-    cb(null, typeDir);
-  },
-  filename: (_, file, cb) => {
-    // 生成唯一文件名
-    const timestamp = Date.now();
-    const randomString = crypto.randomBytes(8).toString('hex');
-    const ext = path.extname(file.originalname);
-    const filename = `${timestamp}_${randomString}${ext}`;
-    cb(null, filename);
-  },
-});
-
-// 文件过滤器
-const fileFilter = (_: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  console.log('🔍 文件类型检查:', {
-    fieldname: file.fieldname,
-    originalname: file.originalname,
-    mimetype: file.mimetype,
-    size: file.size
-  });
-
-  // 允许的文件类型
-  const allowedMimeTypes = [
-    // 图片
-    'image/jpeg',
-    'image/jpg',
-    'image/png',
-    'image/gif',
-    'image/webp',
-    // 视频
-    'video/mp4',
-    'video/avi',
-    'video/mov',
-    'video/wmv',
-    'video/quicktime',
-    'video/x-msvideo', // AVI的另一种MIME类型
-    // 文档
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'application/vnd.ms-powerpoint',
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    // 其他
-    'text/plain',
-    'application/zip',
-    'application/x-rar-compressed',
-    // 分块上传时可能出现的类型
-    'application/octet-stream', // 二进制数据
-  ];
-
-  if (allowedMimeTypes.includes(file.mimetype)) {
-    console.log('✅ 文件类型验证通过:', file.mimetype);
-    cb(null, true);
-  } else {
-    console.error('❌ 不支持的文件类型:', file.mimetype);
-    cb(new Error(`不支持的文件类型: ${file.mimetype}`));
-  }
-};
 
 // 文件大小限制 - 从配置文件读取
 const limits = {
@@ -103,15 +9,7 @@ const limits = {
 
 // 创建multer实例
 export const uploadMiddleware = multer({
-  storage,
-  fileFilter,
-  limits,
-});
-
-// 分块上传专用的内存存储中间件
-export const chunkUploadMiddleware = multer({
-  storage: multer.memoryStorage(), // 使用内存存储
-  fileFilter,
+  storage:multer.memoryStorage(),
   limits,
 });
 
@@ -219,15 +117,4 @@ export const handleUploadError = (error: any, _: any, res: any, next: any) => {
   }
 
   next(error);
-};
-
-// 清理临时文件
-export const cleanupTempFiles = (files: Express.Multer.File[]) => {
-  files.forEach(file => {
-    fs.unlink(file.path, err => {
-      if (err) {
-        console.error(`清理临时文件失败: ${file.path}`, err);
-      }
-    });
-  });
 };

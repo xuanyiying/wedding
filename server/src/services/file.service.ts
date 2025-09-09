@@ -26,7 +26,7 @@ interface GetFilesParams {
 }
 
 interface UploadFileData {
-  filename: string;
+  filename?: string; // 内存存储时不需要filename
   originalName: string;
   mimetype: string;
   size: number;
@@ -301,8 +301,8 @@ export class FileService {
     await file.destroy();
 
     // 异步删除OSS文件
-    this.deleteOssFile(file.filePath, file.thumbnailUrl || undefined).catch(error => {
-      logger.error(`删除OSS文件失败: ${file.filePath}`, error instanceof Error ? error : new Error(String(error)));
+    this.deleteOssFile(file.fileUrl, file.thumbnailUrl || undefined).catch(error => {
+      logger.error(`删除OSS文件失败: ${file.fileUrl}`, error instanceof Error ? error : new Error(String(error)));
     });
 
     logger.info(`文件已删除: ${id}, 操作用户: ${currentUserId}`);
@@ -335,8 +335,8 @@ export class FileService {
         // 删除记录
         await file.destroy();
         // 异步删除OSS文件
-        this.deleteOssFile(file.filePath, file.thumbnailUrl || undefined).catch(error => {
-          logger.error(`删除OSS文件失败: ${file.filePath}`, error instanceof Error ? error : new Error(String(error)));
+        this.deleteOssFile(file.fileUrl, file.thumbnailUrl || undefined).catch(error => {
+          logger.error(`删除OSS文件失败: ${file.fileUrl}`, error instanceof Error ? error : new Error(String(error)));
         });
 
         results.push(file.id);
@@ -594,21 +594,20 @@ export class FileService {
   /**
    * 删除OSS文件
    */
-  private static async deleteOssFile(fileId: string, thumbnailUrl?: string): Promise<void> {
+  private static async deleteOssFile(fileUrl: string, thumbnailUrl?: string): Promise<void> {
     try {
       // 删除主文件
-      const file = await this.getFileById(fileId);
-      await this.ossService.deleteFile(file.fileUrl);
+      await this.ossService.deleteFile(fileUrl);
       // 删除缩略图（如果存在）
-      if (file.thumbnailUrl) {
+      if (thumbnailUrl) {
         try {
-          await this.ossService.deleteFile(file.thumbnailUrl);
+          await this.ossService.deleteFile(thumbnailUrl);
         } catch (error) {
           logger.warn(`删除缩略图失败: ${thumbnailUrl}`, error instanceof Error ? error : new Error(String(error)));
         }
       }
     } catch (error) {
-      logger.error(`删除OSS文件失败: ${fileId}`, error instanceof Error ? error : new Error(String(error)));
+      logger.error(`删除OSS文件失败: ${fileUrl}`, error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }

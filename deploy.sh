@@ -186,7 +186,7 @@ setup_directories() {
     
     # 创建必要的目录
     mkdir -p deployment/logs/{nginx,api,mysql,redis,minio}
-    mkdir -p deployment/uploads/{images,documents}
+    mkdir -p deployment/uploads/{images,videos}
     mkdir -p deployment/ssl
     
     # 设置正确的权限
