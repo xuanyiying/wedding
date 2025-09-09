@@ -3,7 +3,7 @@ import { Button, Popconfirm } from 'antd';
 import { EyeOutlined, DeleteOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import styled, { keyframes } from 'styled-components';
 import { type MediaFile, FileType } from '../../../types';
-import { useResponsive, useTouchDevice } from '../../../hooks/useResponsive.ts';
+import { useResponsive, useTouchDevice } from '../../../hooks/useResponsive';
 
 interface MediaGalleryProps {
   mediaFiles: MediaFile[];
