@@ -3,7 +3,7 @@ import { Button, Popconfirm } from 'antd';
 import { EyeOutlined, DeleteOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import styled, { keyframes } from 'styled-components';
 import { type MediaFile, FileType } from '../../../types';
-import { useResponsive, useTouchDevice } from '../../../hooks/useResponsive';
+import { useResponsive, useTouchDevice } from '../../../hooks/useResponsive.ts';
 
 interface MediaGalleryProps {
   mediaFiles: MediaFile[];
@@ -98,8 +98,8 @@ const MediaItem = styled.div<{ $isMobile: boolean; $isTouchDevice: boolean }>`
   width: ${props => props.$isMobile ? '90%' : '80%'};
   max-width: ${props => props.$isMobile ? '350px' : '500px'};
   
-  /* 保持媒体比例 - 可根据内容调整 */
-  aspect-ratio: ${props => props.$isMobile ? '4/3' : '16/10'};
+  /* 移除固定的宽高比，改为最小高度，让容器根据内容自适应 */
+  min-height: 200px;
   
   border-radius: 0;
   overflow: hidden;
@@ -164,9 +164,11 @@ const MediaContent = styled.div`
   overflow: hidden;
   
   .media-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain; /* 改为 contain 以完整显示图片 */
     transition: transform 0.3s ease;
     user-select: none;
     -webkit-user-drag: none;
@@ -327,11 +329,11 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
   const [errorImages, setErrorImages] = useState<Set<string>>(new Set());
   const [touchStart, setTouchStart] = useState<{ x: number; y: number; time: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  
+
   // 响应式信息
   const responsive = useResponsive();
   const isTouchDevice = useTouchDevice();
-  
+
   // 计算响应式属性
   const responsiveProps = useMemo(() => ({
     isMobile: responsive.isMobile,
@@ -363,27 +365,27 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
   // 触摸开始处理
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0];
-    setTouchStart({ 
-      x: touch.clientX, 
-      y: touch.clientY, 
-      time: Date.now() 
+    setTouchStart({
+      x: touch.clientX,
+      y: touch.clientY,
+      time: Date.now()
     });
   }, []);
 
   // 触摸结束处理
   const handleTouchEnd = useCallback((e: React.TouchEvent, file: MediaFile) => {
     if (!touchStart) return;
-    
+
     const touch = e.changedTouches[0];
     const deltaX = Math.abs(touch.clientX - touchStart.x);
     const deltaY = Math.abs(touch.clientY - touchStart.y);
     const deltaTime = Date.now() - touchStart.time;
-    
+
     // 如果移动距离很小且时间很短，认为是点击
     if (deltaX < 10 && deltaY < 10 && deltaTime < 500) {
       onPreview(file);
     }
-    
+
     setTouchStart(null);
   }, [touchStart, onPreview]);
 
@@ -393,7 +395,7 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
     const isLoaded = loadedImages.has(fileId);
     const hasError = errorImages.has(fileId);
     const isVideo = file.fileType === FileType.VIDEO;
-    
+
     return (
       <MediaItem
         key={fileId}
@@ -407,14 +409,14 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
           {!isLoaded && !hasError && (
             <LoadingPlaceholder $isMobile={responsiveProps.isMobile} />
           )}
-          
+
           {hasError && (
             <ErrorPlaceholder $isMobile={responsiveProps.isMobile}>
               <div className="error-icon">📷</div>
               <div>加载失败</div>
             </ErrorPlaceholder>
           )}
-          
+
           {isVideo && file.thumbnailUrl ? (
             <>
               <img
@@ -441,10 +443,10 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
             />
           )}
         </MediaContent>
-        
+
         <MediaOverlay className="media-overlay" />
-        
-        <MediaActions 
+
+        <MediaActions
           className="media-actions"
           $isMobile={responsiveProps.isMobile}
         >
@@ -477,14 +479,14 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
       </MediaItem>
     );
   }, [
-    loadedImages, 
-    errorImages, 
-    responsiveProps, 
-    handleImageLoad, 
-    handleImageError, 
-    handleTouchStart, 
-    handleTouchEnd, 
-    onPreview, 
+    loadedImages,
+    errorImages,
+    responsiveProps,
+    handleImageLoad,
+    handleImageError,
+    handleTouchStart,
+    handleTouchEnd,
+    onPreview,
     onDelete
   ]);
 
@@ -496,9 +498,9 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
   // 如果正在加载，显示加载占位符
   if (loading) {
     const placeholderCount = responsiveProps.isMobile ? 2 : 3;
-    
+
     return (
-      <MediaGalleryContainer 
+      <MediaGalleryContainer
         ref={containerRef}
         $isMobile={responsiveProps.isMobile}
         $isTablet={responsiveProps.isTablet}
@@ -519,7 +521,7 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
   }
 
   return (
-    <MediaGalleryContainer 
+    <MediaGalleryContainer
       ref={containerRef}
       $isMobile={responsiveProps.isMobile}
       $isTablet={responsiveProps.isTablet}
