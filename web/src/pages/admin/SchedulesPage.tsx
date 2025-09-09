@@ -304,7 +304,7 @@ const SchedulesPage: React.FC = () => {
 
       <Row gutter={16}>
         {/* 日历视图 */}
-        <Col xs={24} lg={16}>
+        <Col xs={24} lg={24}>
           <ContentCard>
             {/* 操作按钮区域 */}
             <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

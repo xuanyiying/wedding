@@ -748,6 +748,11 @@ export class FileService {
   }) {
     const { uploadId, chunkIndex, chunkData, userId } = params;
 
+    // 检查分块数据是否有效
+    if (!chunkData || !Buffer.isBuffer(chunkData)) {
+      throw new Error('分块数据无效或为空');
+    }
+
     // 从Redis获取上传会话
     const sessionKey = `${CHUNK_UPLOAD_PREFIX}${uploadId}`;
     const sessionStr = await redisClient.get(sessionKey);
@@ -877,7 +882,7 @@ export class FileService {
 
       // 生成文件名和路径
       const fileExtension = path.extname(session.filename);
-      const uniqueFilename = `${crypto.randomUUID()}${fileExtension}`;
+      const uniqueFilename = `${generateId}${fileExtension}`;
 
       // 确定文件类型
       const fileType = this.getFileTypeFromMimeType(session.mimeType);
@@ -902,7 +907,7 @@ export class FileService {
         userId: session.userId,
         fileType: fileType,
         category: session.category as FileCategory,
-        ossType: 'minio' as any,
+        ossType: config.oss.type as OssType,
         isPublic: true,
         downloadCount: 0
       });
@@ -922,15 +927,7 @@ export class FileService {
         url: fileRecord.fileUrl
       });
 
-      return {
-        fileId: fileRecord.id,
-        filename: fileRecord.filename,
-        url: fileRecord.fileUrl,
-        originalName: fileRecord.originalName,
-        mimeType: fileRecord.mimeType,
-        size: fileRecord.fileSize,
-        category: fileRecord.category
-      };
+      return fileRecord;
 
     } catch (error) {
       // 上传失败时清理Redis数据

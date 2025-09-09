@@ -108,6 +108,13 @@ export const uploadMiddleware = multer({
   limits,
 });
 
+// 分块上传专用的内存存储中间件
+export const chunkUploadMiddleware = multer({
+  storage: multer.memoryStorage(), // 使用内存存储
+  fileFilter,
+  limits,
+});
+
 // 带超时的上传中间件
 export const uploadWithTimeout = (timeoutMs: number = config.upload.timeout) => {
   return (req: any, res: any, next: any) => {
@@ -179,7 +186,7 @@ export const handleUploadError = (error: any, _: any, res: any, next: any) => {
       case 'LIMIT_FILE_SIZE':
         return res.status(400).json({
           success: false,
-          message: '文件大小超出限制（最大100MB）',
+          message: `文件大小超出限制（最大${Math.round(config.upload.maxFileSize / 1024 / 1024)}MB）`,
           code: 'FILE_TOO_LARGE',
         });
       case 'LIMIT_FILE_COUNT':

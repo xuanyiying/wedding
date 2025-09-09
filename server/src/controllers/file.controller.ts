@@ -388,8 +388,8 @@ export const uploadChunk = async (req: AuthenticatedRequest, res: Response, next
     const { uploadId, chunkIndex } = req.body;
     const userId = req.user!.id;
 
-    if (!req.file) {
-      Resp.badRequest(res, '请选择要上传的分块文件');
+    if (!req.file || !req.file.buffer) {
+      Resp.badRequest(res, '分块文件数据无效或未正确上传');
       return;
     }
 
@@ -398,9 +398,10 @@ export const uploadChunk = async (req: AuthenticatedRequest, res: Response, next
       uploadId,
       chunkIndex,
       hasFile: !!req.file,
-      fileSize: req.file?.size,
-      fileName: req.file?.originalname,
-      mimeType: req.file?.mimetype,
+      fileSize: req.file.size,
+      fileName: req.file.originalname,
+      mimeType: req.file.mimetype,
+      bufferSize: req.file.buffer?.length,
       headers: {
         contentType: req.headers['content-type'],
         contentLength: req.headers['content-length']
@@ -409,7 +410,7 @@ export const uploadChunk = async (req: AuthenticatedRequest, res: Response, next
 
     const result = await FileService.uploadChunk({
       uploadId,
-      chunkIndex: parseInt(chunkIndex),
+      chunkIndex: typeof chunkIndex === 'string' ? parseInt(chunkIndex) : chunkIndex,
       chunkData: req.file.buffer,
       userId
     });
@@ -448,9 +449,9 @@ export const completeChunkUpload = async (req: AuthenticatedRequest, res: Respon
     });
 
     console.log('✅ 分块上传完成:', {
-      fileId: result.fileId,
+      fileId: result.id,
       filename: result.filename,
-      url: result.url
+      url: result.fileUrl
     });
 
     Resp.success(res, result, '分块上传完成');

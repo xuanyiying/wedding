@@ -115,7 +115,12 @@ export const fileValidators = {
   uploadChunk: {
     body: Joi.object({
       uploadId: Joi.string().uuid().required(),
-      chunkIndex: Joi.string().pattern(/^\d+$/).required(), // 字符串形式的数字
+      chunkIndex: Joi.alternatives()
+        .try(
+          Joi.number().integer().min(0).required(),
+          Joi.string().pattern(/^\d+$/).required()
+        )
+        .required(),
     }),
   },
 

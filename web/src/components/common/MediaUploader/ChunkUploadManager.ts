@@ -81,14 +81,9 @@ export class ChunkUploadManager {
         uploadUrl
       });
 
-      // 使用统一的request.ts进行上传
-      const response = await http.upload(uploadUrl, formData, {
-        timeout: UPLOAD_TIMEOUT * 2,
-        retryConfig: {
-          maxAttempts: 3,
-          delay: 1000,
-          backoff: true
-        },
+      // 使用固定的分块上传API端点（相对路径，baseURL已配置）
+      const response = await http.upload('/files/chunk/upload', formData, {
+        timeout: UPLOAD_TIMEOUT * 3, // 增加超时时间
         headers: {
           'X-Upload-Type': 'chunk',
           'X-Chunk-Index': chunkIndex.toString(),
@@ -202,33 +197,25 @@ export class ChunkUploadManager {
       }
       
       fileState.uploadId = initResponse.data.uploadId;
-      const uploadUrl = initResponse.data.uploadUrl;
       
-      // 创建分块并发上传
-      const uploadPromises: Promise<void>[] = [];
-      let concurrentUploads = 0;
-      
+      // 串行上传分块，避免并发冲突
       for (let i = 0; i < chunks.length; i++) {
         const chunk = chunks[i];
         const chunkState = fileState.chunks[i];
         
-        // 控制并发数
-        while (concurrentUploads >= MAX_CONCURRENT_CHUNKS) {
-          await Promise.race(uploadPromises);
-          concurrentUploads = uploadPromises.filter(p => p !== undefined).length;
-        }
-        
-        const uploadPromise = this.uploadChunk(
-          chunk,
-          i,
-          fileState.uploadId!,
-          uploadUrl,
-          (progress) => {
-            if (onChunkProgress) {
-              onChunkProgress(i, progress);
+        try {
+          await this.uploadChunk(
+            chunk,
+            i,
+            fileState.uploadId!,
+            '', // uploadUrl不再使用
+            (progress) => {
+              if (onChunkProgress) {
+                onChunkProgress(i, progress);
+              }
             }
-          }
-        ).then(() => {
+          );
+          
           chunkState.uploaded = true;
           fileState.uploadedBytes += chunk.size;
           
@@ -238,18 +225,22 @@ export class ChunkUploadManager {
             onProgress(totalProgress);
           }
           
-          concurrentUploads--;
-        }).catch(error => {
-          concurrentUploads--;
-          throw error;
-        });
-        
-        uploadPromises.push(uploadPromise);
-        concurrentUploads++;
+          console.log(`✅ 分块 ${i + 1}/${chunks.length} 上传完成`);
+          
+        } catch (error: any) {
+          console.error(`❌ 分块 ${i + 1} 上传失败:`, error);
+          
+          // 如果是取消错误，直接抛出
+          if (error.message?.includes('cancelled') || error.name === 'AbortError') {
+            throw error;
+          }
+          
+          // 其他错误也抛出，不再重试
+          throw new Error(`分块 ${i + 1} 上传失败: ${error.message}`);
+        }
       }
       
-      // 等待所有分块上传完成
-      await Promise.all(uploadPromises);
+
       
       // 完成分块上传
       const completeResponse = await fileService.completeChunkUpload({

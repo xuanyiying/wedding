@@ -450,6 +450,10 @@ const defaultRetryConfig: Required<RetryConfig> = {
   delay: 2000, // 增加基础延迟到2秒
   backoff: true,
   retryCondition: (error: any) => {
+    // 如果是取消错误，则不进行重试
+    if (error.code === 'ERR_CANCELED') {
+      return false;
+    }
     // 只对网络错误、超时和5xx服务器错误进行重试
     if (!error.response) return true; // 网络错误
     if (error.code === 'ECONNABORTED') return true; // 超时

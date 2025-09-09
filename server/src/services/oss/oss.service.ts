@@ -20,6 +20,7 @@ export interface FileInfo {
 }
 
 export interface OssService {
+
   bucketName: string;
   /**
    * 初始化存储桶
