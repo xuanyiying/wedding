@@ -143,7 +143,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
   // MediaUploader回调处理
   const handleMediaUploadSuccess = (results: DirectUploadResult[]) => {
     const newMediaFiles = results.map(result => ({
-      id: result.fileId,
+      id: result.id,
       file: new File([], result.originalName, { type: result.fileType }),
       type: result.fileType.startsWith('video/') ? 'video' as const : 'image' as const,
       status: 'success' as const,
@@ -175,7 +175,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
 
   const handleCoverUploadSuccess = (results: DirectUploadResult[]) => {
     const newCoverFiles = results.map(result => ({
-      id: result.fileId,
+      id: result.id,
       file: new File([], result.originalName, { type: result.fileType }),
       type: 'image' as const,
       status: 'success' as const,

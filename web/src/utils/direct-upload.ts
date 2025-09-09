@@ -41,7 +41,7 @@ export interface DirectUploadConfig {
 
 // 直传上传结果
 export interface DirectUploadResult {
-  fileId: string;
+  id: string; // 文件ID
   filename: string;
   originalName: string;
   fileSize: number;

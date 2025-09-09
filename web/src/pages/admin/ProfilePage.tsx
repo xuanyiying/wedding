@@ -459,7 +459,7 @@ const ProfilePage: React.FC = () => {
         if (results.length > 0) {
           await profileService.batchCreateMediaProfiles(currentUser.id, {
             mediaProfiles: results.map((result, index) => ({
-              fileId: result.fileId,
+              fileId: result.id,
               fileType: result.fileType as FileType || FileType.IMAGE,
               category: 'profile',
               mediaOrder: index + 1,

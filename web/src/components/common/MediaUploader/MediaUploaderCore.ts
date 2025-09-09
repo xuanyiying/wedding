@@ -198,7 +198,7 @@ export class MediaUploaderCore {
           );
 
           result = {
-            fileId: chunkResult.fileId,
+            id: chunkResult.id,
             url: chunkResult.url,
             fileType,
             category: this.config.category!,
@@ -242,13 +242,13 @@ export class MediaUploaderCore {
             throw new Error('上传已取消');
           }
 
-          if (!resp.data) {
+          if (!resp.data || !resp.data.fileUrl || !resp.data.id) {
             throw new Error('上传失败');
           }
 
           result = {
-            fileId: resp.data.fileId,
-            url: resp.data.fileUrl || '',
+            id: resp.data.id,
+            url: resp.data.fileUrl,
             fileType,
             category: this.config.category!,
             filename: resp.data.filename || file.name,
@@ -267,13 +267,13 @@ export class MediaUploaderCore {
           throw new Error('上传已取消');
         }
 
-        if (!result || !result.fileId) {
+        if (!result || !result.id) {
           throw new Error('上传失败');
         }
 
         // 如果是视频文件且有封面信息，上传封面
         if (videoCoverInfo) {
-          await this.handleVideoCoverUpload(result.fileId, file, videoCoverInfo);
+          await this.handleVideoCoverUpload(result.id, file, videoCoverInfo);
         }
 
         message.success(`${file.name} 上传成功`);
