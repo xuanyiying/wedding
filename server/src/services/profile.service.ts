@@ -147,9 +147,10 @@ export class MediaProfileService {
           model: File,
           as: 'file',
           attributes: ['id', 'originalName', 'filename', 'filePath', 'fileUrl', 'fileSize', 'mimeType', 'width', 'height', 'duration', 'thumbnailUrl', 'hashMd5', 'hashSha256', 'ossType', 'bucketName', 'isPublic', 'downloadCount', 'metadata', 'category', 'createdAt', 'updatedAt'],
+          where: { deletedAt: null } // 只关联未删除的文件
         }
       ],
-      order: [['mediaOrder', 'ASC']],
+      order: [['mediaOrder', 'ASC']]
     });
   }
 
@@ -189,11 +190,12 @@ export class MediaProfileService {
     if (!profile) {
       return false;
     }
-    // 删除文件
-    await FileService.deleteFile(fileId, userId);
-    // 删除文件记录
-    await File.destroy({ where: { id: fileId } });
+    // 1. 删除关联记录，确保从用户资料中移除
     await profile.destroy();
+
+    // 2. 委托 FileService 删除文件实体和记录
+    // FileService 内部应处理文件是否被其他地方引用的逻辑
+    await FileService.deleteFile(fileId, userId);
 
     return true;
   }

@@ -50,6 +50,7 @@ router.post(
 router.post(
   '/:id/cover',
   authMiddleware,
+  uploadMiddleware.single('file'),
   uploadVideoCover,
 );
 
