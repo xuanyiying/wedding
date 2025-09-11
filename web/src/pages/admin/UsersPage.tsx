@@ -120,6 +120,7 @@ const UsersPage: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [form] = Form.useForm();
+  const [usernameError, setUsernameError] = useState<string>('');
 
   // 转换User数据为ExtendedUser格式
   const transformUserData = (user: User): ExtendedUser => {
@@ -214,6 +215,7 @@ const UsersPage: React.FC = () => {
   const openModal = (user?: ExtendedUser) => {
     setEditingUser(user || null);
     setModalVisible(true);
+    setUsernameError(''); // 清除之前的错误状态
     
     if (user) {
       form.setFieldsValue({
@@ -297,7 +299,7 @@ const UsersPage: React.FC = () => {
       console.log('🎉 [UsersPage] 用户保存操作完成，关闭模态框');
       setModalVisible(false);
       form.resetFields();
-    } catch (error) {
+    } catch (error: any) {
       console.error('💥 [UsersPage] 用户保存操作异常:', error);
       console.error('📊 [UsersPage] 错误详情:', {
         message: error instanceof Error ? error.message : '未知错误',
@@ -305,6 +307,21 @@ const UsersPage: React.FC = () => {
         formValues: values,
         editingUserId: editingUser?.id
       });
+      
+      // 处理用户名验证错误
+      if (error.response?.status === 400) {
+        const errorMessage = error.response.data?.message || error.response.data?.error;
+        if (errorMessage && errorMessage.includes('用户名只能包含字母和数字')) {
+          setUsernameError(errorMessage);
+          // 聚焦到用户名输入框
+          form.setFields([{
+            name: 'username',
+            errors: [errorMessage]
+          }]);
+          return; // 不显示通用错误消息
+        }
+      }
+      
       message.error('操作失败，请重试');
     } finally {
       setLoading(false);
@@ -594,6 +611,7 @@ const UsersPage: React.FC = () => {
         onCancel={() => {
           setModalVisible(false);
           form.resetFields();
+          setUsernameError(''); // 关闭模态框时清除错误状态
         }}
         footer={null}
         width={600}
@@ -612,8 +630,13 @@ const UsersPage: React.FC = () => {
                   { required: true, message: '请输入用户名' },
                   { min: 2, max: 20, message: '用户名只能包含字母和数字，长度为2-20个字符' }
                 ]}
+                validateStatus={usernameError ? 'error' : ''}
+                help={usernameError || ''}
               >
-                <Input placeholder="请输入用户名" />
+                <Input 
+                  placeholder="请输入用户名" 
+                  onChange={() => setUsernameError('')} // 用户开始输入时清除错误
+                />
               </Form.Item>
             </Col>
             <Col span={12}>

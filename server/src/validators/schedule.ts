@@ -32,8 +32,7 @@ export const scheduleValidators = {
   createSchedule: {
     body: Joi.object({
       title: Joi.string().trim().min(1).max(200).required(),
-      startTime: Joi.date().iso().greater('now').required(),
-      endTime: Joi.date().iso().greater(Joi.ref('startTime')).required(),
+      weddingTime: Joi.string().valid(...Object.values(WeddingTime)).required(),
       location: Joi.string().trim().max(500).optional(),
       eventType: Joi.string()
         .valid(...Object.values(EventType))
@@ -60,8 +59,7 @@ export const scheduleValidators = {
     }),
     body: Joi.object({
       title: Joi.string().trim().min(1).max(200).optional(),
-      startTime: Joi.date().iso().optional(),
-      endTime: Joi.date().iso().optional(),
+      weddingTime: Joi.string().valid(...Object.values(WeddingTime)).required(),
       location: Joi.string().trim().max(500).optional(),
       eventType: Joi.string()
         .valid(...Object.values(EventType))
@@ -105,8 +103,7 @@ export const scheduleValidators = {
   checkConflict: {
     body: Joi.object({
       userId: Joi.string().optional(),
-      startTime: Joi.date().iso().required(),
-      endTime: Joi.date().iso().greater(Joi.ref('startTime')).required(),
+      weddingTime: Joi.string().valid(...Object.values(WeddingTime)).required(),
       excludeId: Joi.string().optional(),
     }),
   },
