@@ -660,7 +660,7 @@ export const profileService = {
   updateSingleMediaProfile: (fileId: string, data: any): Promise<ApiResponse<any>> => {
     return http.put(`/profile/media-profiles/${fileId}`, data);
   },
-  updateMediaProfilesOrder: (data: { orderData: { fileId: string; mediaOrder: number }[] }): Promise<ApiResponse<any>> => {
+  updateMediaProfilesOrder: (data: { orderData: { id: string; mediaOrder: number }[] }): Promise<ApiResponse<any>> => {
     return http.put('/profile/media-profiles/order', data);
   },
   deleteMediaProfile: (fileId: string): Promise<ApiResponse<any>> => {

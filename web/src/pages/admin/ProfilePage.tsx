@@ -434,11 +434,12 @@ const ProfilePage: React.FC = () => {
           const sortData = mediaFiles
             .filter(media => media.id) // 过滤掉没有id的媒体文件
             .map((media, index) => ({
-              fileId: media.id as string, // 类型断言，因为我们已经过滤了undefined的情况
+              id: media.id as string, // 类型断言，因为我们已经过滤了undefined的情况
               mediaOrder: index,
             }));
 
           await profileService.updateMediaProfilesOrder({ orderData: sortData });
+          loadMediaFiles(currentUser.id);
         } catch (error) {
           console.error('保存排序失败:', error);
         }

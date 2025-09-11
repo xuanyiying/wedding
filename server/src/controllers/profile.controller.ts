@@ -12,10 +12,6 @@ export class ProfileController {
       Resp.badRequest(res, '请提供文件ID');
       return;
     }
-    if (!mediaOrder) {
-      Resp.badRequest(res, '请提供媒体排序序号');
-      return;
-    }
     if (!userId) {
       Resp.badRequest(res, '用户ID不存在');
       return;

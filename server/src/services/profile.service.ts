@@ -20,6 +20,11 @@ export class MediaProfileService {
     if (!data.id) {
       data.id = generateId();
     }
+    if(!data.mediaOrder){
+      // 获取当前用 MediaProfile 的mediaOrder最大值
+      const maxOrder = await MediaProfile.max('mediaOrder', { where: { userId :data.userId } });
+      data.mediaOrder = maxOrder !== null ? Number(maxOrder) + 1 : 1;
+    }
     return await MediaProfile.create(data);
   }
 
@@ -205,13 +210,15 @@ export class MediaProfileService {
    * 批量创建媒体资料
    */
   async batchCreateMediaProfile(userId: string, mediaProfiles: Partial<MediaProfileCreationAttributes>[]): Promise<MediaProfile[]> {
+    // 获取当前用 MediaProfile 的mediaOrder最大值
+    const maxOrder = await MediaProfile.max('mediaOrder', { where: { userId } });
     const profilesWithIds = mediaProfiles.map((p, index) => {
       const profile: MediaProfileCreationAttributes = {
         id: p.id || generateId(),
         userId,
         fileId: p.fileId!,
         fileType: p.fileType!,
-        mediaOrder: p.mediaOrder ?? index,
+        mediaOrder: p.mediaOrder ?? (maxOrder !== null ? Number(maxOrder) + index + 1 : index + 1),
       };
       return profile;
     });
