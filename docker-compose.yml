@@ -18,8 +18,6 @@ services:
     image: wedding-web:${ENVIRONMENT:-prod}-latest
     environment:
       - VITE_API_URL=${VITE_API_URL:-http://localhost:3000}
-      - VITE_UPLOAD_URL=${VITE_UPLOAD_URL:-http://localhost:3000/upload}
-      - VITE_MINIO_URL=${VITE_MINIO_URL:-http://localhost:9000}
     container_name: wedding-web-${ENVIRONMENT:-prod}
     restart: unless-stopped
     pull_policy: never
