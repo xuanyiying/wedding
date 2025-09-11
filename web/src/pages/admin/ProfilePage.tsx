@@ -408,6 +408,42 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  // 处理媒体文件重新排序
+  const handleReorder = useCallback(async (newOrderedFiles: MediaFile[]) => {
+    try {
+      console.log('🔄 开始处理重新排序:', newOrderedFiles.map(f => ({ id: f.id, order: f.mediaOrder })));
+      
+      // 立即更新本地状态以提供即时反馈
+      setMediaFiles(newOrderedFiles);
+      
+      // 准备排序数据并发送到后端
+      if (newOrderedFiles.length > 0 && currentUser?.id) {
+        const sortData = newOrderedFiles
+          .filter(media => media.id)
+          .map((media, index) => ({
+            id: media.id as string,
+            mediaOrder: media.mediaOrder ?? index,
+          }));
+
+        console.log('🔄 发送排序数据到后端:', sortData);
+        await profileService.updateMediaProfilesOrder({ orderData: sortData });
+        
+        // 重新加载媒体文件以确保数据同步
+        await loadMediaFiles(currentUser.id);
+        
+        message.success('排序已保存');
+      }
+    } catch (error) {
+      console.error('重新排序失败:', error);
+      message.error('排序保存失败，请重试');
+      
+      // 如果保存失败，重新加载原始数据
+      if (currentUser?.id) {
+        await loadMediaFiles(currentUser.id);
+      }
+    }
+  }, [currentUser?.id]);
+
   // 保存公开资料
   const handleSavePublicProfile = async () => {
     try {
@@ -616,6 +652,7 @@ const ProfilePage: React.FC = () => {
                     mediaFiles={mediaFiles}
                     onPreview={handlePreview}
                     onDelete={handleOnRemoveMediaFile}
+                    onReorder={handleReorder}
                     loading={loading}
                   />
                 </div>
