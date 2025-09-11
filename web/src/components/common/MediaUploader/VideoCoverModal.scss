@@ -90,25 +90,41 @@
         }
       }
       
-      .frames-grid-container {
-        .frames-horizontal-layout {
-          display: flex;
-          align-items: flex-start;
-          gap: 16px;
+      .frames-container {
+        .frames-horizontal-scroll {
+          width: 100%;
+          overflow-x: auto;
+          overflow-y: hidden;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: thin;
           
-          // 响应式布局
-          @media (max-width: 768px) {
-            flex-direction: column;
-            gap: 12px;
+          &::-webkit-scrollbar {
+            height: 4px;
           }
           
-          .frames-thumbnails {
+          &::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 2px;
+          }
+          
+          &::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 2px;
+          }
+          
+          &::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+          }
+          
+          .frames-scroll-content {
             display: flex;
-            flex-wrap: wrap;
-            gap: 0; // 紧密排列，无间距
-            flex: 1;
+            flex-wrap: nowrap; // 严格禁止换行
+            gap: 12px;
+            padding: 4px 2px 12px;
+            min-height: 100px;
             
             .frame-thumbnail {
+              flex: 0 0 auto;
               width: 80px;
               height: 80px;
               cursor: pointer;
@@ -165,87 +181,87 @@
                 }
               }
             }
-          }
-          
-          .album-select-wrapper {
-            flex-shrink: 0;
             
-            .album-select-button {
-              width: 80px;
-              height: 80px;
-              cursor: pointer;
-              border: 2px solid #d9d9d9;
-              border-radius: 6px;
-              overflow: hidden;
-              transition: all 0.2s ease;
-              position: relative;
-              background: #fafafa;
-              min-height: 48px; // 确保点击区域不小于48px
-              min-width: 48px;
+            .album-select-button-wrapper {
+              flex: 0 0 auto;
               
-              &:hover {
-                border-color: #1890ff;
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
-              }
-              
-              &.selected {
-                border-color: #1890ff;
-                box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
-              }
-              
-              .album-button-content {
-                width: 100%;
-                height: 100%;
+              .album-select-button {
+                width: 80px;
+                height: 80px;
+                cursor: pointer;
+                border: 2px solid #d9d9d9;
+                border-radius: 6px;
+                overflow: hidden;
+                transition: all 0.2s ease;
                 position: relative;
-                display: flex;
-                align-items: center;
-                justify-content: center;
+                background: #fafafa;
+                min-height: 48px;
+                min-width: 48px;
                 
-                img {
+                &:hover {
+                  border-color: #1890ff;
+                  transform: translateY(-2px);
+                  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+                }
+                
+                &.selected {
+                  border-color: #1890ff;
+                  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+                }
+                
+                .album-button-content {
                   width: 100%;
                   height: 100%;
-                  object-fit: cover;
-                  display: block;
-                }
-                
-                .album-placeholder {
-                  display: flex;
-                  flex-direction: column;
-                  align-items: center;
-                  justify-content: center;
-                  padding: 8px;
-                  text-align: center;
-                  
-                  .album-icon {
-                    font-size: 20px;
-                    color: #666;
-                    margin-bottom: 4px;
-                  }
-                  
-                  .album-text {
-                    font-size: 10px;
-                    color: #666;
-                    line-height: 1.2;
-                    word-break: break-all;
-                  }
-                }
-                
-                .selected-overlay {
-                  position: absolute;
-                  top: 0;
-                  left: 0;
-                  right: 0;
-                  bottom: 0;
-                  background: rgba(24, 144, 255, 0.8);
+                  position: relative;
                   display: flex;
                   align-items: center;
                   justify-content: center;
                   
-                  .selected-icon {
-                    color: white;
-                    font-size: 20px;
-                    font-weight: bold;
+                  img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    display: block;
+                  }
+                  
+                  .album-placeholder {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 8px;
+                    text-align: center;
+                    
+                    .album-icon {
+                      font-size: 20px;
+                      color: #666;
+                      margin-bottom: 4px;
+                    }
+                    
+                    .album-text {
+                      font-size: 10px;
+                      color: #666;
+                      line-height: 1.2;
+                      word-break: break-all;
+                    }
+                  }
+                  
+                  .selected-overlay {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(24, 144, 255, 0.8);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    
+                    .selected-icon {
+                      color: white;
+                      font-size: 20px;
+                      font-weight: bold;
+                    }
                   }
                 }
               }

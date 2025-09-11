@@ -322,9 +322,38 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
     return false; // 阻止自动上传
   };
 
-  // 打开相册选择
+  // 打开相册选择 - 直接触发系统图片选择器
   const handleOpenAlbum = () => {
-    setShowUploadModal(true);
+    // 创建隐藏的文件输入元素
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = SUPPORTED_IMAGE_TYPES.join(',');
+    input.multiple = false;
+    input.style.display = 'none';
+    
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        // 验证文件类型
+        if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) {
+          message.error('不支持的文件格式，请上传支持的图片格式');
+          return;
+        }
+
+        // 验证文件大小（最大 10MB）
+        const maxSize = 10 * 1024 * 1024;
+        if (file.size > maxSize) {
+          message.error('图片文件大小不能超过 10MB');
+          return;
+        }
+
+        handleCoverUpload(file);
+      }
+    };
+
+    document.body.appendChild(input);
+    input.click();
+    document.body.removeChild(input);
   };
 
   // 确认选择（优化版本）
@@ -555,11 +584,11 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
                 <p>正在生成缩略图...{retryCount > 0 && ` (重试 ${retryCount}/3)`}</p>
               </div>
             ) : (
-              <div className="frames-grid-container">
-                {/* 优化后的水平布局 */}
-                <div className="frames-horizontal-layout">
+              <div className="frames-container">
+                {/* 水平单行布局 */}
+                <div className="frames-horizontal-scroll">
                   {/* 视频帧缩略图 */}
-                  <div className="frames-thumbnails">
+                  <div className="frames-scroll-content">
                     {extractedFrames.map((frame, index) => (
                       <div
                         key={index}
@@ -584,11 +613,10 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
                         </div>
                       </div>
                     ))}
-                  </div>
-
+                  
                   {/* 从相册选择按钮 */}
                   {extractedFrames.length > 0 && (
-                    <div className="album-select-wrapper">
+                    <div className="album-select-button-wrapper">
                       <div
                         className={`album-select-button ${selectedCover?.type === 'upload' ? 'selected' : ''
                           }`}
@@ -619,6 +647,7 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
                       </div>
                     </div>
                   )}
+                  </div>
                 </div>
 
                 {/* 空状态 */}
