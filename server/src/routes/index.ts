@@ -11,6 +11,7 @@ import contactRoutes from './contact';
 import settingsRoutes from './settings';
 import pageViewRoutes from './view';
 import profileRoutes from './profile';
+import issueRoutes from './issue';
 
 const router = Router();
 
@@ -34,6 +35,7 @@ router.get('/', (_req, res) => {
       settings: '/settings',
       'page-views': '/page-views',
       profile: '/profile',
+      issues: '/issues',
       docs: '/docs'
     }
   });
@@ -74,5 +76,8 @@ router.use('/page-views', pageViewRoutes);
 
 // 用户档案路由
 router.use('/profile', profileRoutes);
+
+// 问题管理路由
+router.use('/issues', issueRoutes);
 
 export default router;

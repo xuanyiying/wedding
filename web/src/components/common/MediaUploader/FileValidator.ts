@@ -12,7 +12,7 @@ export const SUPPORTED_IMAGE_TYPES = import.meta.env.VITE_ALLOWED_IMAGE_TYPES
 
 export const SUPPORTED_VIDEO_TYPES = import.meta.env.VITE_ALLOWED_VIDEO_TYPES
   ? import.meta.env.VITE_ALLOWED_VIDEO_TYPES.split(',').map((type: string) => type.trim())
-  : ['video/mp4', 'video/avi', 'video/mov', 'video/quicktime', 'video/wmv', 'video/flv'];
+  : ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-msvideo', 'video/x-ms-wmv', 'video/x-flv'];
 
 export class FileValidator {
   private config: MediaUploadConfig;
