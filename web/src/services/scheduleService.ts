@@ -1,4 +1,4 @@
-import api from './api';
+import request from "../utils/request";
 
 export interface User {
   id: number;
@@ -25,17 +25,17 @@ export interface Appointment {
 }
 
 const getAvailability = async (date: string): Promise<DayAvailability[]> => {
-  const response = await api.get(`/schedule/availability?date=${date}`);
+  const response = await request.get(`/schedule/availability?date=${date}`);
   return response.data;
 };
 
 const getAppointments = async (start: string, end: string): Promise<Appointment[]> => {
-  const response = await api.get(`/appointments?start=${start}&end=${end}`);
+  const response = await request.get(`/appointments?start=${start}&end=${end}`);
   return response.data;
 };
 
 const createAppointment = async (appointment: Omit<Appointment, 'id'>): Promise<Appointment> => {
-  const response = await api.post('/appointments', appointment);
+  const response = await request.post('/appointments', appointment);
   return response.data;
 };
 

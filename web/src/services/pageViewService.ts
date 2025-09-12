@@ -1,4 +1,4 @@
-import { http } from '../utils/request';
+import request  from '../utils/request';
 
 export interface PageViewStats {
   totalViews: number;
@@ -43,7 +43,7 @@ export class PageViewService {
    */
   static async recordPageView(pageType: 'team_member' | 'work' | 'team' | 'team_page', pageId: string): Promise<void> {
     try {
-      await http.post('/page-views/record', {
+      await request.post('/page-views/record', {
         pageType,
         pageId,
       });
@@ -57,7 +57,7 @@ export class PageViewService {
    * 获取页面访问统计
    */
   static async getPageViewStats(pageType: 'team_member' | 'work' | 'team' | 'team_page', pageId: string): Promise<PageViewStats> {
-    const response = await http.get(`/page-views/stats/${pageType}/${pageId}`);
+    const response = await request.get(`/page-views/stats/${pageType}/${pageId}`);
     return (response.data as any).data;
   }
 
@@ -68,7 +68,7 @@ export class PageViewService {
     pageType: 'team_member' | 'work' | 'team' | 'team_page',
     pageIds: string[]
   ): Promise<Record<string, PageViewStats>> {
-    const response = await http.post(`/page-views/stats/${pageType}/batch`, {
+    const response = await request.post(`/page-views/stats/${pageType}/batch`, {
       pageIds,
     });
     return (response.data as any).data;
@@ -79,7 +79,7 @@ export class PageViewService {
    */
   static async recordPlay(pageId: string): Promise<void> {
     try {
-      await http.post('/page-views/play/record', {
+      await request.post('/page-views/play/record', {
         pageId,
       });
     } catch (error) {
@@ -92,7 +92,7 @@ export class PageViewService {
    * 获取作品播放统计
    */
   static async getPlayStats(pageId: string): Promise<PlayStats> {
-    const response = await http.get(`/page-views/play/stats/${pageId}`);
+    const response = await request.get(`/page-views/play/stats/${pageId}`);
     return (response.data as any).data;
   }
 
@@ -100,7 +100,7 @@ export class PageViewService {
    * 批量获取作品播放统计
    */
   static async getBatchPlayStats(pageIds: string[]): Promise<Record<string, PlayStats>> {
-    const response = await http.post('/page-views/play/stats/batch', {
+    const response = await request.post('/page-views/play/stats/batch', {
       pageIds,
     });
     return (response.data as any).data;
@@ -120,7 +120,7 @@ export class PageViewService {
       params.endDate = timeRange.end.toISOString();
     }
 
-    const response = await http.get(`/page-views/popular/${pageType}`, { params });
+    const response = await request.get(`/page-views/popular/${pageType}`, { params });
     return (response.data as any).data;
   }
 
@@ -137,7 +137,7 @@ export class PageViewService {
       params.pageId = pageId;
     }
 
-    const response = await http.get(`/page-views/trends/${pageType}`, { params });
+    const response = await request.get(`/page-views/trends/${pageType}`, { params });
     return (response.data as any).data;
   }
 
@@ -145,7 +145,7 @@ export class PageViewService {
    * 获取管理员统计概览
    */
   static async getAdminStats(days: number = 7): Promise<AdminStats> {
-    const response = await http.get('/page-views/admin/stats', {
+    const response = await request.get('/page-views/admin/stats', {
       params: { days },
     });
     return (response.data as any).data;
