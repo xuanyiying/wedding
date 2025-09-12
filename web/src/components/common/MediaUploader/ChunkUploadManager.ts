@@ -213,16 +213,39 @@ export class ChunkUploadManager {
               if (onChunkProgress) {
                 onChunkProgress(i, progress);
               }
+              
+              // 实时更新总进度（基于当前分片的进度）
+              if (onProgress) {
+                const currentChunkBytes = Math.round(chunk.size * progress / 100);
+                const totalUploadedBytes = fileState.uploadedBytes + currentChunkBytes;
+                const totalProgress = Math.round((totalUploadedBytes / fileState.totalBytes) * 100);
+                
+                // 确保进度值在合理范围内，避免跳跃
+                const clampedProgress = Math.min(Math.max(totalProgress, 0), 100);
+                onProgress(clampedProgress);
+                
+                // 添加调试日志
+                if (progress === 100) {
+                  console.log(`📊 分片 ${i + 1} 完成，当前总进度: ${clampedProgress}%`);
+                }
+              }
             }
           );
           
           chunkState.uploaded = true;
           fileState.uploadedBytes += chunk.size;
           
-          // 更新总进度
+          // 立即更新总进度 - 确保分片完成后进度准确
           if (onProgress) {
             const totalProgress = Math.round((fileState.uploadedBytes / fileState.totalBytes) * 100);
-            onProgress(totalProgress);
+            const finalProgress = Math.min(totalProgress, 100);
+            
+            // 使用 setTimeout 确保进度更新在下一个事件循环中执行，避免UI阻塞
+            setTimeout(() => {
+              onProgress(finalProgress);
+            }, 0);
+            
+            console.log(`📊 分片 ${i + 1}/${chunks.length} 完成，总进度: ${finalProgress}% (已上传: ${fileState.uploadedBytes}/${fileState.totalBytes} 字节)`);
           }
           
           console.log(`✅ 分块 ${i + 1}/${chunks.length} 上传完成`);

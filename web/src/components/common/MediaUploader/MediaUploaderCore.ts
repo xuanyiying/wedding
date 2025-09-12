@@ -13,6 +13,7 @@ import { ChunkUploadManager } from './ChunkUploadManager';
 import type { FileUploadState } from './ChunkUploadManager';
 import { FileValidator } from './FileValidator';
 import { UploadProgressTracker } from './UploadProgressTracker';
+import { ProgressUpdateManager } from './ProgressThrottler';
 import type {
   MediaFileItem,
   MediaUploadConfig,
@@ -55,6 +56,7 @@ export class MediaUploaderCore {
   private validator: FileValidator;
   private chunkManager: ChunkUploadManager;
   private progressTracker: UploadProgressTracker;
+  private progressManager: ProgressUpdateManager;
   private options: MediaUploaderCoreOptions;
 
   // 状态管理
@@ -69,6 +71,7 @@ export class MediaUploaderCore {
     this.validator = new FileValidator(this.config);
     this.chunkManager = new ChunkUploadManager();
     this.progressTracker = new UploadProgressTracker();
+    this.progressManager = new ProgressUpdateManager(50); // 50ms节流间隔
   }
 
   /**
@@ -187,13 +190,32 @@ export class MediaUploaderCore {
             file,
             this.config.category!,
             (progress) => {
+              // 确保进度值有效
+              const validProgress = Math.min(Math.max(progress, 0), 100);
+              const loadedBytes = Math.round(file.size * validProgress / 100);
+              
+              // 更新文件进度
               const progressInfo = this.progressTracker.updateFileProgress(
                 fileItem.id,
-                Math.round(file.size * progress / 100),
+                loadedBytes,
                 file.size
               );
+              
+              // 存储进度信息
               this.fileProgresses.set(fileItem.id, progressInfo);
+              
+              // 触发文件级进度回调
               this.options.onFileProgress?.(fileItem.id, progressInfo);
+              
+              // 使用节流更新总体进度
+              this.progressManager.throttleFileProgress(fileItem.id, () => {
+                this.updateOverallProgress();
+              });
+              
+              console.log(`📊 分片上传进度: ${validProgress}% (${loadedBytes}/${file.size} 字节)`);
+            },
+            (chunkIndex, chunkProgress) => {
+              console.log(`📦 分片 ${chunkIndex + 1} 进度: ${chunkProgress}%`);
             }
           );
 
@@ -452,11 +474,20 @@ export class MediaUploaderCore {
   }
 
   /**
+   * 更新总体进度
+   */
+  private updateOverallProgress(): void {
+    const overallProgress = this.progressTracker.calculateOverallProgress(this.fileProgresses);
+    this.options.onUploadProgress?.(overallProgress);
+  }
+
+  /**
    * 清理资源
    */
   cleanup(): void {
     this.cancelUpload();
     this.progressTracker.cleanup();
+    this.progressManager.cleanup();
     this.fileUploadStates.clear();
     this.fileProgresses.clear();
   }

@@ -52,33 +52,36 @@ export class UploadProgressTracker {
       return this.updateFileProgress(fileId, loaded, total, customProgress);
     }
 
+    // 确保loaded不超过total
+    const safeLoaded = Math.min(loaded, total);
+    
     // 计算基础进度
-    const percentage = total > 0 ? Math.round((loaded / total) * 100) : 0;
+    const percentage = total > 0 ? Math.round((safeLoaded / total) * 100) : 0;
     
     // 计算速度（每秒字节数）
     const timeElapsed = (now - calculator.lastUpdateTime) / 1000;
-    const bytesProgress = loaded - calculator.lastBytes;
-    const instantSpeed = timeElapsed > 0 ? bytesProgress / timeElapsed : 0;
+    const bytesProgress = safeLoaded - calculator.lastBytes;
+    const instantSpeed = timeElapsed > 0.1 ? bytesProgress / timeElapsed : 0; // 避免除以很小的数
     
     // 计算平均速度
     const totalTimeElapsed = (now - calculator.startTime) / 1000;
-    const totalBytesProgress = loaded - calculator.startBytes;
-    const averageSpeed = totalTimeElapsed > 0 ? totalBytesProgress / totalTimeElapsed : 0;
+    const totalBytesProgress = safeLoaded - calculator.startBytes;
+    const averageSpeed = totalTimeElapsed > 1 ? totalBytesProgress / totalTimeElapsed : instantSpeed;
     
     // 使用平均速度来计算剩余时间，更稳定
-    const remainingBytes = total - loaded;
+    const remainingBytes = total - safeLoaded;
     const remainingTime = averageSpeed > 0 ? remainingBytes / averageSpeed : 0;
 
     // 更新计算器状态
     calculator.lastUpdateTime = now;
-    calculator.lastBytes = loaded;
+    calculator.lastBytes = safeLoaded;
 
     const progress: DirectUploadProgress = {
-      loaded,
+      loaded: safeLoaded,
       total,
       percentage,
       speed: Math.max(instantSpeed, averageSpeed), // 取较大值，避免速度为0
-      remainingTime,
+      remainingTime: isFinite(remainingTime) ? remainingTime : 0,
       status: customProgress?.status || (percentage === 100 ? 'completed' : 'uploading'),
       ...customProgress
     };
