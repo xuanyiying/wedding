@@ -56,16 +56,6 @@ fi
 
 echo "配置文件大小: $(wc -c < /etc/nginx/conf.d/default.conf) 字节"
 
-# 测试配置
-echo "测试 Nginx 配置..."
-if ! nginx -t; then
-    echo "错误: nginx配置测试失败"
-    echo "显示生成的配置文件内容:"
-    cat /etc/nginx/conf.d/default.conf
-    exit 1
-fi
-
-echo "Nginx 配置测试通过"
 echo "=== Nginx 配置生成完成 ==="
 
 # 检查依赖服务是否可达（增加重试机制和更灵活的检查）
@@ -135,6 +125,17 @@ done
 if [[ $retry_count -ge $max_retries ]]; then
     echo "⚠️ API服务在多次尝试后仍不可达，nginx将启动但API请求可能失败"
 fi
+
+# 测试配置
+echo "测试 Nginx 配置..."
+if ! nginx -t; then
+    echo "错误: nginx配置测试失败"
+    echo "显示生成的配置文件内容:"
+    cat /etc/nginx/conf.d/default.conf
+    exit 1
+fi
+
+echo "Nginx 配置测试通过"
 
 echo "显示生成的配置文件关键部分..."
 echo "=== upstream配置 ==="
