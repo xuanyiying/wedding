@@ -400,6 +400,37 @@ CREATE TABLE `work_likes` (
   CONSTRAINT `fk_work_likes_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='作品点赞表';
 
+DROP TABLE IF EXISTS `issues`;
+CREATE TABLE `issues` (
+  `id` char(36) NOT NULL,
+  `title` varchar(100) NOT NULL,
+  `description` text NOT NULL,
+  `type` enum('bug','feature','enhancement','documentation','other') NOT NULL DEFAULT 'bug',
+  `priority` enum('low','medium','high','critical') NOT NULL DEFAULT 'medium',
+  `status` enum('open','in_progress','resolved','closed','rejected') NOT NULL DEFAULT 'open',
+  `stepsToReproduce` text,
+  `expectedBehavior` text,
+  `actualBehavior` text,
+  `environment` varchar(100) DEFAULT NULL,
+  `version` varchar(100) DEFAULT NULL,
+  `reporter_id` char(36) NOT NULL,
+  `assignee_id` char(36) DEFAULT NULL,
+  `dueDate` datetime DEFAULT NULL,
+  `estimatedHours` int DEFAULT NULL,
+  `labels` text,
+  `attachments` text,
+  `voteCount` int NOT NULL DEFAULT '0',
+  `commentCount` int NOT NULL DEFAULT '0',
+  `createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deletedAt` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_issues_type` (`type`),
+  KEY `idx_issues_priority` (`priority`),
+  KEY `idx_issues_status` (`status`),
+  KEY `idx_issues_reporter_id` (`reporter_id`),
+  KEY `idx_issues_assignee_id` (`assignee_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 -- ================================
 -- 14. 插入系统配置初始数据
 -- ================================

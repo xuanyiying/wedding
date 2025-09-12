@@ -1,4 +1,4 @@
-import api from './api';
+
 import type {
   Issue,
   CreateIssueRequest,
@@ -8,6 +8,7 @@ import type {
   VoteRequest,
   VoteResponse
 } from '../types/issue';
+import request from '../utils/request';
 
 export const issueService = {
   /**
@@ -25,7 +26,7 @@ export const issueService = {
     sortBy?: string;
     sortOrder?: string;
   }): Promise<IssueListResponse> {
-    const response = await api.get('/issues', { params });
+    const response = await request.get('/issues', { params });
     return response.data;
   },
 
@@ -33,7 +34,7 @@ export const issueService = {
    * 获取问题统计
    */
   async getIssueStats(): Promise<IssueStats> {
-    const response = await api.get('/issues/stats');
+    const response = await request.get('/issues/stats');
     return response.data;
   },
 
@@ -41,7 +42,7 @@ export const issueService = {
    * 获取单个问题详情
    */
   async getIssue(id: string): Promise<Issue> {
-    const response = await api.get(`/issues/${id}`);
+    const response = await request.get(`/issues/${id}`);
     return response.data;
   },
 
@@ -49,7 +50,7 @@ export const issueService = {
    * 创建新问题
    */
   async createIssue(data: CreateIssueRequest): Promise<Issue> {
-    const response = await api.post('/issues', data);
+    const response = await request.post('/issues', data);
     return response.data;
   },
 
@@ -57,7 +58,7 @@ export const issueService = {
    * 更新问题
    */
   async updateIssue(id: string, data: UpdateIssueRequest): Promise<Issue> {
-    const response = await api.put(`/issues/${id}`, data);
+    const response = await request.put(`/issues/${id}`, data);
     return response.data;
   },
 
@@ -65,14 +66,14 @@ export const issueService = {
    * 删除问题
    */
   async deleteIssue(id: string): Promise<void> {
-    await api.delete(`/issues/${id}`);
+    await request.delete(`/issues/${id}`);
   },
 
   /**
    * 投票问题
    */
   async voteIssue(id: string, data: VoteRequest): Promise<VoteResponse> {
-    const response = await api.post(`/issues/${id}/vote`, data);
+    const response = await request.post(`/issues/${id}/vote`, data);
     return response.data;
   }
 };
