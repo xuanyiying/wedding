@@ -184,7 +184,7 @@ deploy() {
     
     if [[ ${#services_to_build[@]} -gt 0 ]]; then
         log_info "将要构建的服务: ${services_to_build[*]}"
-        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build "${services_to_build[@]}"
+        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build --build-arg BUILDKIT_INLINE_BUILD=1 "${services_to_build[@]}"
     else
         log_info "构建所有服务..."
         docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build
@@ -211,7 +211,7 @@ redeploy() {
     
     if [[ ${#services_to_build[@]} -gt 0 ]]; then
         log_info "将要强制重新构建的服务: ${services_to_build[*]}"
-        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build --no-cache "${services_to_build[@]}"
+        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build --no-cache --build-arg BUILDKIT_INLINE_BUILD=1 "${services_to_build[@]}"
     else
         log_info "强制重新构建所有服务..."
         docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build --no-cache
