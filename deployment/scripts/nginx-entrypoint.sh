@@ -40,19 +40,23 @@ fi
 
 echo "正在处理 Nginx 配置模板..."
 
-# 使用 envsubst 替换环境变量
-if ! envsubst '${SERVER_HOST} ${API_SERVICE_NAME} ${API_SERVICE_PORT} ${WEB_SERVICE_NAME} ${WEB_SERVICE_PORT} ${MINIO_SERVICE_NAME} ${MINIO_SERVICE_PORT}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf; then
+# 使用 envsubst 替换环境变量 - 添加所有需要的变量
+if ! envsubst '${SERVER_HOST} ${API_SERVICE_NAME} ${API_SERVICE_PORT} ${WEB_SERVICE_NAME} ${WEB_SERVICE_PORT} ${MINIO_SERVICE_NAME} ${MINIO_SERVICE_PORT} ${ENVIRONMENT}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf; then
     echo "错误: 配置模板处理失败"
     exit 1
 fi
 
 echo "Nginx 配置已生成"
 
-# 验证生成的配置文件
+# 检查生成的配置文件是否有效
 if [[ ! -f "/etc/nginx/conf.d/default.conf" ]]; then
     echo "错误: nginx配置文件未生成"
     exit 1
 fi
+
+# 检查配置文件末尾是否有意外字符并清理
+echo "清理配置文件末尾..."
+sed -i '$ { /^[[:space:]]*$/d; }' /etc/nginx/conf.d/default.conf
 
 echo "配置文件大小: $(wc -c < /etc/nginx/conf.d/default.conf) 字节"
 

@@ -3,21 +3,21 @@
 
 # 上游服务器配置
 upstream api_backend {
-    server ${API_SERVICE_NAME:-wedding-api-prod}:${API_SERVICE_PORT:-3000} max_fails=3 fail_timeout=30s;
+    server ${API_SERVICE_NAME}:${API_SERVICE_PORT} max_fails=3 fail_timeout=30s;
     keepalive 32;
     keepalive_requests 1000;
     keepalive_timeout 60s;
 }
 
 upstream web_backend {
-    server ${WEB_SERVICE_NAME:-wedding-web-prod}:${WEB_SERVICE_PORT:-80} max_fails=3 fail_timeout=30s;
+    server ${WEB_SERVICE_NAME}:${WEB_SERVICE_PORT} max_fails=3 fail_timeout=30s;
     keepalive 32;
     keepalive_requests 1000;
     keepalive_timeout 60s;
 }
 
 upstream minio_backend {
-    server ${MINIO_SERVICE_NAME:-wedding-minio-prod}:${MINIO_SERVICE_PORT:-9000} weight=1 max_fails=2 fail_timeout=20s;
+    server ${MINIO_SERVICE_NAME}:${MINIO_SERVICE_PORT} weight=1 max_fails=2 fail_timeout=20s;
     keepalive 64;
     keepalive_requests 500;
     keepalive_timeout 60s;
@@ -38,7 +38,7 @@ server {
     add_header X-XSS-Protection "1; mode=block" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http://${SERVER_HOST}:${MINIO_SERVICE_PORT:-9000}; font-src 'self' data:; connect-src 'self' https: http://${SERVER_HOST}:${MINIO_SERVICE_PORT:-9000} blob:; media-src 'self' blob: https: http://${SERVER_HOST}:${MINIO_SERVICE_PORT:-9000}; object-src 'none'; child-src 'self' blob:; frame-ancestors 'self'; base-uri 'self'; form-action 'self' http://${SERVER_HOST}:${MINIO_SERVICE_PORT:-9000};" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http://${SERVER_HOST}:${MINIO_SERVICE_PORT}; font-src 'self' data:; connect-src 'self' https: http://${SERVER_HOST}:${MINIO_SERVICE_PORT} blob:; media-src 'self' blob: https: http://${SERVER_HOST}:${MINIO_SERVICE_PORT}; object-src 'none'; child-src 'self' blob:; frame-ancestors 'self'; base-uri 'self'; form-action 'self' http://${SERVER_HOST}:${MINIO_SERVICE_PORT};" always;
 
     # 健康检查端点 - 直接代理到API服务
     location /health {
