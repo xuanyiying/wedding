@@ -12,7 +12,8 @@ import {
   MenuUnfoldOutlined,
   BellOutlined,
   LockOutlined,
-  ContactsOutlined
+  ContactsOutlined,
+  BugOutlined
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
@@ -187,6 +188,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
         label: '系统设置',
         roles: ['super_admin', 'admin'], // 仅管理员可见
       },
+      {
+        key: '/admin/issues',
+        icon: <BugOutlined />,
+        label: 'bug管理',
+        roles: ['super_admin', 'admin', 'user'], // 所有用户可见
+      }
     ];
 
     // 根据用户角色过滤菜单项

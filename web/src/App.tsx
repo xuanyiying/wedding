@@ -27,6 +27,7 @@ import AdminWorksPage from './pages/admin/WorksPage';
 import TeamManagePage from './pages/admin/TeamManagePage';
 import ProfilePage from './pages/admin/ProfilePage';
 import ContactsPage from './pages/admin/ContactsPage';
+import IssuesPage from './pages/admin/IssuesPage';
 
 // Ant Design 主题配置
 const theme = {
@@ -142,6 +143,7 @@ function AppContent() {
           <Route path="works" element={<AdminWorksPage />} />
           <Route path="contacts" element={<ContactsPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="issues" element={<IssuesPage />} />
         </Route>
         
         {/* 404 重定向 */}
