@@ -1,9 +1,10 @@
 import React from 'react';
-import { Card, Tag, Space, Button, Typography, Switch, Image, Tooltip } from 'antd';
+import { Card, Tag, Space, Button, Typography, Switch, Tooltip } from 'antd';
 import { EyeOutlined, EditOutlined, DeleteOutlined, HeartOutlined, DownloadOutlined, StarOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import dayjs from 'dayjs';
-import type { MediaFile } from '../../../types';
+import type { FileInfo } from '../../../types';
+import WorkMedia from './WorkMedia';
 
 const { Text, Paragraph } = Typography;
 const { Meta } = Card;
@@ -94,9 +95,7 @@ export interface Work {
   title: string;
   description: string;
   category: string;
-  type: 'photo' | 'video';
-  coverImage: string;
-  contentUrls: string[];
+  type: 'image' | 'video';
   tags: string[];
   author: string;
   customer?: string;
@@ -106,9 +105,10 @@ export interface Work {
   views: number;
   likes: number;
   downloads: number;
+  shares?: number;
   createdAt: string;
   updatedAt: string;
-  files: MediaFile[];
+  files: FileInfo[];
 }
 
 interface WorkCardProps {
@@ -160,15 +160,14 @@ const WorkCard: React.FC<WorkCardProps> = ({
       style={style}
       cover={
         <div style={{ position: 'relative', height: 100 }}>
-          <Image
-            src={work.coverImage}
-            alt={work.title}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            preview={false}
+          <WorkMedia files={work.files} 
+            isFeatured={work.isFeatured}
+            title={work.title} 
+            onClick={() => onPreview(work)}
           />
-          
+
           <TagContainer>
-            {work.isFeatured && (
+            {work.isFeatured && ( 
               <Tag color="gold" icon={<StarOutlined />}>
                 精选
               </Tag>
@@ -182,7 +181,7 @@ const WorkCard: React.FC<WorkCardProps> = ({
           
           <TypeBadge>
             {getTypeIcon(work.type)} {getTypeText(work.type)}
-            {work.contentUrls.length > 1 && ` (${work.contentUrls.length})`}
+            {work.files.length > 1 && ` (${work.files.length})`}
           </TypeBadge>
         </div>
       }

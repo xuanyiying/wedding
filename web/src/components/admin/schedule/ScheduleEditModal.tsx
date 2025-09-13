@@ -252,14 +252,6 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
-                name="location"
-                label="婚礼地点"
-              >
-                <Input placeholder="请输入婚礼地点" prefix={<EnvironmentOutlined />} />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
                 name="status"
                 label="档期状态"
                 rules={[{ required: true, message: '请选择档期状态' }]}
@@ -275,7 +267,55 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
             </Col>
           </Row>
 
+
           <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="venueName"
+                label="所在城市"
+              >
+                <Input placeholder="请输所在城市" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="location"
+                label="婚礼酒店"
+              >
+                <Input placeholder="请输入婚礼酒店" prefix={<EnvironmentOutlined />} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="venueAddress"
+                label="婚礼详细地址"
+              >
+                <Input placeholder="请输入婚礼详细地址" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item
+            name="notes"
+            label="备注"
+          >
+            <TextArea
+              rows={3}
+              placeholder="请输入备注信息"
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="requirements"
+            label="特殊要求"
+          >
+            <TextArea
+              rows={2}
+              placeholder="请输入特殊要求"
+            />
+          </Form.Item>
+
+        <Row gutter={16}>
             <Col span={8}>
               <Form.Item
                 name="price"
@@ -315,44 +355,6 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
             </Col>
           </Row>
 
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="venueName"
-                label="场地名称"
-              >
-                <Input placeholder="请输入场地名称" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="venueAddress"
-                label="场地地址"
-              >
-                <Input placeholder="请输入场地地址" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Form.Item
-            name="notes"
-            label="备注"
-          >
-            <TextArea
-              rows={3}
-              placeholder="请输入备注信息"
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="requirements"
-            label="特殊要求"
-          >
-            <TextArea
-              rows={2}
-              placeholder="请输入特殊要求"
-            />
-          </Form.Item>
         </Form>
       </Modal>
     </>

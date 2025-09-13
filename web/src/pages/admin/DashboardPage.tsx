@@ -210,7 +210,10 @@ const DashboardPage: React.FC = () => {
             uniqueViews: page.uniqueViews || 0
           }));
           setPopularPages(mappedPopularPages);
-          setViewTrends(viewTrendsResponse || []);
+          // 确保 viewTrendsResponse 是数组
+          const viewTrendsArray = Array.isArray(viewTrendsResponse) ? viewTrendsResponse : 
+                                 (viewTrendsResponse?.data && Array.isArray(viewTrendsResponse.data)) ? viewTrendsResponse.data : [];
+          setViewTrends(viewTrendsArray);
         } else {
           setPopularPages([]);
           setViewTrends([]);
@@ -409,13 +412,13 @@ const DashboardPage: React.FC = () => {
             <ContentCard>
               <h3 style={{ marginBottom: 16, color: 'var(--admin-text-primary)' }}>访问趋势</h3>
               <div style={{ padding: '16px 0' }}>
-                {viewTrends.map((trend, index) => (
+                {Array.isArray(viewTrends) && viewTrends.map((trend, index) => (
                   <div key={index} style={{ 
                     display: 'flex', 
                     justifyContent: 'space-between', 
                     alignItems: 'center',
                     padding: '8px 0',
-                    borderBottom: index < viewTrends.length - 1 ? '1px solid var(--admin-border-color)' : 'none'
+                    borderBottom: index < (Array.isArray(viewTrends) ? viewTrends.length : 0) - 1 ? '1px solid var(--admin-border-color)' : 'none'
                   }}>
                     <span style={{ color: 'var(--admin-text-secondary)' }}>
                       {dayjs(trend.date).format('MM-DD')}
@@ -428,7 +431,7 @@ const DashboardPage: React.FC = () => {
                     </span>
                   </div>
                 ))}
-                {viewTrends.length === 0 && !loading && (
+                {(!Array.isArray(viewTrends) || viewTrends.length === 0) && !loading && (
                   <div style={{ 
                     textAlign: 'center', 
                     color: 'var(--admin-text-secondary)',

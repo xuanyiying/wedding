@@ -132,21 +132,6 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
   const [isHovered, setIsHovered] = useState(false);
 
-  // 如果只有一张图片或没有图片，不显示轮播功能
-  if (!images || images.length === 0) {
-    return null;
-  }
-
-  if (images.length === 1) {
-    return (
-      <CarouselContainer height={height} className={className}>
-        <ImageItem>
-          <img src={images[0]} alt="作品图片" />
-        </ImageItem>
-      </CarouselContainer>
-    );
-  }
-
   const goToSlide = (index: number) => {
     setCurrentIndex(index);
   };
@@ -161,7 +146,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
 
   // 自动播放逻辑
   useEffect(() => {
-    if (autoPlay && !isHovered) {
+    if (autoPlay && !isHovered && images && images.length > 1) {
       autoPlayRef.current = setInterval(() => {
         goToNext();
       }, autoPlayInterval);
@@ -177,7 +162,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
         clearInterval(autoPlayRef.current);
       }
     };
-  }, [autoPlay, isHovered, autoPlayInterval, currentIndex]);
+  }, [autoPlay, isHovered, autoPlayInterval, currentIndex, images]);
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -186,6 +171,22 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
   const handleMouseLeave = () => {
     setIsHovered(false);
   };
+
+  // 如果没有图片，返回null
+  if (!images || images.length === 0) {
+    return null;
+  }
+
+  // 如果只有一张图片，显示简单版本
+  if (images.length === 1) {
+    return (
+      <CarouselContainer height={height} className={className}>
+        <ImageItem>
+          <img src={images[0]} alt="作品图片" />
+        </ImageItem>
+      </CarouselContainer>
+    );
+  }
 
   return (
     <CarouselWrapper 

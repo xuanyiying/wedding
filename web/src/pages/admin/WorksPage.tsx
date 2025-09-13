@@ -217,17 +217,14 @@ const WorksPage: React.FC = () => {
 
   // 预览作品
   const handlePreviewWork = (work: Work) => {
-    let coverUrl = '';
     const contentUrls: string[] = [];
     work.files?.forEach(file => {
       if (file.fileUrl) {
         contentUrls.push(file.fileUrl);
       }
       if (file.fileType === FileType.VIDEO && file.thumbnailUrl) {
-        coverUrl = file.thumbnailUrl || '';
       }
       if (file.fileType === FileType.IMAGE && file.fileUrl) {
-        coverUrl = file.fileUrl || '';
       }
     })
     const workCardData: WorkCardType = {
@@ -235,9 +232,7 @@ const WorksPage: React.FC = () => {
       title: work.title,
       description: work.description || '',
       category: work.category,
-      type: work.type === 'image' ? 'photo' : 'video',
-      coverImage: coverUrl || '',
-      contentUrls: contentUrls || [],
+      type: work.type,
       tags: work.tags || [],
       author: work.author || '',
       customer: work.customer || undefined,
@@ -504,7 +499,7 @@ const WorksPage: React.FC = () => {
             title: editingWork.title,
             description: editingWork.description || '',
             category: editingWork.category,
-            type: editingWork.type === 'image' ? 'photo' : 'video',
+            type: editingWork.type,
             files: editingWork.files || [],
             tags: editingWork.tags || [],
             author: editingWork.author || '',
@@ -512,6 +507,10 @@ const WorksPage: React.FC = () => {
             weddingDate: editingWork.weddingDate ? new Date(editingWork.weddingDate) : undefined,
             isPublic: editingWork.isPublic ?? false,
             isFeatured: editingWork.isFeatured ?? false,
+            views: editingWork.viewCount || 0,
+            likes: editingWork.likeCount || 0,
+            downloads: editingWork.downloads || 0,
+            shares : editingWork.shareCount || 0
           } : undefined}
           onSubmit={handleSave}
           onCancel={() => setModalVisible(false)}

@@ -1,0 +1,150 @@
+// 媒体缩略图容器 - 单行横向排列
+.media-thumbnails-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 8px;
+  min-height: 120px;
+  
+  .media-thumbnail-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    
+    .thumbnail-wrapper {
+      position: relative;
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 80px;
+      min-height: 60px;
+      max-width: 160px;
+      max-height: 120px;
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        
+        .delete-button {
+          opacity: 1;
+        }
+      }
+      
+      .delete-button {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid #ff4d4f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        z-index: 10;
+        
+        &:hover {
+          background: #ff4d4f;
+          color: white;
+        }
+        
+        .anticon {
+          font-size: 12px;
+        }
+      }
+      
+      // 视频占位符缩略图
+      .video-placeholder-thumbnail {
+        width: 120px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f0f0f0;
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+      }
+    }
+    
+    .thumbnail-info {
+      margin-top: 6px;
+      text-align: center;
+      width: 120px;
+      
+      .file-name {
+        font-size: 12px;
+        color: #595959;
+        line-height: 1.2;
+        word-break: break-all;
+      }
+      
+      .file-size {
+        font-size: 11px;
+        color: #8c8c8c;
+        margin-top: 2px;
+      }
+    }
+  }
+}
+
+// 空状态提示
+.media-thumbnails-container:empty::after {
+  content: "暂无文件";
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 80px;
+  color: #bfbfbf;
+  font-size: 14px;
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .media-thumbnails-container {
+    gap: 8px;
+    padding: 8px;
+    
+    .media-thumbnail-item {
+      .thumbnail-wrapper {
+        .delete-button {
+          opacity: 1; // 移动端始终显示删除按钮
+        }
+      }
+      
+      .thumbnail-info {
+        width: 100px;
+        
+        .file-name {
+          font-size: 11px;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .media-thumbnails-container {
+    .media-thumbnail-item {
+      .thumbnail-wrapper {
+        img, .video-placeholder-thumbnail {
+          width: 100px !important;
+          height: 67px !important;
+        }
+      }
+      
+      .thumbnail-info {
+        width: 100px;
+      }
+    }
+  }
+}

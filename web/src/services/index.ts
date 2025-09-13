@@ -17,6 +17,7 @@ import type {
   MediaFile,
   FileType,
   SiteSettings,
+  FileInfo,
 } from '../types';
 
 // 认证相关API
@@ -586,6 +587,9 @@ export const fileService = {
   // 删除文件
   deleteFile: (id: string): Promise<ApiResponse<Boolean>> => {
     return http.delete(`/files/${id}`);
+  },
+  getFile: (id: string): Promise<ApiResponse<FileInfo>> => {
+    return http.get(`/files/${id}`);  
   },
 
   uploadVedioCover: (file: File, vedioFileId: string): Promise<ApiResponse<string>> => {

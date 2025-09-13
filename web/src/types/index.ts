@@ -337,6 +337,30 @@ export interface User {
 
 // 媒体文件类型
 
+export interface FileInfo {
+    fileId: string;
+   userId: string;
+   originalName?: string;
+   filename?: string;
+   filePath?: string;
+   fileUrl: string;
+   fileSize?: number;
+   mimeType?: string;
+   fileType: FileType;
+   width?: number;
+   height?: number;
+   duration?: number;
+   thumbnailUrl?: string;
+   hashMd5?: string;
+   hashSha256?: string;
+   bucketName?: string;
+   downloadCount?: number;
+   metadata?: any;
+   createdAt?: Date;
+   updatedAt?: Date;
+   deletedAt?: Date;
+}
+
 // 媒体文件相关类型
 export interface MediaFile {
   id?: string;
@@ -433,7 +457,7 @@ export interface Work {
   updatedAt: string;
   deletedAt?: string | null;
   user?: User;
-  files?: MediaFile[];
+  files?: FileInfo[];
 }
 
 
