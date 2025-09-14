@@ -7,6 +7,7 @@ dotenvConfig({ path: resolve(__dirname, '../../.env') });
 interface Config {
   nodeEnv: string;
   port: number;
+  mcpPort: number;
   apiPrefix: string;
 
   // 数据库配置
@@ -139,6 +140,7 @@ const getEnvArray = (key: string, defaultValue?: string[]): string[] => {
 export const config: Config = {
   nodeEnv: getEnvVar('NODE_ENV', 'development'),
   port: getEnvNumber('PORT', 3000),
+  mcpPort: getEnvNumber('MCP_PORT', 3002),
   apiPrefix: getEnvVar('API_PREFIX', '/api/v1'),
 
   database: {

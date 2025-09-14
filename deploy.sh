@@ -41,7 +41,7 @@ show_help() {
     echo "  test          测试配置"
     echo ""
     echo -e "${YELLOW}选项:${NC}"
-    echo "  --services <服务列表>  指定要构建和部署的服务（web,api,nginx）"
+    echo "  --services <服务列表>  指定要构建和部署的服务（web,api,nginx,mcp）"
     echo ""
     echo -e "${GREEN}部署模式说明:${NC}"
     echo "  deploy        - 智能检测代码变化，无变化时快速重启"
@@ -52,6 +52,7 @@ show_help() {
     echo "  ./deploy.sh redeploy                      # 强制重新构建所有服务"
     echo "  ./deploy.sh redeploy --services web       # 只重新构建web服务"
     echo "  ./deploy.sh redeploy --services web,api   # 重新构建web和api服务"
+    echo "  ./deploy.sh redeploy --services web,api,mcp # 重新构建web、api和mcp服务"
     echo "  ./deploy.sh deploy --services web         # 智能部署，仅构建web服务（如有变化）"
     echo "  ./deploy.sh logs api                      # 查看API日志"
     echo ""
@@ -81,6 +82,14 @@ start_services() {
     
     log_info "使用 docker-compose 启动所有服务..."
     docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --remove-orphans
+    
+    # 等待Nginx服务启动并显示启动日志
+    log_info "等待Nginx服务启动..."
+    sleep 5
+    
+    # 显示Nginx启动日志
+    log_info "Nginx启动日志："
+    docker logs wedding-nginx-${ENVIRONMENT:-prod} --tail 200 2>/dev/null || log_warning "无法获取Nginx日志"
     
     show_status
     log_success "服务启动完成！"
@@ -122,7 +131,13 @@ show_logs() {
     if [[ -z "$1" ]]; then
         docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" logs -f
     else
-        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" logs -f "$1"
+        # 特殊处理nginx日志，显示更多启动信息
+        if [[ "$1" == "nginx" ]]; then
+            log_info "显示Nginx详细日志..."
+            docker logs wedding-nginx-${ENVIRONMENT:-prod} -f --tail 200
+        else
+            docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" logs -f "$1"
+        fi
     fi
 }
 
