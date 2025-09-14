@@ -148,4 +148,37 @@ echo "=== location / 配置 ==="
 grep -A 15 "location / {" /etc/nginx/conf.d/default.conf || echo "未找到根路径配置"
 
 echo "启动 Nginx..."
-exec nginx -g "daemon off;"
+
+# 添加启动前的最终检查
+echo "=== 启动前最终检查 ==="
+echo "检查nginx二进制文件..."
+which nginx || echo "警告: nginx命令未找到"
+
+echo "检查配置文件权限..."
+ls -la /etc/nginx/conf.d/default.conf
+
+echo "检查nginx主配置文件..."
+ls -la /etc/nginx/nginx.conf
+
+echo "最终配置测试..."
+nginx -t -c /etc/nginx/nginx.conf
+
+echo "检查nginx进程..."
+ps aux | grep nginx || echo "当前无nginx进程运行"
+
+echo "=== 开始启动nginx进程 ==="
+echo "启动时间: $(date)"
+echo "启动命令: nginx -g 'daemon off;'"
+
+# 启动nginx并捕获可能的错误
+if ! nginx -g "daemon off;"; then
+    echo "❌ Nginx启动失败!"
+    echo "检查错误日志..."
+    if [[ -f /var/log/nginx/error.log ]]; then
+        echo "=== Nginx错误日志 ==="
+        tail -100 /var/log/nginx/error.log
+    fi
+    echo "检查系统日志..."
+    dmesg | tail -10
+    exit 1
+fi
