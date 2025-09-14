@@ -4,6 +4,7 @@ import { EyeOutlined, HeartOutlined, DownloadOutlined, PlayCircleOutlined, Pause
 import styled from 'styled-components';
 import type { Work } from './WorkCard';
 import { usePlayStats } from '../../../hooks/usePageView';
+import type { FileInfo } from '../../../types';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -188,12 +189,6 @@ const WorkPreviewModal: React.FC<WorkPreviewModalProps> = ({
     setPreviewVisible(true);
   };
 
-  const getFileType = (url: string) => {
-    const extension = url.split('.').pop()?.toLowerCase();
-    const videoExtensions = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'];
-    return videoExtensions.includes(extension || '') ? 'video' : 'image';
-  };
-
   const handleVideoPlay = (index: number) => {
     const video = document.getElementById(`video-${index}`) as HTMLVideoElement;
     if (video) {
@@ -240,19 +235,18 @@ const WorkPreviewModal: React.FC<WorkPreviewModalProps> = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const renderMediaItem = (url: string, index: number) => {
-    const fileType = getFileType(url);
+  const renderMediaItem = (file: FileInfo, index: number) => {
     const isPlaying = playingVideos.has(index);
     const currentTime = videoCurrentTimes.get(index) || 0;
     const duration = videoDurations.get(index) || 0;
     const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
     
-    if (fileType === 'video') {
+    if (file.fileType === 'video') {
       return (
         <div key={index} className="media-item">
           <video
             id={`video-${index}`}
-            src={url}
+            src={file.fileUrl}
             onTimeUpdate={(e) => handleVideoTimeUpdate(index, e.currentTarget.currentTime)}
             onLoadedMetadata={(e) => handleVideoLoadedMetadata(index, e.currentTarget.duration)}
             onEnded={() => setPlayingVideos(prev => {
@@ -295,9 +289,9 @@ const WorkPreviewModal: React.FC<WorkPreviewModalProps> = ({
     return (
       <div key={index} className="media-item">
         <img 
-          src={url} 
+          src={file.fileUrl} 
           alt={`作品图片 ${index + 1}`}
-          onClick={() => handleImagePreview(url)}
+          onClick={() => handleImagePreview(file.fileUrl)}
         />
         
         <div className="media-info">
@@ -330,8 +324,8 @@ const WorkPreviewModal: React.FC<WorkPreviewModalProps> = ({
             
             <Space wrap style={{ marginBottom: 16 }}>
               <Tag color="blue">{work.category}</Tag>
-              <Tag color={work.type === 'photo' ? 'green' : 'orange'}>
-                {work.type === 'photo' ? '图片' : '视频'}
+              <Tag color={work.type === 'image' ? 'green' : 'orange'}>
+                {work.type === 'image' ? '图片' : '视频'}
               </Tag>
               {work.isFeatured && <Tag color="gold">精选</Tag>}
               {!work.isPublic && <Tag color="red">私有</Tag>}
@@ -413,12 +407,12 @@ const WorkPreviewModal: React.FC<WorkPreviewModalProps> = ({
             
             <InfoSection>
               <div className="section-title">
-                作品内容 ({work.contentUrls?.length || 0} 个文件)
+                作品内容 ({work.files?.length || 0} 个文件)
               </div>
               
-              {work.contentUrls && work.contentUrls.length > 0 ? (
+              {work.files && work.files.length > 0 ? (
                 <MediaContainer>
-                  {work.contentUrls.map((url, index) => renderMediaItem(url, index))}
+                  {work.files.map((file, index) => renderMediaItem(file, index))}
                 </MediaContainer>
               ) : (
                 <Text type="secondary">暂无作品文件</Text>
