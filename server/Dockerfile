@@ -92,15 +92,15 @@ RUN rm -rf dist && mkdir -p dist && \
 FROM base AS production
 
 # 构建参数
-ARG ENVIRONMENT=development
-ARG SERVER_IP=localhost
+ARG ENVIRONMENT=dev
+ARG DOMAIN=localhost:80
 
 # 设置环境变量
 ENV TZ=Asia/Shanghai \
     NODE_ENV=${ENVIRONMENT} \
     PORT=3000 \
     LOG_LEVEL=info \
-    SERVER_IP=${SERVER_IP}
+    DOMAIN=${DOMAIN}
 
 # 快速配置运行环境
 RUN apk update && \

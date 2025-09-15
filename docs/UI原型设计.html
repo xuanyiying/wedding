@@ -1,0 +1,1967 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>婚礼主持档期管理系统 - UI原型设计</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue/dist/index.iife.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .prototype-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .page-section {
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .page-header {
+            background: linear-gradient(135deg, #F55D54, #FF8A80);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .page-desc {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .page-content {
+            padding: 20px;
+        }
+        
+        .mobile-frame {
+            max-width: 375px;
+            margin: 0 auto;
+            border: 2px solid #ddd;
+            border-radius: 20px;
+            overflow: hidden;
+            background: white;
+        }
+        
+        .status-bar {
+            height: 20px;
+            background: #000;
+            color: white;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+        }
+        
+        .app-header {
+            height: 60px;
+            background: #F55D54;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+        }
+        
+        .app-content {
+            min-height: 600px;
+            background: #f5f5f5;
+        }
+        
+        .bottom-nav {
+            height: 60px;
+            background: white;
+            border-top: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            color: #999;
+            font-size: 12px;
+        }
+        
+        .nav-item.active {
+            color: #F55D54;
+        }
+        
+        .nav-icon {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+        
+        .banner {
+            height: 180px;
+            background: linear-gradient(135deg, #F55D54, #FF8A80);
+            margin: 15px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+        
+        .search-bar {
+            margin: 15px;
+            padding: 12px;
+            background: white;
+            border-radius: 25px;
+            border: 1px solid #eee;
+            font-size: 14px;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 15px;
+            color: #333;
+        }
+        
+        .host-card {
+            background: white;
+            margin: 10px 15px;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .host-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .host-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #F55D54;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .host-details h4 {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+        
+        .host-details p {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .host-tags {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .tag {
+            background: #F55D54;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+        }
+        
+        .host-price {
+            color: #F55D54;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .calendar-view {
+            background: white;
+            margin: 15px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .calendar-header {
+            background: #F55D54;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+        }
+        
+        .calendar-day {
+            aspect-ratio: 1;
+            border: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            position: relative;
+        }
+        
+        .calendar-day.available {
+            background: #e8f5e8;
+            color: #52c41a;
+        }
+        
+        .calendar-day.booked {
+            background: #ffe7e7;
+            color: #f5222d;
+        }
+        
+        .calendar-day.rest {
+            background: #f0f0f0;
+            color: #999;
+        }
+        
+        .profile-header {
+            background: linear-gradient(135deg, #F55D54, #FF8A80);
+            color: white;
+            padding: 30px 15px;
+            text-align: center;
+        }
+        
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .profile-name {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .profile-desc {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .profile-stats {
+            display: flex;
+            background: white;
+            margin: 0 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transform: translateY(-20px);
+        }
+        
+        .stat-item {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            border-right: 1px solid #eee;
+        }
+        
+        .stat-item:last-child {
+            border-right: none;
+        }
+        
+        .stat-number {
+            font-size: 18px;
+            font-weight: 600;
+            color: #F55D54;
+            margin-bottom: 4px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .tab-nav {
+            display: flex;
+            background: white;
+            margin: 15px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .tab-item {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            background: #f5f5f5;
+            color: #999;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .tab-item.active {
+            background: #F55D54;
+            color: white;
+        }
+        
+        .work-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 15px;
+        }
+        
+        .work-item {
+            aspect-ratio: 1;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .work-image {
+            height: 70%;
+            background: linear-gradient(135deg, #F55D54, #FF8A80);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+        
+        .work-info {
+            height: 30%;
+            padding: 8px;
+            font-size: 12px;
+        }
+        
+        .message-list {
+            background: white;
+            margin: 15px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .message-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .message-item:last-child {
+            border-bottom: none;
+        }
+        
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #F55D54;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .message-content {
+            flex: 1;
+        }
+        
+        .message-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .message-text {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .message-time {
+            font-size: 10px;
+            color: #ccc;
+        }
+        
+        .filter-bar {
+            background: white;
+            margin: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .filter-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .filter-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .filter-label {
+            width: 60px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .filter-options {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+        }
+        
+        .filter-option {
+            padding: 6px 12px;
+            background: #f5f5f5;
+            border-radius: 15px;
+            font-size: 12px;
+            color: #666;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .filter-option.active {
+            background: #F55D54;
+            color: white;
+        }
+        
+        .team-header {
+            background: white;
+            margin: 15px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .team-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #F55D54;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+        
+        .team-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .team-desc {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .member-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 15px;
+        }
+        
+        .member-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .member-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #F55D54;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+        }
+        
+        .member-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .member-role {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .floating-btn {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #F55D54;
+            color: white;
+            border: none;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(245, 93, 84, 0.4);
+            cursor: pointer;
+            z-index: 1000;
+        }
+        
+        /* 作品管理样式 */
+        .works-grid {
+            margin: 15px;
+        }
+        
+        .work-item {
+            display: flex;
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .work-image {
+            width: 80px;
+            height: 80px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .work-info {
+            flex: 1;
+        }
+        
+        .work-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .work-desc {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .work-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 15px;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: 600;
+            color: #F55D54;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        /* 动态管理样式 */
+        .dynamic-list {
+            margin: 15px;
+        }
+        
+        .dynamic-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .dynamic-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .dynamic-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #F55D54;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        
+        .dynamic-info {
+            flex: 1;
+        }
+        
+        .dynamic-name {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        
+        .dynamic-time {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .dynamic-more {
+            color: #999;
+            cursor: pointer;
+        }
+        
+        .dynamic-content {
+            margin-bottom: 15px;
+        }
+        
+        .dynamic-text {
+            line-height: 1.5;
+            margin-bottom: 10px;
+            white-space: pre-line;
+        }
+        
+        .dynamic-images {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .dynamic-image {
+            width: 60px;
+            height: 60px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .dynamic-location {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .dynamic-actions {
+            display: flex;
+            gap: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #f0f0f0;
+        }
+        
+        .action-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+        }
+        
+        .action-item:hover {
+            color: #F55D54;
+        }
+        
+        /* 标签页样式 */
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* 作品展示样式优化 */
+        .work-stats {
+            display: flex;
+            gap: 10px;
+            margin: 15px;
+        }
+        
+        .stat-card {
+            flex: 1;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 20px;
+            font-weight: 600;
+            color: #F55D54;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .work-filter {
+            display: flex;
+            gap: 10px;
+            margin: 0 15px 15px;
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #666;
+            cursor: pointer;
+        }
+        
+        .filter-btn.active {
+            background: #F55D54;
+            color: white;
+        }
+        
+        .work-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 15px;
+        }
+        
+        .work-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .work-image {
+            width: 60px;
+            height: 60px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin: 0 auto 10px;
+        }
+        
+        .work-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .work-meta {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        /* 设置页面样式 */
+        .settings-list {
+            margin: 15px;
+        }
+        
+        .setting-item {
+            display: flex;
+            align-items: center;
+            background: white;
+            padding: 15px;
+            margin-bottom: 1px;
+            cursor: pointer;
+        }
+        
+        .setting-item:first-child {
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .setting-item:last-child {
+            border-radius: 0 0 8px 8px;
+            margin-bottom: 0;
+        }
+        
+        .setting-item:only-child {
+            border-radius: 8px;
+        }
+        
+        .setting-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 15px;
+            font-size: 16px;
+        }
+        
+        .setting-text {
+            flex: 1;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .setting-arrow {
+            color: #ccc;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .prototype-container {
+                padding: 10px;
+            }
+            
+            .mobile-frame {
+                border: none;
+                border-radius: 0;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="prototype-container">
+        <h1 style="text-align: center; color: #F55D54; margin-bottom: 30px; font-size: 28px;">婚礼主持档期管理系统 - UI原型设计</h1>
+        
+        <!-- 首页设计 -->
+        <div class="page-section">
+            <div class="page-header">
+                <div class="page-title">首页 - Home</div>
+                <div class="page-desc">主要功能：个人工作台、档期管理、团队信息、作品展示</div>
+            </div>
+            <div class="page-content">
+                <div class="mobile-frame">
+                    <div class="status-bar">
+                        <span>9:41</span>
+                        <span>100%</span>
+                    </div>
+                    <div class="app-header">
+                        <div style="font-size: 18px; font-weight: 600;">我的工作台</div>
+                        <div style="display: flex; gap: 15px;">
+                            <span>🔔</span>
+                            <span>⚙️</span>
+                        </div>
+                    </div>
+                    <div class="app-content">
+                        <!-- 用户信息卡片 -->
+                        <div class="profile-header" style="margin: 15px; border-radius: 8px; padding: 20px;">
+                            <div class="profile-avatar" style="width: 60px; height: 60px; margin: 0 auto 10px;">
+                                张
+                            </div>
+                            <div class="profile-name" style="font-size: 18px;">张婚礼主持</div>
+                            <div class="profile-desc">专业婚礼主持人 · 5年经验</div>
+                        </div>
+                        
+                        <!-- 统计数据 -->
+                        <div class="profile-stats" style="margin: 0 15px 20px; transform: translateY(-10px);">
+                            <div class="stat-item">
+                                <div class="stat-number">15</div>
+                                <div class="stat-label">本月档期</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">8</div>
+                                <div class="stat-label">待确认</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">328</div>
+                                <div class="stat-label">总服务</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">4.9</div>
+                                <div class="stat-label">评分</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 快捷功能 -->
+                        <div class="section-title">📋 快捷功能</div>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 15px; margin-bottom: 25px;">
+                            <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                <div style="font-size: 24px; margin-bottom: 8px;">📅</div>
+                                <div style="font-size: 12px; color: #666;">档期管理</div>
+                            </div>
+                            <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                <div style="font-size: 24px; margin-bottom: 8px;">📝</div>
+                                <div style="font-size: 12px; color: #666;">预约管理</div>
+                            </div>
+                            <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                <div style="font-size: 24px; margin-bottom: 8px;">📸</div>
+                                <div style="font-size: 12px; color: #666;">发布作品</div>
+                            </div>
+                            <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                <div style="font-size: 24px; margin-bottom: 8px;">✍️</div>
+                                <div style="font-size: 12px; color: #666;">发布动态</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 更多功能 -->
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 15px; margin-bottom: 25px;">
+                            <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                <div style="font-size: 24px; margin-bottom: 8px;">🎨</div>
+                                <div style="font-size: 12px; color: #666;">作品管理</div>
+                            </div>
+                            <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                <div style="font-size: 24px; margin-bottom: 8px;">👥</div>
+                                <div style="font-size: 12px; color: #666;">团队管理</div>
+                            </div>
+                            <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
+                                <div style="font-size: 12px; color: #666;">收益统计</div>
+                            </div>
+                            <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                <div style="font-size: 24px; margin-bottom: 8px;">⚙️</div>
+                                <div style="font-size: 12px; color: #666;">系统设置</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 近期档期 -->
+                        <div class="section-title">📅 近期档期</div>
+                        <div class="host-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <div>
+                                    <h4 style="color: #F55D54;">3月15日 周五</h4>
+                                    <p style="font-size: 12px; color: #999;">14:00-18:00 · 北京香格里拉酒店</p>
+                                </div>
+                                <div style="background: #52c41a; color: white; padding: 4px 8px; border-radius: 4px; font-size: 10px;">已确认</div>
+                            </div>
+                            <div style="font-size: 12px; color: #666;">联系人：李先生 · 13800138000</div>
+                        </div>
+                        
+                        <div class="host-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <div>
+                                    <h4 style="color: #F55D54;">3月22日 周五</h4>
+                                    <p style="font-size: 12px; color: #999;">10:00-14:00 · 上海外滩茂悦酒店</p>
+                                </div>
+                                <div style="background: #faad14; color: white; padding: 4px 8px; border-radius: 4px; font-size: 10px;">待确认</div>
+                            </div>
+                            <div style="font-size: 12px; color: #666;">联系人：王女士 · 13900139000</div>
+                        </div>
+                        
+                        <!-- 团队信息 -->
+                        <div class="section-title">👥 我的团队</div>
+                        <div class="host-card">
+                            <div class="host-info">
+                                <div class="host-avatar" style="background: #722ed1;">爱</div>
+                                <div class="host-details">
+                                    <h4>爱情见证团队</h4>
+                                    <p>团队成员 · 5人团队</p>
+                                </div>
+                            </div>
+                            <div style="font-size: 12px; color: #666; margin-top: 8px;">本月团队接单：23场 · 团队评分：4.9分</div>
+                        </div>
+                        
+                        <!-- 系统通知 -->
+                        <div class="section-title">🔔 系统通知</div>
+                        <div class="message-list">
+                            <div class="message-item">
+                                <div class="message-avatar" style="background: #52c41a;">✓</div>
+                                <div class="message-content">
+                                    <div class="message-title">预约确认通知</div>
+                                    <div class="message-text">李先生的3月15日婚礼预约已确认</div>
+                                </div>
+                                <div class="message-time">2小时前</div>
+                            </div>
+                            <div class="message-item">
+                                <div class="message-avatar" style="background: #faad14;">!</div>
+                                <div class="message-content">
+                                    <div class="message-title">新预约待处理</div>
+                                    <div class="message-text">王女士申请3月22日档期预约</div>
+                                </div>
+                                <div class="message-time">5小时前</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bottom-nav">
+                        <div class="nav-item active">
+                            <div class="nav-icon">🏠</div>
+                            <div>首页</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">📅</div>
+                            <div>档期</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">💬</div>
+                            <div>消息</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">👤</div>
+                            <div>我的</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 档期查询页 -->
+        <div class="page-section">
+            <div class="page-header">
+                <div class="page-title">档期查询 - Schedule Search</div>
+                <div class="page-desc">主要功能：日期选择、筛选条件、查看可用主持人</div>
+            </div>
+            <div class="page-content">
+                <div class="mobile-frame">
+                    <div class="status-bar">
+                        <span>9:41</span>
+                        <span>100%</span>
+                    </div>
+                    <div class="app-header">
+                        <div>← 档期查询</div>
+                        <div>📅</div>
+                    </div>
+                    <div class="app-content">
+                        <div class="calendar-view">
+                            <div class="calendar-header">2024年3月</div>
+                            <div class="calendar-grid">
+                                <div class="calendar-day">日</div>
+                                <div class="calendar-day">一</div>
+                                <div class="calendar-day">二</div>
+                                <div class="calendar-day">三</div>
+                                <div class="calendar-day">四</div>
+                                <div class="calendar-day">五</div>
+                                <div class="calendar-day">六</div>
+                                <div class="calendar-day"></div>
+                                <div class="calendar-day"></div>
+                                <div class="calendar-day"></div>
+                                <div class="calendar-day"></div>
+                                <div class="calendar-day"></div>
+                                <div class="calendar-day available">1</div>
+                                <div class="calendar-day available">2</div>
+                                <div class="calendar-day booked">3</div>
+                                <div class="calendar-day available">4</div>
+                                <div class="calendar-day available">5</div>
+                                <div class="calendar-day available">6</div>
+                                <div class="calendar-day available">7</div>
+                                <div class="calendar-day available">8</div>
+                                <div class="calendar-day booked">9</div>
+                                <div class="calendar-day available">10</div>
+                                <div class="calendar-day rest">11</div>
+                                <div class="calendar-day available">12</div>
+                                <div class="calendar-day available">13</div>
+                                <div class="calendar-day available">14</div>
+                                <div class="calendar-day booked">15</div>
+                                <div class="calendar-day available">16</div>
+                                <div class="calendar-day available">17</div>
+                                <div class="calendar-day available">18</div>
+                                <div class="calendar-day available">19</div>
+                                <div class="calendar-day available">20</div>
+                                <div class="calendar-day booked">21</div>
+                                <div class="calendar-day available">22</div>
+                                <div class="calendar-day available">23</div>
+                                <div class="calendar-day available">24</div>
+                                <div class="calendar-day rest">25</div>
+                                <div class="calendar-day available">26</div>
+                                <div class="calendar-day available">27</div>
+                                <div class="calendar-day available">28</div>
+                                <div class="calendar-day available">29</div>
+                                <div class="calendar-day available">30</div>
+                                <div class="calendar-day available">31</div>
+                            </div>
+                        </div>
+                        
+                        <div class="filter-bar">
+                            <div class="filter-row">
+                                <div class="filter-label">地区:</div>
+                                <div class="filter-options">
+                                    <button class="filter-option active">全部</button>
+                                    <button class="filter-option">市区</button>
+                                    <button class="filter-option">郊区</button>
+                                </div>
+                            </div>
+                            <div class="filter-row">
+                                <div class="filter-label">价格:</div>
+                                <div class="filter-options">
+                                    <button class="filter-option">2000以下</button>
+                                    <button class="filter-option active">2000-5000</button>
+                                    <button class="filter-option">5000以上</button>
+                                </div>
+                            </div>
+                            <div class="filter-row">
+                                <div class="filter-label">类型:</div>
+                                <div class="filter-options">
+                                    <button class="filter-option active">个人</button>
+                                    <button class="filter-option">团队</button>
+                                    <button class="filter-option">工作室</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="section-title">3月15日 可用主持人 (5位)</div>
+                        
+                        <div class="host-card">
+                            <div class="host-info">
+                                <div class="host-avatar">王</div>
+                                <div class="host-details">
+                                    <h4>王主持</h4>
+                                    <p>⭐ 4.9分 · 距离您2.5km</p>
+                                </div>
+                            </div>
+                            <div class="host-tags">
+                                <span class="tag">可预约</span>
+                                <span class="tag">当日可用</span>
+                            </div>
+                            <div class="host-price">¥2,500/场</div>
+                        </div>
+                        
+                        <div class="host-card">
+                            <div class="host-info">
+                                <div class="host-avatar">陈</div>
+                                <div class="host-details">
+                                    <h4>陈婚礼策划</h4>
+                                    <p>⭐ 4.7分 · 距离您1.8km</p>
+                                </div>
+                            </div>
+                            <div class="host-tags">
+                                <span class="tag">可预约</span>
+                                <span class="tag">包含策划</span>
+                            </div>
+                            <div class="host-price">¥3,800/场</div>
+                        </div>
+                    </div>
+                    <div class="bottom-nav">
+                        <div class="nav-item">
+                            <div class="nav-icon">🏠</div>
+                            <div>首页</div>
+                        </div>
+                        <div class="nav-item active">
+                            <div class="nav-icon">📅</div>
+                            <div>档期</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">💬</div>
+                            <div>消息</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">👤</div>
+                            <div>我的</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+
+        
+
+        
+        <!-- 个人主页 -->
+        <div class="page-section">
+            <div class="page-header">
+                <div class="page-title">个人主页 - Profile</div>
+                <div class="page-desc">主要功能：个人信息展示、作品展示、档期管理</div>
+            </div>
+            <div class="page-content">
+                <div class="mobile-frame">
+                    <div class="status-bar">
+                        <span>9:41</span>
+                        <span>100%</span>
+                    </div>
+                    <div class="app-header">
+                        <div>← 个人主页</div>
+                        <div>⚙️</div>
+                    </div>
+                    <div class="app-content">
+                        <div class="profile-header">
+                            <div class="profile-avatar">张</div>
+                            <div class="profile-name">张婚礼主持</div>
+                            <div class="profile-desc">专业婚礼主持 · 5年经验 · 已服务328场婚礼</div>
+                        </div>
+                        
+                        <div class="profile-stats">
+                            <div class="stat-item">
+                                <div class="stat-number">328</div>
+                                <div class="stat-label">服务场次</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">4.9</div>
+                                <div class="stat-label">评分</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">156</div>
+                                <div class="stat-label">粉丝</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">89%</div>
+                                <div class="stat-label">回头率</div>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-nav">
+                            <button class="tab-item active">动态</button>
+                            <button class="tab-item">作品</button>
+                            <button class="tab-item">设置</button>
+                        </div>
+                        
+                        <!-- 动态内容 -->
+                        <div class="tab-content active" id="dynamic-content">
+                            <div class="publish-entry" style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px dashed #ddd; text-align: center; cursor: pointer;" onclick="window.location.href='#publish-dynamic'">
+                                <div style="color: #F55D54; font-size: 16px; margin-bottom: 5px;">✍️ 发布新动态</div>
+                                <div style="color: #999; font-size: 12px;">分享你的工作心得和精彩瞬间</div>
+                            </div>
+                            <div class="dynamic-list">
+                                <div class="dynamic-item">
+                                    <div class="dynamic-header">
+                                        <div class="dynamic-avatar">张</div>
+                                        <div class="dynamic-info">
+                                            <div class="dynamic-name">张婚礼主持</div>
+                                            <div class="dynamic-time">2小时前</div>
+                                        </div>
+                                    </div>
+                                    <div class="dynamic-content">今天完成了一场温馨的户外婚礼，新人的笑容是我最大的收获 💕</div>
+                                    <div class="dynamic-images">
+                                        <div class="dynamic-image">📸</div>
+                                        <div class="dynamic-image">📸</div>
+                                    </div>
+                                    <div class="dynamic-actions">
+                                        <span class="action-item">👍 12</span>
+                                        <span class="action-item">💬 3</span>
+                                        <span class="action-item">🔗 分享</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="dynamic-item">
+                                    <div class="dynamic-header">
+                                        <div class="dynamic-avatar">李</div>
+                                        <div class="dynamic-info">
+                                            <div class="dynamic-name">李摄影师</div>
+                                            <div class="dynamic-time">1天前</div>
+                                        </div>
+                                    </div>
+                                    <div class="dynamic-content">与张主持合作愉快，专业的主持让整个婚礼流程非常顺畅</div>
+                                    <div class="dynamic-actions">
+                                        <span class="action-item">👍 8</span>
+                                        <span class="action-item">💬 2</span>
+                                        <span class="action-item">🔗 分享</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 作品内容 -->
+                        <div class="tab-content" id="work-content">
+                            <div class="publish-entry" style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px dashed #ddd; text-align: center; cursor: pointer;" onclick="window.location.href='#publish-work'">
+                                <div style="color: #F55D54; font-size: 16px; margin-bottom: 5px;">📸 发布新作品</div>
+                                <div style="color: #999; font-size: 12px;">上传你的精彩作品展示专业实力</div>
+                            </div>
+                            <div class="work-stats">
+                                <div class="stat-card">
+                                    <div class="stat-number">45</div>
+                                    <div class="stat-label">作品数量</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number">1.2k</div>
+                                    <div class="stat-label">总浏览量</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number">89</div>
+                                    <div class="stat-label">点赞数</div>
+                                </div>
+                            </div>
+                            
+                            <div class="work-filter">
+                                <button class="filter-btn active">全部</button>
+                                <button class="filter-btn">视频</button>
+                                <button class="filter-btn">图片</button>
+                                <button class="filter-btn">音频</button>
+                            </div>
+                            
+                            <div class="work-grid">
+                                <div class="work-item">
+                                    <div class="work-image">📹</div>
+                                    <div class="work-info">
+                                        <div class="work-title">婚礼现场视频</div>
+                                        <div class="work-meta">👁️ 156 · 👍 12</div>
+                                    </div>
+                                </div>
+                                <div class="work-item">
+                                    <div class="work-image">📸</div>
+                                    <div class="work-info">
+                                        <div class="work-title">主持风采照</div>
+                                        <div class="work-meta">👁️ 89 · 👍 8</div>
+                                    </div>
+                                </div>
+                                <div class="work-item">
+                                    <div class="work-image">🎤</div>
+                                    <div class="work-info">
+                                        <div class="work-title">主持片段</div>
+                                        <div class="work-meta">👁️ 234 · 👍 18</div>
+                                    </div>
+                                </div>
+                                <div class="work-item">
+                                    <div class="work-image">💒</div>
+                                    <div class="work-info">
+                                        <div class="work-title">婚礼现场</div>
+                                        <div class="work-meta">👁️ 67 · 👍 5</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 设置内容 -->
+                        <div class="tab-content" id="settings-content">
+                            <div class="settings-list">
+                                <div class="setting-item">
+                                    <div class="setting-icon">👤</div>
+                                    <div class="setting-text">个人信息</div>
+                                    <div class="setting-arrow">></div>
+                                </div>
+                                <div class="setting-item">
+                                    <div class="setting-icon">📅</div>
+                                    <div class="setting-text">档期管理</div>
+                                    <div class="setting-arrow">></div>
+                                </div>
+                                <div class="setting-item">
+                                    <div class="setting-icon">💰</div>
+                                    <div class="setting-text">收入统计</div>
+                                    <div class="setting-arrow">></div>
+                                </div>
+                                <div class="setting-item">
+                                    <div class="setting-icon">⭐</div>
+                                    <div class="setting-text">评价管理</div>
+                                    <div class="setting-arrow">></div>
+                                </div>
+                                <div class="setting-item">
+                                    <div class="setting-icon">🔔</div>
+                                    <div class="setting-text">消息通知</div>
+                                    <div class="setting-arrow">></div>
+                                </div>
+                                <div class="setting-item">
+                                    <div class="setting-icon">🛡️</div>
+                                    <div class="setting-text">隐私设置</div>
+                                    <div class="setting-arrow">></div>
+                                </div>
+                                <div class="setting-item">
+                                    <div class="setting-icon">❓</div>
+                                    <div class="setting-text">帮助中心</div>
+                                    <div class="setting-arrow">></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="height: 50px;"></div>
+                    </div>
+                    <div class="bottom-nav">
+                        <div class="nav-item">
+                            <div class="nav-icon">🏠</div>
+                            <div>首页</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">📅</div>
+                            <div>档期</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">💬</div>
+                            <div>消息</div>
+                        </div>
+                        <div class="nav-item active">
+                            <div class="nav-icon">👤</div>
+                            <div>我的</div>
+                        </div>
+                    </div>
+                    <button class="floating-btn">+</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 消息页面 -->
+        <div class="page-section">
+            <div class="page-header">
+                <div class="page-title">消息中心 - Messages</div>
+                <div class="page-desc">主要功能：查看消息、预约通知、系统消息</div>
+            </div>
+            <div class="page-content">
+                <div class="mobile-frame">
+                    <div class="status-bar">
+                        <span>9:41</span>
+                        <span>100%</span>
+                    </div>
+                    <div class="app-header">
+                        <div>消息</div>
+                        <div>🔔</div>
+                    </div>
+                    <div class="app-content">
+                        <div class="message-list">
+                            <div class="message-item">
+                                <div class="message-avatar">李</div>
+                                <div class="message-content">
+                                    <div class="message-title">李小姐的预约申请</div>
+                                    <div class="message-text">希望预约您3月15日的婚礼主持服务...</div>
+                                </div>
+                                <div class="message-time">2分钟前</div>
+                            </div>
+                            
+                            <div class="message-item">
+                                <div class="message-avatar">系</div>
+                                <div class="message-content">
+                                    <div class="message-title">系统通知</div>
+                                    <div class="message-text">您有新的评价，快去查看吧！</div>
+                                </div>
+                                <div class="message-time">1小时前</div>
+                            </div>
+                            
+                            <div class="message-item">
+                                <div class="message-avatar">王</div>
+                                <div class="message-content">
+                                    <div class="message-title">王先生</div>
+                                    <div class="message-text">谢谢您的精彩主持，婚礼很成功！</div>
+                                </div>
+                                <div class="message-time">昨天</div>
+                            </div>
+                            
+                            <div class="message-item">
+                                <div class="message-avatar">团</div>
+                                <div class="message-content">
+                                    <div class="message-title">团队消息</div>
+                                    <div class="message-text">团队有新的档期安排，请查看</div>
+                                </div>
+                                <div class="message-time">2天前</div>
+                            </div>
+                            
+                            <div class="message-item">
+                                <div class="message-avatar">赵</div>
+                                <div class="message-content">
+                                    <div class="message-title">赵女士的咨询</div>
+                                    <div class="message-text">请问您4月份的档期安排如何？</div>
+                                </div>
+                                <div class="message-time">3天前</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bottom-nav">
+                        <div class="nav-item">
+                            <div class="nav-icon">🏠</div>
+                            <div>首页</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">📅</div>
+                            <div>档期</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">💬</div>
+                            <div>消息</div>
+                        </div>
+                        <div class="nav-item active">
+                            <div class="nav-icon">👤</div>
+                            <div>我的</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 团队页面 -->
+        <div class="page-section">
+            <div class="page-header">
+                <div class="page-title">团队管理 - Team</div>
+                <div class="page-desc">主要功能：团队信息、成员管理、协作功能</div>
+            </div>
+            <div class="page-content">
+                <div class="mobile-frame">
+                    <div class="status-bar">
+                        <span>9:41</span>
+                        <span>100%</span>
+                    </div>
+                    <div class="app-header">
+                        <div>← 团队管理</div>
+                        <div>⚙️</div>
+                    </div>
+                    <div class="app-content">
+                        <div class="team-header">
+                            <div class="team-logo">爱</div>
+                            <div class="team-name">爱情见证团队</div>
+                            <div class="team-desc">专业婚礼服务团队，为您打造完美婚礼</div>
+                        </div>
+                        
+                        <div class="section-title">团队成员 (6人)</div>
+                        
+                        <div class="member-grid">
+                            <div class="member-card">
+                                <div class="member-avatar">张</div>
+                                <div class="member-name">张主持</div>
+                                <div class="member-role">团队负责人</div>
+                            </div>
+                            <div class="member-card">
+                                <div class="member-avatar">李</div>
+                                <div class="member-name">李主持</div>
+                                <div class="member-role">高级主持</div>
+                            </div>
+                            <div class="member-card">
+                                <div class="member-avatar">王</div>
+                                <div class="member-name">王摄影</div>
+                                <div class="member-role">摄影师</div>
+                            </div>
+                            <div class="member-card">
+                                <div class="member-avatar">陈</div>
+                                <div class="member-name">陈摄像</div>
+                                <div class="member-role">摄像师</div>
+                            </div>
+                            <div class="member-card">
+                                <div class="member-avatar">刘</div>
+                                <div class="member-name">刘化妆</div>
+                                <div class="member-role">化妆师</div>
+                            </div>
+                            <div class="member-card">
+                                <div class="member-avatar">赵</div>
+                                <div class="member-name">赵策划</div>
+                                <div class="member-role">策划师</div>
+                            </div>
+                        </div>
+                        
+                        <div class="section-title">团队功能</div>
+                        
+                        <div style="margin: 15px;">
+                            <div class="host-card">
+                                <div class="host-info">
+                                    <div class="host-avatar">📅</div>
+                                    <div class="host-details">
+                                        <h4>档期共享</h4>
+                                        <p>查看团队成员的档期安排</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="host-card">
+                                <div class="host-info">
+                                    <div class="host-avatar">💰</div>
+                                    <div class="host-details">
+                                        <h4>收益分成</h4>
+                                        <p>查看团队收益和分成情况</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="host-card">
+                                <div class="host-info">
+                                    <div class="host-avatar">📋</div>
+                                    <div class="host-details">
+                                        <h4>任务分配</h4>
+                                        <p>分配和管理团队任务</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bottom-nav">
+                        <div class="nav-item">
+                            <div class="nav-icon">🏠</div>
+                            <div>首页</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">📅</div>
+                            <div>档期</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">💬</div>
+                            <div>消息</div>
+                        </div>
+                        <div class="nav-item active">
+                            <div class="nav-icon">👤</div>
+                            <div>我的</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 发布作品页面 -->
+        <div class="page-section">
+            <div class="page-header">
+                <div class="page-title">发布作品 - Publish Work</div>
+                <div class="page-desc">主要功能：上传作品图片、填写作品信息、发布作品</div>
+            </div>
+            <div class="page-content">
+                <div class="mobile-frame">
+                    <div class="status-bar">
+                        <span>9:41</span>
+                        <span>100%</span>
+                    </div>
+                    <div class="app-header">
+                        <div>← 发布作品</div>
+                        <div style="color: #F55D54; font-weight: 600;">发布</div>
+                    </div>
+                    <div class="app-content">
+                        <!-- 图片上传区域 -->
+                        <div style="margin: 15px; margin-bottom: 20px;">
+                            <div style="font-size: 16px; font-weight: 600; margin-bottom: 10px; color: #333;">作品图片</div>
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                                <div style="aspect-ratio: 1; background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column; color: #999;">
+                                    <div style="font-size: 24px; margin-bottom: 5px;">📷</div>
+                                    <div style="font-size: 12px;">添加图片</div>
+                                </div>
+                                <div style="aspect-ratio: 1; background: #f0f0f0; border-radius: 8px; position: relative; display: flex; align-items: center; justify-content: center; font-size: 40px;">📸
+                                    <div style="position: absolute; top: 5px; right: 5px; width: 20px; height: 20px; background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">×</div>
+                                </div>
+                                <div style="aspect-ratio: 1; background: #f0f0f0; border-radius: 8px; position: relative; display: flex; align-items: center; justify-content: center; font-size: 40px;">🎭
+                                    <div style="position: absolute; top: 5px; right: 5px; width: 20px; height: 20px; background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">×</div>
+                                </div>
+                            </div>
+                            <div style="font-size: 12px; color: #999; margin-top: 8px;">最多上传9张图片，建议尺寸1:1</div>
+                        </div>
+                        
+                        <!-- 作品信息 -->
+                        <div style="margin: 15px; margin-bottom: 20px;">
+                            <div style="font-size: 16px; font-weight: 600; margin-bottom: 15px; color: #333;">作品信息</div>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <div style="font-size: 14px; color: #666; margin-bottom: 8px;">作品标题</div>
+                                <input style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;" placeholder="请输入作品标题" value="浪漫海边婚礼主持" />
+                            </div>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <div style="font-size: 14px; color: #666; margin-bottom: 8px;">作品描述</div>
+                                <textarea style="width: 100%; height: 80px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; resize: none;" placeholder="请描述作品特色、风格等...">这是一场在海边举行的浪漫婚礼，新人选择了简约而温馨的仪式风格。整个主持过程注重情感表达，营造了温馨浪漫的氛围。</textarea>
+                            </div>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <div style="font-size: 14px; color: #666; margin-bottom: 8px;">婚礼类型</div>
+                                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                    <div style="padding: 8px 16px; background: #F55D54; color: white; border-radius: 20px; font-size: 12px;">户外婚礼</div>
+                                    <div style="padding: 8px 16px; background: #f5f5f5; color: #666; border-radius: 20px; font-size: 12px;">室内婚礼</div>
+                                    <div style="padding: 8px 16px; background: #f5f5f5; color: #666; border-radius: 20px; font-size: 12px;">中式婚礼</div>
+                                    <div style="padding: 8px 16px; background: #f5f5f5; color: #666; border-radius: 20px; font-size: 12px;">西式婚礼</div>
+                                    <div style="padding: 8px 16px; background: #f5f5f5; color: #666; border-radius: 20px; font-size: 12px;">主题婚礼</div>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <div style="font-size: 14px; color: #666; margin-bottom: 8px;">举办地点</div>
+                                <input style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;" placeholder="请输入举办地点" value="三亚海棠湾" />
+                            </div>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <div style="font-size: 14px; color: #666; margin-bottom: 8px;">举办时间</div>
+                                <input style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;" placeholder="请选择举办时间" value="2024年2月14日" />
+                            </div>
+                        </div>
+                        
+                        <!-- 隐私设置 -->
+                        <div style="margin: 15px; margin-bottom: 20px;">
+                            <div style="font-size: 16px; font-weight: 600; margin-bottom: 15px; color: #333;">隐私设置</div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                <div>
+                                    <div style="font-size: 14px; color: #333; margin-bottom: 4px;">公开作品</div>
+                                    <div style="font-size: 12px; color: #999;">其他用户可以查看此作品</div>
+                                </div>
+                                <div style="width: 44px; height: 24px; background: #F55D54; border-radius: 12px; position: relative;">
+                                    <div style="width: 20px; height: 20px; background: white; border-radius: 50%; position: absolute; top: 2px; right: 2px; transition: all 0.3s;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bottom-nav">
+                        <div class="nav-item">
+                            <div class="nav-icon">🏠</div>
+                            <div>首页</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">📅</div>
+                            <div>档期</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">💬</div>
+                            <div>消息</div>
+                        </div>
+                        <div class="nav-item active">
+                            <div class="nav-icon">👤</div>
+                            <div>我的</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 发布动态页面 -->
+        <div class="page-section">
+            <div class="page-header">
+                <div class="page-title">发布动态 - Publish Dynamic</div>
+                <div class="page-desc">主要功能：发布文字动态、上传图片、分享心情</div>
+            </div>
+            <div class="page-content">
+                <div class="mobile-frame">
+                    <div class="status-bar">
+                        <span>9:41</span>
+                        <span>100%</span>
+                    </div>
+                    <div class="app-header">
+                        <div>← 发布动态</div>
+                        <div style="color: #F55D54; font-weight: 600;">发布</div>
+                    </div>
+                    <div class="app-content">
+                        <!-- 用户信息 -->
+                        <div style="display: flex; align-items: center; margin: 15px; margin-bottom: 20px;">
+                            <div style="width: 40px; height: 40px; background: #F55D54; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; margin-right: 12px;">张</div>
+                            <div>
+                                <div style="font-size: 14px; font-weight: 600; color: #333;">张婚礼主持</div>
+                                <div style="font-size: 12px; color: #999;">分享你的工作心得</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 动态内容 -->
+                        <div style="margin: 15px; margin-bottom: 20px;">
+                            <textarea style="width: 100%; height: 120px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; resize: none; line-height: 1.5;" placeholder="分享你的工作心得、生活感悟或者有趣的事情...">今天主持了一场非常温馨的婚礼，新人的真挚情感让在场的每一个人都感动不已。作为主持人，能够见证这样美好的时刻，真的是一种幸福。每一场婚礼都是独一无二的故事，感谢新人们的信任！ #婚礼主持 #幸福见证</textarea>
+                        </div>
+                        
+                        <!-- 图片上传 -->
+                        <div style="margin: 15px; margin-bottom: 20px;">
+                            <div style="font-size: 14px; color: #666; margin-bottom: 10px;">添加图片（可选）</div>
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                                <div style="aspect-ratio: 1; background: #f0f0f0; border-radius: 8px; position: relative; display: flex; align-items: center; justify-content: center; font-size: 30px;">💒
+                                    <div style="position: absolute; top: 5px; right: 5px; width: 20px; height: 20px; background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">×</div>
+                                </div>
+                                <div style="aspect-ratio: 1; background: #f0f0f0; border-radius: 8px; position: relative; display: flex; align-items: center; justify-content: center; font-size: 30px;">💐
+                                    <div style="position: absolute; top: 5px; right: 5px; width: 20px; height: 20px; background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">×</div>
+                                </div>
+                                <div style="aspect-ratio: 1; background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column; color: #999;">
+                                    <div style="font-size: 24px; margin-bottom: 5px;">📷</div>
+                                    <div style="font-size: 12px;">添加图片</div>
+                                </div>
+                            </div>
+                            <div style="font-size: 12px; color: #999; margin-top: 8px;">最多上传9张图片</div>
+                        </div>
+                        
+                        <!-- 位置信息 -->
+                        <div style="margin: 15px; margin-bottom: 20px;">
+                            <div style="display: flex; align-items: center; padding: 12px; background: white; border: 1px solid #ddd; border-radius: 8px;">
+                                <div style="font-size: 16px; margin-right: 10px;">📍</div>
+                                <div style="flex: 1;">
+                                    <div style="font-size: 14px; color: #333;">北京香格里拉酒店</div>
+                                    <div style="font-size: 12px; color: #999;">北京市朝阳区</div>
+                                </div>
+                                <div style="font-size: 12px; color: #F55D54;">更改</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 话题标签 -->
+                        <div style="margin: 15px; margin-bottom: 20px;">
+                            <div style="font-size: 14px; color: #666; margin-bottom: 10px;">添加话题</div>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <div style="padding: 6px 12px; background: #F55D54; color: white; border-radius: 15px; font-size: 12px;">#婚礼主持</div>
+                                <div style="padding: 6px 12px; background: #F55D54; color: white; border-radius: 15px; font-size: 12px;">#幸福见证</div>
+                                <div style="padding: 6px 12px; background: #f5f5f5; color: #666; border-radius: 15px; font-size: 12px; border: 1px dashed #ddd;">+ 添加话题</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 隐私设置 -->
+                        <div style="margin: 15px; margin-bottom: 20px;">
+                            <div style="font-size: 14px; color: #666; margin-bottom: 10px;">谁可以看到</div>
+                            <div style="display: flex; gap: 10px;">
+                                <div style="flex: 1; padding: 12px; background: #F55D54; color: white; border-radius: 8px; text-align: center; font-size: 14px;">公开</div>
+                                <div style="flex: 1; padding: 12px; background: #f5f5f5; color: #666; border-radius: 8px; text-align: center; font-size: 14px;">仅团队</div>
+                                <div style="flex: 1; padding: 12px; background: #f5f5f5; color: #666; border-radius: 8px; text-align: center; font-size: 14px;">私密</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bottom-nav">
+                        <div class="nav-item">
+                            <div class="nav-icon">🏠</div>
+                            <div>首页</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">📅</div>
+                            <div>档期</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">💬</div>
+                            <div>消息</div>
+                        </div>
+                        <div class="nav-item active">
+                            <div class="nav-icon">👤</div>
+                            <div>我的</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 登录注册页面 -->
+        <div class="page-section">
+            <div class="page-header">
+                <div class="page-title">登录注册 - Auth</div>
+                <div class="page-desc">主要功能：用户登录、注册、第三方登录</div>
+            </div>
+            <div class="page-content">
+                <div class="mobile-frame">
+                    <div class="status-bar">
+                        <span>9:41</span>
+                        <span>100%</span>
+                    </div>
+                    <div class="app-header">
+                        <div>← 登录</div>
+                        <div></div>
+                    </div>
+                    <div class="app-content">
+                        <div style="padding: 40px 30px; text-align: center;">
+                            <div style="font-size: 48px; color: #F55D54; margin-bottom: 20px;">💒</div>
+                            <div style="font-size: 24px; font-weight: 600; color: #333; margin-bottom: 8px;">婚礼主持</div>
+                            <div style="font-size: 14px; color: #999; margin-bottom: 40px;">专业的婚礼主持档期管理平台</div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <input style="width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 15px;" placeholder="手机号/邮箱" />
+                                <input style="width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 15px;" placeholder="密码" type="password" />
+                            </div>
+                            
+                            <button style="width: 100%; padding: 15px; background: #F55D54; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; margin-bottom: 20px;">登录</button>
+                            
+                            <div style="font-size: 14px; color: #999; margin-bottom: 30px;">
+                                <span>还没有账号？</span>
+                                <span style="color: #F55D54;">立即注册</span>
+                                <span style="margin: 0 10px;">|</span>
+                                <span style="color: #F55D54;">忘记密码？</span>
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <div style="font-size: 14px; color: #999; margin-bottom: 20px;">第三方登录</div>
+                                <div style="display: flex; justify-content: center; gap: 30px;">
+                                    <div style="width: 50px; height: 50px; border-radius: 50%; background: #1AAD19; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">微</div>
+                                    <div style="width: 50px; height: 50px; border-radius: 50%; background: #12B7F5; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">Q</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 设计说明 -->
+        <div class="page-section">
+            <div class="page-header">
+                <div class="page-title">设计说明 - Design Notes</div>
+                <div class="page-desc">UI设计理念和交互说明</div>
+            </div>
+            <div class="page-content">
+                <h3 style="color: #F55D54; margin-bottom: 15px;">🎨 设计理念</h3>
+                <ul style="margin-bottom: 20px; line-height: 1.6;">
+                    <li><strong>扁平化设计：</strong>采用现代扁平化设计风格，界面简洁清爽</li>
+                    <li><strong>移动优先：</strong>响应式设计，优先考虑移动端用户体验</li>
+                    <li><strong>Element Plus风格：</strong>遵循Element Plus设计规范，保持一致性</li>
+                    <li><strong>喜庆色彩：</strong>主色调采用红色系，符合婚礼主题</li>
+                </ul>
+                
+                <h3 style="color: #F55D54; margin-bottom: 15px;">🎯 交互特点</h3>
+                <ul style="margin-bottom: 20px; line-height: 1.6;">
+                    <li><strong>底部导航：</strong>采用底部Tab导航，方便单手操作</li>
+                    <li><strong>卡片布局：</strong>信息以卡片形式展示，层次清晰</li>
+                    <li><strong>浮动按钮：</strong>重要操作使用浮动按钮，提高可达性</li>
+                    <li><strong>状态反馈：</strong>清晰的状态标识和操作反馈</li>
+                </ul>
+                
+                <h3 style="color: #F55D54; margin-bottom: 15px;">📱 响应式适配</h3>
+                <ul style="margin-bottom: 20px; line-height: 1.6;">
+                    <li><strong>移动端：</strong>375px宽度为基准，适配各种手机屏幕</li>
+                    <li><strong>平板端：</strong>768px以上采用更宽松的布局</li>
+                    <li><strong>桌面端：</strong>1200px以上展示更多信息和功能</li>
+                    <li><strong>弹性布局：</strong>使用Flexbox和Grid实现弹性布局</li>
+                </ul>
+                
+                <h3 style="color: #F55D54; margin-bottom: 15px;">🔧 技术实现</h3>
+                <ul style="line-height: 1.6;">
+                    <li><strong>Vue 3 + TypeScript：</strong>现代前端框架，类型安全</li>
+                    <li><strong>Element Plus：</strong>成熟的Vue 3组件库</li>
+                    <li><strong>Vite：</strong>快速的构建工具和开发服务器</li>
+                    <li><strong>Pinia：</strong>轻量级状态管理</li>
+                    <li><strong>Vue Router：</strong>单页面应用路由管理</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 简单的页面交互演示
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab切换功能
+            const tabNavs = document.querySelectorAll('.tab-nav');
+            tabNavs.forEach(nav => {
+                const tabs = nav.querySelectorAll('.tab-item');
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        tabs.forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                    });
+                });
+            });
+            
+            // 筛选选项切换
+            const filterOptions = document.querySelectorAll('.filter-option');
+            filterOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const siblings = this.parentNode.querySelectorAll('.filter-option');
+                    siblings.forEach(s => s.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+            
+            // 底部导航切换
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const siblings = this.parentNode.querySelectorAll('.nav-item');
+                    siblings.forEach(s => s.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

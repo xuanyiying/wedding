@@ -1,7 +1,7 @@
 import express from 'express';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { 
+import {
   InitializeRequestSchema,
   PingRequestSchema,
   ListRootsRequestSchema,
@@ -9,8 +9,8 @@ import {
   ListToolsRequestSchema,
   CallToolRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
-import { logger } from '../utils/logger';
-import { config } from '../config/config';
+import { logger } from './utils/logger';
+import { config } from './config/config';
 import { MCPAuthService } from './services/auth.service';
 import { ResourceProviderService } from './services/resource-provider.service';
 import { ToolService } from './services/tool.service';
@@ -30,7 +30,7 @@ class MCPApp {
         tools: {}
       }
     });
-    
+
     this.initializeMiddlewares();
     this.initializeMCP();
     this.initializeRoutes();
@@ -76,7 +76,7 @@ class MCPApp {
       } else {
         token = authHeader!;
       }
-      
+
       const user = await MCPAuthService.verifyToken(token);
       if (!user) {
         throw new Error("Invalid authorization token");
@@ -106,7 +106,7 @@ class MCPApp {
       } else {
         token = authHeader!;
       }
-      
+
       const user = await MCPAuthService.verifyToken(token);
       if (!user) {
         throw new Error("Invalid authorization token");
@@ -116,12 +116,12 @@ class MCPApp {
       const parts = uri.replace(':///', '').split('/');
       const resourceType = parts[0];
       const resourceId = parts[1];
-      
+
       // 确保resourceType不为undefined
       if (!resourceType) {
         throw new Error("Invalid resource URI");
       }
-      
+
       if (!resourceId) {
         // 列出资源
         const resources = await ResourceProviderService.listResources(user, resourceType);
@@ -138,7 +138,7 @@ class MCPApp {
         if (!resource) {
           throw new Error(`Resource ${resourceId} not found`);
         }
-        
+
         return {
           contents: [{
             uri,
@@ -163,7 +163,7 @@ class MCPApp {
       } else {
         token = authHeader!;
       }
-      
+
       const user = await MCPAuthService.verifyToken(token);
       if (!user) {
         throw new Error("Invalid authorization token");
@@ -186,7 +186,7 @@ class MCPApp {
       } else {
         token = authHeader!;
       }
-      
+
       const user = await MCPAuthService.verifyToken(token);
       if (!user) {
         throw new Error("Invalid authorization token");
@@ -194,7 +194,7 @@ class MCPApp {
 
       const { name, arguments: args } = request.params;
       const result = await ToolService.callTool(user, name, args || {});
-      
+
       // 转换结果格式以匹配MCP规范
       return {
         content: result.content

@@ -1,11 +1,7 @@
 import { MCPAuthService, MCPUser } from './auth.service';
-import { logger } from '../../utils/logger';
-
-// 导入现有的服务
-import { IssueService } from '../../services/issue.service';
-import { ScheduleService } from '../../services/schedule.service';
-import { UserService } from '../../services/user.service';
-import { WorkService } from '../../services/work.service';
+import axios, { AxiosInstance } from 'axios';
+import { logger } from '../utils/logger';
+import { config } from '../config/config';
 
 export interface ToolDefinition {
   name: string;
@@ -25,6 +21,20 @@ export interface ToolResult {
 }
 
 export class ToolService {
+  private static apiClient: AxiosInstance;
+
+  // 初始化API客户端
+  private static initializeApiClient(token: string): void {
+    this.apiClient = axios.create({
+      baseURL: config.apiBaseUrl,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      timeout: 10000, // 10秒超时
+    });
+  }
+
   /**
    * 获取可用工具列表
    * @param user 用户信息
@@ -123,9 +133,12 @@ export class ToolService {
     args: Record<string, any>
   ): Promise<ToolResult> {
     try {
+      // 初始化API客户端
+      this.initializeApiClient(user.token);
+
       switch (toolName) {
         case 'createIssue':
-          return await this.createIssue(user, args);
+          return await this.createIssue(args);
         case 'updateSchedule':
           return await this.updateSchedule(user, args);
         case 'createUser':
@@ -146,22 +159,26 @@ export class ToolService {
   /**
    * 创建问题报告
    */
-  private static async createIssue(user: MCPUser, args: Record<string, any>): Promise<ToolResult> {
+  private static async createIssue(args: Record<string, any>): Promise<ToolResult> {
     const { title, description, priority = 'medium' } = args;
-    
-    // 使用现有的IssueService创建问题
-    const issue = await IssueService.createIssue({
-      title,
-      description,
-      priority,
-    }, user.id);
 
-    return {
-      content: [{
-        type: 'text',
-        text: `Issue created successfully with ID: ${issue.id}`
-      }]
-    };
+    try {
+      const response = await this.apiClient.post('/api/v1/issues', {
+        title,
+        description,
+        priority,
+      });
+
+      return {
+        content: [{
+          type: 'text',
+          text: `Issue created successfully with ID: ${response.data.id}`
+        }]
+      };
+    } catch (error) {
+      logger.error('Error creating issue:', error);
+      throw new Error(`Failed to create issue: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   /**
@@ -169,21 +186,25 @@ export class ToolService {
    */
   private static async updateSchedule(user: MCPUser, args: Record<string, any>): Promise<ToolResult> {
     const { scheduleId, status } = args;
-    
+
     // 检查权限
     if (!MCPAuthService.hasRole(user, 'admin') && !MCPAuthService.hasPermission(user, 'manage_schedules')) {
       throw new Error('Insufficient permissions to update schedule');
     }
-    
-    // 使用现有的ScheduleService更新档期
-    await ScheduleService.updateSchedule(scheduleId, { status }, user.id);
 
-    return {
-      content: [{
-        type: 'text',
-        text: `Schedule ${scheduleId} updated successfully`
-      }]
-    };
+    try {
+      await this.apiClient.patch(`/api/v1/schedules/${scheduleId}`, { status });
+
+      return {
+        content: [{
+          type: 'text',
+          text: `Schedule ${scheduleId} updated successfully`
+        }]
+      };
+    } catch (error) {
+      logger.error('Error updating schedule:', error);
+      throw new Error(`Failed to update schedule: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   /**
@@ -194,23 +215,27 @@ export class ToolService {
     if (!MCPAuthService.hasRole(user, 'admin')) {
       throw new Error('Insufficient permissions to create user');
     }
-    
-    const { email, username, role } = args;
-    
-    // 使用现有的UserService创建用户
-    const newUser = await UserService.createUser({
-      email,
-      username,
-      role,
-      password: 'temporary-password' // 临时密码，用户需要重置
-    });
 
-    return {
-      content: [{
-        type: 'text',
-        text: `User created successfully with ID: ${newUser.id}`
-      }]
-    };
+    const { email, username, role } = args;
+
+    try {
+      const response = await this.apiClient.post('/api/v1/users', {
+        email,
+        username,
+        role,
+        password: 'temporary-password' // 临时密码，用户需要重置
+      });
+
+      return {
+        content: [{
+          type: 'text',
+          text: `User created successfully with ID: ${response.data.id}`
+        }]
+      };
+    } catch (error) {
+      logger.error('Error creating user:', error);
+      throw new Error(`Failed to create user: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   /**
@@ -221,12 +246,10 @@ export class ToolService {
     if (!MCPAuthService.hasRole(user, 'admin')) {
       throw new Error('Insufficient permissions to assign team member');
     }
-    
+
     const { teamId, userId } = args;
-    
-    // 使用现有的TeamService分配成员
-    // 注意：这里需要根据实际的TeamService API进行调整
-    // 假设有一个addTeamMember方法
+
+    // 这里需要根据实际的API进行调整
     return {
       content: [{
         type: 'text',
@@ -243,17 +266,21 @@ export class ToolService {
     if (!MCPAuthService.hasRole(user, 'admin')) {
       throw new Error('Insufficient permissions to update work status');
     }
-    
-    const { workId, status } = args;
-    
-    // 使用现有的WorkService更新作品状态
-    await WorkService.updateWork(workId, { status }, user.id);
 
-    return {
-      content: [{
-        type: 'text',
-        text: `Work ${workId} status updated successfully`
-      }]
-    };
+    const { workId, status } = args;
+
+    try {
+      await this.apiClient.patch(`/api/v1/works/${workId}`, { status });
+
+      return {
+        content: [{
+          type: 'text',
+          text: `Work ${workId} status updated successfully`
+        }]
+      };
+    } catch (error) {
+      logger.error('Error updating work status:', error);
+      throw new Error(`Failed to update work status: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 }

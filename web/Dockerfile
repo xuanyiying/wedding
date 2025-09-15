@@ -41,7 +41,7 @@ RUN apk add --no-cache curl && \
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # 复制nginx配置文件（使用专为静态文件服务设计的配置）
-COPY nginx-static.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \

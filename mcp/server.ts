@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import MCPApp from './app';
-import { logger } from '../utils/logger';
+import { logger } from './utils/logger';
 
 // 处理未捕获的异常
 process.on('uncaughtException', (error: Error) => {

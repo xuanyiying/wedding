@@ -1,273 +1,609 @@
 #!/bin/bash
 
-# Wedding Client 精简部署脚本
-# 确保部署流程一次成功，失败则需要重新构建
+# =============================================================================
+# Wedding Club 部署脚本 - 支持多环境部署
+# =============================================================================
+# 使用方法:
+#   ./deploy.sh [环境] [操作] [选项]
+#   
+# 环境: dev, test, prod (默认: prod)
+# 操作: deploy, stop, restart, logs, status, clean (默认: deploy)
+# 选项: --force, --no-cache, --pull, --build-only
+# 
+# 示例:
+#   ./deploy.sh prod deploy --force     # 强制部署生产环境
+#   ./deploy.sh dev restart             # 重启开发环境
+#   ./deploy.sh test logs               # 查看测试环境日志
+# =============================================================================
 
-set -e
+set -euo pipefail
+
+# =============================================================================
+# 全局变量和配置
+# =============================================================================
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DB_HOST="wedding-club"
+COMPOSE_FILE="docker-compose.yml"
 
 # 颜色输出
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m'
+NC='\033[0m' # No Color
 
-# 获取脚本目录
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$SCRIPT_DIR"
+# 默认参数
+ENVIRONMENT="${1:-prod}"
+ACTION="${2:-deploy}"
+FORCE_FLAG=""
+NO_CACHE_FLAG=""
+PULL_FLAG=""
+BUILD_ONLY_FLAG=""
 
-# 显示帮助信息
-show_help() {
-    echo -e "${BLUE}========================================${NC}"
-    echo -e "${BLUE}    Wedding Client 精简部署工具${NC}"
-    echo -e "${BLUE}========================================${NC}"
-    echo ""
-    echo "使用方法: ./deploy.sh [命令] [选项]"
-    echo ""
-    echo -e "${GREEN}核心命令:${NC}"
-    echo "  start         启动服务"
-    echo "  stop          停止服务"
-    echo "  restart       重启服务"
-    echo "  status        查看状态"
-    echo ""
-    echo -e "${YELLOW}部署命令:${NC}"
-    echo "  deploy        智能部署（检测变化后部署）"
-    echo "  redeploy      强制重新构建并部署"
-    echo ""
-    echo -e "${BLUE}管理命令:${NC}"
-    echo "  logs [服务]   查看日志"
-    echo "  clean         清理资源"
-    echo "  health        健康检查"
-    echo "  test          测试配置"
-    echo ""
-    echo -e "${YELLOW}选项:${NC}"
-    echo "  --services <服务列表>  指定要构建和部署的服务（web,api,nginx,mcp）"
-    echo ""
-    echo -e "${GREEN}部署模式说明:${NC}"
-    echo "  deploy        - 智能检测代码变化，无变化时快速重启"
-    echo "  redeploy      - 强制重新构建指定服务（或全部服务）"
-    echo ""
-    echo "示例:"
-    echo "  ./deploy.sh deploy                        # 智能部署（推荐）"
-    echo "  ./deploy.sh redeploy                      # 强制重新构建所有服务"
-    echo "  ./deploy.sh redeploy --services web       # 只重新构建web服务"
-    echo "  ./deploy.sh redeploy --services web,api   # 重新构建web和api服务"
-    echo "  ./deploy.sh redeploy --services web,api,mcp # 重新构建web、api和mcp服务"
-    echo "  ./deploy.sh deploy --services web         # 智能部署，仅构建web服务（如有变化）"
-    echo "  ./deploy.sh logs api                      # 查看API日志"
-    echo ""
-    echo -e "${GREEN}Swagger文档:${NC} http://YOUR_IP/api/v1/docs"
-    echo ""
+# =============================================================================
+# 工具函数
+# =============================================================================
+log_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
 }
 
-# 日志函数
-log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
-log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
-log_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
-log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
-
-# 获取配置文件路径
-get_config_files() {
-    local env=${ENVIRONMENT:-prod}
-    COMPOSE_FILE="$PROJECT_ROOT/docker-compose.env.yml"
-    ENV_FILE="$PROJECT_ROOT/deployment/environments/.env.$env"
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
 }
 
-# 启动服务
-start_services() {
-    log_info "启动Wedding Client服务..."
-    get_config_files
+log_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+show_usage() {
+    cat << EOF
+Wedding Club 部署脚本
+
+使用方法:
+    $0 [环境] [操作] [选项]
+
+环境:
+    dev     - 开发环境
+    test    - 测试环境  
+    prod    - 生产环境 (默认)
+
+操作:
+    deploy  - 部署服务 (默认)
+    stop    - 停止服务
+    restart - 重启服务
+    logs    - 查看日志
+    status  - 查看状态
+    clean   - 清理资源
+
+选项:
+    --force      - 强制重新构建和部署
+    --no-cache   - 构建时不使用缓存
+    --pull       - 拉取最新基础镜像
+    --build-only - 仅构建，不启动服务
+    --help       - 显示帮助信息
+
+示例:
+    $0 prod deploy --force
+    $0 dev restart
+    $0 test logs api
+EOF
+}
+
+# 解析命令行参数
+parse_args() {
+    shift 2 2>/dev/null || true
     
-    cd "$PROJECT_ROOT"
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --force)
+                FORCE_FLAG="--force-recreate --remove-orphans"
+                shift
+                ;;
+            --no-cache)
+                NO_CACHE_FLAG="--no-cache"
+                shift
+                ;;
+            --pull)
+                PULL_FLAG="--pull"
+                shift
+                ;;
+            --build-only)
+                BUILD_ONLY_FLAG="true"
+                shift
+                ;;
+            --help)
+                show_usage
+                exit 0
+                ;;
+            *)
+                log_error "未知选项: $1"
+                show_usage
+                exit 1
+                ;;
+        esac
+    done
+}
+
+# 验证环境
+validate_environment() {
+    case $ENVIRONMENT in
+        dev|test|prod)
+            log_info "使用环境: $ENVIRONMENT"
+            ;;
+        *)
+            log_error "无效环境: $ENVIRONMENT"
+            log_error "支持的环境: dev, test, prod"
+            exit 1
+            ;;
+    esac
+}
+
+# 检查环境文件
+check_env_file() {
+    local env_file="./deployment/environments/.env.$ENVIRONMENT"
     
-    log_info "使用 docker-compose 启动所有服务..."
-    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --remove-orphans
+    if [[ ! -f "$env_file" ]]; then
+        log_error "环境文件不存在: $env_file"
+        exit 1
+    fi
     
-    # 等待Nginx服务启动并显示启动日志
-    log_info "等待Nginx服务启动..."
-    sleep 5
+    log_info "使用环境文件: $env_file"
+}
+
+# 设置环境变量
+setup_environment() {
+    export ENVIRONMENT="$ENVIRONMENT"
+    export COMPOSE_DB_HOST="${DB_HOST}-${ENVIRONMENT}"
     
-    # 显示Nginx启动日志
-    log_info "Nginx启动日志："
-    docker logs wedding-nginx-${ENVIRONMENT:-prod} --tail 200 2>/dev/null || log_warning "无法获取Nginx日志"
+    # 加载环境变量文件
+    local env_file="./deployment/environments/.env.$ENVIRONMENT"
+    if [[ -f "$env_file" ]]; then
+        log_info "加载环境变量文件: $env_file"
+        
+        # 使用set -a自动导出变量，然后source文件
+        set -a
+        if source "$env_file"; then
+            log_success "环境变量文件加载完成"
+        else
+            log_error "环境变量文件加载失败"
+            set +a
+            return 1
+        fi
+        set +a
+    else
+        log_error "环境变量文件不存在: $env_file"
+        return 1
+    fi
     
-    show_status
-    log_success "服务启动完成！"
+    # 设置Docker Compose文件
+    export COMPOSE_FILE="$COMPOSE_FILE"
+    
+    log_info "项目名称: $COMPOSE_DB_HOST"
+    log_info "环境: $ENVIRONMENT"
+}
+
+# 检查Docker和Docker Compose
+check_dependencies() {
+    if ! command -v docker &> /dev/null; then
+        log_error "Docker 未安装或不在PATH中"
+        exit 1
+    fi
+    
+    if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
+        log_error "Docker Compose 未安装或不在PATH中"
+        exit 1
+    fi
+    
+    # 优先使用 docker compose (v2)
+    if docker compose version &> /dev/null; then
+        DOCKER_COMPOSE="docker compose"
+    else
+        DOCKER_COMPOSE="docker-compose"
+    fi
+    
+    log_info "使用 Docker Compose: $DOCKER_COMPOSE"
+}
+
+# 创建必要目录
+create_directories() {
+    local dirs=(
+        "./deployment/logs/nginx"
+        "./deployment/logs/api"
+        "./deployment/logs/mysql"
+        "./deployment/logs/redis"
+        "./deployment/logs/minio"
+        "./deployment/uploads/images"
+        "./deployment/uploads/videos"
+        "./deployment/ssl"
+    )
+    
+    for dir in "${dirs[@]}"; do
+        if [[ ! -d "$dir" ]]; then
+            mkdir -p "$dir"
+            log_info "创建目录: $dir"
+        fi
+    done
+}
+
+# 构建镜像
+build_images() {
+    log_info "开始构建镜像..."
+    
+    local build_args="--build-arg ENVIRONMENT=$ENVIRONMENT"
+    
+    if [[ -n "$NO_CACHE_FLAG" ]]; then
+        build_args="$build_args $NO_CACHE_FLAG"
+    fi
+    
+    if [[ -n "$PULL_FLAG" ]]; then
+        build_args="$build_args $PULL_FLAG"
+    fi
+    
+    $DOCKER_COMPOSE build $build_args
+    
+    log_success "镜像构建完成"
+}
+
+# 数据库初始化函数
+init_database() {
+    local environment=$1
+    local max_retries=30
+    local retry_count=0
+    
+    log_info "开始数据库初始化流程..."
+    
+    # 1. 等待数据库服务就绪
+    log_info "等待数据库服务启动..."
+    while [ $retry_count -lt $max_retries ]; do
+        if docker exec ${DB_NAME}-mysql-${environment} mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "SELECT 1;" >/dev/null 2>&1; then
+            log_success "数据库服务已就绪"
+            break
+        fi
+        
+        retry_count=$((retry_count + 1))
+        log_info "等待数据库启动... (${retry_count}/${max_retries})"
+        sleep 2
+    done
+    
+    if [ $retry_count -eq $max_retries ]; then
+        log_error "数据库服务启动超时"
+        return 1
+    fi
+    
+    # 2. 验证数据库和表结构
+    log_info "验证数据库结构..."
+    if ! docker exec ${DB_HOST}-mysql-${environment} mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "USE ${DB_NAME}; SHOW TABLES;" >/dev/null 2>&1; then
+        log_error "数据库 ${DB_NAME} 不存在或表结构未创建"
+        return 1
+    fi
+    
+    # 获取表数量
+    local table_count=$(docker exec ${DB_HOST}-mysql-${environment} mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "USE ${DB_NAME}; SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='${DB_NAME}';" -s -N 2>/dev/null)
+    log_info "发现 ${table_count} 个数据表"
+    
+    # 3. 检查是否已初始化
+    log_info "检查数据库初始化状态..."
+    local admin_exists=$(docker exec ${DB_HOST}-mysql-${environment} mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "USE ${DB_NAME}; SELECT COUNT(*) FROM users WHERE username='admin';" -s -N 2>/dev/null || echo "0")
+    
+    if [ "$admin_exists" -gt "0" ]; then
+        log_info "检测到管理员用户已存在，跳过数据初始化"
+        validate_initialization_data "$environment"
+        return $?
+    fi
+    
+    # 4. 复制初始化脚本到容器
+    log_info "准备数据库初始化脚本..."
+    local init_script_path="server/scripts/database-data-init.sql"
+    
+    if [ ! -f "$init_script_path" ]; then
+        log_error "初始化脚本不存在: $init_script_path"
+        return 1
+    fi
+    
+    # 创建临时脚本，替换数据库名称
+    local temp_script="/tmp/database-init-${environment}.sql"
+    sed "s/USE wedding_club;/USE ${DB_NAME};/g" "$init_script_path" > "$temp_script"
+    
+    if ! docker cp "$temp_script" ${DB_HOST}-mysql-${environment}:/tmp/init.sql; then
+        log_error "复制初始化脚本到容器失败"
+        rm -f "$temp_script"
+        return 1
+    fi
+    
+    rm -f "$temp_script"
+    log_success "初始化脚本已准备就绪"
+    
+    # 5. 执行数据库初始化
+    log_info "执行数据库数据初始化..."
+    local init_output
+    init_output=$(docker exec ${DB_HOST}-mysql-${environment} mysql -u root -p${MYSQL_ROOT_PASSWORD} ${DB_NAME} -e "source /tmp/init.sql" 2>&1)
+    local init_exit_code=$?
+    
+    if [ $init_exit_code -ne 0 ]; then
+        log_error "数据库初始化执行失败:"
+        echo "$init_output" | while IFS= read -r line; do
+            log_error "  $line"
+        done
+        return 1
+    fi
+    
+    # 6. 解析初始化结果
+    log_info "解析初始化执行结果..."
+    echo "$init_output" | while IFS= read -r line; do
+        if [[ "$line" =~ ^[0-9]+$ ]] || [[ "$line" =~ "Data initialization completed successfully" ]] || [[ "$line" =~ "admin" ]]; then
+            log_info "  $line"
+        fi
+    done
+    
+    # 7. 数据校验
+    log_info "执行数据完整性校验..."
+    if ! validate_initialization_data "$environment"; then
+        log_error "数据校验失败"
+        return 1
+    fi
+    
+    # 8. 清理临时文件
+    docker exec ${DB_HOST}-mysql-${environment} rm -f /tmp/init.sql >/dev/null 2>&1
+    
+    log_success "数据库初始化流程完成"
+    return 0
+}
+
+# 数据校验函数
+validate_initialization_data() {
+    local environment=$1
+    local validation_failed=0
+    
+    log_info "开始数据完整性校验..."
+    
+    # 校验管理员用户
+    local admin_count=$(docker exec ${DB_HOST}-mysql-${environment} mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "USE ${DB_NAME}; SELECT COUNT(*) FROM users WHERE username='admin' AND role='super_admin';" -s -N 2>/dev/null || echo "0")
+    if [ "$admin_count" -eq "1" ]; then
+        log_success "✓ 管理员用户校验通过"
+    else
+        log_error "✗ 管理员用户校验失败 (期望:1, 实际:$admin_count)"
+        validation_failed=1
+    fi
+    
+    # 校验系统配置
+    local config_count=$(docker exec ${DB_HOST}-mysql-${environment} mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "USE ${DB_NAME}; SELECT COUNT(*) FROM system_configs;" -s -N 2>/dev/null || echo "0")
+    if [ "$config_count" -ge "5" ]; then
+        log_success "✓ 系统配置校验通过 ($config_count 项配置)"
+    else
+        log_error "✗ 系统配置校验失败 (期望:>=5, 实际:$config_count)"
+        validation_failed=1
+    fi
+    
+    # 校验用户权限
+    local permission_count=$(docker exec ${DB_HOST}-mysql-${environment} mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "USE ${DB_NAME}; SELECT COUNT(*) FROM user_permissions WHERE user_id='1';" -s -N 2>/dev/null || echo "0")
+    if [ "$permission_count" -ge "30" ]; then
+        log_success "✓ 用户权限校验通过 ($permission_count 个权限)"
+    else
+        log_error "✗ 用户权限校验失败 (期望:>=30, 实际:$permission_count)"
+        validation_failed=1
+    fi
+    
+    # 校验关键配置项
+    local site_name=$(docker exec ${DB_HOST}-mysql-${environment} mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "USE ${DB_NAME}; SELECT config_value FROM system_configs WHERE config_key='site_name';" -s -N 2>/dev/null || echo "")
+    if [ -n "$site_name" ]; then
+        log_success "✓ 网站配置校验通过 (site_name: $site_name)"
+    else
+        log_error "✗ 网站配置校验失败 (site_name 配置缺失)"
+        validation_failed=1
+    fi
+    
+    # 输出详细统计信息
+    log_info "数据库初始化统计信息:"
+    local stats_output=$(docker exec ${DB_HOST}-mysql-${environment} mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "
+        USE ${DB_NAME};
+        SELECT 'Users' as table_name, COUNT(*) as count FROM users
+        UNION ALL
+        SELECT 'System Configs' as table_name, COUNT(*) as count FROM system_configs
+        UNION ALL
+        SELECT 'User Permissions' as table_name, COUNT(*) as count FROM user_permissions;
+    " -s -N 2>/dev/null)
+    
+    echo "$stats_output" | while IFS=$'\t' read -r table_name count; do
+        log_info "  $table_name: $count"
+    done
+    
+    if [ $validation_failed -eq 0 ]; then
+        log_success "所有数据校验通过"
+        return 0
+    else
+        log_error "数据校验存在失败项"
+        return 1
+    fi
+}
+
+# 部署服务
+deploy_services() {
+    log_info "开始部署服务..."
+    
+    # 如果只构建不启动
+    if [[ "$BUILD_ONLY_FLAG" == "true" ]]; then
+        log_success "仅构建模式，跳过服务启动"
+        return 0
+    fi
+    
+    local up_args="-d"
+    
+    if [[ -n "$FORCE_FLAG" ]]; then
+        up_args="$up_args $FORCE_FLAG"
+    fi
+    
+    $DOCKER_COMPOSE up $up_args
+    
+    log_success "服务部署完成"
+    
+    # 等待服务启动
+    log_info "等待服务启动..."
+    sleep 10
+    
+    # 检查服务状态
+    check_services_health
+    
+    # 执行数据库初始化
+    log_info "开始数据库初始化检查..."
+    if init_database "$ENVIRONMENT"; then
+        log_success "数据库初始化完成"
+    else
+        log_error "数据库初始化失败，但服务已启动"
+        log_info "可以稍后手动执行数据库初始化"
+        return 1
+    fi
+}
+
+# 检查服务健康状态
+check_services_health() {
+    log_info "检查服务健康状态..."
+    
+    local services=("web" "api" "mysql" "redis")
+    local failed_services=()
+    
+    for service in "${services[@]}"; do
+        local container_name="${DB_HOST}-${service}-${ENVIRONMENT}"
+        
+        if docker ps --format "table {{.Names}}\t{{.Status}}" | grep -q "$container_name.*healthy\|Up"; then
+            log_success "✓ $service 服务运行正常"
+        else
+            log_warning "✗ $service 服务可能存在问题"
+            failed_services+=("$service")
+        fi
+    done
+    
+    if [[ ${#failed_services[@]} -gt 0 ]]; then
+        log_warning "以下服务可能需要检查: ${failed_services[*]}"
+        log_info "使用 '$0 $ENVIRONMENT logs [服务名]' 查看详细日志"
+    fi
 }
 
 # 停止服务
 stop_services() {
-    log_info "停止Wedding Client服务..."
-    get_config_files
-    
-    cd "$PROJECT_ROOT"
-    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" down
-    
-    log_success "服务已停止。"
+    log_info "停止服务..."
+    $DOCKER_COMPOSE down
+    log_success "服务已停止"
 }
 
 # 重启服务
 restart_services() {
-    log_info "重启Wedding Client服务..."
-    stop_services
-    start_services
-}
-
-# 查看服务状态
-show_status() {
-    log_info "查看服务状态..."
-    get_config_files
+    log_info "重启服务..."
+    $DOCKER_COMPOSE restart
+    log_success "服务已重启"
     
-    cd "$PROJECT_ROOT"
-    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" ps
+    # 检查服务状态
+    sleep 5
+    check_services_health
 }
 
 # 查看日志
 show_logs() {
-    log_info "查看日志..."
-    get_config_files
+    local service="${3:-}"
     
-    cd "$PROJECT_ROOT"
-    if [[ -z "$1" ]]; then
-        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" logs -f
+    if [[ -n "$service" ]]; then
+        log_info "查看 $service 服务日志..."
+        $DOCKER_COMPOSE logs -f --tail=100 "$service"
     else
-        # 特殊处理nginx日志，显示更多启动信息
-        if [[ "$1" == "nginx" ]]; then
-            log_info "显示Nginx详细日志..."
-            docker logs wedding-nginx-${ENVIRONMENT:-prod} -f --tail 200
-        else
-            docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" logs -f "$1"
-        fi
+        log_info "查看所有服务日志..."
+        $DOCKER_COMPOSE logs -f --tail=50
     fi
+}
+
+# 查看状态
+show_status() {
+    log_info "服务状态:"
+    $DOCKER_COMPOSE ps
+    
+    echo
+    log_info "系统资源使用:"
+    docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}"
 }
 
 # 清理资源
 clean_resources() {
-    log_warning "这将删除所有容器、网络和卷。确定要继续吗？ (y/n)"
-    read -r answer
-    if [[ "$answer" != "y" ]]; then
-        log_info "操作已取消。"
-        exit 0
-    fi
+    log_warning "这将删除所有容器、镜像和数据卷！"
+    read -p "确认继续? (y/N): " -n 1 -r
+    echo
     
-    log_info "清理资源..."
-    get_config_files
-    
-    cd "$PROJECT_ROOT"
-    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" down -v --remove-orphans
-    
-    log_success "资源清理完成。"
-}
-
-# 健康检查
-health_check() {
-    log_info "执行健康检查..."
-    get_config_files
-    
-    cd "$PROJECT_ROOT"
-    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" ps
-    
-    log_info "检查各服务健康状态..."
-    # 在这里添加更具体的健康检查逻辑
-}
-
-# 测试配置
-test_config() {
-    log_info "测试配置..."
-    get_config_files
-    
-    cd "$PROJECT_ROOT"
-    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" config
-    
-    log_success "配置测试通过。"
-}
-
-# 部署
-deploy() {
-    log_info "开始智能部署..."
-    get_config_files
-    
-    cd "$PROJECT_ROOT"
-    
-    local services_to_build=()
-    if [[ -n "$SERVICES" ]]; then
-        IFS=',' read -ra ADDR <<< "$SERVICES"
-        for service in "${ADDR[@]}"; do
-            services_to_build+=("$service")
-        done
-    fi
-    
-    if [[ ${#services_to_build[@]} -gt 0 ]]; then
-        log_info "将要构建的服务: ${services_to_build[*]}"
-        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build --build-arg BUILDKIT_INLINE_BUILD=1 "${services_to_build[@]}"
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        log_info "清理资源..."
+        
+        # 停止并删除容器
+        $DOCKER_COMPOSE down -v --remove-orphans
+        
+        # 删除镜像
+        docker images | grep "$DB_HOST" | awk '{print $3}' | xargs -r docker rmi -f
+        
+        # 清理未使用的资源
+        docker system prune -f
+        
+        log_success "资源清理完成"
     else
-        log_info "构建所有服务..."
-        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build
+        log_info "取消清理操作"
     fi
-    
-    start_services
-    log_success "部署完成！"
 }
 
-# 强制重新部署
-redeploy() {
-    log_info "开始强制重新部署..."
-    get_config_files
-    
-    cd "$PROJECT_ROOT"
-    
-    local services_to_build=()
-    if [[ -n "$SERVICES" ]]; then
-        IFS=',' read -ra ADDR <<< "$SERVICES"
-        for service in "${ADDR[@]}"; do
-            services_to_build+=("$service")
-        done
-    fi
-    
-    if [[ ${#services_to_build[@]} -gt 0 ]]; then
-        log_info "将要强制重新构建的服务: ${services_to_build[*]}"
-        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build --no-cache --build-arg BUILDKIT_INLINE_BUILD=1 "${services_to_build[@]}"
-    else
-        log_info "强制重新构建所有服务..."
-        docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build --no-cache
-    fi
-    
-    start_services
-    log_success "强制重新部署完成！"
-}
-
-# 主逻辑
+# =============================================================================
+# 主函数
+# =============================================================================
 main() {
-    # 解析选项
-    while [[ $# -gt 0 ]]; do
-        key="$1"
-        case $key in
-            --services)
-                SERVICES="$2"
-                shift
-                shift
-                ;;
-            *)
-                break
-                ;;
-        esac
-    done
-
-    COMMAND=${1:-help}
-
-    case $COMMAND in
-        start) start_services ;;
-        stop) stop_services ;;
-        restart) restart_services ;;
-        status) show_status ;;
-        deploy) deploy ;;
-        redeploy) redeploy ;;
-        logs) show_logs "$2" ;;
-        clean) clean_resources ;;
-        health) health_check ;;
-        test) test_config ;;
-        help|*) show_help ;;
+    log_info "Wedding Club 部署脚本启动"
+    log_info "时间: $(date '+%Y-%m-%d %H:%M:%S')"
+    
+    # 解析参数
+    parse_args "$@"
+    
+    # 验证环境
+    validate_environment
+    
+    # 检查依赖
+    check_dependencies
+    
+    # 检查环境文件
+    check_env_file
+    
+    # 设置环境变量
+    setup_environment
+    
+    # 创建必要目录
+    create_directories
+    
+    # 执行操作
+    case $ACTION in
+        deploy)
+            build_images
+            deploy_services
+            ;;
+        stop)
+            stop_services
+            ;;
+        restart)
+            restart_services
+            ;;
+        logs)
+            show_logs "$@"
+            ;;
+        status)
+            show_status
+            ;;
+        clean)
+            clean_resources
+            ;;
+        *)
+            log_error "无效操作: $ACTION"
+            show_usage
+            exit 1
+            ;;
     esac
+    
+    log_success "操作完成: $ACTION ($ENVIRONMENT)"
 }
 
-main "$@"
+# 脚本入口
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi

@@ -1,0 +1,2041 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>婚礼主持档期管理系统 - Web端UI原型设计（基于移动端原型优化）</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .prototype-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .page-section {
+            background: white;
+            border-radius: 16px;
+            margin-bottom: 40px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .page-header {
+            background: linear-gradient(135deg, #F55D54 0%, #FF8A80 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .page-desc {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .page-content {
+            padding: 30px;
+        }
+        
+        .web-frame {
+            background: #f8f9fa;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            min-height: 900px;
+        }
+        
+        /* Web端顶部导航 */
+        .web-header {
+            background: white;
+            padding: 0 30px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #e9ecef;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo {
+            font-size: 28px;
+            color: #F55D54;
+            font-weight: bold;
+        }
+        
+        .search-section {
+            flex: 1;
+            max-width: 500px;
+            margin: 0 50px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 20px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 14px;
+            background: #f8f9fa;
+        }
+        
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .notification-btn {
+            position: relative;
+            padding: 8px;
+            border: none;
+            background: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #F55D54;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #F55D54;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        /* Web端主体布局 */
+        .web-main {
+            display: flex;
+            min-height: calc(100vh - 70px);
+        }
+        
+        .sidebar {
+            width: 250px;
+            background: white;
+            border-right: 1px solid #e9ecef;
+            padding: 20px 0;
+        }
+        
+        .sidebar-nav {
+            list-style: none;
+        }
+        
+        .sidebar-nav li {
+            margin-bottom: 5px;
+        }
+        
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 25px;
+            text-decoration: none;
+            color: #666;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background: #f8f9fa;
+            color: #F55D54;
+            border-right: 3px solid #F55D54;
+        }
+        
+        .sidebar-icon {
+            font-size: 18px;
+            width: 20px;
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+        
+        /* 卡片样式 */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .card-action {
+            color: #F55D54;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-icon {
+            font-size: 32px;
+            margin-bottom: 15px;
+        }
+        
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #F55D54;
+            margin-bottom: 8px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        /* 表格样式 */
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .data-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .data-table tbody tr:hover {
+            background: #f8f9fa;
+            transition: background-color 0.2s ease;
+        }
+        
+        .data-table .client-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .data-table .client-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #1890ff;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .data-table .client-details h4 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #262626;
+        }
+        
+        .data-table .client-details p {
+            margin: 2px 0 0 0;
+            font-size: 12px;
+            color: #8c8c8c;
+        }
+        
+        /* 状态标签 */
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-available {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-booked {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: #F55D54;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #e04e45;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #F55D54;
+            color: #F55D54;
+        }
+        
+        .btn-outline:hover {
+            background: #F55D54;
+            color: white;
+        }
+        
+        /* 日历样式 */
+        .calendar-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        
+        .calendar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .calendar-nav {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .calendar-nav button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .calendar-nav button:hover {
+            background: #f0f0f0;
+            border-color: #F55D54;
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .calendar-day {
+            background: white;
+            padding: 15px 10px;
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .calendar-day:hover {
+            background: #f8f9fa;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .calendar-day.booked {
+            background: #e6f7ff;
+            border-left: 4px solid #1890ff;
+            color: #1890ff;
+        }
+        
+        .calendar-day.available {
+            background: #f6ffed;
+            border-left: 4px solid #52c41a;
+            color: #52c41a;
+        }
+        
+        .calendar-day.pending {
+            background: #fff7e6;
+            border-left: 4px solid #faad14;
+            color: #faad14;
+        }
+        
+        .calendar-day small {
+            font-size: 11px;
+            margin-top: 2px;
+            font-weight: 500;
+        }
+        
+        .calendar-day.selected {
+            background: #F55D54 !important;
+            color: white !important;
+            border-left: 4px solid #d63031 !important;
+        }
+        
+        .calendar-day.selected small {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .calendar-legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .web-main {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+            }
+            
+            .sidebar-nav {
+                display: flex;
+                overflow-x: auto;
+                padding: 10px;
+            }
+            
+            .sidebar-nav li {
+                white-space: nowrap;
+                margin-right: 20px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .web-frame {
+                min-height: 100vh;
+            }
+            
+            .web-header {
+                padding: 10px 15px;
+            }
+            
+            .search-section {
+                display: none;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+            
+            .calendar-grid {
+                font-size: 12px;
+            }
+            
+            .calendar-day {
+                min-height: 60px;
+                padding: 8px 5px;
+            }
+            
+            .data-table {
+                font-size: 12px;
+            }
+            
+            .data-table th,
+            .data-table td {
+                padding: 8px;
+            }
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+        
+        .calendar-day.available {
+            background: #d4edda;
+        }
+        
+        .calendar-day.booked {
+            background: #f8d7da;
+        }
+        
+        /* 消息样式 */
+        .message-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .message-item {
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.3s;
+        }
+        
+        .message-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .message-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #F55D54;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .message-content {
+            flex: 1;
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .message-sender {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .message-time {
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .message-text {
+            color: #666;
+            line-height: 1.4;
+        }
+        
+        /* 快捷操作卡片样式 */
+        .quick-action-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: 200px;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .web-main {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+            }
+            
+            .sidebar-nav {
+                display: flex;
+                overflow-x: auto;
+                padding: 0 20px;
+            }
+            
+            .sidebar-nav li {
+                margin-bottom: 0;
+                margin-right: 10px;
+                white-space: nowrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="prototype-container">
+        <h1 style="text-align: center; color: white; margin-bottom: 40px; font-size: 32px; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">婚礼主持档期管理系统 - Web端UI原型设计</h1>
+        
+        <!-- 首页设计 -->
+        <div class="page-section">
+            <div class="page-header">
+                <div class="page-title">首页 - Dashboard</div>
+                <div class="page-desc">主要功能：数据概览、快捷操作、最新动态</div>
+            </div>
+            <div class="page-content">
+                <div class="web-frame">
+                    <!-- 顶部导航 -->
+                    <div class="web-header">
+                        <div class="logo-section">
+                            <div class="logo">💒 婚礼主持</div>
+                        </div>
+                        <div class="search-section">
+                            <input type="text" class="search-input" placeholder="搜索档期、客户、主持人...">
+                        </div>
+                        <div class="user-section">
+                            <button class="notification-btn">
+                                🔔
+                                <span class="notification-badge">3</span>
+                            </button>
+                            <div class="user-avatar">张</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 主体内容 -->
+                    <div class="web-main">
+                        <!-- 侧边栏 -->
+                        <div class="sidebar">
+                            <ul class="sidebar-nav">
+                                <li><a href="#" class="active"><span class="sidebar-icon">🏠</span>首页</a></li>
+                                <li><a href="#"><span class="sidebar-icon">📅</span>档期管理</a></li>
+                                <li><a href="#"><span class="sidebar-icon">👥</span>客户管理</a></li>
+                                <li><a href="#"><span class="sidebar-icon">🎤</span>主持人管理</a></li>
+                                <li><a href="#"><span class="sidebar-icon">💬</span>消息中心</a></li>
+                                <li><a href="#"><span class="sidebar-icon">📊</span>数据统计</a></li>
+                                <li><a href="#"><span class="sidebar-icon">🎨</span>作品展示</a></li>
+                                <li><a href="#"><span class="sidebar-icon">📝</span>动态发布</a></li>
+                                <li><a href="#"><span class="sidebar-icon">⚙️</span>系统设置</a></li>
+                            </ul>
+                        </div>
+                        
+                        <!-- 主要内容区 -->
+                        <div class="main-content">
+                            <!-- 用户信息卡片 -->
+                            <div class="card" style="margin-bottom: 30px; background: linear-gradient(135deg, #F55D54, #FF8A80); color: white;">
+                                <div class="card-body" style="padding: 30px;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                                        <div style="display: flex; align-items: center; gap: 20px;">
+                                            <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: bold;">张</div>
+                                            <div>
+                                                <h3 style="margin-bottom: 8px;">张婚礼主持</h3>
+                                                <p style="margin-bottom: 5px; opacity: 0.9;">专业婚礼主持人 · 5年经验</p>
+                                                <p style="margin-bottom: 0; opacity: 0.8; font-size: 14px;">爱情见证团队负责人 · 服务评分 4.9/5.0</p>
+                                            </div>
+                                        </div>
+                                        <div style="text-align: right;">
+                                            <div style="font-size: 24px; font-weight: bold; margin-bottom: 5px;">328</div>
+                                            <div style="opacity: 0.9; font-size: 14px;">累计服务场次</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 统计卡片 -->
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-icon">📅</div>
+                                    <div class="stat-number">28</div>
+                                    <div class="stat-label">本月档期</div>
+                                    <div style="font-size: 12px; color: #52c41a; margin-top: 5px;">较上月 +15%</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">✅</div>
+                                    <div class="stat-number">15</div>
+                                    <div class="stat-label">已确认</div>
+                                    <div style="font-size: 12px; color: #666; margin-top: 5px;">进行中</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">⏳</div>
+                                    <div class="stat-number">8</div>
+                                    <div class="stat-label">待确认</div>
+                                    <div style="font-size: 12px; color: #faad14; margin-top: 5px;">需要处理</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">💰</div>
+                                    <div class="stat-number">¥45,600</div>
+                                    <div class="stat-label">本月收入</div>
+                                    <div style="font-size: 12px; color: #52c41a; margin-top: 5px;">目标达成 76%</div>
+                                </div>
+                            </div>
+                            
+                            <!-- 快捷操作 -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="card-title">📋 快捷操作</div>
+                                </div>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
+                                    <div class="quick-action-card" style="background: #f0f9ff; border: 1px solid #e0f2fe; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                                        <div style="font-size: 24px; margin-bottom: 10px;">📅</div>
+                                        <div style="font-weight: 600; margin-bottom: 5px;">新建档期</div>
+                                        <div style="font-size: 12px; color: #666;">快速创建新的档期安排</div>
+                                    </div>
+                                    <div class="quick-action-card" style="background: #f6ffed; border: 1px solid #d9f7be; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                                        <div style="font-size: 24px; margin-bottom: 10px;">👥</div>
+                                        <div style="font-weight: 600; margin-bottom: 5px;">客户管理</div>
+                                        <div style="font-size: 12px; color: #666;">查看和管理客户信息</div>
+                                    </div>
+                                    <div class="quick-action-card" style="background: #fff2e8; border: 1px solid #ffd8bf; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                                        <div style="font-size: 24px; margin-bottom: 10px;">🎨</div>
+                                        <div style="font-weight: 600; margin-bottom: 5px;">发布作品</div>
+                                        <div style="font-size: 12px; color: #666;">展示您的精彩作品</div>
+                                    </div>
+                                    <div class="quick-action-card" style="background: #f9f0ff; border: 1px solid #efdbff; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                                        <div style="font-size: 24px; margin-bottom: 10px;">📝</div>
+                                        <div style="font-weight: 600; margin-bottom: 5px;">发布动态</div>
+                                        <div style="font-size: 12px; color: #666;">分享工作动态和心得</div>
+                                    </div>
+                                    <div class="quick-action-card" style="background: #fff1f0; border: 1px solid #ffccc7; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                                        <div style="font-size: 24px; margin-bottom: 10px;">📊</div>
+                                        <div style="font-weight: 600; margin-bottom: 5px;">数据报表</div>
+                                        <div style="font-size: 12px; color: #666;">查看业务数据分析</div>
+                                    </div>
+                                    <div class="quick-action-card" style="background: #f6f6f6; border: 1px solid #d9d9d9; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                                        <div style="font-size: 24px; margin-bottom: 10px;">⚙️</div>
+                                        <div style="font-weight: 600; margin-bottom: 5px;">系统设置</div>
+                                        <div style="font-size: 12px; color: #666;">个人和系统配置</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 团队信息 -->
+                            <div class="card" style="margin-bottom: 30px;">
+                                <div class="card-header">
+                                    <div class="card-title">👥 我的团队</div>
+                                    <a href="#" class="card-action">管理团队 →</a>
+                                </div>
+                                <div style="display: flex; gap: 20px; align-items: center; padding: 20px;">
+                                    <div style="display: flex; gap: 15px;">
+                                        <div style="width: 60px; height: 60px; background: #F55D54; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">张</div>
+                                        <div style="width: 60px; height: 60px; background: #52c41a; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">李</div>
+                                        <div style="width: 60px; height: 60px; background: #1890ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">王</div>
+                                        <div style="width: 60px; height: 60px; background: #faad14; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">陈</div>
+                                        <div style="width: 60px; height: 60px; background: #f0f0f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #666; font-size: 24px;">+</div>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 600; margin-bottom: 5px;">爱情见证团队</div>
+                                        <div style="color: #666; font-size: 14px;">5名成员 · 本月完成 28 场服务 · 客户满意度 4.9/5.0</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 系统通知 -->
+                            <div class="card" style="margin-bottom: 30px;">
+                                <div class="card-header">
+                                    <div class="card-title">🔔 系统通知</div>
+                                    <a href="#" class="card-action">查看全部 →</a>
+                                </div>
+                                <div style="padding: 20px;">
+                                    <div style="display: flex; gap: 15px; margin-bottom: 15px; padding: 15px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #1890ff;">
+                                        <div style="font-size: 20px;">📅</div>
+                                        <div>
+                                            <div style="font-weight: 600; margin-bottom: 5px;">档期提醒</div>
+                                            <div style="color: #666; font-size: 14px;">明天有2场婚礼需要主持，请提前准备</div>
+                                            <div style="color: #999; font-size: 12px; margin-top: 5px;">2小时前</div>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 15px; margin-bottom: 15px; padding: 15px; background: #f6ffed; border-radius: 8px; border-left: 4px solid #52c41a;">
+                                        <div style="font-size: 20px;">💰</div>
+                                        <div>
+                                            <div style="font-weight: 600; margin-bottom: 5px;">收款提醒</div>
+                                            <div style="color: #666; font-size: 14px;">王先生已支付定金 ¥2,000，请确认</div>
+                                            <div style="color: #999; font-size: 12px; margin-top: 5px;">5小时前</div>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 15px; padding: 15px; background: #fff2e8; border-radius: 8px; border-left: 4px solid #faad14;">
+                                        <div style="font-size: 20px;">⭐</div>
+                                        <div>
+                                            <div style="font-weight: 600; margin-bottom: 5px;">客户评价</div>
+                                            <div style="color: #666; font-size: 14px;">李女士给您的服务打了5星好评</div>
+                                            <div style="color: #999; font-size: 12px; margin-top: 5px;">1天前</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 最近档期 -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="card-title">📅 最近档期</div>
+                                    <a href="#" class="card-action">查看全部 →</a>
+                                </div>
+                                <div class="table-container">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>日期</th>
+                                                <th>时间</th>
+                                                <th>客户</th>
+                                                <th>地点</th>
+                                                <th>状态</th>
+                                                <th>操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>2024-03-15</td>
+                                                <td>14:00-18:00</td>
+                                                <td>王先生 & 李女士</td>
+                                                <td>香格里拉酒店</td>
+                                                <td><span class="status-badge status-available">已确认</span></td>
+                                                <td><a href="#" class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">查看详情</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td>2024-03-18</td>
+                                                <td>12:00-16:00</td>
+                                                <td>张先生 & 陈女士</td>
+                                                <td>万豪酒店</td>
+                                                <td><span class="status-badge status-pending">待确认</span></td>
+                                                <td><a href="#" class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">查看详情</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td>2024-03-22</td>
+                                                <td>16:00-20:00</td>
+                                                <td>刘先生 & 赵女士</td>
+                                                <td>希尔顿酒店</td>
+                                                <td><span class="status-badge status-available">已确认</span></td>
+                                                <td><a href="#" class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">查看详情</a></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- 最新消息 -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="card-title">💬 最新消息</div>
+                                    <a href="#" class="card-action">查看全部 →</a>
+                                </div>
+                                <div class="message-list">
+                                    <div class="message-item">
+                                        <div class="message-avatar">王</div>
+                                        <div class="message-content">
+                                            <div class="message-header">
+                                                <div class="message-sender">王女士</div>
+                                                <div class="message-time">2小时前</div>
+                                            </div>
+                                            <div class="message-text">您好，我想咨询3月22日的档期安排</div>
+                                        </div>
+                                    </div>
+                                    <div class="message-item">
+                                        <div class="message-avatar">李</div>
+                                        <div class="message-content">
+                                            <div class="message-header">
+                                                <div class="message-sender">李先生</div>
+                                                <div class="message-time">5小时前</div>
+                                            </div>
+                                            <div class="message-text">档期确认成功，期待合作！</div>
+                                        </div>
+                                    </div>
+                                    <div class="message-item">
+                                        <div class="message-avatar">张</div>
+                                        <div class="message-content">
+                                            <div class="message-header">
+                                                <div class="message-sender">张经理</div>
+                                                <div class="message-time">1天前</div>
+                                            </div>
+                                            <div class="message-text">酒店场地已确认，请提前1小时到场</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 客户管理页面 -->
+        <div class="page-section">
+            <div class="page-header">
+                <div class="page-title">客户管理 - Client Management</div>
+                <div class="page-desc">主要功能：客户信息管理、沟通记录、档期关联</div>
+            </div>
+            <div class="page-content">
+                <div class="web-frame">
+                    <!-- 顶部导航 -->
+                    <div class="web-header">
+                        <div class="logo-section">
+                            <div class="logo">💒 婚礼主持</div>
+                        </div>
+                        <div class="search-section">
+                            <input type="text" class="search-input" placeholder="搜索客户姓名、电话、档期...">
+                        </div>
+                        <div class="user-section">
+                            <button class="notification-btn">
+                                🔔
+                                <span class="notification-badge">3</span>
+                            </button>
+                            <div class="user-avatar">张</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 主体内容 -->
+                    <div class="web-main">
+                        <!-- 侧边栏 -->
+                        <div class="sidebar">
+                            <ul class="sidebar-nav">
+                                <li><a href="#"><span class="sidebar-icon">🏠</span>首页</a></li>
+                                <li><a href="#"><span class="sidebar-icon">📅</span>档期管理</a></li>
+                                <li><a href="#" class="active"><span class="sidebar-icon">👥</span>客户管理</a></li>
+                                <li><a href="#"><span class="sidebar-icon">🎤</span>主持人管理</a></li>
+                                <li><a href="#"><span class="sidebar-icon">💬</span>消息中心</a></li>
+                                <li><a href="#"><span class="sidebar-icon">📊</span>数据统计</a></li>
+                                <li><a href="#"><span class="sidebar-icon">🎨</span>作品展示</a></li>
+                                <li><a href="#"><span class="sidebar-icon">📝</span>动态发布</a></li>
+                                <li><a href="#"><span class="sidebar-icon">⚙️</span>系统设置</a></li>
+                            </ul>
+                        </div>
+                        
+                        <!-- 主要内容区 -->
+                        <div class="main-content">
+                            <!-- 客户统计 -->
+                            <div class="stats-grid" style="margin-bottom: 30px;">
+                                <div class="stat-card">
+                                    <div class="stat-icon">👥</div>
+                                    <div class="stat-number">156</div>
+                                    <div class="stat-label">总客户数</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">📞</div>
+                                    <div class="stat-number">23</div>
+                                    <div class="stat-label">本月新增</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">✅</div>
+                                    <div class="stat-number">89</div>
+                                    <div class="stat-label">已成交</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">⏳</div>
+                                    <div class="stat-number">12</div>
+                                    <div class="stat-label">跟进中</div>
+                                </div>
+                            </div>
+                            
+                            <!-- 操作栏 -->
+                            <div class="card">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                    <div style="display: flex; gap: 15px; align-items: center;">
+                                        <select style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;">
+                                            <option>全部状态</option>
+                                            <option>意向客户</option>
+                                            <option>已签约</option>
+                                            <option>已完成</option>
+                                            <option>已取消</option>
+                                        </select>
+                                        <select style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;">
+                                            <option>全部地区</option>
+                                            <option>上海</option>
+                                            <option>北京</option>
+                                            <option>广州</option>
+                                            <option>深圳</option>
+                                        </select>
+                                    </div>
+                                    <a href="#" class="btn btn-primary">👥 添加客户</a>
+                                </div>
+                                
+                                <!-- 客户列表 -->
+                                <div class="table-container">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>客户信息</th>
+                                                <th>联系方式</th>
+                                                <th>婚期</th>
+                                                <th>预算</th>
+                                                <th>状态</th>
+                                                <th>跟进人</th>
+                                                <th>操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                                        <div style="width: 40px; height: 40px; background: #F55D54; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">王</div>
+                                                        <div>
+                                                            <div style="font-weight: 600;">王先生 & 李女士</div>
+                                                            <div style="font-size: 12px; color: #666;">2024-01-15 创建</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div>📱 138****8888</div>
+                                                    <div style="font-size: 12px; color: #666;">📧 wang@email.com</div>
+                                                </td>
+                                                <td>2024-05-20</td>
+                                                <td>¥15-20万</td>
+                                                <td><span class="status-badge status-available">已签约</span></td>
+                                                <td>张主持</td>
+                                                <td>
+                                                    <div style="display: flex; gap: 5px;">
+                                                        <a href="#" class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">查看</a>
+                                                        <a href="#" class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">编辑</a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                                        <div style="width: 40px; height: 40px; background: #52c41a; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">张</div>
+                                                        <div>
+                                                            <div style="font-weight: 600;">张先生 & 陈女士</div>
+                                                            <div style="font-size: 12px; color: #666;">2024-02-10 创建</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div>📱 139****9999</div>
+                                                    <div style="font-size: 12px; color: #666;">📧 zhang@email.com</div>
+                                                </td>
+                                                <td>2024-06-15</td>
+                                                <td>¥10-15万</td>
+                                                <td><span class="status-badge status-pending">跟进中</span></td>
+                                                <td>李主持</td>
+                                                <td>
+                                                    <div style="display: flex; gap: 5px;">
+                                                        <a href="#" class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">查看</a>
+                                                        <a href="#" class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">编辑</a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                                        <div style="width: 40px; height: 40px; background: #1890ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">刘</div>
+                                                        <div>
+                                                            <div style="font-weight: 600;">刘先生 & 赵女士</div>
+                                                            <div style="font-size: 12px; color: #666;">2024-03-01 创建</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div>📱 137****7777</div>
+                                                    <div style="font-size: 12px; color: #666;">📧 liu@email.com</div>
+                                                </td>
+                                                <td>2024-08-10</td>
+                                                <td>¥20-30万</td>
+                                                <td><span class="status-badge status-available">已完成</span></td>
+                                                <td>王主持</td>
+                                                <td>
+                                                    <div style="display: flex; gap: 5px;">
+                                                        <a href="#" class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">查看</a>
+                                                        <a href="#" class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">评价</a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 档期管理页面 -->
+        <div class="page-section">
+            <div class="page-header">
+                <div class="page-title">档期管理 - Schedule Management</div>
+                <div class="page-desc">主要功能：日历视图、档期筛选、状态管理</div>
+            </div>
+            <div class="page-content">
+                <div class="web-frame">
+                    <!-- 顶部导航 -->
+                    <div class="web-header">
+                        <div class="logo-section">
+                            <div class="logo">💒 婚礼主持</div>
+                        </div>
+                        <div class="search-section">
+                            <input type="text" class="search-input" placeholder="搜索档期、客户、主持人...">
+                        </div>
+                        <div class="user-section">
+                            <button class="notification-btn">
+                                🔔
+                                <span class="notification-badge">3</span>
+                            </button>
+                            <div class="user-avatar">张</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 主体内容 -->
+                    <div class="web-main">
+                        <!-- 侧边栏 -->
+                        <div class="sidebar">
+                            <ul class="sidebar-nav">
+                                <li><a href="#"><span class="sidebar-icon">🏠</span>首页</a></li>
+                                <li><a href="#" class="active"><span class="sidebar-icon">📅</span>档期管理</a></li>
+                                <li><a href="#"><span class="sidebar-icon">👥</span>客户管理</a></li>
+                                <li><a href="#"><span class="sidebar-icon">🎤</span>主持人管理</a></li>
+                                <li><a href="#"><span class="sidebar-icon">💬</span>消息中心</a></li>
+                                <li><a href="#"><span class="sidebar-icon">📊</span>数据统计</a></li>
+                                <li><a href="#"><span class="sidebar-icon">🎨</span>作品展示</a></li>
+                                <li><a href="#"><span class="sidebar-icon">📝</span>动态发布</a></li>
+                                <li><a href="#"><span class="sidebar-icon">⚙️</span>系统设置</a></li>
+                            </ul>
+                        </div>
+                        
+                        <!-- 主要内容区 -->
+                        <div class="main-content">
+                            <!-- 操作栏 -->
+                            <div class="card">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                    <div style="display: flex; gap: 15px; align-items: center;">
+                                        <select style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;">
+                                            <option>全部状态</option>
+                                            <option>已确认</option>
+                                            <option>待确认</option>
+                                            <option>已取消</option>
+                                        </select>
+                                        <select style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;">
+                                            <option>本月</option>
+                                            <option>下月</option>
+                                            <option>本季度</option>
+                                        </select>
+                                    </div>
+                                    <a href="#" class="btn btn-primary">📅 新建档期</a>
+                                </div>
+                                
+                                <!-- 日历视图 -->
+                                <div class="calendar-container">
+                                    <div class="calendar-header">
+                                        <h3>2024年3月</h3>
+                                        <div class="calendar-nav">
+                                            <button>← 上月</button>
+                                            <button>今天</button>
+                                            <button>下月 →</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="calendar-grid">
+                                        <div class="calendar-day" style="background: #f8f9fa; font-weight: bold;">日</div>
+                                        <div class="calendar-day" style="background: #f8f9fa; font-weight: bold;">一</div>
+                                        <div class="calendar-day" style="background: #f8f9fa; font-weight: bold;">二</div>
+                                        <div class="calendar-day" style="background: #f8f9fa; font-weight: bold;">三</div>
+                                        <div class="calendar-day" style="background: #f8f9fa; font-weight: bold;">四</div>
+                                        <div class="calendar-day" style="background: #f8f9fa; font-weight: bold;">五</div>
+                                        <div class="calendar-day" style="background: #f8f9fa; font-weight: bold;">六</div>
+                                        
+                                        <div class="calendar-day">1</div>
+                                        <div class="calendar-day">2</div>
+                                        <div class="calendar-day">3</div>
+                                        <div class="calendar-day">4</div>
+                                        <div class="calendar-day">5</div>
+                                        <div class="calendar-day">6</div>
+                                        <div class="calendar-day">7</div>
+                                        
+                                        <div class="calendar-day">8</div>
+                                        <div class="calendar-day">9</div>
+                                        <div class="calendar-day">10</div>
+                                        <div class="calendar-day">11</div>
+                                        <div class="calendar-day">12</div>
+                                        <div class="calendar-day">13</div>
+                                        <div class="calendar-day">14</div>
+                                        
+                                        <div class="calendar-day booked">15<br><small>王先生</small></div>
+                                        <div class="calendar-day">16</div>
+                                        <div class="calendar-day">17</div>
+                                        <div class="calendar-day pending">18<br><small>待确认</small></div>
+                                        <div class="calendar-day">19</div>
+                                        <div class="calendar-day">20</div>
+                                        <div class="calendar-day">21</div>
+                                        
+                                        <div class="calendar-day booked">22<br><small>刘先生</small></div>
+                                        <div class="calendar-day">23</div>
+                                        <div class="calendar-day available">24<br><small>空闲</small></div>
+                                        <div class="calendar-day">25</div>
+                                        <div class="calendar-day pending">26<br><small>咨询中</small></div>
+                                        <div class="calendar-day">27</div>
+                                        <div class="calendar-day booked">28<br><small>张先生</small></div>
+                                        
+                                        <div class="calendar-day">29</div>
+                                        <div class="calendar-day available">30<br><small>空闲</small></div>
+                                        <div class="calendar-day">31</div>
+                                        <div class="calendar-day"></div>
+                                        <div class="calendar-day"></div>
+                                        <div class="calendar-day"></div>
+                                        <div class="calendar-day"></div>
+                                    </div>
+                                    
+                                    <!-- 日历图例 -->
+                                    <div class="calendar-legend">
+                                        <div class="legend-item">
+                                            <div class="legend-color" style="background: #1890ff;"></div>
+                                            <span>已确认</span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <div class="legend-color" style="background: #52c41a;"></div>
+                                            <span>空闲可预约</span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <div class="legend-color" style="background: #faad14;"></div>
+                                            <span>待确认/咨询中</span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <div class="legend-color" style="background: #f0f0f0;"></div>
+                                            <span>无安排</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 档期列表 -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="card-title">📋 档期列表</div>
+                                    <div style="display: flex; gap: 10px;">
+                                        <button class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">导出Excel</button>
+                                        <button class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">批量操作</button>
+                                    </div>
+                                </div>
+                                <div class="table-container">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th><input type="checkbox"></th>
+                                                <th>档期编号</th>
+                                                <th>日期时间</th>
+                                                <th>客户信息</th>
+                                                <th>婚礼地点</th>
+                                                <th>主持人</th>
+                                                <th>费用</th>
+                                                <th>状态</th>
+                                                <th>操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><input type="checkbox"></td>
+                                                <td>WD240315001</td>
+                                                <td>2024-03-15 14:00</td>
+                                                <td>王先生 & 李女士<br><small>📞 138****8888</small></td>
+                                                <td>香格里拉酒店<br><small>钻石厅</small></td>
+                                                <td>张主持</td>
+                                                <td>¥3,800</td>
+                                                <td><span class="status-badge status-available">已确认</span></td>
+                                                <td>
+                                                    <a href="#" class="btn btn-outline" style="padding: 5px 10px; font-size: 12px; margin-right: 5px;">详情</a>
+                                                    <a href="#" class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">编辑</a>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><input type="checkbox"></td>
+                                                <td>WD240318002</td>
+                                                <td>2024-03-18 12:00</td>
+                                                <td>张先生 & 陈女士<br><small>📞 139****9999</small></td>
+                                                <td>万豪酒店<br><small>宴会厅A</small></td>
+                                                <td>李主持</td>
+                                                <td>¥4,200</td>
+                                                <td><span class="status-badge status-pending">待确认</span></td>
+                                                <td>
+                                                    <a href="#" class="btn btn-outline" style="padding: 5px 10px; font-size: 12px; margin-right: 5px;">详情</a>
+                                                    <a href="#" class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;">确认</a>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><input type="checkbox"></td>
+                                                <td>WD240322003</td>
+                                                <td>2024-03-22 16:00</td>
+                                                <td>刘先生 & 赵女士<br><small>📞 137****7777</small></td>
+                                                <td>希尔顿酒店<br><small>水晶厅</small></td>
+                                                <td>王主持</td>
+                                                <td>¥5,000</td>
+                                                <td><span class="status-badge status-available">已确认</span></td>
+                                                <td>
+                                                    <a href="#" class="btn btn-outline" style="padding: 5px 10px; font-size: 12px; margin-right: 5px;">详情</a>
+                                                    <a href="#" class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">编辑</a>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <!-- 分页 -->
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #f0f0f0;">
+                                    <div style="color: #666; font-size: 14px;">共 156 条记录，当前第 1/16 页</div>
+                                    <div style="display: flex; gap: 5px;">
+                                        <button class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">上一页</button>
+                                        <button class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;">1</button>
+                                        <button class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">2</button>
+                                        <button class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">3</button>
+                                        <button class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">...</button>
+                                        <button class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">下一页</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 消息中心页面 -->
+        <div class="page-section">
+            <div class="page-header">
+                <div class="page-title">消息中心 - Message Center</div>
+                <div class="page-desc">主要功能：消息管理、通知设置、沟通记录</div>
+            </div>
+            <div class="page-content">
+                <div class="web-frame">
+                    <!-- 顶部导航 -->
+                    <div class="web-header">
+                        <div class="logo-section">
+                            <div class="logo">💒 婚礼主持</div>
+                        </div>
+                        <div class="search-section">
+                            <input type="text" class="search-input" placeholder="搜索消息内容...">
+                        </div>
+                        <div class="user-section">
+                            <button class="notification-btn">
+                                🔔
+                                <span class="notification-badge">3</span>
+                            </button>
+                            <div class="user-avatar">张</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 主体内容 -->
+                    <div class="web-main">
+                        <!-- 侧边栏 -->
+                        <div class="sidebar">
+                            <ul class="sidebar-nav">
+                                <li><a href="#"><span class="sidebar-icon">🏠</span>首页</a></li>
+                                <li><a href="#"><span class="sidebar-icon">📅</span>档期管理</a></li>
+                                <li><a href="#"><span class="sidebar-icon">👥</span>客户管理</a></li>
+                                <li><a href="#"><span class="sidebar-icon">🎤</span>主持人管理</a></li>
+                                <li><a href="#" class="active"><span class="sidebar-icon">💬</span>消息中心</a></li>
+                                <li><a href="#"><span class="sidebar-icon">📊</span>数据统计</a></li>
+                                <li><a href="#"><span class="sidebar-icon">🎨</span>作品展示</a></li>
+                                <li><a href="#"><span class="sidebar-icon">📝</span>动态发布</a></li>
+                                <li><a href="#"><span class="sidebar-icon">⚙️</span>系统设置</a></li>
+                            </ul>
+                        </div>
+                        
+                        <!-- 主要内容区 -->
+                        <div class="main-content">
+                            <div style="display: grid; grid-template-columns: 300px 1fr; gap: 20px; height: 600px;">
+                                <!-- 消息列表 -->
+                                <div class="card" style="margin-bottom: 0; display: flex; flex-direction: column;">
+                                    <div class="card-header">
+                                        <div class="card-title">💬 消息列表</div>
+                                        <button class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">全部已读</button>
+                                    </div>
+                                    
+                                    <!-- 消息分类 -->
+                                    <div style="display: flex; gap: 5px; margin-bottom: 15px;">
+                                        <button class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;">全部</button>
+                                        <button class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">未读</button>
+                                        <button class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">系统</button>
+                                    </div>
+                                    
+                                    <div class="message-list" style="flex: 1; max-height: none;">
+                                        <div class="message-item" style="background: #f8f9fa; border-left: 3px solid #F55D54;">
+                                            <div class="message-avatar">王</div>
+                                            <div class="message-content">
+                                                <div class="message-header">
+                                                    <div class="message-sender">王女士</div>
+                                                    <div class="message-time">2小时前</div>
+                                                </div>
+                                                <div class="message-text">您好，我想咨询3月22日的档期安排</div>
+                                            </div>
+                                        </div>
+                                        <div class="message-item">
+                                            <div class="message-avatar">李</div>
+                                            <div class="message-content">
+                                                <div class="message-header">
+                                                    <div class="message-sender">李先生</div>
+                                                    <div class="message-time">5小时前</div>
+                                                </div>
+                                                <div class="message-text">档期确认成功，期待合作！</div>
+                                            </div>
+                                        </div>
+                                        <div class="message-item">
+                                            <div class="message-avatar">张</div>
+                                            <div class="message-content">
+                                                <div class="message-header">
+                                                    <div class="message-sender">张经理</div>
+                                                    <div class="message-time">1天前</div>
+                                                </div>
+                                                <div class="message-text">酒店场地已确认，请提前1小时到场</div>
+                                            </div>
+                                        </div>
+                                        <div class="message-item">
+                                            <div class="message-avatar" style="background: #28a745;">系</div>
+                                            <div class="message-content">
+                                                <div class="message-header">
+                                                    <div class="message-sender">系统通知</div>
+                                                    <div class="message-time">2天前</div>
+                                                </div>
+                                                <div class="message-text">您有新的档期预约申请</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 消息详情 -->
+                                <div class="card" style="margin-bottom: 0; display: flex; flex-direction: column;">
+                                    <div class="card-header">
+                                        <div>
+                                            <div class="card-title">与王女士的对话</div>
+                                            <div style="color: #666; font-size: 14px;">📞 138****8888</div>
+                                        </div>
+                                        <div style="display: flex; gap: 10px;">
+                                            <button class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">📞 拨打电话</button>
+                                            <button class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">📋 查看档期</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 聊天记录 -->
+                                    <div style="flex: 1; padding: 20px; background: #f8f9fa; overflow-y: auto;">
+                                        <div style="margin-bottom: 20px;">
+                                            <div style="display: flex; align-items: flex-start; gap: 10px;">
+                                                <div class="message-avatar" style="width: 35px; height: 35px; font-size: 14px;">王</div>
+                                                <div>
+                                                    <div style="background: white; padding: 12px; border-radius: 12px; max-width: 300px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">您好，我想咨询3月22日的档期安排，请问还有空档吗？</div>
+                                                    <div style="color: #666; font-size: 12px; margin-top: 5px;">2小时前</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div style="margin-bottom: 20px;">
+                                            <div style="display: flex; align-items: flex-start; gap: 10px; flex-direction: row-reverse;">
+                                                <div class="user-avatar" style="width: 35px; height: 35px; font-size: 14px;">张</div>
+                                                <div>
+                                                    <div style="background: #F55D54; color: white; padding: 12px; border-radius: 12px; max-width: 300px;">您好！3月22日下午16:00-20:00还有空档，费用是5000元，包含主持和策划服务。</div>
+                                                    <div style="color: #666; font-size: 12px; margin-top: 5px; text-align: right;">1小时前</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div style="margin-bottom: 20px;">
+                                            <div style="display: flex; align-items: flex-start; gap: 10px;">
+                                                <div class="message-avatar" style="width: 35px; height: 35px; font-size: 14px;">王</div>
+                                                <div>
+                                                    <div style="background: white; padding: 12px; border-radius: 12px; max-width: 300px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">好的，我需要和家人商量一下，稍后给您回复。</div>
+                                                    <div style="color: #666; font-size: 12px; margin-top: 5px;">30分钟前</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 消息输入 -->
+                                    <div style="padding: 15px; border-top: 1px solid #f0f0f0; background: white;">
+                                        <div style="display: flex; gap: 10px; align-items: flex-end;">
+                                            <input type="text" placeholder="输入消息..." style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 20px; resize: none;">
+                                            <button class="btn btn-primary" style="border-radius: 20px;">发送</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 作品展示页面 -->
+        <div class="page-section">
+            <div class="page-header">
+                <div class="page-title">作品展示 - Portfolio</div>
+                <div class="page-desc">主要功能：作品管理、分类展示、发布新作品</div>
+            </div>
+            <div class="page-content">
+                <div class="web-frame">
+                    <!-- 顶部导航 -->
+                    <div class="web-header">
+                        <div class="logo-section">
+                            <div class="logo">💒 婚礼主持</div>
+                        </div>
+                        <div class="search-section">
+                            <input type="text" class="search-input" placeholder="搜索作品...">
+                        </div>
+                        <div class="user-section">
+                            <button class="notification-btn">
+                                🔔
+                                <span class="notification-badge">3</span>
+                            </button>
+                            <div class="user-avatar">张</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 主体内容 -->
+                    <div class="web-main">
+                        <!-- 侧边栏 -->
+                        <div class="sidebar">
+                            <ul class="sidebar-nav">
+                                <li><a href="#"><span class="sidebar-icon">🏠</span>首页</a></li>
+                                <li><a href="#"><span class="sidebar-icon">📅</span>档期管理</a></li>
+                                <li><a href="#"><span class="sidebar-icon">👥</span>客户管理</a></li>
+                                <li><a href="#"><span class="sidebar-icon">🎤</span>主持人管理</a></li>
+                                <li><a href="#"><span class="sidebar-icon">💬</span>消息中心</a></li>
+                                <li><a href="#"><span class="sidebar-icon">📊</span>数据统计</a></li>
+                                <li><a href="#" class="active"><span class="sidebar-icon">🎨</span>作品展示</a></li>
+                                <li><a href="#"><span class="sidebar-icon">📝</span>动态发布</a></li>
+                                <li><a href="#"><span class="sidebar-icon">⚙️</span>系统设置</a></li>
+                            </ul>
+                        </div>
+                        
+                        <!-- 主要内容区 -->
+                        <div class="main-content">
+                            <!-- 操作栏 -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                                <div style="display: flex; gap: 15px; align-items: center;">
+                                    <button class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;">全部</button>
+                                    <button class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">婚礼现场</button>
+                                    <button class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">主持风采</button>
+                                    <button class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">客户反馈</button>
+                                    <button class="btn btn-outline" style="padding: 5px 10px; font-size: 12px;">精彩瞬间</button>
+                                </div>
+                                <a href="#" class="btn btn-primary">🎨 发布新作品</a>
+                            </div>
+                            
+                            <!-- 作品网格 -->
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px;">
+                                <!-- 作品卡片1 -->
+                                <div class="card" style="margin-bottom: 0; overflow: hidden;">
+                                    <div style="height: 200px; background: linear-gradient(45deg, #FFB6C1, #FFC0CB); display: flex; align-items: center; justify-content: center; color: white; font-size: 48px;">📸</div>
+                                    <div style="padding: 20px;">
+                                        <h3 style="margin-bottom: 10px; color: #333;">浪漫海边婚礼</h3>
+                                        <p style="color: #666; font-size: 14px; line-height: 1.5; margin-bottom: 15px;">在美丽的海边举办的浪漫婚礼，新人在夕阳下许下永恒的誓言...</p>
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <div style="display: flex; gap: 5px;">
+                                                <span style="background: #f0f0f0; padding: 2px 8px; border-radius: 12px; font-size: 12px; color: #666;">#花园婚礼</span>
+                                                <span style="background: #f0f0f0; padding: 2px 8px; border-radius: 12px; font-size: 12px; color: #666;">#自然</span>
+                                            </div>
+                                            <div style="color: #666; font-size: 12px;">2024-02-28</div>
+                                        </div>
+                                        <div style="display: flex; gap: 10px; margin-top: 15px;">
+                                            <button class="btn btn-outline" style="flex: 1; padding: 8px; font-size: 12px;">查看详情</button>
+                                            <button class="btn btn-outline" style="padding: 8px 12px; font-size: 12px;">编辑</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 作品卡片4 -->
+                                <div class="card" style="margin-bottom: 0; overflow: hidden;">
+                                    <div style="height: 200px; background: linear-gradient(45deg, #FFD700, #FFA500); display: flex; align-items: center; justify-content: center; color: white; font-size: 48px;">✨</div>
+                                    <div style="padding: 20px;">
+                                        <h3 style="margin-bottom: 10px; color: #333;">奢华酒店婚礼</h3>
+                                        <p style="color: #666; font-size: 14px; line-height: 1.5; margin-bottom: 15px;">五星级酒店举办的奢华婚礼，灯光璀璨，气氛热烈，彰显尊贵...</p>
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <div style="display: flex; gap: 5px;">
+                                                <span style="background: #f0f0f0; padding: 2px 8px; border-radius: 12px; font-size: 12px; color: #666;">#奢华</span>
+                                                <span style="background: #f0f0f0; padding: 2px 8px; border-radius: 12px; font-size: 12px; color: #666;">#酒店</span>
+                                            </div>
+                                            <div style="color: #666; font-size: 12px;">2024-02-20</div>
+                                        </div>
+                                        <div style="display: flex; gap: 10px; margin-top: 15px;">
+                                            <button class="btn btn-outline" style="flex: 1; padding: 8px; font-size: 12px;">查看详情</button>
+                                            <button class="btn btn-outline" style="padding: 8px 12px; font-size: 12px;">编辑</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 分页 -->
+                            <div style="display: flex; justify-content: center; margin-top: 40px;">
+                                <div style="display: flex; gap: 5px;">
+                                    <button class="btn btn-outline" style="padding: 8px 12px; font-size: 12px;">上一页</button>
+                                    <button class="btn btn-primary" style="padding: 8px 12px; font-size: 12px;">1</button>
+                                    <button class="btn btn-outline" style="padding: 8px 12px; font-size: 12px;">2</button>
+                                    <button class="btn btn-outline" style="padding: 8px 12px; font-size: 12px;">3</button>
+                                    <button class="btn btn-outline" style="padding: 8px 12px; font-size: 12px;">下一页</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 个人中心页面 -->
+        <div id="profile" class="page" style="display: none;">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="sidebar">
+                            <div class="user-info" style="text-align: center; padding: 30px 20px; border-bottom: 1px solid #eee;">
+                                <div style="width: 80px; height: 80px; background: linear-gradient(45deg, #FF6B6B, #4ECDC4); border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; color: white; font-size: 32px;">👤</div>
+                                <h3 style="margin-bottom: 5px; color: #333;">张婚庆师</h3>
+                                <p style="color: #666; font-size: 14px;">专业婚庆策划师</p>
+                            </div>
+                            <nav class="nav nav-pills nav-stacked" style="padding: 20px 0;">
+                                <a href="#" class="nav-link active" onclick="showProfileTab('info')">个人信息</a>
+                                <a href="#" class="nav-link" onclick="showProfileTab('works')">我的作品</a>
+                                <a href="#" class="nav-link" onclick="showProfileTab('dynamics')">我的动态</a>
+                                <a href="#" class="nav-link" onclick="showProfileTab('schedule')">档期管理</a>
+                                <a href="#" class="nav-link" onclick="showProfileTab('team')">团队管理</a>
+                                <a href="#" class="nav-link" onclick="showProfileTab('settings')">系统设置</a>
+                            </nav>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="main-content">
+                            <!-- 个人信息 -->
+                            <div id="profile-info" class="profile-tab">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h4>个人信息</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <form>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label>姓名</label>
+                                                        <input type="text" class="form-control" value="张婚庆师">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label>手机号</label>
+                                                        <input type="text" class="form-control" value="138****8888">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label>邮箱</label>
+                                                        <input type="email" class="form-control" value="zhang@example.com">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label>所在城市</label>
+                                                        <select class="form-control">
+                                                            <option>北京</option>
+                                                            <option>上海</option>
+                                                            <option>广州</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>个人简介</label>
+                                                <textarea class="form-control" rows="4">专业婚庆策划师，拥有8年行业经验，擅长各种风格的婚礼策划...</textarea>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">保存修改</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 我的作品 -->
+                            <div id="profile-works" class="profile-tab" style="display: none;">
+                                <div class="card">
+                                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                                        <h4>我的作品</h4>
+                                        <button class="btn btn-primary">发布新作品</button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="card" style="margin-bottom: 20px;">
+                                                    <div style="height: 150px; background: linear-gradient(45deg, #FF6B6B, #4ECDC4); display: flex; align-items: center; justify-content: center; color: white; font-size: 32px;">💒</div>
+                                                    <div style="padding: 15px;">
+                                                        <h5>浪漫海边婚礼</h5>
+                                                        <p style="color: #666; font-size: 12px;">2024-03-15</p>
+                                                        <div style="display: flex; gap: 5px; margin-top: 10px;">
+                                                            <button class="btn btn-outline btn-sm">编辑</button>
+                                                            <button class="btn btn-outline btn-sm">删除</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="card" style="margin-bottom: 20px;">
+                                                    <div style="height: 150px; background: linear-gradient(45deg, #A8E6CF, #88D8C0); display: flex; align-items: center; justify-content: center; color: white; font-size: 32px;">🌸</div>
+                                                    <div style="padding: 15px;">
+                                                        <h5>花园主题婚礼</h5>
+                                                        <p style="color: #666; font-size: 12px;">2024-03-10</p>
+                                                        <div style="display: flex; gap: 5px; margin-top: 10px;">
+                                                            <button class="btn btn-outline btn-sm">编辑</button>
+                                                            <button class="btn btn-outline btn-sm">删除</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 我的动态 -->
+                            <div id="profile-dynamics" class="profile-tab" style="display: none;">
+                                <div class="card">
+                                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                                        <h4>我的动态</h4>
+                                        <button class="btn btn-primary">发布新动态</button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="dynamic-item" style="padding: 20px; border-bottom: 1px solid #eee;">
+                                            <div style="display: flex; gap: 15px;">
+                                                <div style="width: 40px; height: 40px; background: linear-gradient(45deg, #FF6B6B, #4ECDC4); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">👤</div>
+                                                <div style="flex: 1;">
+                                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                                        <strong>张婚庆师</strong>
+                                                        <span style="color: #666; font-size: 12px;">2024-03-15 14:30</span>
+                                                    </div>
+                                                    <p style="margin-bottom: 10px;">今天完成了一场美丽的海边婚礼，新人非常满意！感谢团队的辛苦付出。</p>
+                                                    <div style="display: flex; gap: 10px;">
+                                                        <button class="btn btn-outline btn-sm">编辑</button>
+                                                        <button class="btn btn-outline btn-sm">删除</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 发布作品页面 -->
+        <div id="publish-work" class="page" style="display: none;">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-8 col-md-offset-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4>发布作品</h4>
+                            </div>
+                            <div class="card-body">
+                                <form>
+                                    <div class="form-group">
+                                        <label>作品标题</label>
+                                        <input type="text" class="form-control" placeholder="请输入作品标题">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>作品描述</label>
+                                        <textarea class="form-control" rows="4" placeholder="请描述您的作品..."></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>作品图片</label>
+                                        <div style="border: 2px dashed #ddd; padding: 40px; text-align: center; background: #f9f9f9;">
+                                            <div style="font-size: 48px; color: #ccc; margin-bottom: 10px;">📷</div>
+                                            <p style="color: #666;">点击或拖拽上传图片</p>
+                                            <button type="button" class="btn btn-outline">选择文件</button>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label>作品类型</label>
+                                                <select class="form-control">
+                                                    <option>海边婚礼</option>
+                                                    <option>花园婚礼</option>
+                                                    <option>教堂婚礼</option>
+                                                    <option>酒店婚礼</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label>价格范围</label>
+                                                <select class="form-control">
+                                                    <option>1-5万</option>
+                                                    <option>5-10万</option>
+                                                    <option>10-20万</option>
+                                                    <option>20万以上</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>标签</label>
+                                        <input type="text" class="form-control" placeholder="请输入标签，用逗号分隔">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>隐私设置</label>
+                                        <div>
+                                            <label class="radio-inline">
+                                                <input type="radio" name="privacy" value="public" checked> 公开
+                                            </label>
+                                            <label class="radio-inline">
+                                                <input type="radio" name="privacy" value="private"> 私密
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div style="text-align: center; margin-top: 30px;">
+                                        <button type="button" class="btn btn-outline" style="margin-right: 10px;">取消</button>
+                                        <button type="submit" class="btn btn-primary">发布作品</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 发布动态页面 -->
+        <div id="publish-dynamic" class="page" style="display: none;">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-8 col-md-offset-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4>发布动态</h4>
+                            </div>
+                            <div class="card-body">
+                                <form>
+                                    <div class="form-group">
+                                        <label>动态内容</label>
+                                        <textarea class="form-control" rows="6" placeholder="分享您的想法..."></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>添加图片</label>
+                                        <div style="border: 2px dashed #ddd; padding: 40px; text-align: center; background: #f9f9f9;">
+                                            <div style="font-size: 48px; color: #ccc; margin-bottom: 10px;">📷</div>
+                                            <p style="color: #666;">点击或拖拽上传图片（可选）</p>
+                                            <button type="button" class="btn btn-outline">选择文件</button>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>话题标签</label>
+                                        <input type="text" class="form-control" placeholder="请输入话题标签，用#开头">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>隐私设置</label>
+                                        <div>
+                                            <label class="radio-inline">
+                                                <input type="radio" name="privacy" value="public" checked> 公开
+                                            </label>
+                                            <label class="radio-inline">
+                                                <input type="radio" name="privacy" value="friends"> 仅好友可见
+                                            </label>
+                                            <label class="radio-inline">
+                                                <input type="radio" name="privacy" value="private"> 私密
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div style="text-align: center; margin-top: 30px;">
+                                        <button type="button" class="btn btn-outline" style="margin-right: 10px;">取消</button>
+                                        <button type="submit" class="btn btn-primary">发布动态</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <script>
+            // 页面切换功能
+            function showPage(pageId) {
+                // 显示所有页面部分（这是一个原型展示页面，应该显示所有内容）
+                const pages = document.querySelectorAll('.page-section');
+                pages.forEach(page => page.style.display = 'block');
+                
+                // 如果有特定页面需要高亮或滚动到指定位置
+                const targetPage = document.getElementById(pageId);
+                if (targetPage) {
+                    targetPage.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
+            
+            // 日历交互功能
+            function selectCalendarDay(element) {
+                // 移除其他选中状态
+                document.querySelectorAll('.calendar-day').forEach(day => {
+                    day.classList.remove('selected');
+                });
+                
+                // 添加选中状态
+                element.classList.add('selected');
+                
+                // 显示详情（可以在这里添加更多交互）
+                console.log('选中日期:', element.textContent);
+            }
+            
+            // 表格排序功能
+            function sortTable(columnIndex) {
+                const table = document.querySelector('.data-table');
+                if (!table) return;
+                
+                const tbody = table.querySelector('tbody');
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                
+                rows.sort((a, b) => {
+                    const aText = a.cells[columnIndex].textContent.trim();
+                    const bText = b.cells[columnIndex].textContent.trim();
+                    return aText.localeCompare(bText);
+                });
+                
+                rows.forEach(row => tbody.appendChild(row));
+            }
+            
+            // 搜索功能
+            function searchData(searchTerm) {
+                const rows = document.querySelectorAll('.data-table tbody tr');
+                
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    if (text.includes(searchTerm.toLowerCase())) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            }
+            
+            // 个人中心标签页切换
+            function showProfileTab(tabId) {
+                // 隐藏所有标签页
+                const tabs = document.querySelectorAll('.profile-tab');
+                tabs.forEach(tab => tab.style.display = 'none');
+                
+                // 显示指定标签页
+                const targetTab = document.getElementById('profile-' + tabId);
+                if (targetTab) {
+                    targetTab.style.display = 'block';
+                }
+            }
+            
+            // 页面加载完成后的初始化
+            document.addEventListener('DOMContentLoaded', function() {
+                showPage('dashboard');
+                
+                // 添加日历点击事件
+                document.querySelectorAll('.calendar-day').forEach(day => {
+                    day.addEventListener('click', function() {
+                        selectCalendarDay(this);
+                    });
+                });
+                
+                // 添加搜索框事件
+                const searchInput = document.querySelector('.search-input');
+                if (searchInput) {
+                    searchInput.addEventListener('input', function() {
+                        searchData(this.value);
+                    });
+                }
+                
+                // 添加表格头部点击排序
+                document.querySelectorAll('.data-table th').forEach((th, index) => {
+                    th.style.cursor = 'pointer';
+                    th.addEventListener('click', function() {
+                        sortTable(index);
+                    });
+                });
+            });
+        </script>
+    </body>
+</html>

@@ -1,12 +1,13 @@
 import * as jwt from 'jsonwebtoken';
-import { config } from '../../config/config';
-import { logger } from '../../utils/logger';
+import { config } from '../config/config';
+import { logger } from '../utils/logger';
 
 export interface MCPUser {
   id: string;
   email: string;
   role: string;
   permissions: string[];
+  token: string;
 }
 
 export class MCPAuthService {
@@ -19,16 +20,17 @@ export class MCPAuthService {
     try {
       // 移除Bearer前缀（如果存在）
       const cleanToken = token.startsWith('Bearer ') ? token.slice(7) : token;
-      
+
       // 验证JWT令牌
       const decoded = jwt.verify(cleanToken, config.jwt.secret) as any;
-      
+
       // 返回用户信息
       return {
         id: decoded.id,
         email: decoded.email,
         role: decoded.role,
-        permissions: decoded.permissions || []
+        permissions: decoded.permissions || [],
+        token: cleanToken
       };
     } catch (error) {
       logger.error('Token verification failed:', error);
@@ -47,7 +49,7 @@ export class MCPAuthService {
     if (user.role === 'admin') {
       return true;
     }
-    
+
     // 检查用户权限列表
     return user.permissions.includes(permission);
   }
