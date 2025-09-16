@@ -76,7 +76,7 @@ services:
   # =============================================================================
   mysql:
     image: wedding-service-mysql:8.0
-    container_name: wedding-service-${ENVIRONMENT:-prod}
+    container_name: wedding-service-mysql-${ENVIRONMENT:-prod}
     restart: unless-stopped
     ports:
       - "${MYSQL_PORT:-3306}:3306"

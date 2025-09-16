@@ -25,7 +25,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # 默认参数
 ENVIRONMENT="${1:-prod}"
-DB_HOST="wedding-service-${ENVIRONMENT}"
+DB_HOST="wedding-service-mysql-${ENVIRONMENT}"
 COMPOSE_FILE="docker-compose.yml"
 
 # 颜色输出
