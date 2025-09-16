@@ -15,7 +15,7 @@ services:
       dockerfile: Dockerfile
       target: production
     image: wedding-service-web:${ENVIRONMENT:-prod}-latest
-    container_name: wedding-web-${ENVIRONMENT:-prod}
+    container_name: wedding-service-web-${ENVIRONMENT:-prod}
     restart: unless-stopped
     pull_policy: never
     ports:
@@ -44,7 +44,7 @@ services:
       dockerfile: Dockerfile
       target: production
     image: wedding-service-api:${ENVIRONMENT:-prod}-latest
-    container_name: wedding-api-${ENVIRONMENT:-prod}
+    container_name: wedding-service-api-${ENVIRONMENT:-prod}
     restart: unless-stopped
     pull_policy: never
     ports:

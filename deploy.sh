@@ -22,7 +22,10 @@ set -euo pipefail
 # 全局变量和配置
 # =============================================================================
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DB_HOST="wedding-service-"${ENVIRONMENT}
+
+# 默认参数
+ENVIRONMENT="${1:-prod}"
+DB_HOST="wedding-service-${ENVIRONMENT}"
 COMPOSE_FILE="docker-compose.yml"
 
 # 颜色输出
@@ -33,7 +36,6 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # 默认参数
-ENVIRONMENT="${1:-prod}"
 ACTION="${2:-deploy}"
 FORCE_FLAG=""
 NO_CACHE_FLAG=""
