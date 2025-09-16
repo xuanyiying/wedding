@@ -241,6 +241,40 @@ build_images() {
     log_success "镜像构建完成"
 }
 
+# 数据库索引修复函数
+fix_database_indexes() {
+    local environment=$1
+    
+    log_info "开始修复数据库索引..."
+    
+    # 复制修复脚本到API容器
+    local fix_script_path="server/scripts/fix-database-indexes.js"
+    
+    if [ ! -f "$fix_script_path" ]; then
+        log_error "修复脚本不存在: $fix_script_path"
+        return 1
+    fi
+    
+    if ! docker cp "$fix_script_path" wedding-service-api-${environment}:/app/fix-database-indexes.js; then
+        log_error "复制修复脚本到容器失败"
+        return 1
+    fi
+    
+    # 在容器中执行修复脚本
+    log_info "在容器中执行数据库索引修复..."
+    if docker exec wedding-service-api-${environment} node fix-database-indexes.js; then
+        log_success "数据库索引修复完成"
+        # 清理容器中的修复脚本
+        docker exec wedding-service-api-${environment} rm -f /app/fix-database-indexes.js
+        return 0
+    else
+        log_error "数据库索引修复失败"
+        # 清理容器中的修复脚本
+        docker exec wedding-service-api-${environment} rm -f /app/fix-database-indexes.js
+        return 1
+    fi
+}
+
 # 数据库初始化函数
 init_database() {
     local environment=$1
@@ -309,6 +343,14 @@ init_database() {
     
     rm -f "$temp_script"
     log_success "初始化脚本已准备就绪"
+    
+    # 4.1 修复数据库索引
+    log_info "修复数据库索引..."
+    if fix_database_indexes "$environment"; then
+        log_success "数据库索引修复成功"
+    else
+        log_warning "数据库索引修复失败，继续执行数据库初始化"
+    fi
     
     # 5. 执行数据库初始化
     log_info "执行数据库数据初始化..."

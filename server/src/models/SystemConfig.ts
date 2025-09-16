@@ -166,7 +166,6 @@ export const initSystemConfig = (sequelize: Sequelize): void => {
       timestamps: true,
       comment: '系统配置表',
       indexes: [
-        { name: 'idx_system_configs_key', fields: ['config_key'], unique: true },
         { name: 'idx_system_configs_category', fields: ['category'] },
         { name: 'idx_system_configs_public', fields: ['is_public'] },
         { name: 'idx_system_configs_sort_order', fields: ['sort_order'] },
