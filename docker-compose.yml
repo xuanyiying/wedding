@@ -75,7 +75,8 @@ services:
   # MySQL 数据库服务 - 使用统一的DB_前缀配置
   # =============================================================================
   mysql:
-    image: wedding-service-mysql:8.0
+    image: mysql:8.0
+    pull_policy: never
     container_name: wedding-service-mysql-${ENVIRONMENT:-prod}
     restart: unless-stopped
     ports:
@@ -108,6 +109,7 @@ services:
   # =============================================================================
   redis:
     image: redis:7-alpine
+    pull_policy: never
     container_name: wedding-service-redis-${ENVIRONMENT:-prod}
     restart: unless-stopped
     ports:
@@ -135,6 +137,7 @@ services:
   # =============================================================================
   minio:
     image: minio/minio:latest
+    pull_policy: never
     container_name: wedding-service-minio-${ENVIRONMENT:-prod}
     restart: unless-stopped
     ports:
@@ -163,8 +166,10 @@ services:
   # =============================================================================
   nginx:
     image: nginx:alpine
+    pull_policy: never
     container_name: wedding-service-nginx-${ENVIRONMENT:-prod}
     restart: unless-stopped
+    
     ports:
       - "${NGINX_PORT:-80}:80"
     env_file:
