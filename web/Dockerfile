@@ -1,6 +1,9 @@
 # 生产环境Web服务Dockerfile
 # 多阶段构建，优化镜像大小和构建速度
 
+# 构建参数
+ARG ENVIRONMENT=dev
+
 # 构建阶段
 FROM node:22-alpine AS builder
 

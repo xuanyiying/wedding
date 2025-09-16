@@ -235,17 +235,8 @@ create_directories() {
 build_images() {
     log_info "开始构建镜像..."
     
-    local build_args="--build-arg ENVIRONMENT=$ENVIRONMENT"
-    
-    if [[ -n "$NO_CACHE_FLAG" ]]; then
-        build_args="$build_args $NO_CACHE_FLAG"
-    fi
-    
-    if [[ -n "$PULL_FLAG" ]]; then
-        build_args="$build_args $PULL_FLAG"
-    fi
-    
-    $DOCKER_COMPOSE build "$build_args"
+    # Docker Compose v2 使用 build.args 而不是 --build-arg 参数
+    ENVIRONMENT=$ENVIRONMENT $DOCKER_COMPOSE build
     
     log_success "镜像构建完成"
 }
