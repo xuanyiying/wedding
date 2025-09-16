@@ -245,7 +245,7 @@ build_images() {
         build_args="$build_args $PULL_FLAG"
     fi
     
-    $DOCKER_COMPOSE build $build_args
+    $DOCKER_COMPOSE build "$build_args"
     
     log_success "镜像构建完成"
 }
