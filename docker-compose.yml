@@ -206,7 +206,7 @@ services:
 # 网络和数据卷配置保持不变
 # =============================================================================
 networks:
-  wedding-network:
+  wedding-service-network:
     driver: bridge
     name: wedding-service-${ENVIRONMENT:-prod}-network
 

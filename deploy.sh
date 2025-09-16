@@ -22,7 +22,7 @@ set -euo pipefail
 # 全局变量和配置
 # =============================================================================
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DB_HOST="wedding-club"
+DB_HOST="wedding-service-"${ENVIRONMENT}
 COMPOSE_FILE="docker-compose.yml"
 
 # 颜色输出
