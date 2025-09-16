@@ -242,35 +242,35 @@ build_images() {
 }
 
 # 数据库索引修复函数
-fix_database_indexes() {
+clean_database_indexes() {
     local environment=$1
     
-    log_info "开始修复数据库索引..."
+    log_info "开始清理数据库索引..."
     
-    # 复制修复脚本到API容器
-    local fix_script_path="server/scripts/fix-database-indexes.js"
+    # 复制清理脚本到API容器
+    local clean_script_path="server/scripts/clean-database-indexes.js"
     
-    if [ ! -f "$fix_script_path" ]; then
-        log_error "修复脚本不存在: $fix_script_path"
+    if [ ! -f "$clean_script_path" ]; then
+        log_error "清理脚本不存在: $clean_script_path"
         return 1
     fi
     
-    if ! docker cp "$fix_script_path" wedding-service-api-${environment}:/app/fix-database-indexes.js; then
-        log_error "复制修复脚本到容器失败"
+    if ! docker cp "$clean_script_path" wedding-service-api-${environment}:/app/clean-database-indexes.js; then
+        log_error "复制清理脚本到容器失败"
         return 1
     fi
     
-    # 在容器中执行修复脚本
-    log_info "在容器中执行数据库索引修复..."
-    if docker exec wedding-service-api-${environment} node fix-database-indexes.js; then
-        log_success "数据库索引修复完成"
-        # 清理容器中的修复脚本
-        docker exec wedding-service-api-${environment} rm -f /app/fix-database-indexes.js
+    # 在容器中执行清理脚本
+    log_info "在容器中执行数据库索引清理..."
+    if docker exec wedding-service-api-${environment} node clean-database-indexes.js; then
+        log_success "数据库索引清理完成"
+        # 清理容器中的清理脚本
+        docker exec wedding-service-api-${environment} rm -f /app/clean-database-indexes.js
         return 0
     else
-        log_error "数据库索引修复失败"
-        # 清理容器中的修复脚本
-        docker exec wedding-service-api-${environment} rm -f /app/fix-database-indexes.js
+        log_error "数据库索引清理失败"
+        # 清理容器中的清理脚本
+        docker exec wedding-service-api-${environment} rm -f /app/clean-database-indexes.js
         return 1
     fi
 }
@@ -344,12 +344,12 @@ init_database() {
     rm -f "$temp_script"
     log_success "初始化脚本已准备就绪"
     
-    # 4.1 修复数据库索引
-    log_info "修复数据库索引..."
-    if fix_database_indexes "$environment"; then
-        log_success "数据库索引修复成功"
+    # 4.1 清理数据库索引
+    log_info "清理数据库索引..."
+    if clean_database_indexes "$environment"; then
+        log_success "数据库索引清理成功"
     else
-        log_warning "数据库索引修复失败，继续执行数据库初始化"
+        log_warning "数据库索引清理失败，继续执行数据库初始化"
     fi
     
     # 5. 执行数据库初始化

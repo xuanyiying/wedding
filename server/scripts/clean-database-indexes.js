@@ -21,11 +21,7 @@ const sequelize = new Sequelize({
     },
 });
 
-// 检查环境变量
-const environment = process.env.ENVIRONMENT || 'dev';
-console.log(`运行环境: ${environment}`);
-
-async function checkAndFixIndexes() {
+async function cleanDatabaseIndexes() {
     try {
         console.log('正在连接数据库...');
 
@@ -90,10 +86,10 @@ async function checkAndFixIndexes() {
             console.log(`  - ${index.Key_name} (${index.Column_name})`);
         });
 
-        console.log('\n数据库索引修复完成');
+        console.log('\n数据库索引清理完成');
         return true;
     } catch (error) {
-        console.error('数据库索引修复失败:', error.message);
+        console.error('数据库索引清理失败:', error.message);
         return false;
     } finally {
         await sequelize.close();
@@ -101,18 +97,18 @@ async function checkAndFixIndexes() {
     }
 }
 
-// 执行修复
-checkAndFixIndexes()
+// 执行清理
+cleanDatabaseIndexes()
     .then(success => {
         if (success) {
-            console.log('修复脚本执行成功');
+            console.log('清理脚本执行成功');
             process.exit(0);
         } else {
-            console.log('修复脚本执行失败');
+            console.log('清理脚本执行失败');
             process.exit(1);
         }
     })
     .catch(error => {
-        console.error('修复脚本执行出错:', error);
+        console.error('清理脚本执行出错:', error);
         process.exit(1);
     });

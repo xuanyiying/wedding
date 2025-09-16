@@ -27,12 +27,11 @@ export interface SystemConfigAttributes {
 }
 
 // Interface for SystemConfig creation attributes
-export interface SystemConfigCreationAttributes extends Optional<SystemConfigAttributes, 'id'> {}
+export interface SystemConfigCreationAttributes extends Optional<SystemConfigAttributes, 'id'> { }
 
 class SystemConfig
   extends Model<SystemConfigAttributes, SystemConfigCreationAttributes>
-  implements SystemConfigAttributes
-{
+  implements SystemConfigAttributes {
   public id!: string;
   public configKey!: string;
   public configValue!: string | null;
