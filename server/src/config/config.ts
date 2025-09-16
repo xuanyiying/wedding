@@ -146,7 +146,7 @@ export const config: Config = {
   database: {
     host: getEnvVar('DB_HOST', 'mysql'),
     port: getEnvNumber('DB_PORT', 3306),
-    name: getEnvVar('DB_NAME', 'wedding_club'),
+    name: getEnvVar('DB_NAME', 'wedding_service'),
     username: getEnvVar('DB_USERNAME', 'root'),
     password: getEnvVar('DB_PASSWORD', ''),
     dialect: getEnvVar('DB_DIALECT', 'mysql'),
@@ -221,7 +221,7 @@ export const config: Config = {
     region: getEnvVar('OSS_REGION', 'us-east-1'),
     accessKey: getEnvVar('OSS_ACCESS_KEY', 'ossadmin'),
     secretKey: getEnvVar('OSS_SECRET_KEY', 'osspassword'),
-    bucket: getEnvVar('OSS_BUCKET', 'wedding-media-prod'),
+    bucket: getEnvVar('OSS_BUCKET', 'wedding-service'),
     publicEndpoint: getEnvVar('OSS_PUBLIC_ENDPOINT'),
     useSSL: getEnvBoolean('OSS_USE_SSL', false),
     pathStyle: getEnvBoolean('OSS_PATH_STYLE', true),

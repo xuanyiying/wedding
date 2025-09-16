@@ -210,7 +210,7 @@ server {
     }
 
     # 前端直传OSS签名URL路由 - 处理预签名URL请求
-    location ~* ^/wedding-media-prod/ {
+    location ~* ^/wedding-service/ {
         # 处理CORS预检请求
         if ($request_method = 'OPTIONS') {
             add_header Access-Control-Allow-Origin '*' always;

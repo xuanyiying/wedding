@@ -17,7 +17,7 @@ export const ossConfig: OSSConfig = {
   region: process.env.OSS_REGION || 'us-east-1',
   accessKeyId: process.env.OSS_ACCESS_KEY || '',
   accessKeySecret: process.env.OSS_SECRET_KEY || '',
-  bucket: process.env.OSS_BUCKET || 'wedding-media-prod',
+  bucket: process.env.OSS_BUCKET || 'wedding-service',
   endpoint: process.env.OSS_ENDPOINT || 'http://localhost:9000',
   secure: process.env.OSS_USE_SSL === 'true',
   cdnBaseUrl: process.env.OSS_PUBLIC_ENDPOINT || 'http://localhost:9000',

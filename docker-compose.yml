@@ -14,7 +14,7 @@ services:
       context: ./web
       dockerfile: Dockerfile
       target: production
-    image: wedding-web:${ENVIRONMENT:-prod}-latest
+    image: wedding-service-web:${ENVIRONMENT:-prod}-latest
     container_name: wedding-web-${ENVIRONMENT:-prod}
     restart: unless-stopped
     pull_policy: never
@@ -27,7 +27,7 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-prod}
     networks:
-      - wedding-network
+      - wedding-service-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s
@@ -43,7 +43,7 @@ services:
       context: ./server
       dockerfile: Dockerfile
       target: production
-    image: wedding-api:${ENVIRONMENT:-prod}-latest
+    image: wedding-service-api:${ENVIRONMENT:-prod}-latest
     container_name: wedding-api-${ENVIRONMENT:-prod}
     restart: unless-stopped
     pull_policy: never
@@ -63,7 +63,7 @@ services:
       - mysql
       - redis
     networks:
-      - wedding-network
+      - wedding-service-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
@@ -75,8 +75,8 @@ services:
   # MySQL 数据库服务 - 使用统一的DB_前缀配置
   # =============================================================================
   mysql:
-    image: mysql:8.0
-    container_name: wedding-mysql-${ENVIRONMENT:-prod}
+    image: wedding-service-mysql:8.0
+    container_name: wedding-service-${ENVIRONMENT:-prod}
     restart: unless-stopped
     ports:
       - "${MYSQL_PORT:-3306}:3306"
@@ -95,7 +95,7 @@ services:
       - ./deployment/logs/mysql:/var/log/mysql
     command: --default-authentication-plugin=mysql_native_password
     networks:
-      - wedding-network
+      - wedding-service-network
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 30s
@@ -108,7 +108,7 @@ services:
   # =============================================================================
   redis:
     image: redis:7-alpine
-    container_name: wedding-redis-${ENVIRONMENT:-prod}
+    container_name: wedding-service-redis-${ENVIRONMENT:-prod}
     restart: unless-stopped
     ports:
       - "${REDIS_PORT:-6379}:6379"
@@ -122,7 +122,7 @@ services:
       - ./deployment/logs/redis:/var/log/redis
     command: redis-server /etc/redis/redis.conf --requirepass ${REDIS_PASSWORD}
     networks:
-      - wedding-network
+      - wedding-service-network
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 30s
@@ -135,7 +135,7 @@ services:
   # =============================================================================
   minio:
     image: minio/minio:latest
-    container_name: wedding-minio-${ENVIRONMENT:-prod}
+    container_name: wedding-service-minio-${ENVIRONMENT:-prod}
     restart: unless-stopped
     ports:
       - "${MINIO_PORT:-9000}:9000"
@@ -150,7 +150,7 @@ services:
       - ./deployment/logs/minio:/var/log/minio
     command: server /data --console-address ":9001"
     networks:
-      - wedding-network
+      - wedding-service-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
@@ -163,7 +163,7 @@ services:
   # =============================================================================
   nginx:
     image: nginx:alpine
-    container_name: wedding-nginx-${ENVIRONMENT:-prod}
+    container_name: wedding-service-nginx-${ENVIRONMENT:-prod}
     restart: unless-stopped
     ports:
       - "${NGINX_PORT:-80}:80"
@@ -194,7 +194,7 @@ services:
       minio:
         condition: service_healthy
     networks:
-      - wedding-network
+      - wedding-service-network
     healthcheck:
       test: ["CMD", "curl", "--no-verbose", "--tries=1", "--spider", "http://localhost/nginx-health"]
       interval: 15s
@@ -208,14 +208,14 @@ services:
 networks:
   wedding-network:
     driver: bridge
-    name: wedding-${ENVIRONMENT:-prod}-network
+    name: wedding-service-${ENVIRONMENT:-prod}-network
 
 volumes:
   mysql_data:
-    name: wedding-mysql-${ENVIRONMENT:-prod}-data
+    name: wedding-service-mysql-${ENVIRONMENT:-prod}-data
   redis_data:
-    name: wedding-redis-${ENVIRONMENT:-prod}-data
+    name: wedding-service-redis-${ENVIRONMENT:-prod}-data
   minio_data:
-    name: wedding-minio-${ENVIRONMENT:-prod}-data
+    name: wedding-service-minio-${ENVIRONMENT:-prod}-data
   nginx_cache:
-    name: wedding-nginx-${ENVIRONMENT:-prod}-cache
+    name: wedding-service-nginx-${ENVIRONMENT:-prod}-cache

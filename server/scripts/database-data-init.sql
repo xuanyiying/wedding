@@ -1,4 +1,4 @@
--- Active: 1757153926451@@150.158.20.143@3306@wedding_club
+-- Active: 1757153926451@@150.158.20.143@3306@wedding_service
 -- 婚礼服务平台数据初始化脚本
 -- 仅负责插入初始化数据，不创建表结构
 -- 表结构由Sequelize模型自动同步创建
@@ -8,7 +8,7 @@ SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- 使用数据库
-USE wedding_club;
+USE wedding_service;
 
 -- ================================
 -- 插入系统管理员用户

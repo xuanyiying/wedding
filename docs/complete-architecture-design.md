@@ -1531,9 +1531,9 @@ services:
       - NODE_ENV=production
       - DB_HOST=mysql
       - DB_PORT=3306
-      - DB_USERNAME=wedding_user
+      - DB_USERNAME=wedding_service_user
       - DB_PASSWORD=${DB_PASSWORD}
-      - DB_DATABASE=wedding_club
+      - DB_DATABASE=wedding_service
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
@@ -1553,8 +1553,8 @@ services:
       - "3306:3306"
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=wedding_club
-      - MYSQL_USER=wedding_user
+      - MYSQL_DATABASE=wedding_service
+      - MYSQL_USER=wedding_service_user
       - MYSQL_PASSWORD=${DB_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql

@@ -687,17 +687,17 @@ export class DatabaseInitializer {
           for (let k = 0; k < 4; k++) {
             filePromises.push(File.create({
               id: generateId(),
-              filePath: `/wedding-media/images/${generateId()}.png`,
+              filePath: `/wedding-service/images/${generateId()}.png`,
               fileType: FileType.IMAGE,
               originalName: `${generateId()}.png`,
               filename: `${generateId()}.png`,
-              fileUrl: 'http://localhost:9000/wedding-media/images/1639df43-3cc5-410a-89d9-e799a10d07bd.png',
+              fileUrl: 'http://localhost:9000/wedding-service/images/1639df43-3cc5-410a-89d9-e799a10d07bd.png',
               fileSize: 1024,
               mimeType: 'image/png',
               category: FileCategory.WORK,
               ossType: OssType.minio,
               userId: userId,
-              thumbnailUrl: 'http://localhost:9000/wedding-media/images/1639df43-3cc5-410a-89d9-e799a10d07bd.png',
+              thumbnailUrl: 'http://localhost:9000/wedding-service/images/1639df43-3cc5-410a-89d9-e799a10d07bd.png',
             }));
           }
           const files = await Promise.all(filePromises);
@@ -705,17 +705,17 @@ export class DatabaseInitializer {
         } else if (type === WorkType.VIDEO) {
           const file = await File.create({
             id: generateId(),
-            filePath: '/wedding-media/videos/135223ea-3678-4ea9-a9dd-fb11a9d84918.mp4',
+            filePath: '/wedding-service/videos/135223ea-3678-4ea9-a9dd-fb11a9d84918.mp4',
             fileType: FileType.VIDEO,
             originalName: '135223ea-3678-4ea9-a9dd-fb11a9d84918.mp4',
             filename: '135223ea-3678-4ea9-a9dd-fb11a9d84918.mp4',
-            fileUrl: 'http://localhost:9000/wedding-media/videos/135223ea-3678-4ea9-a9dd-fb11a9d84918.mp4',
+            fileUrl: 'http://localhost:9000/wedding-service/videos/135223ea-3678-4ea9-a9dd-fb11a9d84918.mp4',
             fileSize: 1024 * 1024 * 100,
             mimeType: 'video/mp4',
             category: FileCategory.WORK,
             ossType: OssType.minio,
             userId: userId,
-            thumbnailUrl: 'http://localhost:9000/wedding-media/images/1639df43-3cc5-410a-89d9-e799a10d07bd.png',
+            thumbnailUrl: 'http://localhost:9000/wedding-service/images/1639df43-3cc5-410a-89d9-e799a10d07bd.png',
           });
           fileIds.push(file.id);
         }

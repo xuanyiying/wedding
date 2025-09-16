@@ -306,7 +306,7 @@ init_database() {
     
     # 创建临时脚本，替换数据库名称
     local temp_script="/tmp/database-init-${environment}.sql"
-    sed "s/USE wedding_club;/USE ${DB_NAME};/g" "$init_script_path" > "$temp_script"
+    sed "s/USE wedding_service;/USE ${DB_NAME};/g" "$init_script_path" > "$temp_script"
     
     if ! docker cp "$temp_script" ${DB_HOST}-mysql-${environment}:/tmp/init.sql; then
         log_error "复制初始化脚本到容器失败"

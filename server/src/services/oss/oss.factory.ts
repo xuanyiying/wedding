@@ -65,7 +65,7 @@ export class OssFactory {
           region: process.env.OSS_REGION || 'us-east-1',
           accessKeyId: process.env.OSS_ACCESS_KEY || 'ossadmin',
           secretAccessKey: process.env.OSS_SECRET_KEY || 'osspassword',
-          bucket: process.env.OSS_BUCKET || 'wedding-media-prod'
+          bucket: process.env.OSS_BUCKET || 'wedding-service'
         } as MinIOConfig
       };
     } else if (ossType === 'aliyun') {
@@ -75,7 +75,7 @@ export class OssFactory {
           region: process.env.OSS_REGION || 'oss-cn-hangzhou',
           accessKeyId: process.env.OSS_ACCESS_KEY || '',
           accessKeySecret: process.env.OSS_SECRET_KEY || '',
-          bucket: process.env.OSS_BUCKET || 'wedding-media-prod',
+          bucket: process.env.OSS_BUCKET || 'wedding-service',
           endpoint: process.env.OSS_ENDPOINT,
           secure: process.env.OSS_USE_SSL === 'true'
         } as OSSConfig

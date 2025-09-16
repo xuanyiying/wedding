@@ -248,7 +248,7 @@ groups:
     rules:
       # High user registration rate (potential spam)
       - alert: HighUserRegistrationRate
-        expr: rate(wedding_user_registrations_total[5m]) > 10
+        expr: rate(wedding_service_user_registrations_total[5m]) > 10
         for: 5m
         labels:
           severity: warning
@@ -259,7 +259,7 @@ groups:
 
       # Low user activity
       - alert: LowUserActivity
-        expr: rate(wedding_user_logins_total[1h]) < 0.1
+        expr: rate(wedding_service_user_logins_total[1h]) < 0.1
         for: 30m
         labels:
           severity: info
@@ -270,7 +270,7 @@ groups:
 
       # High booking failure rate
       - alert: HighBookingFailureRate
-        expr: rate(wedding_bookings_total{status="failed"}[5m]) / rate(wedding_bookings_total[5m]) > 0.1
+        expr: rate(wedding_service_bookings_total{status="failed"}[5m]) / rate(wedding_service_bookings_total[5m]) > 0.1
         for: 5m
         labels:
           severity: warning
@@ -281,7 +281,7 @@ groups:
 
       # Payment processing issues
       - alert: PaymentProcessingIssues
-        expr: rate(wedding_payments_total{status="failed"}[5m]) > 0.05
+        expr: rate(wedding_service_payments_total{status="failed"}[5m]) > 0.05
         for: 5m
         labels:
           severity: critical

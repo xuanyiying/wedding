@@ -89,7 +89,7 @@ cd /Users/yiying/dev-app/wedding-client/deployment
 
 1. 检查容器日志：
    ```bash
-   docker logs wedding_api_prod
+   docker logs wedding_service_api_prod
    ```
 
 2. 测试邮件发送功能（如果应用提供相关接口）

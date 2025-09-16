@@ -450,7 +450,7 @@ check_database() {
             -h "$DB_HOST" \
             -p "$DB_PORT" \
             -U "${DB_USER:-postgres}" \
-            -d "${DB_NAME:-wedding_club}" \
+            -d "${DB_NAME:-wedding_service}" \
             -c "SELECT 1" >/dev/null 2>&1; then
             
             local end_time=$(date +%s%3N)
@@ -1134,8 +1134,8 @@ output_results() {
             ;;
         "prometheus")
             # Prometheus metrics output
-            echo "# HELP wedding_club_health_status Health status of Wedding Club services (0=healthy, 1=warning, 2=critical)"
-            echo "# TYPE wedding_club_health_status gauge"
+            echo "# HELP wedding_service_health_status Health status of Wedding Club services (0=healthy, 1=warning, 2=critical)"
+            echo "# TYPE wedding_service_health_status gauge"
             
             for service in "${!HEALTH_RESULTS[@]}"; do
                 local status_value=0
@@ -1144,14 +1144,14 @@ output_results() {
                     "critical") status_value=2 ;;
                 esac
                 
-                echo "wedding_club_health_status{service=\"$service\",environment=\"$ENVIRONMENT\"} $status_value"
+                echo "wedding_service_health_status{service=\"$service\",environment=\"$ENVIRONMENT\"} $status_value"
             done
             
             # Output metrics
             for metric in "${!HEALTH_METRICS[@]}"; do
-                echo "# HELP wedding_club_$metric $metric metric"
-                echo "# TYPE wedding_club_$metric gauge"
-                echo "wedding_club_$metric{environment=\"$ENVIRONMENT\"} ${HEALTH_METRICS[$metric]}"
+                echo "# HELP wedding_service_$metric $metric metric"
+                echo "# TYPE wedding_service_$metric gauge"
+                echo "wedding_service_$metric{environment=\"$ENVIRONMENT\"} ${HEALTH_METRICS[$metric]}"
             done
             ;;
         *)

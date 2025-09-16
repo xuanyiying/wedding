@@ -2,7 +2,11 @@
   "dashboard": {
     "id": null,
     "title": "Wedding Club - Production Monitoring",
-    "tags": ["wedding", "production", "monitoring"],
+    "tags": [
+      "wedding",
+      "production",
+      "monitoring"
+    ],
     "style": "dark",
     "timezone": "browser",
     "refresh": "30s",
@@ -13,7 +17,18 @@
       "to": "now"
     },
     "timepicker": {
-      "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ]
     },
     "templating": {
       "list": [
@@ -32,14 +47,24 @@
         "id": 1,
         "title": "System Overview",
         "type": "row",
-        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0},
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
         "collapsed": false
       },
       {
         "id": 2,
         "title": "Service Status",
         "type": "stat",
-        "gridPos": {"h": 8, "w": 6, "x": 0, "y": 1},
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 0,
+          "y": 1
+        },
         "targets": [
           {
             "expr": "up{job=\"wedding-api\"}",
@@ -60,16 +85,38 @@
         ],
         "fieldConfig": {
           "defaults": {
-            "color": {"mode": "thresholds"},
+            "color": {
+              "mode": "thresholds"
+            },
             "thresholds": {
               "steps": [
-                {"color": "red", "value": 0},
-                {"color": "green", "value": 1}
+                {
+                  "color": "red",
+                  "value": 0
+                },
+                {
+                  "color": "green",
+                  "value": 1
+                }
               ]
             },
             "mappings": [
-              {"options": {"0": {"text": "DOWN"}}, "type": "value"},
-              {"options": {"1": {"text": "UP"}}, "type": "value"}
+              {
+                "options": {
+                  "0": {
+                    "text": "DOWN"
+                  }
+                },
+                "type": "value"
+              },
+              {
+                "options": {
+                  "1": {
+                    "text": "UP"
+                  }
+                },
+                "type": "value"
+              }
             ]
           }
         }
@@ -78,7 +125,12 @@
         "id": 3,
         "title": "CPU Usage",
         "type": "timeseries",
-        "gridPos": {"h": 8, "w": 6, "x": 6, "y": 1},
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 6,
+          "y": 1
+        },
         "targets": [
           {
             "expr": "100 - (avg by(instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
@@ -92,9 +144,18 @@
             "max": 100,
             "thresholds": {
               "steps": [
-                {"color": "green", "value": 0},
-                {"color": "yellow", "value": 70},
-                {"color": "red", "value": 90}
+                {
+                  "color": "green",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 70
+                },
+                {
+                  "color": "red",
+                  "value": 90
+                }
               ]
             }
           }
@@ -104,7 +165,12 @@
         "id": 4,
         "title": "Memory Usage",
         "type": "timeseries",
-        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 1},
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 12,
+          "y": 1
+        },
         "targets": [
           {
             "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
@@ -118,9 +184,18 @@
             "max": 100,
             "thresholds": {
               "steps": [
-                {"color": "green", "value": 0},
-                {"color": "yellow", "value": 80},
-                {"color": "red", "value": 95}
+                {
+                  "color": "green",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 80
+                },
+                {
+                  "color": "red",
+                  "value": 95
+                }
               ]
             }
           }
@@ -130,7 +205,12 @@
         "id": 5,
         "title": "Disk Usage",
         "type": "timeseries",
-        "gridPos": {"h": 8, "w": 6, "x": 18, "y": 1},
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 18,
+          "y": 1
+        },
         "targets": [
           {
             "expr": "(1 - (node_filesystem_avail_bytes{fstype!=\"tmpfs\"} / node_filesystem_size_bytes{fstype!=\"tmpfs\"})) * 100",
@@ -144,9 +224,18 @@
             "max": 100,
             "thresholds": {
               "steps": [
-                {"color": "green", "value": 0},
-                {"color": "yellow", "value": 80},
-                {"color": "red", "value": 90}
+                {
+                  "color": "green",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 80
+                },
+                {
+                  "color": "red",
+                  "value": 90
+                }
               ]
             }
           }
@@ -156,14 +245,24 @@
         "id": 6,
         "title": "Application Metrics",
         "type": "row",
-        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 9},
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 9
+        },
         "collapsed": false
       },
       {
         "id": 7,
         "title": "API Request Rate",
         "type": "timeseries",
-        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 10},
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 10
+        },
         "targets": [
           {
             "expr": "rate(http_requests_total{job=\"wedding-api\"}[5m])",
@@ -180,7 +279,12 @@
         "id": 8,
         "title": "API Response Time",
         "type": "timeseries",
-        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 10},
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 8,
+          "y": 10
+        },
         "targets": [
           {
             "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket{job=\"wedding-api\"}[5m]))",
@@ -205,7 +309,12 @@
         "id": 9,
         "title": "API Error Rate",
         "type": "timeseries",
-        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 10},
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 16,
+          "y": 10
+        },
         "targets": [
           {
             "expr": "rate(http_requests_total{job=\"wedding-api\",status=~\"4..\"}[5m])",
@@ -226,14 +335,24 @@
         "id": 10,
         "title": "Database Metrics",
         "type": "row",
-        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 18},
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 18
+        },
         "collapsed": false
       },
       {
         "id": 11,
         "title": "MySQL Connections",
         "type": "timeseries",
-        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 19},
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 19
+        },
         "targets": [
           {
             "expr": "mysql_global_status_threads_connected",
@@ -254,7 +373,12 @@
         "id": 12,
         "title": "MySQL Query Rate",
         "type": "timeseries",
-        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 19},
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 8,
+          "y": 19
+        },
         "targets": [
           {
             "expr": "rate(mysql_global_status_queries[5m])",
@@ -275,7 +399,12 @@
         "id": 13,
         "title": "Redis Memory Usage",
         "type": "timeseries",
-        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 19},
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 16,
+          "y": 19
+        },
         "targets": [
           {
             "expr": "redis_memory_used_bytes",
@@ -296,17 +425,27 @@
         "id": 14,
         "title": "Business Metrics",
         "type": "row",
-        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 27},
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 27
+        },
         "collapsed": false
       },
       {
         "id": 15,
         "title": "User Registrations",
         "type": "timeseries",
-        "gridPos": {"h": 8, "w": 6, "x": 0, "y": 28},
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 0,
+          "y": 28
+        },
         "targets": [
           {
-            "expr": "rate(wedding_user_registrations_total[1h])",
+            "expr": "rate(wedding_service_user_registrations_total[1h])",
             "legendFormat": "Registrations/hour"
           }
         ],
@@ -320,10 +459,15 @@
         "id": 16,
         "title": "User Logins",
         "type": "timeseries",
-        "gridPos": {"h": 8, "w": 6, "x": 6, "y": 28},
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 6,
+          "y": 28
+        },
         "targets": [
           {
-            "expr": "rate(wedding_user_logins_total[1h])",
+            "expr": "rate(wedding_service_user_logins_total[1h])",
             "legendFormat": "Logins/hour"
           }
         ],
@@ -337,14 +481,19 @@
         "id": 17,
         "title": "Bookings",
         "type": "timeseries",
-        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 28},
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 12,
+          "y": 28
+        },
         "targets": [
           {
-            "expr": "rate(wedding_bookings_total{status=\"success\"}[1h])",
+            "expr": "rate(wedding_service_bookings_total{status=\"success\"}[1h])",
             "legendFormat": "Successful Bookings/hour"
           },
           {
-            "expr": "rate(wedding_bookings_total{status=\"failed\"}[1h])",
+            "expr": "rate(wedding_service_bookings_total{status=\"failed\"}[1h])",
             "legendFormat": "Failed Bookings/hour"
           }
         ],
@@ -358,14 +507,19 @@
         "id": 18,
         "title": "Payments",
         "type": "timeseries",
-        "gridPos": {"h": 8, "w": 6, "x": 18, "y": 28},
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 18,
+          "y": 28
+        },
         "targets": [
           {
-            "expr": "rate(wedding_payments_total{status=\"success\"}[1h])",
+            "expr": "rate(wedding_service_payments_total{status=\"success\"}[1h])",
             "legendFormat": "Successful Payments/hour"
           },
           {
-            "expr": "rate(wedding_payments_total{status=\"failed\"}[1h])",
+            "expr": "rate(wedding_service_payments_total{status=\"failed\"}[1h])",
             "legendFormat": "Failed Payments/hour"
           }
         ],
@@ -379,14 +533,24 @@
         "id": 19,
         "title": "Network & External",
         "type": "row",
-        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 36},
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 36
+        },
         "collapsed": false
       },
       {
         "id": 20,
         "title": "Website Response Time",
         "type": "timeseries",
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 37},
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 37
+        },
         "targets": [
           {
             "expr": "probe_duration_seconds{job=\"blackbox-http\"}",
@@ -403,7 +567,12 @@
         "id": 21,
         "title": "SSL Certificate Expiry",
         "type": "stat",
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 37},
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 37
+        },
         "targets": [
           {
             "expr": "(probe_ssl_earliest_cert_expiry - time()) / 86400",
@@ -415,9 +584,18 @@
             "unit": "d",
             "thresholds": {
               "steps": [
-                {"color": "red", "value": 0},
-                {"color": "yellow", "value": 7},
-                {"color": "green", "value": 30}
+                {
+                  "color": "red",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 7
+                },
+                {
+                  "color": "green",
+                  "value": 30
+                }
               ]
             }
           }

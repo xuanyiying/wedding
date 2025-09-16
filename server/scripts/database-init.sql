@@ -7,7 +7,7 @@ SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- 使用数据库
-USE wedding_club;
+USE wedding_service;
 
 -- 警告：此脚本会删除现有表，请谨慎使用
 -- 建议在生产环境中使用Sequelize的sync({alter: true})来同步表结构

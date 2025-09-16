@@ -61,12 +61,12 @@
 
 | 服务 | 容器名 | 内部端口 | 外部端口 | 网络别名 |
 |------|--------|----------|----------|----------|
-| MySQL | wedding_mysql | 3306 | 3306 | mysql |
-| Redis | wedding_redis | 6379 | 6379 | redis |
-| MinIO | wedding_minio | 9000/9001 | 9000/9001 | minio |
-| Server | wedding_server | 3000 | 3000 | server |
-| Web | wedding_web | 5173 | 5173 | web |
-| Caddy | wedding_caddy | 80/443 | 80/443 | caddy |
+| MySQL | wedding_service_mysql | 3306 | 3306 | mysql |
+| Redis | wedding_service_redis | 6379 | 6379 | redis |
+| MinIO | wedding_service_minio | 9000/9001 | 9000/9001 | minio |
+| Server | wedding_service_server | 3000 | 3000 | server |
+| Web | wedding_service_web | 5173 | 5173 | web |
+| Caddy | wedding_service_caddy | 80/443 | 80/443 | caddy |
 
 ### 2. 服务间通信
 
