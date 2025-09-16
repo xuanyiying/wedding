@@ -25,7 +25,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # 默认参数
 ENVIRONMENT="${1:-prod}"
-DB_HOST="wedding-service-mysql-${ENVIRONMENT}"
+DB_HOST="wedding-service-mysql-"${ENVIRONMENT}
 COMPOSE_FILE="docker-compose.yml"
 
 # 颜色输出
@@ -159,7 +159,7 @@ check_env_file() {
 # 设置环境变量
 setup_environment() {
     export ENVIRONMENT="$ENVIRONMENT"
-    export COMPOSE_DB_HOST="${DB_HOST}-${ENVIRONMENT}"
+    export COMPOSE_DB_HOST="${DB_HOST}"
     
     # 加载环境变量文件
     local env_file="./deployment/environments/.env.$ENVIRONMENT"
