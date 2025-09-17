@@ -26,6 +26,10 @@ chmod -R 755 /var/cache/nginx 2>/dev/null || true
 
 log_success "nginx缓存目录创建完成"
 
+# 使用envsubst替换环境变量并生成nginx配置
+log_info "替换环境变量并生成nginx配置..."
+envsubst '${API_SERVICE_NAME},${API_SERVICE_PORT},${WEB_SERVICE_NAME},${WEB_SERVICE_PORT},${MINIO_SERVICE_NAME},${MINIO_SERVICE_PORT},${SERVER_HOST}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
+
 # 测试nginx配置
 log_info "执行nginx配置语法检查"
 if nginx -t; then
