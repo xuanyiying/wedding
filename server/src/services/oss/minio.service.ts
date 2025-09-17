@@ -6,6 +6,7 @@ import {
   DeleteObjectCommand,
   ListObjectsV2Command,
   HeadObjectCommand,
+  HeadBucketCommand,
   PutBucketPolicyCommand
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -49,31 +50,61 @@ export class MinIOService implements OssService {
    */
   async initializeBucket(): Promise<void> {
     try {
-      const command = new CreateBucketCommand({
+      // 检查存储桶是否存在
+      const headCommand = new HeadBucketCommand({
         Bucket: this.bucket
       });
-      logger.info('Initializing OSS bucket...', this.config);
-      await this.s3Client.send(command);
-      console.log(`OSS Bucket ${this.bucket} created successfully`);
+      
+      try {
+        await this.s3Client.send(headCommand);
+        logger.info(`OSS Bucket ${this.bucket} already exists`);
+      } catch (headError: any) {
+        if (headError.name === 'NotFound' || headError.$metadata?.httpStatusCode === 404) {
+          // 存储桶不存在，创建它
+          const createCommand = new CreateBucketCommand({
+            Bucket: this.bucket
+          });
+          
+          logger.info('Creating OSS bucket...', { bucket: this.bucket, endpoint: this.config.endpoint });
+          await this.s3Client.send(createCommand);
+          logger.info(`OSS Bucket ${this.bucket} created successfully`);
+        } else {
+          throw headError;
+        }
+      }
     } catch (error: any) {
       if (error.name === 'BucketAlreadyOwnedByYou' || error.name === 'BucketAlreadyExists') {
-        console.log(`OSS Bucket ${this.bucket} already exists`);
+        logger.info(`OSS Bucket ${this.bucket} already exists`);
       } else {
-        console.error('Error creating OSS bucket:', error);
+        logger.error('Error creating OSS bucket:', error);
         throw error;
       }
     }
 
-    // 设置bucket策略，允许公共读取和上传
+    // 设置存储桶策略为公共读写
+    await this.setBucketPublicPolicy();
+  }
+
+  /**
+   * 设置存储桶为公共读写策略
+   */
+  private async setBucketPublicPolicy(): Promise<void> {
     try {
+      // 为 MinIO 设置公共读写策略
       const bucketPolicy = {
         Version: '2012-10-17',
         Statement: [
           {
             Effect: 'Allow',
             Principal: '*',
-            Action: ['s3:GetObject', 's3:PutObject', 's3:DeleteObject', 's3:ListBucket'],
-            Resource: [`arn:aws:s3:::${this.bucket}/*`, `arn:aws:s3:::${this.bucket}`]
+            Action: ['s3:GetObject'],
+            Resource: [`arn:aws:s3:::${this.bucket}/*`]
+          },
+          {
+            Effect: 'Allow',
+            Principal: '*',
+            Action: ['s3:ListBucket'],
+            Resource: [`arn:aws:s3:::${this.bucket}`]
           }
         ]
       };
@@ -84,10 +115,54 @@ export class MinIOService implements OssService {
       });
 
       await this.s3Client.send(policyCommand);
-      console.log(`OSS Bucket ${this.bucket} policy set successfully`);
+      logger.info(`OSS Bucket ${this.bucket} public policy set successfully`);
+    } catch (error: any) {
+      logger.warn('Error setting OSS bucket public policy:', error);
+      
+      // 如果策略设置失败，尝试使用 MinIO 特定的方法
+      try {
+        await this.setMinIOPublicPolicy();
+      } catch (minioError) {
+        logger.warn('MinIO public policy fallback also failed:', minioError);
+        // 不抛出错误，因为策略设置失败不应该阻止服务启动
+      }
+    }
+  }
+
+  /**
+   * MinIO 特定的公共策略设置方法
+   */
+  private async setMinIOPublicPolicy(): Promise<void> {
+    try {
+      // 使用 MinIO 特定的公共读取策略
+      const publicReadPolicy = {
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Effect: 'Allow',
+            Principal: { AWS: '*' },
+            Action: ['s3:GetBucketLocation', 's3:ListBucket'],
+            Resource: [`arn:aws:s3:::${this.bucket}`]
+          },
+          {
+            Effect: 'Allow',
+            Principal: { AWS: '*' },
+            Action: ['s3:GetObject'],
+            Resource: [`arn:aws:s3:::${this.bucket}/*`]
+          }
+        ]
+      };
+
+      const policyCommand = new PutBucketPolicyCommand({
+        Bucket: this.bucket,
+        Policy: JSON.stringify(publicReadPolicy)
+      });
+
+      await this.s3Client.send(policyCommand);
+      logger.info(`MinIO Bucket ${this.bucket} public read policy set successfully`);
     } catch (error) {
-      console.error('Error setting OSS bucket policy:', error);
-      // 不抛出错误，因为策略设置失败不应该阻止服务启动
+      logger.error('Failed to set MinIO public policy:', error);
+      throw error;
     }
   }
 
