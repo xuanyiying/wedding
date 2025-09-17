@@ -236,7 +236,7 @@ build_images() {
     log_info "开始构建镜像..."
     
     # Docker Compose v2 使用 build.args 而不是 --build-arg 参数
-    ENVIRONMENT=$ENVIRONMENT $DOCKER_COMPOSE build
+    ENVIRONMENT=$ENVIRONMENT $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" build
     
     log_success "镜像构建完成"
 }
@@ -471,7 +471,7 @@ deploy_services() {
         up_args="$up_args $FORCE_FLAG"
     fi
     
-    $DOCKER_COMPOSE up $up_args
+    $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" up $up_args
     
     log_success "服务部署完成"
     
@@ -520,14 +520,14 @@ check_services_health() {
 # 停止服务
 stop_services() {
     log_info "停止服务..."
-    $DOCKER_COMPOSE down
+    $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" down
     log_success "服务已停止"
 }
 
 # 重启服务
 restart_services() {
     log_info "重启服务..."
-    $DOCKER_COMPOSE restart
+    $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" restart
     log_success "服务已重启"
     
     # 检查服务状态
@@ -541,17 +541,17 @@ show_logs() {
     
     if [[ -n "$service" ]]; then
         log_info "查看 $service 服务日志..."
-        $DOCKER_COMPOSE logs -f --tail=100 "$service"
+        $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" logs -f --tail=100 "$service"
     else
         log_info "查看所有服务日志..."
-        $DOCKER_COMPOSE logs -f --tail=50
+        $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" logs -f --tail=50
     fi
 }
 
 # 查看状态
 show_status() {
     log_info "服务状态:"
-    $DOCKER_COMPOSE ps
+    $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" ps
     
     echo
     log_info "系统资源使用:"
@@ -568,7 +568,7 @@ clean_resources() {
         log_info "清理资源..."
         
         # 停止并删除容器
-        $DOCKER_COMPOSE down -v --remove-orphans
+        $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" down -v --remove-orphans
         
         # 删除镜像
         docker images | grep "$DB_HOST" | awk '{print $3}' | xargs -r docker rmi -f
