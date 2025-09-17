@@ -408,7 +408,7 @@ export const initTeam = (sequelizeInstance: Sequelize): void => {
       },
       teamId: {
         type: DataTypes.UUID,
-        allowNull: false,
+        allowNull: true,
         field: 'team_id',
         references: {
           model: 'teams',
@@ -418,7 +418,7 @@ export const initTeam = (sequelizeInstance: Sequelize): void => {
       },
       userId: {
         type: DataTypes.UUID,
-        allowNull: false,
+        allowNull: true,
         field: 'user_id',
         references: {
           model: 'users',
@@ -466,7 +466,7 @@ export const initTeam = (sequelizeInstance: Sequelize): void => {
       },
       inviterId: {
         type: DataTypes.UUID,
-        allowNull: false,
+        allowNull: true,
         field: 'inviter_id',
         references: {
           model: 'users',
@@ -579,7 +579,7 @@ export const initTeam = (sequelizeInstance: Sequelize): void => {
       },
       ownerId: {
         type: DataTypes.UUID,
-        allowNull: false,
+        allowNull: true,
         field: 'owner_id',
         references: {
           model: 'users',
