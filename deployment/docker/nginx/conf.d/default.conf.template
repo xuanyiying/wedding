@@ -1,7 +1,7 @@
 # Wedding Club - 生产环境 Nginx 配置模板
 # 高性能、安全、负载均衡优化版本
 
-# 上游服务器配置
+# 上游服务器配置 - 使用动态解析避免启动时DNS问题
 upstream api_backend {
     server ${API_SERVICE_NAME}:${API_SERVICE_PORT} max_fails=3 fail_timeout=30s;
     keepalive 32;
@@ -23,6 +23,9 @@ upstream minio_backend {
     keepalive_timeout 60s;
 }
 
+# 动态解析器配置 - 用于运行时DNS解析
+resolver 127.0.0.11 valid=10s ipv6=off;
+
 # HTTP主服务器
 server {
     listen 80;
@@ -33,6 +36,10 @@ server {
     client_body_timeout 300s;
     send_timeout 300s;
     
+    # 大文件上传全局配置
+    client_max_body_size 500M;
+    client_body_buffer_size 32M;
+    
     # 安全头配置
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-XSS-Protection "1; mode=block" always;
@@ -40,10 +47,11 @@ server {
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http://${SERVER_HOST}:${MINIO_SERVICE_PORT}; font-src 'self' data:; connect-src 'self' https: http://${SERVER_HOST}:${MINIO_SERVICE_PORT} blob:; media-src 'self' blob: https: http://${SERVER_HOST}:${MINIO_SERVICE_PORT}; object-src 'none'; child-src 'self' blob:; frame-ancestors 'self'; base-uri 'self'; form-action 'self' http://${SERVER_HOST}:${MINIO_SERVICE_PORT};" always;
 
-    # 健康检查端点 - 直接代理到API服务
+    # 健康检查端点 - 使用动态解析
     location /health {
         access_log off;
-        proxy_pass http://api_backend;
+        set $api_upstream ${API_SERVICE_NAME}:${API_SERVICE_PORT};
+        proxy_pass http://$api_upstream;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -75,8 +83,13 @@ server {
         limit_req zone=api_limit burst=50 nodelay;
         limit_conn conn_limit 20;
 
-        # 直接传递路径，不重写
+        # 大文件上传优化配置
         client_max_body_size 500M;
+        client_body_buffer_size 32M;
+        client_body_timeout 300s;
+
+        # 禁用请求缓冲以支持大文件流式传输
+        proxy_request_buffering off;
 
         # 代理配置
         proxy_pass http://api_backend;
@@ -141,7 +154,9 @@ server {
         limit_req zone=login_limit burst=3 nodelay;
         limit_conn conn_limit 5;
 
-        # 直接传递路径，不重写
+        # 基本配置
+        client_max_body_size 10M;
+        client_body_buffer_size 1M;
 
         proxy_pass http://api_backend;
         proxy_http_version 1.1;
@@ -169,6 +184,61 @@ server {
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
+    }
+
+    # 文件上传专用配置 - 优化大文件上传性能
+    location /api/v1/files/upload {
+        # 处理CORS预检请求
+        if ($request_method = 'OPTIONS') {
+            add_header Access-Control-Allow-Origin '*' always;
+            add_header Access-Control-Allow-Methods 'GET, POST, PUT, DELETE, OPTIONS, PATCH' always;
+            add_header Access-Control-Allow-Headers 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,X-Request-ID,X-External-Host,X-External-Proto' always;
+            add_header Access-Control-Max-Age 86400 always;
+            add_header Content-Length 0 always;
+            add_header Content-Type 'text/plain; charset=utf-8' always;
+            return 204;
+        }
+
+        # 限流配置 - 文件上传相对宽松
+        limit_req zone=api_limit burst=10 nodelay;
+        limit_conn conn_limit 5;
+
+        # 大文件上传专用配置
+        client_max_body_size 500M;
+        client_body_buffer_size 64M;
+        client_body_timeout 900s;
+
+        # 完全禁用请求缓冲，实现流式上传
+        proxy_request_buffering off;
+        proxy_buffering off;
+
+        # 代理配置
+        proxy_pass http://api_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Request-ID $request_id;
+        
+        # 添加自定义头，用于API服务识别外部访问地址
+        proxy_set_header X-External-Host $host;
+        proxy_set_header X-External-Proto $scheme;
+
+        # CORS头设置
+        add_header Access-Control-Allow-Origin '*' always;
+        add_header Access-Control-Allow-Methods 'GET, POST, PUT, DELETE, OPTIONS, PATCH' always;
+        add_header Access-Control-Allow-Headers 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,X-Request-ID' always;
+        add_header Access-Control-Expose-Headers 'Content-Length,Content-Range,X-Request-ID' always;
+
+        # 禁用缓存
+        proxy_no_cache 1;
+        proxy_cache_bypass 1;
+
+        # 超时配置 - 大文件上传需要更长时间
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 900s;
+        proxy_read_timeout 900s;
     }
 
     # Swagger UI 静态资源 - 解决404问题
@@ -228,9 +298,9 @@ server {
         proxy_set_header Host $http_host;
         proxy_set_header Connection "";
 
-        # 大文件上传支持
-        client_max_body_size 500M;  # 或 100M (根据环境调整)
-        client_body_buffer_size 16M;
+        # 大文件上传支持 - 优化配置
+        client_max_body_size 500M;
+        client_body_buffer_size 32M;
         client_body_timeout 900s;
 
         # 超时配置
@@ -337,10 +407,11 @@ server {
         proxy_buffering off;
     }
 
-    # SPA路由支持
+    # SPA路由支持 - 使用动态解析
     location / {
-        # 将请求代理到前端Web服务容器
-        proxy_pass http://web_backend;
+        # 使用变量实现动态解析，避免启动时DNS问题
+        set $web_upstream ${WEB_SERVICE_NAME}:${WEB_SERVICE_PORT};
+        proxy_pass http://$web_upstream;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -375,12 +446,13 @@ server {
         deny all;
     }
 
-    # 错误页面 - 代理到前端应用处理
+    # 错误页面 - 使用动态解析
     error_page 404 @fallback;
     error_page 500 502 503 504 @fallback;
     
     location @fallback {
-        proxy_pass http://web_backend;
+        set $web_upstream ${WEB_SERVICE_NAME}:${WEB_SERVICE_PORT};
+        proxy_pass http://$web_upstream;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
