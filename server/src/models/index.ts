@@ -47,8 +47,15 @@ export const initModels = (sequelizeInstance: Sequelize): void => {
   initViewStat(sequelizeInstance);
   initMediaProfile(sequelizeInstance);
   initIssue(sequelizeInstance);
+  
   // Initialize associations
   MediaProfile.associate(models);
+
+  // Issue associations
+  User.hasMany(Issue, { foreignKey: 'reporter_id', as: 'reportedIssues' });
+  User.hasMany(Issue, { foreignKey: 'assignee_id', as: 'assignedIssues' });
+  Issue.belongsTo(User, { foreignKey: 'reporter_id', as: 'reporter' });
+  Issue.belongsTo(User, { foreignKey: 'assignee_id', as: 'assignee' });
 
   // User and Team associations (Team owner)
   User.hasMany(Team, { foreignKey: 'owner_id', as: 'ownedTeams' });
