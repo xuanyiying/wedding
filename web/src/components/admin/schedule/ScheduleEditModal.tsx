@@ -211,10 +211,10 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
             </Col>
           </Row>
 
-          {/* 主持人字段 - 管理员可选择，非管理员自动设置为当前用户 */}
+          {/* 主持人和档期状态放在一行 */}
           {isAdmin ? (
             <Row gutter={16}>
-              <Col span={18}>
+              <Col span={12}>
                 <Form.Item
                   name="hostId"
                   label="主持人"
@@ -237,35 +237,50 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                   </Select>
                 </Form.Item>
               </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="status"
+                  label="档期状态"
+                  rules={[{ required: true, message: '请选择档期状态' }]}
+                >
+                  <Select placeholder="请选择档期状态">
+                    <Option value={ScheduleStatus.AVAILABLE}>可预约</Option>
+                    <Option value={ScheduleStatus.BOOKED}>已预订</Option>
+                    <Option value={ScheduleStatus.CONFIRMED}>已确认</Option>
+                    <Option value={ScheduleStatus.COMPLETED}>已完成</Option>
+                    <Option value={ScheduleStatus.CANCELLED}>已取消</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
             </Row>
           ) : (
-            // 非管理员用户的隐藏hostId字段
-            <Form.Item
-              name="hostId"
-              label="主持人"
-              rules={[{ required: true, message: '主持人ID不能为空' }]}
-            >
-              <Input value={user?.id} name='hostId' />
-            </Form.Item>
-          )}
-
-          <Row gutter={16}>
-            <Col span={12}>
+            <Row gutter={16}>
+              {/* 非管理员用户的隐藏hostId字段 */}
               <Form.Item
-                name="status"
-                label="档期状态"
-                rules={[{ required: true, message: '请选择档期状态' }]}
+                name="hostId"
+                label="主持人"
+                rules={[{ required: true, message: '主持人ID不能为空' }]}
+                style={{ display: 'none' }}
               >
-                <Select placeholder="请选择档期状态">
-                  <Option value={ScheduleStatus.AVAILABLE}>可预约</Option>
-                  <Option value={ScheduleStatus.BOOKED}>已预订</Option>
-                  <Option value={ScheduleStatus.CONFIRMED}>已确认</Option>
-                  <Option value={ScheduleStatus.COMPLETED}>已完成</Option>
-                  <Option value={ScheduleStatus.CANCELLED}>已取消</Option>
-                </Select>
+                <Input value={user?.id} name='hostId' />
               </Form.Item>
-            </Col>
-          </Row>
+              <Col span={12}>
+                <Form.Item
+                  name="status"
+                  label="档期状态"
+                  rules={[{ required: true, message: '请选择档期状态' }]}
+                >
+                  <Select placeholder="请选择档期状态">
+                    <Option value={ScheduleStatus.AVAILABLE}>可预约</Option>
+                    <Option value={ScheduleStatus.BOOKED}>已预订</Option>
+                    <Option value={ScheduleStatus.CONFIRMED}>已确认</Option>
+                    <Option value={ScheduleStatus.COMPLETED}>已完成</Option>
+                    <Option value={ScheduleStatus.CANCELLED}>已取消</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+          )}
 
 
           <Row gutter={16}>
@@ -285,10 +300,13 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                 <Input placeholder="请输入婚礼酒店" prefix={<EnvironmentOutlined />} />
               </Form.Item>
             </Col>
-            <Col span={12}>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={24}>
               <Form.Item
                 name="venueAddress"
-                label="婚礼详细地址"
+                label="详细地址"
               >
                 <Input placeholder="请输入婚礼详细地址" />
               </Form.Item>

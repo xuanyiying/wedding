@@ -565,20 +565,6 @@ const ProfilePage: React.FC = () => {
                 <div className="title">
                   {currentUser?.bio || '暂无个人简介'}
                 </div>
-                <div className="stats">
-                  <div className="stat-item">
-                    <span className="number">{currentUser?.experienceYears || 0}</span>
-                    <span className="label">从业年限</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="number">{mediaFiles.length}</span>
-                    <span className="label">作品数量</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="number">{currentUser?.specialties?.length || 0}</span>
-                    <span className="label">专业技能</span>
-                  </div>
-                </div>
               </div>
 
               <div className="profile-content">
@@ -612,7 +598,7 @@ const ProfilePage: React.FC = () => {
                 <div className="section">
                   <div className="section-title">
                     <PictureOutlined />
-                    作品展示
+                    媒体资料
                     <Space style={{ marginLeft: 'auto' }}>
                       <Switch
                         checkedChildren={<GlobalOutlined />}

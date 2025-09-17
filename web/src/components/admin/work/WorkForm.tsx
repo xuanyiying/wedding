@@ -443,7 +443,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
                   <div className="mb-4">
                     <MediaUploader
                       config={{
-                        accept: ['video/*'],
+                        accept: ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/flv', 'video/webm', 'video/mkv', 'video/*'],
                         multiple: false,
                         maxCount: 1,
                         category: 'work',
