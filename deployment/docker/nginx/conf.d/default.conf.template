@@ -131,11 +131,13 @@ server {
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
 
-        # 缓冲配置
+        # 缓冲配置 - 优化大文件响应
         proxy_buffering on;
-        proxy_buffer_size 8k;
-        proxy_buffers 16 8k;
-        proxy_busy_buffers_size 16k;
+        proxy_buffer_size 16k;
+        proxy_buffers 32 16k;
+        proxy_busy_buffers_size 32k;
+        proxy_max_temp_file_size 1024m;
+        proxy_temp_file_write_size 16k;
     }
 
     # 登录API特殊限流
