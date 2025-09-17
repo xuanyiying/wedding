@@ -1,4 +1,5 @@
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from 'sequelize-typescript';
+import { Sequelize } from 'sequelize';
 import User from './User';
 
 export enum IssueType {
@@ -169,4 +170,106 @@ export class Issue extends Model {
     defaultValue: 0
   })
   commentCount!: number;
+}
+
+// 添加 initIssue 函数
+export function initIssue(sequelize: Sequelize): void {
+  Issue.init({
+    id: {
+      type: DataType.UUID,
+      defaultValue: DataType.UUIDV4,
+      primaryKey: true,
+    },
+    title: {
+      type: DataType.STRING(100),
+      allowNull: false
+    },
+    description: {
+      type: DataType.TEXT,
+      allowNull: false
+    },
+    type: {
+      type: DataType.ENUM(...Object.values(IssueType)),
+      allowNull: false,
+      defaultValue: IssueType.BUG
+    },
+    priority: {
+      type: DataType.ENUM(...Object.values(IssuePriority)),
+      allowNull: false,
+      defaultValue: IssuePriority.MEDIUM
+    },
+    status: {
+      type: DataType.ENUM(...Object.values(IssueStatus)),
+      allowNull: false,
+      defaultValue: IssueStatus.OPEN
+    },
+    stepsToReproduce: {
+      type: DataType.TEXT,
+      allowNull: true,
+      field: 'steps_to_reproduce'
+    },
+    expectedBehavior: {
+      type: DataType.TEXT,
+      allowNull: true,
+      field: 'expected_behavior'
+    },
+    actualBehavior: {
+      type: DataType.TEXT,
+      allowNull: true,
+      field: 'actual_behavior'
+    },
+    environment: {
+      type: DataType.STRING(100),
+      allowNull: true
+    },
+    version: {
+      type: DataType.STRING(100),
+      allowNull: true
+    },
+    reporterId: {
+      type: DataType.UUID,
+      allowNull: false,
+      field: 'reporter_id'
+    },
+    assigneeId: {
+      type: DataType.UUID,
+      allowNull: true,
+      field: 'assignee_id'
+    },
+    dueDate: {
+      type: DataType.DATE,
+      allowNull: true,
+      field: 'due_date'
+    },
+    estimatedHours: {
+      type: DataType.INTEGER,
+      allowNull: true,
+      field: 'estimated_hours'
+    },
+    labels: {
+      type: DataType.TEXT,
+      allowNull: true
+    },
+    attachments: {
+      type: DataType.TEXT,
+      allowNull: true
+    },
+    voteCount: {
+      type: DataType.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      field: 'vote_count'
+    },
+    commentCount: {
+      type: DataType.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      field: 'comment_count'
+    }
+  }, {
+    sequelize,
+    tableName: 'issues',
+    timestamps: true,
+    paranoid: true
+  });
 }

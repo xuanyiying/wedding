@@ -12,6 +12,7 @@ import { Team, TeamMember, initTeam } from './Team';
 import Contact, { ContactAttributes, initContact } from './Contact';
 import ViewStat, { initViewStat, ViewStatAttributes, ViewStatCreationAttributes } from './ViewStat';
 import MediaProfile, { initMediaProfile } from './MediaProfile';
+import { Issue, initIssue } from './Issue';
 const models = {
   User,
   Schedule,
@@ -26,6 +27,7 @@ const models = {
   TeamMember,
   Contact,
   MediaProfile,
+  Issue,
 };
 
 export const initModels = (sequelizeInstance: Sequelize): void => {
@@ -44,7 +46,7 @@ export const initModels = (sequelizeInstance: Sequelize): void => {
 
   initViewStat(sequelizeInstance);
   initMediaProfile(sequelizeInstance);
-
+  initIssue(sequelizeInstance);
   // Initialize associations
   MediaProfile.associate(models);
 
