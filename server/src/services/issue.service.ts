@@ -36,13 +36,13 @@ export class IssueService {
       } = params;
 
       const where: any = {};
-      
+
       if (type) where.type = type;
       if (priority) where.priority = priority;
       if (status) where.status = status;
       if (assigneeId) where.assigneeId = assigneeId;
       if (reporterId) where.reporterId = reporterId;
-      
+
       if (search) {
         where[Op.or] = [
           { title: { [Op.like]: `%${search}%` } },
@@ -148,7 +148,9 @@ export class IssueService {
         environment,
         version,
         labels: labels ? JSON.stringify(labels) : null,
-        reporterId
+        reporterId,
+        voteCount: 0,
+        commentCount: 0
       });
 
       return await this.getIssueById(issue.id);

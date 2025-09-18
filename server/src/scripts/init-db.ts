@@ -691,13 +691,13 @@ export class DatabaseInitializer {
               fileType: FileType.IMAGE,
               originalName: `${generateId()}.png`,
               filename: `${generateId()}.png`,
-              fileUrl: 'http://localhost:9000/wedding-service/images/1639df43-3cc5-410a-89d9-e799a10d07bd.png',
+              fileUrl: 'http://localhost:900/wedding-service/2.jpg',
               fileSize: 1024,
               mimeType: 'image/png',
               category: FileCategory.WORK,
               ossType: OssType.minio,
               userId: userId,
-              thumbnailUrl: 'http://localhost:9000/wedding-service/images/1639df43-3cc5-410a-89d9-e799a10d07bd.png',
+              thumbnailUrl: 'http://localhost:900/wedding-service/2.jpg',
             }));
           }
           const files = await Promise.all(filePromises);
@@ -709,13 +709,13 @@ export class DatabaseInitializer {
             fileType: FileType.VIDEO,
             originalName: '135223ea-3678-4ea9-a9dd-fb11a9d84918.mp4',
             filename: '135223ea-3678-4ea9-a9dd-fb11a9d84918.mp4',
-            fileUrl: 'http://localhost:9000/wedding-service/videos/135223ea-3678-4ea9-a9dd-fb11a9d84918.mp4',
+            fileUrl: 'http://localhost:900/wedding-service/录屏2025-08-30%2017.24.50.mov',
             fileSize: 1024 * 1024 * 100,
             mimeType: 'video/mp4',
             category: FileCategory.WORK,
             ossType: OssType.minio,
             userId: userId,
-            thumbnailUrl: 'http://localhost:9000/wedding-service/images/1639df43-3cc5-410a-89d9-e799a10d07bd.png',
+            thumbnailUrl: 'http://localhost:900/wedding-service/2.jpg',
           });
           fileIds.push(file.id);
         }

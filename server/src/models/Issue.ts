@@ -1,6 +1,4 @@
-import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from 'sequelize-typescript';
-import { Sequelize } from 'sequelize';
-import User from './User';
+import { Model, DataTypes, Sequelize, Optional } from 'sequelize';
 
 export enum IssueType {
   BUG = 'bug',
@@ -25,251 +23,194 @@ export enum IssueStatus {
   REJECTED = 'rejected'
 }
 
-@Table({
-  tableName: 'issues',
-  timestamps: true,
-  paranoid: true,
-  indexes: [
-    {
-      fields: ['type']
-    },
-    {
-      fields: ['priority']
-    },
-    {
-      fields: ['status']
-    },
-    {
-      fields: ['reporter_id']
-    },
-    {
-      fields: ['assignee_id']
-    }
-  ]
-})
-export class Issue extends Model {
-  @Column({
-    type: DataType.STRING(100),
-    allowNull: false
-  })
-  title!: string;
-
-  @Column({
-    type: DataType.TEXT,
-    allowNull: false
-  })
-  description!: string;
-
-  @Column({
-    type: DataType.ENUM(...Object.values(IssueType)),
-    allowNull: false,
-    defaultValue: IssueType.BUG
-  })
-  type!: IssueType;
-
-  @Column({
-    type: DataType.ENUM(...Object.values(IssuePriority)),
-    allowNull: false,
-    defaultValue: IssuePriority.MEDIUM
-  })
-  priority!: IssuePriority;
-
-  @Column({
-    type: DataType.ENUM(...Object.values(IssueStatus)),
-    allowNull: false,
-    defaultValue: IssueStatus.OPEN
-  })
-  status!: IssueStatus;
-
-  @Column({
-    type: DataType.TEXT,
-    allowNull: true
-  })
+// Issue attributes interface
+export interface IssueAttributes {
+  id: string;
+  title: string;
+  description: string;
+  type: IssueType;
+  priority: IssuePriority;
+  status: IssueStatus;
   stepsToReproduce?: string;
-
-  @Column({
-    type: DataType.TEXT,
-    allowNull: true
-  })
   expectedBehavior?: string;
-
-  @Column({
-    type: DataType.TEXT,
-    allowNull: true
-  })
   actualBehavior?: string;
-
-  @Column({
-    type: DataType.STRING(100),
-    allowNull: true
-  })
   environment?: string;
-
-  @Column({
-    type: DataType.STRING(100),
-    allowNull: true
-  })
   version?: string;
-
-  @ForeignKey(() => User as any)
-  @Column({
-    field: 'reporter_id',
-    type: DataType.UUID,
-    allowNull: false
-  })
-  reporterId!: string;
-
-  @BelongsTo(() => User as any, 'reporter_id')
-  reporter!: User;
-
-  @ForeignKey(() => User as any)
-  @Column({
-    field: 'assignee_id',
-    type: DataType.UUID,
-    allowNull: true
-  })
+  reporterId: string;
   assigneeId?: string;
-
-  @BelongsTo(() => User as any, 'assignee_id')
-  assignee?: User;
-
-  @Column({
-    type: DataType.DATE,
-    allowNull: true
-  })
   dueDate?: Date;
-
-  @Column({
-    type: DataType.INTEGER,
-    allowNull: true
-  })
   estimatedHours?: number;
-
-  @Column({
-    type: DataType.TEXT,
-    allowNull: true
-  })
-  labels?: string;
-
-  @Column({
-    type: DataType.TEXT,
-    allowNull: true
-  })
+  labels?: string | null;  // 修改这里，允许 null 值
   attachments?: string;
-
-  @Column({
-    type: DataType.INTEGER,
-    allowNull: false,
-    defaultValue: 0
-  })
-  voteCount!: number;
-
-  @Column({
-    type: DataType.INTEGER,
-    allowNull: false,
-    defaultValue: 0
-  })
-  commentCount!: number;
+  voteCount: number;
+  commentCount: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+  deletedAt?: Date;
 }
 
-// 添加 initIssue 函数
+// Issue creation attributes interface
+export interface IssueCreationAttributes extends Optional<IssueAttributes, 'id' | 'voteCount' | 'commentCount'> { }
+
+// Issue model class
+export class Issue extends Model<IssueAttributes, IssueCreationAttributes> implements IssueAttributes {
+  public id!: string;
+  public title!: string;
+  public description!: string;
+  public type!: IssueType;
+  public priority!: IssuePriority;
+  public status!: IssueStatus;
+  public stepsToReproduce?: string;
+  public expectedBehavior?: string;
+  public actualBehavior?: string;
+  public environment?: string;
+  public version?: string;
+  public reporterId!: string;
+  public assigneeId?: string;
+  public dueDate?: Date;
+  public estimatedHours?: number;
+  public labels?: string;
+  public attachments?: string;
+  public voteCount!: number;
+  public commentCount!: number;
+
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+  public readonly deletedAt?: Date;
+}
+
 export function initIssue(sequelize: Sequelize): void {
-  Issue.init({
-    id: {
-      type: DataType.UUID,
-      defaultValue: DataType.UUIDV4,
-      primaryKey: true,
+  Issue.init(
+    {
+      id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true,
+      },
+      title: {
+        type: new DataTypes.STRING(100),
+        allowNull: false
+      },
+      description: {
+        type: DataTypes.TEXT,
+        allowNull: false
+      },
+      type: {
+        type: DataTypes.ENUM(...Object.values(IssueType)),
+        allowNull: false,
+        defaultValue: IssueType.BUG
+      },
+      priority: {
+        type: DataTypes.ENUM(...Object.values(IssuePriority)),
+        allowNull: false,
+        defaultValue: IssuePriority.MEDIUM
+      },
+      status: {
+        type: DataTypes.ENUM(...Object.values(IssueStatus)),
+        allowNull: false,
+        defaultValue: IssueStatus.OPEN
+      },
+      stepsToReproduce: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        field: 'steps_to_reproduce'
+      },
+      expectedBehavior: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        field: 'expected_behavior'
+      },
+      actualBehavior: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        field: 'actual_behavior'
+      },
+      environment: {
+        type: new DataTypes.STRING(100),
+        allowNull: true
+      },
+      version: {
+        type: new DataTypes.STRING(100),
+        allowNull: true
+      },
+      reporterId: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        field: 'reporter_id'
+      },
+      assigneeId: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        field: 'assignee_id'
+      },
+      dueDate: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        field: 'due_date'
+      },
+      estimatedHours: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        field: 'estimated_hours'
+      },
+      labels: {
+        type: DataTypes.TEXT,
+        allowNull: true
+      },
+      attachments: {
+        type: DataTypes.TEXT,
+        allowNull: true
+      },
+      voteCount: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+        field: 'vote_count'
+      },
+      commentCount: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+        field: 'comment_count'
+      },
+      deletedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        field: 'deleted_at'
+      },
+      createdAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        field: 'created_at'
+      },
+      updatedAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        field: 'updated_at'
+      }
     },
-    title: {
-      type: DataType.STRING(100),
-      allowNull: false
-    },
-    description: {
-      type: DataType.TEXT,
-      allowNull: false
-    },
-    type: {
-      type: DataType.ENUM(...Object.values(IssueType)),
-      allowNull: false,
-      defaultValue: IssueType.BUG
-    },
-    priority: {
-      type: DataType.ENUM(...Object.values(IssuePriority)),
-      allowNull: false,
-      defaultValue: IssuePriority.MEDIUM
-    },
-    status: {
-      type: DataType.ENUM(...Object.values(IssueStatus)),
-      allowNull: false,
-      defaultValue: IssueStatus.OPEN
-    },
-    stepsToReproduce: {
-      type: DataType.TEXT,
-      allowNull: true,
-      field: 'steps_to_reproduce'
-    },
-    expectedBehavior: {
-      type: DataType.TEXT,
-      allowNull: true,
-      field: 'expected_behavior'
-    },
-    actualBehavior: {
-      type: DataType.TEXT,
-      allowNull: true,
-      field: 'actual_behavior'
-    },
-    environment: {
-      type: DataType.STRING(100),
-      allowNull: true
-    },
-    version: {
-      type: DataType.STRING(100),
-      allowNull: true
-    },
-    reporterId: {
-      type: DataType.UUID,
-      allowNull: false,
-      field: 'reporter_id'
-    },
-    assigneeId: {
-      type: DataType.UUID,
-      allowNull: true,
-      field: 'assignee_id'
-    },
-    dueDate: {
-      type: DataType.DATE,
-      allowNull: true,
-      field: 'due_date'
-    },
-    estimatedHours: {
-      type: DataType.INTEGER,
-      allowNull: true,
-      field: 'estimated_hours'
-    },
-    labels: {
-      type: DataType.TEXT,
-      allowNull: true
-    },
-    attachments: {
-      type: DataType.TEXT,
-      allowNull: true
-    },
-    voteCount: {
-      type: DataType.INTEGER,
-      allowNull: false,
-      defaultValue: 0,
-      field: 'vote_count'
-    },
-    commentCount: {
-      type: DataType.INTEGER,
-      allowNull: false,
-      defaultValue: 0,
-      field: 'comment_count'
+    {
+      sequelize,
+      tableName: 'issues',
+      timestamps: true,
+      paranoid: true,
+      indexes: [
+        {
+          fields: ['type']
+        },
+        {
+          fields: ['priority']
+        },
+        {
+          fields: ['status']
+        },
+        {
+          fields: ['reporter_id']
+        },
+        {
+          fields: ['assignee_id']
+        }
+      ]
     }
-  }, {
-    sequelize,
-    tableName: 'issues',
-    timestamps: true,
-    paranoid: true
-  });
+  );
 }

@@ -15,7 +15,7 @@ const allowedOrigins = config.cors.origin
   : ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173', 'http://127.0.0.1:3000'];
 
 // 开发环境下，额外允许所有来源，便于调试
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'dev') {
   // 使用 Set 来避免重复
   const originSet = new Set(allowedOrigins);
   originSet.add('*'); // 添加通配符以允许所有来源
@@ -25,7 +25,7 @@ if (process.env.NODE_ENV === 'development') {
 const corsOptions: cors.CorsOptions = {
   origin: function (origin, callback) {
     // 开发环境始终允许
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'dev') {
       return callback(null, true);
     }
 
