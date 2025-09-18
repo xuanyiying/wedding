@@ -49,7 +49,7 @@ export class DatabaseInitializer {
           username: 'admin',
           email: 'admin@wedding.com',
           phone: '13800138000',
-          passwordHash: await PasswordUtils.hashPassword('admin123'),
+          passwordHash: await PasswordUtils.hashPassword('password'),
           salt: 'admin_salt',
           role: UserRole.SUPER_ADMIN,
           status: UserStatus.ACTIVE,
@@ -910,6 +910,7 @@ export class DatabaseInitializer {
       // 先删除有外键依赖的表数据
       await Schedule.destroy({ where: {}, force: true });
       await Work.destroy({ where: {}, force: true });
+      await Issue.destroy({ where: {}, force: true }); // 添加这一行
       logger.info('已清除现有数据');
 
       await this.initializeUsers();
