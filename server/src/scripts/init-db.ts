@@ -691,13 +691,13 @@ export class DatabaseInitializer {
               fileType: FileType.IMAGE,
               originalName: `${generateId()}.png`,
               filename: `${generateId()}.png`,
-              fileUrl: 'http://localhost:900/wedding-service/2.jpg',
+              fileUrl: 'http://localhost:9000/wedding-service/2.jpg',
               fileSize: 1024,
               mimeType: 'image/png',
-              category: FileCategory.WORK,
+              category: FileCategory.EVENT,
               ossType: OssType.minio,
               userId: userId,
-              thumbnailUrl: 'http://localhost:900/wedding-service/2.jpg',
+              thumbnailUrl: 'http://localhost:9000/wedding-service/2.jpg',
             }));
           }
           const files = await Promise.all(filePromises);
@@ -709,13 +709,13 @@ export class DatabaseInitializer {
             fileType: FileType.VIDEO,
             originalName: '135223ea-3678-4ea9-a9dd-fb11a9d84918.mp4',
             filename: '135223ea-3678-4ea9-a9dd-fb11a9d84918.mp4',
-            fileUrl: 'http://localhost:900/wedding-service/录屏2025-08-30%2017.24.50.mov',
+            fileUrl: 'http://localhost:9000/wedding-service/录屏2025-08-30%2017.24.50.mov',
             fileSize: 1024 * 1024 * 100,
             mimeType: 'video/mp4',
             category: FileCategory.WORK,
             ossType: OssType.minio,
             userId: userId,
-            thumbnailUrl: 'http://localhost:900/wedding-service/2.jpg',
+            thumbnailUrl: 'http://localhost:9000/wedding-service/2.jpg',
           });
           fileIds.push(file.id);
         }
@@ -910,7 +910,6 @@ export class DatabaseInitializer {
       // 先删除有外键依赖的表数据
       await Schedule.destroy({ where: {}, force: true });
       await Work.destroy({ where: {}, force: true });
-      await Issue.destroy({ where: {}, force: true }); // 添加这一行
       logger.info('已清除现有数据');
 
       await this.initializeUsers();

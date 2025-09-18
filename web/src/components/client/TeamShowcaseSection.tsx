@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Spin, Typography } from 'antd';
-import { EyeOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import { workService } from '../../services';
 import type { Team, Work } from '../../types';
@@ -82,13 +81,6 @@ const ImageCard = styled.div`
   overflow: hidden;
   background: var(--client-bg-container);
   box-shadow: var(--client-shadow-sm);
-  transition: all 0.3s ease;
-  cursor: pointer;
-
-  &:hover {
-    transform: translateY(-8px);
-    box-shadow: var(--client-shadow-lg);
-  }
 
   .ant-image {
     width: 100%;
@@ -98,35 +90,7 @@ const ImageCard = styled.div`
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transition: transform 0.3s ease;
     }
-  }
-
-  &:hover .ant-image img {
-    transform: scale(1.05);
-  }
-
-  .overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-
-  &:hover .overlay {
-    opacity: 1;
-  }
-
-  .view-icon {
-    color: white;
-    font-size: 24px;
   }
 `;
 
@@ -204,9 +168,6 @@ const TeamShowcaseSection: React.FC<TeamShowcaseSectionProps> = ({
                         autoPlay={false}
                       />
                     </div>
-                  </div>
-                  <div className="overlay">
-                    <EyeOutlined className="view-icon" />
                   </div>
                 </ImageCard>
               </Col>

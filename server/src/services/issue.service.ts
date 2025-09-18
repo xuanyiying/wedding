@@ -59,12 +59,12 @@ export class IssueService {
           {
             model: User,
             as: 'reporter',
-            attributes: ['id', 'username', 'avatar']
+            attributes: ['id', 'username']  // 移除了avatar字段
           },
           {
             model: User,
             as: 'assignee',
-            attributes: ['id', 'username', 'avatar']
+            attributes: ['id', 'username']  // 移除了avatar字段
           }
         ],
         order: [[sortBy, sortOrder]],
@@ -97,12 +97,12 @@ export class IssueService {
           {
             model: User,
             as: 'reporter',
-            attributes: ['id', 'username', 'avatar']
+            attributes: ['id', 'username', 'realName', 'nickname'] // 移除了avatar字段
           },
           {
             model: User,
             as: 'assignee',
-            attributes: ['id', 'username', 'avatar']
+            attributes: ['id', 'username', 'realName', 'nickname']  // 移除了avatar字段
           }
         ]
       });

@@ -42,7 +42,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [imageDimensions, setImageDimensions] = useState<Record<string, { width: number; height: number }>>({});
   const user = useAppSelector((state: RootState) => state.auth.user);
-  
+
   useEffect(() => {
     if (initialValues) {
       const formValues = {
@@ -68,7 +68,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
   // 表单验证函数
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
-    
+
     // 验证标题
     const title = form.getFieldValue('title');
     if (!title || title.trim() === '') {
@@ -109,15 +109,15 @@ const WorkForm: React.FC<WorkFormProps> = ({
   // 计算保持宽高比的缩略图尺寸
   const calculateThumbnailSize = (originalWidth: number, originalHeight: number, maxWidth: number = 120, maxHeight: number = 80) => {
     const aspectRatio = originalWidth / originalHeight;
-    
+
     let thumbnailWidth = maxWidth;
     let thumbnailHeight = maxWidth / aspectRatio;
-    
+
     if (thumbnailHeight > maxHeight) {
       thumbnailHeight = maxHeight;
       thumbnailWidth = maxHeight * aspectRatio;
     }
-    
+
     return {
       width: Math.round(thumbnailWidth),
       height: Math.round(thumbnailHeight)
@@ -129,27 +129,28 @@ const WorkForm: React.FC<WorkFormProps> = ({
     if (results.length === 0) {
       return;
     }
-    let newWorkMedias: FileInfo[] = [];  
+    let newWorkMedias: FileInfo[] = [];
     if (workType === 'video') {
-      const file = (await fileService.getFile(results[0].id)).data 
+      const file = (await fileService.getFile(results[0].id)).data
       if (file) {
         newWorkMedias = [{ ...file, fileType: 'video', thumbnailUrl: file.thumbnailUrl }];
       };
     }
-   else{
-    newWorkMedias = results.map(result => ({
-      fileId: result.id, 
-      fileType: result.fileType as FileType, 
-      thumbnailUrl: result.url,
-      fileUrl: result.url,
-      userId: user?.id || '',
-      createdAt: new Date(result.uploadedAt),
-      updatedAt: new Date(result.uploadedAt),
-      filename: result.filename,
-      fileSize: result.fileSize
-   }));}
-   
-    
+    else {
+      newWorkMedias = results.map(result => ({
+        fileId: result.id,
+        fileType: result.fileType as FileType,
+        thumbnailUrl: result.url,
+        fileUrl: result.url,
+        userId: user?.id || '',
+        createdAt: new Date(result.uploadedAt),
+        updatedAt: new Date(result.uploadedAt),
+        filename: result.filename,
+        fileSize: result.fileSize
+      }));
+    }
+
+
     setWorkMedias(prev => [...prev, ...newWorkMedias]);
 
     // 获取图片尺寸
@@ -166,7 +167,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
 
     const dimensionsResults = await Promise.all(dimensionsPromises);
     const newDimensions: Record<string, { width: number; height: number }> = {};
-    
+
     dimensionsResults.forEach(result => {
       if (result) {
         newDimensions[result.fileId] = result.dimensions;
@@ -213,7 +214,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
 
       // 然后进行Ant Design表单验证
       const values = await form.validateFields();
-      
+
       const submitData = {
         ...values,
         weddingDate: values.weddingDate?.format('YYYY-MM-DD'),
@@ -224,9 +225,9 @@ const WorkForm: React.FC<WorkFormProps> = ({
 
       // 提交前显示加载状态
       setUploading(true);
-      
+
       await onSubmit(submitData);
-      
+
       // 成功后重置表单（如果不是编辑模式）
       if (!isEdit) {
         form.resetFields();
@@ -238,7 +239,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
       } else {
         message.success('作品更新成功！');
       }
-      
+
     } catch (error) {
       console.error('表单提交失败:', error);
       if (error instanceof Error) {
@@ -332,7 +333,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
               validateStatus={formErrors.type ? 'error' : ''}
               help={formErrors.type}
             >
-              <Select 
+              <Select
                 placeholder="请选择作品类型"
                 onChange={(value) => {
                   setWorkType(value);
@@ -443,7 +444,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
                   <div className="mb-4">
                     <MediaUploader
                       config={{
-                        accept: ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/flv', 'video/webm', 'video/mkv', 'video/*'],
+                        accept: ['video/*'],
                         multiple: false,
                         maxCount: 1,
                         category: 'work',
@@ -463,17 +464,17 @@ const WorkForm: React.FC<WorkFormProps> = ({
                               {media.thumbnailUrl ? (
                                 (() => {
                                   const dimensions = imageDimensions[media.fileId];
-                                  const thumbnailSize = dimensions 
+                                  const thumbnailSize = dimensions
                                     ? calculateThumbnailSize(dimensions.width, dimensions.height)
                                     : { width: 120, height: 80 };
-                                  
+
                                   return (
                                     <Image
                                       src={media.thumbnailUrl}
                                       alt={`视频封面 ${index + 1}`}
                                       width={thumbnailSize.width}
                                       height={thumbnailSize.height}
-                                      style={{ 
+                                      style={{
                                         objectFit: 'contain',
                                         borderRadius: '6px',
                                         border: '1px solid #d9d9d9',
@@ -544,17 +545,17 @@ const WorkForm: React.FC<WorkFormProps> = ({
                         <div className="thumbnail-wrapper">
                           {(() => {
                             const dimensions = imageDimensions[media.fileId];
-                            const thumbnailSize = dimensions 
+                            const thumbnailSize = dimensions
                               ? calculateThumbnailSize(dimensions.width, dimensions.height)
                               : { width: 120, height: 80 };
-                            
+
                             return (
                               <Image
                                 src={media.fileUrl}
                                 alt={`作品图片 ${index + 1}`}
                                 width={thumbnailSize.width}
                                 height={thumbnailSize.height}
-                                style={{ 
+                                style={{
                                   objectFit: 'contain',
                                   borderRadius: '6px',
                                   border: '1px solid #d9d9d9',

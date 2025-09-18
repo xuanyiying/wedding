@@ -147,7 +147,7 @@ export const config: Config = {
     host: getEnvVar('DB_HOST', 'mysql'),
     port: getEnvNumber('DB_PORT', 3306),
     name: getEnvVar('DB_NAME', 'wedding_service'),
-    username: getEnvVar('DB_USERNAME', 'root'),
+    username: getEnvVar('DB_USERNAME', 'root') || getEnvVar('DB_USER', 'root'),
     password: getEnvVar('DB_PASSWORD', ''),
     dialect: getEnvVar('DB_DIALECT', 'mysql'),
     logging: getEnvBoolean('DB_LOGGING', false),

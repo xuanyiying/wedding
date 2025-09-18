@@ -436,6 +436,7 @@ export class WorkService {
       where: {
         status: WorkStatus.PUBLISHED,
         isFeatured: true,
+        category: { [Op.ne]: WorkCategory.EVENT },
       },
       include: [
         {
@@ -650,7 +651,7 @@ export class WorkService {
 
     return await WorkService.setFiles(relatedWorks);
   }
-  
+
   static async setFiles(works: Work[]) {
     // 手动填充files属性
     const worksWithFiles = await Promise.all(
@@ -670,7 +671,7 @@ export class WorkService {
         return workJson;
       })
     );
-    logger.info('Set files for works' ,worksWithFiles);
+    logger.info('Set files for works', worksWithFiles);
     return worksWithFiles;
   };
 
