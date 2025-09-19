@@ -63,7 +63,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
   onWeddingDateChange,
   onWeddingTimeChange,
   onSearchAvailableHosts,
-  onCheckScheduleConflict}) => {
+  onCheckScheduleConflict }) => {
   const options = [
     { label: '午宴', value: 'lunch' },
     { label: '晚宴', value: 'dinner' },
@@ -125,32 +125,6 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
           layout="vertical"
           onFinish={onSave}
         >
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="title"
-                label="档期标题"
-                rules={[{ required: true, message: '请输入档期标题' }]}
-              >
-                <Input placeholder="请输入档期标题" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="eventType"
-                label="活动类型"
-                rules={[{ required: false, message: '请选择活动类型' }]}
-              >
-                <Select placeholder="请选择活动类型" defaultValue={'wedding'}>
-                  <Option value="wedding">婚礼</Option>
-                  <Option value="engagement">订婚</Option>
-                  <Option value="anniversary">纪念日</Option>
-                  <Option value="other">其他</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
@@ -244,10 +218,8 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                   rules={[{ required: true, message: '请选择档期状态' }]}
                 >
                   <Select placeholder="请选择档期状态">
-                    <Option value={ScheduleStatus.AVAILABLE}>可预约</Option>
+                    <Option value={ScheduleStatus.RESERVE}>预留</Option>
                     <Option value={ScheduleStatus.BOOKED}>已预订</Option>
-                    <Option value={ScheduleStatus.CONFIRMED}>已确认</Option>
-                    <Option value={ScheduleStatus.COMPLETED}>已完成</Option>
                     <Option value={ScheduleStatus.CANCELLED}>已取消</Option>
                   </Select>
                 </Form.Item>
@@ -271,48 +243,45 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                   rules={[{ required: true, message: '请选择档期状态' }]}
                 >
                   <Select placeholder="请选择档期状态">
-                    <Option value={ScheduleStatus.AVAILABLE}>可预约</Option>
+                    <Option value={ScheduleStatus.RESERVE}>预留</Option>
                     <Option value={ScheduleStatus.BOOKED}>已预订</Option>
-                    <Option value={ScheduleStatus.CONFIRMED}>已确认</Option>
-                    <Option value={ScheduleStatus.COMPLETED}>已完成</Option>
                     <Option value={ScheduleStatus.CANCELLED}>已取消</Option>
                   </Select>
                 </Form.Item>
               </Col>
             </Row>
           )}
+          <Form.Item
+            name="location"
+            label="婚礼酒店"
+          >
+            <Input placeholder="请输入婚礼酒店" prefix={<EnvironmentOutlined />} />
+          </Form.Item>
 
 
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
-                name="venueName"
-                label="所在城市"
+                name="customerName"
+                label="客户姓名"
+                rules={[{ required: false, message: '请输入客户姓名' }]}
               >
-                <Input placeholder="请输所在城市" />
+                <Input placeholder="请输入客户姓名" prefix={<UserOutlined />} />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
-                name="location"
-                label="婚礼酒店"
+                name="customerPhone"
+                label="客户电话"
+                rules={[
+                  { required: false, message: '请输入客户电话' },
+                  { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码' }
+                ]}
               >
-                <Input placeholder="请输入婚礼酒店" prefix={<EnvironmentOutlined />} />
+                <Input placeholder="请输入客户电话" prefix={<PhoneOutlined />} />
               </Form.Item>
             </Col>
           </Row>
-
-          <Row gutter={16}>
-            <Col span={24}>
-              <Form.Item
-                name="venueAddress"
-                label="详细地址"
-              >
-                <Input placeholder="请输入婚礼详细地址" />
-              </Form.Item>
-            </Col>
-          </Row>
-
           <Form.Item
             name="notes"
             label="备注"
@@ -323,17 +292,9 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
             />
           </Form.Item>
 
-          <Form.Item
-            name="requirements"
-            label="特殊要求"
-          >
-            <TextArea
-              rows={2}
-              placeholder="请输入特殊要求"
-            />
-          </Form.Item>
 
-        <Row gutter={16}>
+
+          <Row gutter={16}>
             <Col span={8}>
               <Form.Item
                 name="price"

@@ -146,7 +146,7 @@ const UsersPage: React.FC = () => {
         role: roleFilter || undefined,
         status: statusFilter || undefined
       });
-      
+
       if (response && response.data) {
         const transformedUsers = response.data.users.map(transformUserData);
         setUsers(transformedUsers);
@@ -162,20 +162,20 @@ const UsersPage: React.FC = () => {
 
   // 过滤用户
   const filteredUsers = users.filter(user => {
-    const matchesSearch = !searchText || 
+    const matchesSearch = !searchText ||
       user.username.toLowerCase().includes(searchText.toLowerCase()) ||
       user.realName?.toLowerCase().includes(searchText.toLowerCase()) ||
       user.email.toLowerCase().includes(searchText.toLowerCase());
-    
+
     const matchesRole = !roleFilter || user.role === roleFilter;
     const matchesStatus = !statusFilter || user.status === statusFilter;
-    
+
     return matchesSearch && matchesRole && matchesStatus;
   });
 
   // 初始化admin主题
   const { initTheme } = useTheme();
-  
+
   useEffect(() => {
     initTheme('admin');
   }, [initTheme]);
@@ -187,7 +187,7 @@ const UsersPage: React.FC = () => {
       [UserRole.USER]: { color: 'var(--admin-primary-color)', text: '用户' },
       [UserRole.SUPER_ADMIN]: { color: 'var(--admin-success-color)', text: '超级管理员' },
     };
-    
+
     const config = roleMap[role];
     if (!config) {
       return <Tag style={{ color: 'var(--admin-text-tertiary)', borderColor: 'var(--admin-border-color)' }}>未知角色</Tag>;
@@ -203,7 +203,7 @@ const UsersPage: React.FC = () => {
       [UserStatus.SUSPENDED]: { color: 'var(--admin-error-color)', text: '已暂停' },
       [UserStatus.DELETED]: { color: 'var(--admin-error-color)', text: '已删除' }
     };
-    
+
     const config = statusMap[status];
     if (!config) {
       return <Tag style={{ color: 'var(--admin-text-tertiary)', borderColor: 'var(--admin-border-color)' }}>未知状态</Tag>;
@@ -216,7 +216,7 @@ const UsersPage: React.FC = () => {
     setEditingUser(user || null);
     setModalVisible(true);
     setUsernameError(''); // 清除之前的错误状态
-    
+
     if (user) {
       form.setFieldsValue({
         username: user.username,
@@ -240,7 +240,7 @@ const UsersPage: React.FC = () => {
       setLoading(true);
       console.log('📝 [UsersPage] 表单数据:', values);
       console.log('✏️ [UsersPage] 编辑模式:', !!editingUser?.id, editingUser?.id ? `用户ID: ${editingUser.id}` : '新建用户');
-      
+
       if (editingUser?.id) {
         // 编辑用户
         const updateData = {
@@ -253,14 +253,14 @@ const UsersPage: React.FC = () => {
           bio: values.description,
         };
         console.log('📤 [UsersPage] 发送更新用户请求:', updateData);
-        
+
         const response = await userService.updateUser(editingUser.id, updateData);
         console.log('📥 [UsersPage] 更新用户响应:', response);
-        
+
         if (response.success && response.data) {
           const updatedUser = transformUserData(response.data);
           console.log('✅ [UsersPage] 用户更新成功，转换后数据:', updatedUser);
-          setUsers(prev => prev.map(user => 
+          setUsers(prev => prev.map(user =>
             user.id === editingUser.id ? updatedUser : user
           ));
           message.success('用户信息更新成功');
@@ -281,10 +281,10 @@ const UsersPage: React.FC = () => {
           password: values.password,
         };
         console.log('📤 [UsersPage] 发送创建用户请求:', { ...createData, password: '***' }); // 隐藏密码
-        
+
         const response = await userService.createUser(createData);
         console.log('📥 [UsersPage] 创建用户响应:', response);
-        
+
         if (response.success && response.data) {
           const newUser = transformUserData(response.data);
           console.log('✅ [UsersPage] 用户创建成功，转换后数据:', newUser);
@@ -295,7 +295,7 @@ const UsersPage: React.FC = () => {
           message.error(response.message || '添加用户失败');
         }
       }
-      
+
       console.log('🎉 [UsersPage] 用户保存操作完成，关闭模态框');
       setModalVisible(false);
       form.resetFields();
@@ -307,7 +307,7 @@ const UsersPage: React.FC = () => {
         formValues: values,
         editingUserId: editingUser?.id
       });
-      
+
       // 处理用户名验证错误
       if (error.response?.status === 400) {
         const errorMessage = error.response.data?.message || error.response.data?.error;
@@ -321,7 +321,7 @@ const UsersPage: React.FC = () => {
           return; // 不显示通用错误消息
         }
       }
-      
+
       message.error('操作失败，请重试');
     } finally {
       setLoading(false);
@@ -333,7 +333,7 @@ const UsersPage: React.FC = () => {
   const handleDelete = async (userId: string) => {
     try {
       const response = await userService.deleteUser(userId);
-      
+
       if (response.success) {
         setUsers(prev => prev.filter(user => user.id !== userId));
         message.success('用户删除成功');
@@ -350,13 +350,13 @@ const UsersPage: React.FC = () => {
   const toggleUserStatus = async (userId: string, currentStatus: UserStatus) => {
     try {
       const newStatus = currentStatus === UserStatus.ACTIVE ? UserStatus.INACTIVE : UserStatus.ACTIVE;
-      
-      setUsers(prev => prev.map(user => 
-        user.id === userId 
+
+      setUsers(prev => prev.map(user =>
+        user.id === userId
           ? { ...user, status: newStatus }
           : user
       ));
-      
+
       message.success(`用户状态已${newStatus === UserStatus.ACTIVE ? '启用' : '禁用'}`);
     } catch (error) {
       message.error('状态切换失败');
@@ -372,8 +372,8 @@ const UsersPage: React.FC = () => {
       width: 150,
       render: (_, record) => (
         <Space>
-          <UserAvatar 
-            src={record.avatarUrl} 
+          <UserAvatar
+            src={record.avatarUrl}
             icon={<UserOutlined />}
             style={{ backgroundColor: 'var(--admin-primary-color)' }}
           >
@@ -459,17 +459,17 @@ const UsersPage: React.FC = () => {
       render: (_, record) => (
         <Space>
           <Tooltip title="查看详情">
-            <Button 
-              type="text" 
-              icon={<EyeOutlined />} 
+            <Button
+              type="text"
+              icon={<EyeOutlined />}
               size="small"
               onClick={() => openModal(record)}
             />
           </Tooltip>
           <Tooltip title="编辑">
-            <Button 
-              type="text" 
-              icon={<EditOutlined />} 
+            <Button
+              type="text"
+              icon={<EditOutlined />}
               size="small"
               onClick={() => openModal(record)}
             />
@@ -488,10 +488,10 @@ const UsersPage: React.FC = () => {
             cancelText="取消"
           >
             <Tooltip title="删除">
-              <Button 
-                type="text" 
-                danger 
-                icon={<DeleteOutlined />} 
+              <Button
+                type="text"
+                danger
+                icon={<DeleteOutlined />}
                 size="small"
               />
             </Tooltip>
@@ -511,43 +511,43 @@ const UsersPage: React.FC = () => {
 
   return (
     <PageContainer>
-      <PageHeader 
-        title="用户管理" 
-        subtitle="管理系统用户、主持人和客户信息" 
+      <PageHeader
+        title="用户管理"
+        subtitle="管理系统用户、主持人和客户信息"
       />
-      
+
       {/* 统计卡片 */}
       <Row gutter={16} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={6}>
-          <StatCard 
-            title="总用户数" 
-            value={stats.total} 
-            prefix={<UserOutlined />} 
+          <StatCard
+            title="总用户数"
+            value={stats.total}
+            prefix={<UserOutlined />}
           />
         </Col>
         <Col xs={24} sm={6}>
-          <StatCard 
-            title="活跃用户" 
-            value={stats.active} 
-            valueStyle={{ color: "var(--admin-success-color)" }} 
+          <StatCard
+            title="活跃用户"
+            value={stats.active}
+            valueStyle={{ color: "var(--admin-success-color)" }}
           />
         </Col>
         <Col xs={24} sm={6}>
-          <StatCard 
-            title="用户数" 
-            value={stats.users} 
-            valueStyle={{ color: "var(--admin-primary-color)" }} 
+          <StatCard
+            title="用户数"
+            value={stats.users}
+            valueStyle={{ color: "var(--admin-primary-color)" }}
           />
         </Col>
         <Col xs={24} sm={6}>
-          <StatCard 
-            title="本月新增" 
-            value={stats.newThisMonth} 
-            valueStyle={{ color: "var(--admin-warning-color)" }} 
+          <StatCard
+            title="本月新增"
+            value={stats.newThisMonth}
+            valueStyle={{ color: "var(--admin-warning-color)" }}
           />
         </Col>
       </Row>
-      
+
       {/* 搜索和操作栏 */}
       <ContentCard>
         <SearchBar>
@@ -578,15 +578,15 @@ const UsersPage: React.FC = () => {
             <Option value={UserStatus.SUSPENDED}>已暂停</Option>
             <Option value={UserStatus.DELETED}>已删除</Option>
           </Select>
-          <Button 
-            type="primary" 
+          <Button
+            type="primary"
             icon={<PlusOutlined />}
             onClick={() => openModal()}
           >
             添加用户
           </Button>
         </SearchBar>
-        
+
         {/* 用户表格 */}
         <Table
           columns={columns}
@@ -603,7 +603,7 @@ const UsersPage: React.FC = () => {
           }}
         />
       </ContentCard>
-      
+
       {/* 添加/编辑用户模态框 */}
       <Modal
         title={editingUser ? '编辑用户' : '添加用户'}
@@ -633,8 +633,8 @@ const UsersPage: React.FC = () => {
                 validateStatus={usernameError ? 'error' : ''}
                 help={usernameError || ''}
               >
-                <Input 
-                  placeholder="请输入用户名" 
+                <Input
+                  placeholder="请输入用户名"
                   onChange={() => setUsernameError('')} // 用户开始输入时清除错误
                 />
               </Form.Item>
@@ -642,14 +642,14 @@ const UsersPage: React.FC = () => {
             <Col span={12}>
               <Form.Item
                 name="realName"
-                label="真实姓名"
-                rules={[{ required: true, message: '请输入真实姓名' }]}
+                label="姓名"
+                rules={[{ required: true, message: '请输入姓名' }]}
               >
-                <Input placeholder="请输入真实姓名" />
+                <Input placeholder="请输入姓名" />
               </Form.Item>
             </Col>
           </Row>
-          
+
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
@@ -676,7 +676,7 @@ const UsersPage: React.FC = () => {
               </Form.Item>
             </Col>
           </Row>
-          
+
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
@@ -698,14 +698,13 @@ const UsersPage: React.FC = () => {
               >
                 <Select placeholder="请选择状态">
                   <Option value={UserStatus.ACTIVE}>正常</Option>
-                  <Option value={UserStatus.INACTIVE}>未激活</Option>
                   <Option value={UserStatus.SUSPENDED}>已暂停</Option>
                   <Option value={UserStatus.DELETED}>已删除</Option>
                 </Select>
               </Form.Item>
             </Col>
           </Row>
-          
+
           {!editingUser && (
             <Form.Item
               name="password"
@@ -718,19 +717,19 @@ const UsersPage: React.FC = () => {
               <Input.Password placeholder="请输入密码" />
             </Form.Item>
           )}
-          
+
           <Form.Item
             name="description"
             label="描述"
           >
-            <Input.TextArea 
-              placeholder="请输入用户描述" 
+            <Input.TextArea
+              placeholder="请输入用户描述"
               rows={3}
               maxLength={200}
               showCount
             />
           </Form.Item>
-          
+
           <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
             <Space>
               <Button onClick={() => {

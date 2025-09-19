@@ -20,7 +20,13 @@ export interface UserAttributes {
   experienceYears?: number; // 工作经验年数
   location?: string; // 工作地点
   contactInfo?: any; // 联系信息
-  socialLinks?: any; // 社交链接
+  socialLinks?: {
+    weibo?: { value: string; hidden?: boolean };
+    wechat?: { value: string; hidden?: boolean };
+    xiaohongshu?: { value: string; hidden?: boolean };
+    douyin?: { value: string; hidden?: boolean };
+  }; // 社交链接
+  hideSocialLinks?: boolean; // 控制是否隐藏整个社交媒体部分
   lastLoginAt?: Date;
   lastLoginIp?: string;
   emailVerifiedAt?: Date;
@@ -31,7 +37,7 @@ export interface UserAttributes {
 }
 
 // User creation attributes interface
-export interface UserCreationAttributes extends Optional<UserAttributes, 'id'> {}
+export interface UserCreationAttributes extends Optional<UserAttributes, 'id'> { }
 
 // User model class
 class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {

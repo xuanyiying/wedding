@@ -1,5 +1,4 @@
 import React from 'react';
-import { Space, Tag } from 'antd';
 import styled from 'styled-components';
 
 
@@ -15,11 +14,13 @@ interface ProfileData {
   yearsOfExperience?: number;
   location?: string;
   website?: string;
-  socialMedia?: {
-    wechat?: string;
-    weibo?: string;
-    instagram?: string;
+  socialLinks?: {
+    wechat?: { value: string; hidden?: boolean };
+    weibo?: { value: string; hidden?: boolean };
+    xiaohongshu?: { value: string; hidden?: boolean };
+    douyin?: { value: string; hidden?: boolean };
   };
+  hideSocialLinks?: boolean; // 控制是否隐藏整个社交媒体部分
   createdAt?: string;
   updatedAt?: string;
 }
@@ -120,65 +121,53 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
 }) => {
   return (
     <ProfileContainer>
-  
-        
-        
-        <div className="profile-content">
-       
-          
-          {profile.specialties && profile.specialties.length > 0 && (
-            <div className="info-section">
-              <div className="section-title">
-                专业技能
-              </div>
-              
-              <div className="specialties-container">
-                <Space wrap>
-                  {profile.specialties.map((specialty, index) => (
-                    <Tag
-                      key={index}
-                      color="blue"
-                      className="specialty-tag"
-                    >
-                      {specialty}
-                    </Tag>
-                  ))}
-                </Space>
-              </div>
+
+
+
+      <div className="profile-content">
+
+
+        {!profile.hideSocialLinks && profile.socialLinks && (
+          <div className="info-section">
+            <div className="section-title">
+              社交媒体
             </div>
-          )}
-          
-          {profile.socialMedia && (
-            <div className="info-section">
-              <div className="section-title">
-                社交媒体
-              </div>
-              
-              <div className="social-links">
-                {profile.socialMedia.wechat && (
+
+            <div className="social-links">
+              {profile.socialLinks?.wechat?.value && !profile.socialLinks?.wechat?.hidden && (
+                <div className="social-item">
+                  <span className="platform">微信:</span>
+                  <span className="handle">{profile.socialLinks.wechat.value}</span>
+                </div>
+              )}
+
+              {profile.socialLinks?.weibo?.value && !profile.socialLinks?.weibo?.hidden && (
+                <div className="social-item">
+                  <span className="platform">微博:</span>
+                  <span className="handle">{profile.socialLinks.weibo.value}</span>
+                </div>
+              )}
+
+              {
+                profile.socialLinks?.xiaohongshu?.value && !profile.socialLinks?.xiaohongshu?.hidden && (
                   <div className="social-item">
-                    <span className="platform">微信:</span>
-                    <span className="handle">{profile.socialMedia.wechat}</span>
+                    <span className="platform">小红书:</span>
+                    <span className="handle">{profile.socialLinks.xiaohongshu.value}</span>
                   </div>
-                )}
-                
-                {profile.socialMedia.weibo && (
+                )
+              }
+              {
+                profile.socialLinks?.douyin?.value && !profile.socialLinks?.douyin?.hidden && (
                   <div className="social-item">
-                    <span className="platform">微博:</span>
-                    <span className="handle">{profile.socialMedia.weibo}</span>
+                    <span className="platform">抖音:</span>
+                    <span className="handle">{profile.socialLinks.douyin.value}</span>
                   </div>
-                )}
-                
-                {profile.socialMedia.instagram && (
-                  <div className="social-item">
-                    <span className="platform">Instagram:</span>
-                    <span className="handle">{profile.socialMedia.instagram}</span>
-                  </div>
-                )}
-              </div>
+                )
+              }
             </div>
-          )}
-        </div>
+          </div>
+        )}
+      </div>
     </ProfileContainer>
   );
 };

@@ -103,10 +103,8 @@ export const UserStatus = {
 
 // 档期状态枚举
 export const ScheduleStatus = {
-  AVAILABLE: 'available', // 可预约
+  RESERVE: 'reserve', // 预订留
   BOOKED: 'booked', // 已预订
-  CONFIRMED: 'confirmed', // 已确认
-  COMPLETED: 'completed', // 已完成
   CANCELLED: 'cancelled', // 已取消
 } as const;
 
@@ -317,13 +315,12 @@ export interface User {
     address?: string;
   };
   socialLinks?: {
-    weibo?: string;
-    wechat?: string;
-    xiaohongshu?: string;
-    douyin?: string;
-    instagram?: string;
-    facebook?: string;
+    weibo?: { value: string; hidden?: boolean };
+    wechat?: { value: string; hidden?: boolean };
+    xiaohongshu?: { value: string; hidden?: boolean };
+    douyin?: { value: string; hidden?: boolean };
   };
+  hideSocialLinks?: boolean; // 控制是否隐藏整个社交媒体部分
   lastLoginAt?: Date;
   lastLoginIp?: string;
   emailVerifiedAt?: Date;
@@ -338,27 +335,27 @@ export interface User {
 // 媒体文件类型
 
 export interface FileInfo {
-    fileId: string;
-   userId: string;
-   originalName?: string;
-   filename?: string;
-   filePath?: string;
-   fileUrl: string;
-   fileSize?: number;
-   mimeType?: string;
-   fileType: FileType;
-   width?: number;
-   height?: number;
-   duration?: number;
-   thumbnailUrl?: string;
-   hashMd5?: string;
-   hashSha256?: string;
-   bucketName?: string;
-   downloadCount?: number;
-   metadata?: any;
-   createdAt?: Date;
-   updatedAt?: Date;
-   deletedAt?: Date;
+  fileId: string;
+  userId: string;
+  originalName?: string;
+  filename?: string;
+  filePath?: string;
+  fileUrl: string;
+  fileSize?: number;
+  mimeType?: string;
+  fileType: FileType;
+  width?: number;
+  height?: number;
+  duration?: number;
+  thumbnailUrl?: string;
+  hashMd5?: string;
+  hashSha256?: string;
+  bucketName?: string;
+  downloadCount?: number;
+  metadata?: any;
+  createdAt?: Date;
+  updatedAt?: Date;
+  deletedAt?: Date;
 }
 
 // 媒体文件相关类型

@@ -162,7 +162,13 @@ export class UserService {
       experienceYears?: number;
       location?: string;
       contactInfo?: any;
-      socialLinks?: any;
+      hideSocialLinks?: boolean;
+      socialLinks?: {
+        weibo?: { value: string; hidden?: boolean };
+        wechat?: { value: string; hidden?: boolean };
+        xiaohongshu?: { value: string; hidden?: boolean };
+        douyin?: { value: string; hidden?: boolean };
+      };
     },
   ) {
     try {

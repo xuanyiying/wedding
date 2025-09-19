@@ -155,16 +155,10 @@ const useStyle = createStyles(({ token, css, cx }) => {
 // 获取状态背景色
 const getStatusBackground = (status: string) => {
   switch (status) {
-    case ScheduleStatus.AVAILABLE:
+    case ScheduleStatus.RESERVE:
       return 'rgba(144, 238, 144, 0.15)'; // 浅绿色背景
     case ScheduleStatus.BOOKED:
       return 'rgba(24, 144, 255, 0.15)'; // 蓝色背景
-    case 'PENDING': // 待确认
-      return 'rgba(255, 179, 102, 0.15)'; // 浅橙色背景
-    case ScheduleStatus.CONFIRMED:
-      return 'rgba(255, 140, 0, 0.15)'; // 深橙色背景
-    case ScheduleStatus.COMPLETED:
-      return 'rgba(82, 196, 26, 0.15)'; // 绿色背景
     case ScheduleStatus.CANCELLED:
       return 'rgba(255, 77, 79, 0.15)';
     default:
@@ -175,16 +169,10 @@ const getStatusBackground = (status: string) => {
 // 获取状态文本
 const getStatusText = (status: string) => {
   switch (status) {
-    case ScheduleStatus.AVAILABLE:
-      return '可预约';
+    case ScheduleStatus.RESERVE:
+      return '预留';
     case ScheduleStatus.BOOKED:
       return '已预订';
-    case 'PENDING':
-      return '待确认';
-    case ScheduleStatus.CONFIRMED:
-      return '已确认';
-    case ScheduleStatus.COMPLETED:
-      return '已完成';
     case ScheduleStatus.CANCELLED:
       return '已取消';
     default:

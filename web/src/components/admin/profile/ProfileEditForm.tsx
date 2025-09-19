@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Form, Input, Button, Space, Tag, Row, Col, InputNumber, Select } from 'antd';
+import { Form, Input, Button, Space, Row, Col, InputNumber, Select, Switch } from 'antd';
 import AvatarUploader from '../../AvatarUploader';
 import styled from 'styled-components';
 import type { ProfileData } from './ProfileSection';
@@ -8,7 +8,7 @@ import { PRICE_RANGE_OPTIONS } from '../../../constants';
 const { TextArea } = Input;
 
 interface ProfileEditFormProps {
-  initialValues?: Partial<ProfileData>;
+  initialValues?: Partial<ProfileData> & { hideSocialSection?: boolean };
   onSubmit: (values: any) => void;
   onCancel: () => void;
   loading?: boolean;
@@ -77,6 +77,13 @@ const FormContainer = styled.div`
       color: var(--admin-text-primary);
     }
   }
+  
+  // 根据hideSocialSection字段隐藏社交媒体部分
+  .hide-social-section {
+    .social-section {
+      display: none;
+    }
+  }
 `;
 
 const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
@@ -89,8 +96,8 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
 }) => {
   const [form] = Form.useForm();
   const [uploading] = useState(false);
-  const [specialtyInput, setSpecialtyInput] = useState('');
   const [specialties, setSpecialties] = useState<string[]>([]);
+  const [hideSocialLinks, setHideSocialLinks] = useState(false);
 
   useEffect(() => {
     if (initialValues) {
@@ -103,8 +110,20 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
       if (initialValues.specialties) {
         setSpecialties(initialValues.specialties);
       }
+
+      // 设置初始的隐藏状态
+      if (initialValues.hideSocialSection !== undefined) {
+        setHideSocialLinks(initialValues.hideSocialSection as boolean);
+      }
     }
   }, [initialValues, form]);
+
+  // 监听hideSocialSection字段的变化
+  const onValuesChange = (changedValues: any) => {
+    if (changedValues.hasOwnProperty('hideSocialSection')) {
+      setHideSocialLinks(changedValues.hideSocialSection);
+    }
+  };
 
   const handleSubmit = async () => {
     try {
@@ -119,23 +138,6 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
       console.error('表单验证失败:', error);
     }
   };
-
-
-
-  const addSpecialty = () => {
-    if (specialtyInput && !specialties.includes(specialtyInput)) {
-      setSpecialties([...specialties, specialtyInput]);
-      setSpecialtyInput('');
-    }
-  };
-
-  const removeSpecialty = (specialtyToRemove: string) => {
-    setSpecialties(specialties.filter(specialty => specialty !== specialtyToRemove));
-  };
-
-
-
-
   return (
     <FormContainer>
       <Form
@@ -143,6 +145,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         layout="vertical"
         requiredMark={false}
         autoComplete="off"
+        onValuesChange={onValuesChange}
       >
         <div className="avatar-upload">
           <AvatarUploader
@@ -156,20 +159,6 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         </div>
 
         <Row gutter={16}>
-          <Col xs={24} sm={12}>
-            <Form.Item
-              name="realName"
-              label="真实姓名"
-              rules={[
-                { max: 50, message: '姓名不能超过50个字符' },
-              ]}
-            >
-              <Input
-                placeholder="请输入真实姓名"
-                maxLength={50}
-              />
-            </Form.Item>
-          </Col>
           <Col xs={24} sm={12}>
             <Form.Item
               name="username"
@@ -186,18 +175,19 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           </Col>
           <Col xs={24} sm={12}>
             <Form.Item
-              name="nickname"
-              label="昵称"
+              name="realName"
+              label="姓名"
               rules={[
-                { max: 50, message: '昵称不能超过50个字符' },
+                { max: 50, message: '姓名不能超过50个字符' },
               ]}
             >
               <Input
-                placeholder="请输入昵称"
+                placeholder="请输入姓名"
                 maxLength={50}
               />
             </Form.Item>
           </Col>
+
           <Col xs={24} sm={12}>
             <Form.Item
               name="phone"
@@ -242,17 +232,6 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         </Form.Item>
 
         <Row gutter={16}>
-          <Col xs={24} sm={12}>
-            <Form.Item
-              name="location"
-              label="所在地区"
-            >
-              <Input
-                placeholder="请输入所在地区"
-                maxLength={100}
-              />
-            </Form.Item>
-          </Col>
 
           <Col xs={24} sm={12}>
             <Form.Item
@@ -269,18 +248,6 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           </Col>
         </Row>
 
-        <Form.Item
-          name="website"
-          label="个人网站"
-          rules={[
-            { type: 'url', message: '请输入正确的网址格式' },
-          ]}
-        >
-          <Input
-            placeholder="请输入个人网站地址"
-            maxLength={200}
-          />
-        </Form.Item>
         {/* 价格区间*/}
         <Form.Item
           name="priceRange"
@@ -299,93 +266,69 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           />
         </Form.Item>
 
+        {/* 控制整个社交媒体部分显示/隐藏的开关 */}
         <Form.Item
-          label="个人标签"
+          name="hideSocialLinks"
+          label="隐藏社交媒体部分"
+          valuePropName="checked"
         >
-          <div className="specialty-tags">
-            <Space wrap>
-              {specialties.map((specialty) => (
-                <Tag
-                  key={specialty}
-                  closable
-                  onClose={() => removeSpecialty(specialty)}
-                  className="specialty-tag"
-                >
-                  {specialty}
-                </Tag>
-              ))}
-            </Space>
-          </div>
-
-          <Space.Compact style={{ width: '100%' }} className="specialty-input">
-            <Input
-              placeholder="输入个人特长"
-              value={specialtyInput}
-              onChange={(e) => setSpecialtyInput(e.target.value)}
-              onPressEnter={addSpecialty}
-              maxLength={30}
-            />
-            <Button
-              type="primary"
-              onClick={addSpecialty}
-              disabled={!specialtyInput || specialties.includes(specialtyInput)}
-            >
-              添加
-            </Button>
-          </Space.Compact>
+          <Switch />
         </Form.Item>
 
-        <div className="social-section">
-          <div className="section-title">社交媒体</div>
+        {/* 社交媒体部分，根据hideSocialLinks状态显示/隐藏 */}
+        {!hideSocialLinks && (
+          <div className="social-section">
+            <div className="section-title">社交媒体</div>
 
-          <Row gutter={16}>
-            <Col xs={24} sm={6}>
-              <Form.Item
-                name={['socialMedia', 'wechat']}
-                label="微信号"
-              >
-                <Input
-                  placeholder="请输入微信号"
-                  maxLength={50}
-                />
-              </Form.Item>
-            </Col>
+            <Row gutter={16}>
+              <Col xs={24} sm={6}>
+                <Form.Item
+                  name={['socialMedia', 'wechat', 'value']}
+                  label="微信号"
+                >
+                  <Input
+                    placeholder="请输入微信号"
+                    maxLength={50}
+                  />
+                </Form.Item>
+              </Col>
 
-            <Col xs={24} sm={6}>
-              <Form.Item
-                name={['socialMedia', 'weibo']}
-                label="微博"
-              >
-                <Input
-                  placeholder="请输入微博账号"
-                  maxLength={50}
-                />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={6}>
-              <Form.Item
-                name={['socialMedia', 'xiaohongshu']}
-                label="小红书"
-              >
-                <Input
-                  placeholder="请输入小红书账号"
-                  maxLength={50}
-                />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={6}>
-              <Form.Item
-                name={['socialMedia', 'douyin']}
-                label="抖音"
-              >
-                <Input
-                  placeholder="请输入抖音账号"
-                  maxLength={50}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-        </div>
+              <Col xs={24} sm={6}>
+                <Form.Item
+                  name={['socialMedia', 'weibo', 'value']}
+                  label="微博"
+                >
+                  <Input
+                    placeholder="请输入微博账号"
+                    maxLength={50}
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={6}>
+                <Form.Item
+                  name={['socialMedia', 'xiaohongshu', 'value']}
+                  label="小红书"
+                >
+                  <Input
+                    placeholder="请输入小红书账号"
+                    maxLength={50}
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={6}>
+                <Form.Item
+                  name={['socialMedia', 'douyin', 'value']}
+                  label="抖音"
+                >
+                  <Input
+                    placeholder="请输入抖音账号"
+                    maxLength={50}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+          </div>
+        )}
 
         <Form.Item style={{ marginBottom: 0, marginTop: 32 }}>
           <Space style={{ width: '100%', justifyContent: 'flex-end' }}>

@@ -4,14 +4,12 @@ import {
   Tabs,
   Card,
   Space,
-  Tag,
   Button,
   Modal,
   Switch,
 } from 'antd';
 import {
   UserOutlined,
-  CalendarOutlined,
   PictureOutlined,
   GlobalOutlined,
 } from '@ant-design/icons';
@@ -412,10 +410,10 @@ const ProfilePage: React.FC = () => {
   const handleReorder = useCallback(async (newOrderedFiles: MediaFile[]) => {
     try {
       console.log('🔄 开始处理重新排序:', newOrderedFiles.map(f => ({ id: f.id, order: f.mediaOrder })));
-      
+
       // 立即更新本地状态以提供即时反馈
       setMediaFiles(newOrderedFiles);
-      
+
       // 准备排序数据并发送到后端
       if (newOrderedFiles.length > 0 && currentUser?.id) {
         const sortData = newOrderedFiles
@@ -427,16 +425,16 @@ const ProfilePage: React.FC = () => {
 
         console.log('🔄 发送排序数据到后端:', sortData);
         await profileService.updateMediaProfilesOrder({ orderData: sortData });
-        
+
         // 重新加载媒体文件以确保数据同步
         await loadMediaFiles(currentUser.id);
-        
+
         message.success('排序已保存');
       }
     } catch (error) {
       console.error('重新排序失败:', error);
       message.error('排序保存失败，请重试');
-      
+
       // 如果保存失败，重新加载原始数据
       if (currentUser?.id) {
         await loadMediaFiles(currentUser.id);
@@ -526,6 +524,13 @@ const ProfilePage: React.FC = () => {
               <ProfileEditForm
                 initialValues={{
                   ...currentUser,
+                  socialLinks: currentUser?.socialLinks ? Object.keys(currentUser.socialLinks).reduce((acc, key) => {
+                    const link = (currentUser.socialLinks as any)[key];
+                    acc[key] = { value: link, hidden: false };
+
+                    return acc;
+                  }, {} as any) : {},
+                  hideSocialLinks: (currentUser as any)?.hideSocialLinks,
                   createdAt: formatDate(currentUser?.createdAt || new Date()),
                   updatedAt: formatDate(currentUser?.updatedAt || new Date()),
                 }}
@@ -560,7 +565,7 @@ const ProfilePage: React.FC = () => {
                   />
                 </div>
                 <div className="name">
-                  {currentUser?.realName || currentUser?.nickname}
+                  {currentUser?.realName}
                 </div>
                 <div className="title">
                   {currentUser?.bio || '暂无个人简介'}
@@ -579,20 +584,7 @@ const ProfilePage: React.FC = () => {
                   </div>
                 )}
 
-                {/* 专业技能 */}
-                {currentUser?.specialties && currentUser.specialties.length > 0 && (
-                  <div className="section">
-                    <div className="section-title">
-                      <CalendarOutlined />
-                      专业技能
-                    </div>
-                    <Space wrap>
-                      {currentUser.specialties.map((skill: string, index: number) => (
-                        <Tag key={index} color="blue">{skill}</Tag>
-                      ))}
-                    </Space>
-                  </div>
-                )}
+
 
                 {/* 作品展示 */}
                 <div className="section">

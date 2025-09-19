@@ -142,9 +142,22 @@ export const updateProfileSchema = Joi.object({
   }).optional(),
   avatarUrl: Joi.string().uri().optional(),
   socialLinks: Joi.object({
-    weibo: Joi.string().uri().optional(),
-    douyin: Joi.string().max(100).optional(),
-    xiaohongshu: Joi.string().max(100).optional(),
+    weibo: Joi.object({
+      value: Joi.string().max(100).optional(),
+      hidden: Joi.boolean().optional()
+    }).optional(),
+    wechat: Joi.object({
+      value: Joi.string().max(50).optional(),
+      hidden: Joi.boolean().optional()
+    }).optional(),
+    xiaohongshu: Joi.object({
+      value: Joi.string().max(100).optional(),
+      hidden: Joi.boolean().optional()
+    }).optional(),
+    douyin: Joi.object({
+      value: Joi.string().max(100).optional(),
+      hidden: Joi.boolean().optional()
+    }).optional(),
   }).optional(),
 });
 
