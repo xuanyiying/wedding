@@ -1,22 +1,26 @@
 
 export interface SiteSettings {
   theme?: {
-    darkMode: boolean;
-    colors: {
+    darkMode?: boolean;
+    colors?: {
       primary: string; // 主题色
       secondary: string; // 次主题色
       background: string;
       text: string;
       accent?: string; // 强调色
     };
-    fonts: {
+    fonts?: {
       primary: string;
       secondary: string;
     };
-    spacing: {
+    spacing?: {
       containerPadding: string;
       sectionPadding: string;
     };
+    borderRadius?: number;
+    fontSize?: number;
+    compactMode?: boolean;
+    clientThemeVariant?: string;
   };
   site?: {
     name: string;
@@ -41,50 +45,61 @@ export interface SiteSettings {
   };
   // 首页section配置
   homepageSections?: {
-    hero: {
-      backgroundImage: string; // 背景图片
+    hero?: {
+      backgroundImage?: string; // 背景图片
+      visible?: boolean;
+      title?: string; // 标题
+      description?: string; // 描述
+      ctaText?: string; // 调用-to-action文本
+      ctaLink?: string; // 调用-to-action链接
+    };
+    team?: {
+      visible?: boolean; // 是否可见
+      title?: string; // 标题
+      subtitle?: string; // 副标题
+      description?: string; // 描述
+    };
+    teamShowcase?: {
+      visible?: boolean;
+      title?: string;
+      subtitle?: string;
+      description?: string;
+    };
+    portfolio?: {
+      visible?: boolean;
+      title?: string;
+      subtitle?: string;
+      description?: string;
+    };
+    schedule?: {
+      visible?: boolean;
+      title?: string;
+      subtitle?: string;
+      description?: string;
+    };
+    contact?: {
+      visible?: boolean;
+      title?: string;
+      subtitle?: string;
+      description?: string;
+      address?: string;
+      phone?: string;
+      email?: string;
+      wechat?: string;
+      xiaohongshu?: string;
+      douyin?: string;
+    };
+  };
+  // 导航菜单配置
+  navigation?: {
+    menuItems: Array<{
+      key: string;
+      label: string;
+      path: string;
+      sectionId?: string;
       visible: boolean;
-      title: string; // 标题
-      description: string; // 描述
-      ctaText: string; // 调用-to-action文本
-      ctaLink: string; // 调用-to-action链接
-    };
-    team: {
-      visible: boolean; // 是否可见
-      title: string; // 标题
-      subtitle: string; // 副标题
-      description: string; // 描述
-    };
-    teamShowcase: {
-      visible: boolean;
-      title: string;
-      subtitle: string;
-      description: string;
-    };
-    portfolio: {
-      visible: boolean;
-      title: string;
-      subtitle: string;
-      description: string;
-    };
-    schedule: {
-      visible: boolean;
-      title: string;
-      subtitle: string;
-      description: string;
-    };
-    contact: {
-      visible: boolean;
-      title: string;
-      subtitle: string;
-      description: string;
-      address: string;
-      phone: string;
-      email: string;
-      wechat: string;
-      xiaohongshu: string;
-      douyin: string;
-    };
+      order: number;
+    }>;
   };
 }
 
@@ -103,18 +118,11 @@ export const UserStatus = {
 
 // 档期状态枚举
 export const ScheduleStatus = {
+  AVAILABLE: 'available',
+  BOOKED: 'booked',
+  COMPLETED: 'completed',
+  CANCELLED: 'cancelled',
   RESERVE: 'reserve', // 预订留
-  BOOKED: 'booked', // 已预订
-  CANCELLED: 'cancelled', // 已取消
-} as const;
-
-// 事件类型枚举
-export const EventType = {
-  WEDDING: 'wedding', // 婚礼
-  ENGAGEMENT: 'engagement', // 订婚
-  ANNIVERSARY: 'anniversary', // 纪念日
-  CONSULTATION: 'consultation', // 咨询
-  OTHER: 'other' // 其他
 } as const;
 
 // 作品状态枚举
@@ -268,7 +276,6 @@ export const BookingStatus = {
 export type UserRole = typeof UserRole[keyof typeof UserRole];
 export type UserStatus = typeof UserStatus[keyof typeof UserStatus];
 export type ScheduleStatus = typeof ScheduleStatus[keyof typeof ScheduleStatus];
-export type EventType = typeof EventType[keyof typeof EventType];
 export type WorkType = typeof WorkType[keyof typeof WorkType];
 export type WorkCategory = typeof WorkCategory[keyof typeof WorkCategory];
 export type FileType = typeof FileType[keyof typeof FileType];
@@ -397,7 +404,6 @@ export interface Schedule {
   location?: string | null;
   venueName?: string | null; // 场地名称
   venueAddress?: string | null; // 场地地址
-  eventType: EventType;
   status: ScheduleStatus;
   price?: number | null;
   deposit?: number | null; // 定金
@@ -691,27 +697,6 @@ export interface TeamStats {
   newThisMonth: number;
 }
 
-// 预订类型
-export interface Booking {
-  id: string;
-  clientId: string;
-  clientName: string;
-  clientPhone: string;
-  clientEmail: string;
-  teamId: string;
-  serviceId: string;
-  eventDate: string;
-  eventTime: string;
-  eventAddress: string;
-  eventType: EventType;
-  status: BookingStatus;
-  notes?: string;
-  price: number;
-  paymentStatus: PaymentStatus;
-  cancelReason?: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
 // 应用状态类型
 export interface AppState {

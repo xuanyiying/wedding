@@ -1,6 +1,6 @@
 import { Model, DataTypes, Sequelize, Optional, Op } from 'sequelize';
 import User from './User';
-import { EventType, ScheduleStatus, WeddingTime } from '../types';
+import { ScheduleStatus, WeddingTime } from '../types';
 
 // Schedule attributes interface
 export interface ScheduleAttributes {
@@ -15,7 +15,6 @@ export interface ScheduleAttributes {
   location: string | null; // 婚礼地点
   venueName: string | null; // 场馆名称
   venueAddress: string | null; // 场馆地址
-  eventType: EventType;
   status: ScheduleStatus;
   price: number | null;
   deposit: number | null; // 定金
@@ -30,7 +29,7 @@ export interface ScheduleAttributes {
 }
 
 // Schedule creation attributes interface
-export interface ScheduleCreationAttributes extends Optional<ScheduleAttributes, 'id'> {}
+export interface ScheduleCreationAttributes extends Optional<ScheduleAttributes, 'id'> { }
 
 // Schedule model class
 class Schedule extends Model<ScheduleAttributes, ScheduleCreationAttributes> implements ScheduleAttributes {
@@ -44,7 +43,6 @@ class Schedule extends Model<ScheduleAttributes, ScheduleCreationAttributes> imp
   public location!: string | null; // 婚礼地点
   public venueName!: string | null; // 场馆名称
   public venueAddress!: string | null; // 场馆地址
-  public eventType!: EventType; // 婚礼类型
   public status!: ScheduleStatus;
   public price!: number | null; // 婚礼价格
   public deposit!: number | null; // 定金
@@ -147,12 +145,6 @@ export const initSchedule = (sequelize: Sequelize): void => {
         field: 'venue_address',
         comment: '场地地址',
       },
-      eventType: {
-        type: DataTypes.ENUM(...Object.values(EventType)),
-        allowNull: false,
-        field: 'event_type',
-        comment: '事件类型',
-      },
       status: {
         type: DataTypes.ENUM(...Object.values(ScheduleStatus)),
         allowNull: false,
@@ -183,7 +175,7 @@ export const initSchedule = (sequelize: Sequelize): void => {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
         comment: '是否已支付',
-        field: 'is_Paid',
+        field: 'is_paid',
       },
       requirements: {
         type: DataTypes.TEXT,
@@ -222,7 +214,6 @@ export const initSchedule = (sequelize: Sequelize): void => {
       indexes: [
         { name: 'idx_schedules_user_id_wedding_date', fields: ['user_id', 'wedding_date'] },
         { name: 'idx_schedules_customer_id', fields: ['customer_id'] },
-        { name: 'idx_schedules_status_event_type', fields: ['status', 'event_type'] },
         { name: 'idx_schedules_wedding_date_time', fields: ['wedding_date', 'wedding_time'] },
         { name: 'idx_schedules_deleted_at', fields: ['deleted_at'] },
       ],

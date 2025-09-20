@@ -6,9 +6,8 @@ import classNames from 'classnames';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import { HolidayUtil, Lunar } from 'lunar-typescript';
-import type { Schedule, EventType } from '../types';
+import type { Schedule } from '../types';
 import { ScheduleStatus } from '../types';
-import { getEventTypeColor } from '../utils/styleUtils';
 
 // 档期事件接口
 interface ScheduleEvent extends Schedule {
@@ -292,8 +291,6 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                   className={styles.scheduleEvent}
                   style={{
                     background: getStatusBackground(event.status),
-                    borderLeft: `3px solid ${getEventTypeColor(event.eventType as EventType)}`,
-                    color: getEventTypeColor(event.eventType as EventType)
                   }}
                   onClick={(e) => {
                     e.stopPropagation();

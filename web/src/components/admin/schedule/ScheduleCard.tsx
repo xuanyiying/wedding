@@ -58,12 +58,13 @@ export interface Schedule {
   clientName: string;
   clientPhone: string;
   weddingDate: string;
-  eventType: 'lunch' | 'dinner';
+  weddingTime: 'lunch' | 'dinner';
   location: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  status: 'reserve' | 'booked' | 'completed' | 'cancelled';
   notes?: string;
   createdAt: string;
   updatedAt: string;
+  isPaid?: boolean;
 }
 
 interface ScheduleCardProps {
@@ -87,30 +88,20 @@ const ScheduleCard: React.FC<ScheduleCardProps> = ({
 }) => {
   const getStatusTag = (status: Schedule['status']) => {
     const statusConfig = {
-      pending: { color: 'orange', text: '待确认' },
-      confirmed: { color: 'blue', text: '已确认' },
+      reserve: { color: 'orange', text: '待确认' },
+      booked: { color: 'blue', text: '已预订' },    
       completed: { color: 'green', text: '已完成' },
       cancelled: { color: 'red', text: '已取消' },
     };
-    
+
     const config = statusConfig[status];
     return <Tag color={config.color}>{config.text}</Tag>;
   };
-  
-  const getEventTypeTag = (type: Schedule['eventType']) => {
-    const typeConfig = {
-      lunch: { color: 'gold', text: '午宴' },
-      dinner: { color: 'purple', text: '晚宴' },
-    };
-    
-    const config = typeConfig[type];
-    return <Tag color={config.color}>{config.text}</Tag>;
-  };
-  
+
   const formatDateTime = (dateTime: string) => {
     return dayjs(dateTime).format('YYYY-MM-DD HH:mm');
   };
-  
+
   const handleStatusChange = (newStatus: Schedule['status']) => {
     if (onStatusChange) {
       onStatusChange(schedule.id, newStatus);
@@ -125,7 +116,6 @@ const ScheduleCard: React.FC<ScheduleCardProps> = ({
         <Space>
           <span>{schedule.title}</span>
           {getStatusTag(schedule.status)}
-          {getEventTypeTag(schedule.eventType)}
         </Space>
       }
       extra={
@@ -157,31 +147,31 @@ const ScheduleCard: React.FC<ScheduleCardProps> = ({
         <Text strong>主持人：</Text>
         <Text>{schedule.hostName}</Text>
       </InfoRow>
-      
+
       <InfoRow>
         <UserOutlined />
         <Text strong>客户：</Text>
         <Text>{schedule.clientName}</Text>
       </InfoRow>
-      
+
       <InfoRow>
         <PhoneOutlined />
         <Text strong>联系电话：</Text>
         <Text>{schedule.clientPhone}</Text>
       </InfoRow>
-      
+
       <InfoRow>
         <ClockCircleOutlined />
         <Text strong>婚礼日期：</Text>
         <Text>{formatDateTime(schedule.weddingDate)}</Text>
       </InfoRow>
-      
+
       <InfoRow>
         <EnvironmentOutlined />
         <Text strong>地点：</Text>
         <Text>{schedule.location}</Text>
       </InfoRow>
-      
+
       {schedule.notes && (
         <>
           <Divider style={{ margin: '12px 0' }} />
@@ -193,25 +183,25 @@ const ScheduleCard: React.FC<ScheduleCardProps> = ({
           </Paragraph>
         </>
       )}
-      
+
       {showActions && onStatusChange && (
         <ActionBar>
           <Text type="secondary" style={{ fontSize: '12px' }}>
             创建时间：{formatDateTime(schedule.createdAt)}
           </Text>
-          
+
           <Space>
-            {schedule.status === 'pending' && (
+            {schedule.status === 'reserve' && (
               <Button
                 size="small"
                 type="primary"
-                onClick={() => handleStatusChange('confirmed')}
+                onClick={() => handleStatusChange('booked')}
               >
                 确认
               </Button>
             )}
-            
-            {schedule.status === 'confirmed' && (
+
+            {schedule.status === 'booked' && schedule.isPaid && (
               <Button
                 size="small"
                 type="primary"
@@ -220,7 +210,7 @@ const ScheduleCard: React.FC<ScheduleCardProps> = ({
                 完成
               </Button>
             )}
-            
+
             {['pending', 'confirmed'].includes(schedule.status) && (
               <Button
                 size="small"

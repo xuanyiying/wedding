@@ -418,13 +418,6 @@ router.delete(
   ScheduleController.deleteSchedule,
 );
 
-// 确认档期
-router.post(
-  '/:id/confirm',
-  authMiddleware,
-  validateRequest(scheduleValidators.confirmSchedule),
-  ScheduleController.confirmSchedule,
-);
 
 // 检查档期冲突
 router.post(

@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import { ScheduleStatus, EventType, WeddingTime } from '../types';
+import { ScheduleStatus, WeddingTime } from '../types';
 
 export const scheduleValidators = {
   // 获取档期列表
@@ -10,9 +10,6 @@ export const scheduleValidators = {
       userId: Joi.string().optional(),
       status: Joi.string()
         .valid(...Object.values(ScheduleStatus))
-        .optional(),
-      eventType: Joi.string()
-        .valid(...Object.values(EventType))
         .optional(),
       startDate: Joi.date().iso().optional(),
       endDate: Joi.date().iso().min(Joi.ref('startDate')).optional(),
@@ -34,9 +31,6 @@ export const scheduleValidators = {
       title: Joi.string().trim().min(1).max(200).required(),
       weddingTime: Joi.string().valid(...Object.values(WeddingTime)).required(),
       location: Joi.string().trim().max(500).optional(),
-      eventType: Joi.string()
-        .valid(...Object.values(EventType))
-        .required(),
       description: Joi.string().trim().max(2000).optional(),
       price: Joi.number().min(0).optional(),
       deposit: Joi.number().min(0).max(Joi.ref('price')).optional(),
@@ -61,9 +55,6 @@ export const scheduleValidators = {
       title: Joi.string().trim().min(1).max(200).optional(),
       weddingTime: Joi.string().valid(...Object.values(WeddingTime)).required(),
       location: Joi.string().trim().max(500).optional(),
-      eventType: Joi.string()
-        .valid(...Object.values(EventType))
-        .optional(),
       description: Joi.string().trim().max(2000).optional(),
       price: Joi.number().min(0).optional(),
       deposit: Joi.number().min(0).optional(),
@@ -122,9 +113,6 @@ export const scheduleValidators = {
     query: Joi.object({
       page: Joi.number().integer().min(1).default(1),
       pageSize: Joi.number().integer().min(1).max(100).default(20),
-      eventType: Joi.string()
-        .valid(...Object.values(EventType))
-        .optional(),
       startDate: Joi.date().iso().optional(),
       endDate: Joi.date().iso().min(Joi.ref('startDate')).optional(),
     }),

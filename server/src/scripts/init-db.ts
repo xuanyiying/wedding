@@ -3,13 +3,12 @@
 import { Sequelize } from 'sequelize';
 import { config } from '../config/config';
 import { logger } from '../utils/logger';
-import { initModels } from '../models';
+import { initModels, SystemConfig } from '../models';
 import { User, Work, Schedule, Team, TeamMember, File } from '../models';
 import { PasswordUtils } from '../utils/helpers';
 import { generateId } from '../utils/id.generator';
 import { UserRole, UserStatus } from '../interfaces';
 import {
-  EventType,
   ScheduleStatus,
   WeddingTime,
   WorkType,
@@ -22,8 +21,7 @@ import {
   FileType,
   OssType,
 } from '../types';
-import { initializeSystemConfig } from './init-system-config';
-import sequelize from '../config/database';
+import { SettingsService } from '@/services/settings.service';
 export class DatabaseInitializer {
   private userIdMap: { [key: string]: string } = {};
   private teamIdMap: { [key: string]: string } = {};
@@ -460,32 +458,22 @@ export class DatabaseInitializer {
         }
         const userId = hostIds[Math.floor(Math.random() * hostIds.length)];
 
-        // 随机事件类型
-        const eventTypes: EventType[] = [EventType.WEDDING, EventType.CONSULTATION, EventType.OTHER];
-        const eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)]!;
-
         // 随机状态
         const statuses: ScheduleStatus[] = [
           ScheduleStatus.AVAILABLE,
+          ScheduleStatus.RESERVE,
           ScheduleStatus.BOOKED,
-          ScheduleStatus.CONFIRMED,
-          ScheduleStatus.COMPLETED,
           ScheduleStatus.CANCELLED,
-          ScheduleStatus.BUSY,
-          ScheduleStatus.VACATION,
+
         ];
         const status = statuses[Math.floor(Math.random() * statuses.length)]!;
 
         // 根据事件类型生成标题
         let title = '';
-        switch (eventType) {
-          case EventType.WEDDING:
-            title = '婚礼主持服务';
-            break;
-        }
+
 
         // 随机价格
-        const basePrice = eventType === EventType.WEDDING ? 3000 : eventType === EventType.CONSULTATION ? 500 : 1000;
+        const basePrice = 1000;
         const price = basePrice + Math.floor(Math.random() * 2000);
 
         const schedule = {
@@ -496,16 +484,15 @@ export class DatabaseInitializer {
           weddingTime: WeddingTime.LUNCH,
           weddingDate: startTime,
           location: locations[Math.floor(Math.random() * locations.length)] as string,
-          eventType,
           status,
           price,
           deposit: Math.floor(price * 0.3), // 30%定金
           isPaid: false,
           customerName: customerNames[Math.floor(Math.random() * customerNames.length)] as string,
           customerPhone: generatePhone(),
-          requirements: `${eventType === EventType.WEDDING ? '婚礼' : eventType === EventType.CONSULTATION ? '咨询' : '其他'}服务需求`,
+          requirements: 'wedding',
           notes: notes[Math.floor(Math.random() * notes.length)] as string,
-          tags: [eventType, status],
+          tags: [status],
           createdAt: new Date(),
           updatedAt: new Date(),
         };
@@ -916,15 +903,100 @@ export class DatabaseInitializer {
       await this.initializeTeams();
       await this.initializeSchedules();
       await this.initializeWorks();
-      await initializeSystemConfig(sequelize);
+      await this.initializeDefaultConfigs();
       logger.info('数据库初始化完成');
     } catch (error) {
       logger.error('数据库初始化失败:', error);
       throw error;
     }
   }
-}
 
+
+  /**
+   * 初始化默认配置
+   */
+  async initializeDefaultConfigs(): Promise<void> {
+    try {
+      const defaultConfigs = [
+        // 网站基本信息
+        { key: 'site.name', value: '婚礼主持工作室', category: 'site', isPublic: true },
+        { key: 'site.description', value: '专业的婚礼主持服务', category: 'site', isPublic: true },
+        { key: 'site.keywords', value: '婚礼主持,婚纱主持,主持工作室', category: 'site', isPublic: true },
+        { key: 'site.logo', value: '', category: 'site', isPublic: true },
+        { key: 'site.favicon', value: '', category: 'site', isPublic: true },
+
+        // SEO 配置
+        { key: 'seo.title', value: '婚礼主持工作室', category: 'seo', isPublic: true },
+        { key: 'seo.description', value: '专业的婚礼主持服务', category: 'seo', isPublic: true },
+        { key: 'seo.keywords', value: '婚礼主持', category: 'seo', isPublic: true },
+
+        // 主题配置
+        { key: 'theme.darkMode', value: false, category: 'theme', isPublic: true },
+        { key: 'theme.colors.primary', value: '#d4af37', category: 'theme', isPublic: true },
+        { key: 'theme.colors.secondary', value: '#8b7355', category: 'theme', isPublic: true },
+        { key: 'theme.colors.background', value: '#ffffff', category: 'theme', isPublic: true },
+        { key: 'theme.colors.text', value: '#333333', category: 'theme', isPublic: true },
+        { key: 'theme.colors.accent', value: '#f5f5f5', category: 'theme', isPublic: true },
+        { key: 'theme.fonts.primary', value: 'Inter, sans-serif', category: 'theme', isPublic: true },
+        { key: 'theme.fonts.secondary', value: 'Playfair Display, serif', category: 'theme', isPublic: true },
+        { key: 'theme.spacing.containerPadding', value: '20px', category: 'theme', isPublic: true },
+        { key: 'theme.spacing.sectionPadding', value: '80px 0', category: 'theme', isPublic: true },
+
+        // 首页配置
+        { key: 'homepageSections.hero.visible', value: true, category: 'homepage', isPublic: true },
+        { key: 'homepageSections.hero.title', value: '专业团队为您打造梦想中的婚礼', category: 'homepage', isPublic: true },
+        {
+          key: 'homepageSections.hero.description', value: '专业团队为您打造梦想中的婚礼', category: 'homepage', isPublic: true
+        },
+        { key: 'homepageSections.hero.backgroundImage', value: '', category: 'homepage', isPublic: true },
+        { key: 'homepageSections.hero.ctaText', value: '了解更多', category: 'homepage', isPublic: true },
+        { key: 'homepageSections.hero.ctaLink', value: '#portfolio', category: 'homepage', isPublic: true },
+
+        { key: 'homepageSections.team.visible', value: true, category: 'homepage', isPublic: true },
+        { key: 'homepageSections.team.title', value: '专业团队', category: 'homepage', isPublic: true },
+        { key: 'homepageSections.team.subtitle', value: '经验丰富的主持师', category: 'homepage', isPublic: true },
+        { key: 'homepageSections.team.description', value: '我们的团队拥有多年婚礼主持经验', category: 'homepage', isPublic: true },
+
+        { key: 'homepageSections.portfolio.visible', value: true, category: 'homepage', isPublic: true },
+        { key: 'homepageSections.portfolio.title', value: '作品展示', category: 'homepage', isPublic: true },
+        { key: 'homepageSections.portfolio.subtitle', value: '精选案例', category: 'homepage', isPublic: true },
+        { key: 'homepageSections.portfolio.description', value: '查看我们的精选婚礼主持作品', category: 'homepage', isPublic: true },
+
+        { key: 'homepageSections.contact.visible', value: true, category: 'homepage', isPublic: true },
+        { key: 'homepageSections.contact.title', value: '联系我们', category: 'homepage', isPublic: true },
+        { key: 'homepageSections.contact.subtitle', value: '预约咨询', category: 'homepage', isPublic: true },
+        { key: 'homepageSections.contact.description', value: '联系我们获取专业的婚礼主持服务', category: 'homepage', isPublic: true },
+        { key: 'homepageSections.contact.address', value: '', category: 'homepage', isPublic: true },
+        { key: 'homepageSections.contact.phone', value: '', category: 'homepage', isPublic: true },
+        { key: 'homepageSections.contact.email', value: '', category: 'homepage', isPublic: true },
+        { key: 'homepageSections.contact.wechat', value: '', category: 'homepage', isPublic: true },
+        { key: 'homepageSections.contact.xiaohongshu', value: '', category: 'homepage', isPublic: true },
+        { key: 'homepageSections.contact.douyin', value: '', category: 'homepage', isPublic: true },
+
+        // 邮件配置
+        { key: 'email.smtpHost', value: '', category: 'email', isPublic: false },
+        { key: 'email.smtpPort', value: 587, category: 'email', isPublic: false },
+        { key: 'email.smtpUser', value: '', category: 'email', isPublic: false },
+        { key: 'email.smtpPassword', value: '', category: 'email', isPublic: false },
+        { key: 'email.smtpSecure', value: false, category: 'email', isPublic: false },
+        { key: 'email.emailFrom', value: '', category: 'email', isPublic: false },
+        { key: 'email.emailFromName', value: '婚礼主持工作室', category: 'email', isPublic: false },
+      ];
+
+      for (const config of defaultConfigs) {
+        const existing = await SystemConfig.findByKey(config.key);
+        if (!existing) {
+          await SettingsService.setConfigValue(config.key, config.value, config.category, config.isPublic);
+        }
+      }
+
+      logger.info('默认配置初始化完成');
+    } catch (error) {
+      logger.error('初始化默认配置失败:', error);
+      throw error;
+    }
+  }
+}
 /**
  * 导出初始化函数
  */

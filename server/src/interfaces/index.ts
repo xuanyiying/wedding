@@ -1,5 +1,4 @@
 import {
-  EventType,
   UserRole,
   NotificationType,
   UserStatus,
@@ -68,7 +67,6 @@ export interface SearchQuery {
   priceMin?: number;
   priceMax?: number;
   rating?: number;
-  eventType?: EventType;
   dateFrom?: Date;
   dateTo?: Date;
 }
@@ -170,7 +168,6 @@ export interface Contact {
   name: string;
   phone: string;
   email?: string;
-  eventType: EventType;
   eventDate?: Date;
   location?: string;
   budget?: number;

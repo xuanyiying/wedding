@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ScheduleService } from '../services/schedule.service';
 import { logger } from '../utils/logger';
-import { ScheduleStatus, EventType, WeddingTime } from '../types';
+import { ScheduleStatus, WeddingTime } from '../types';
 import { AuthenticatedRequest } from '../interfaces';
 import { Resp } from '../utils/response';
 
@@ -119,29 +119,6 @@ export const deleteSchedule = async (req: AuthenticatedRequest, res: Response, n
 };
 
 /**
- * 确认档期
- */
-export const confirmSchedule = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const { id } = req.params;
-    const { notes } = req.body;
-    const scheduleId = id;
-    const currentUserId = req.user!.id;
-
-    if (!scheduleId) {
-      res.status(400).json({ error: '无效的档期ID' });
-      return;
-    }
-
-    const schedule = await ScheduleService.confirmSchedule(scheduleId, currentUserId, notes);
-    Resp.success(res, schedule, '确认档期成功');
-  } catch (error) {
-    logger.error('确认档期失败:', error);
-    next(error);
-  }
-};
-
-/**
  * 检查档期冲突
  */
 export const checkScheduleConflict = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -218,12 +195,11 @@ export const getClientScheduleAvailability = async (req: Request, res: Response,
  */
 export const getPublicSchedules = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { page = 1, pageSize = 10, eventType, startDate, endDate } = req.query;
+    const { page = 1, pageSize = 10, startDate, endDate } = req.query;
 
     const result = await ScheduleService.getPublicSchedules({
       page: Number(page),
       pageSize: Number(pageSize),
-      eventType: eventType as EventType,
       startDate: startDate as string,
       endDate: endDate as string,
     });

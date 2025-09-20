@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { type Schedule, type CalendarEvent, type ScheduleStatus, type EventType, ViewMode } from '../../types';
+import { type Schedule, type CalendarEvent, type ScheduleStatus, ViewMode } from '../../types';
 
 interface ScheduleState {
   schedules: Schedule[];
@@ -11,7 +11,6 @@ interface ScheduleState {
   error: string | null;
   filters: {
     status?: ScheduleStatus;
-    eventType?: EventType;
     dateRange?: {
       start: string;
       end: string;
@@ -38,65 +37,65 @@ const scheduleSlice = createSlice({
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
-    
+
     // 设置错误
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
     },
-    
+
     // 清除错误
     clearError: (state) => {
       state.error = null;
     },
-    
+
     // 设置日程列表
     setSchedules: (state, action: PayloadAction<Schedule[]>) => {
       state.schedules = action.payload;
     },
-    
+
     // 添加日程
     addSchedule: (state, action: PayloadAction<Schedule>) => {
       state.schedules.push(action.payload);
     },
-    
+
     // 更新日程
     updateSchedule: (state, action: PayloadAction<Schedule>) => {
       const index = state.schedules.findIndex(s => s.id === action.payload.id);
       if (index !== -1) {
         state.schedules[index] = action.payload;
       }
-      
+
       // 如果是当前选中的日程，也要更新
       if (state.currentSchedule?.id === action.payload.id) {
         state.currentSchedule = action.payload;
       }
     },
-    
+
     // 删除日程
     removeSchedule: (state, action: PayloadAction<string>) => {
       state.schedules = state.schedules.filter(s => s.id !== action.payload);
-      
+
       // 如果删除的是当前选中的日程，清除选中状态
       if (state.currentSchedule?.id === action.payload) {
         state.currentSchedule = null;
       }
     },
-    
+
     // 设置当前日程
     setCurrentSchedule: (state, action: PayloadAction<Schedule | null>) => {
       state.currentSchedule = action.payload;
     },
-    
+
     // 设置日历事件
     setCalendarEvents: (state, action: PayloadAction<CalendarEvent[]>) => {
       state.calendarEvents = action.payload;
     },
-    
+
     // 添加日历事件
     addCalendarEvent: (state, action: PayloadAction<CalendarEvent>) => {
       state.calendarEvents.push(action.payload);
     },
-    
+
     // 更新日历事件
     updateCalendarEvent: (state, action: PayloadAction<CalendarEvent>) => {
       const index = state.calendarEvents.findIndex(e => e.id === action.payload.id);
@@ -104,32 +103,32 @@ const scheduleSlice = createSlice({
         state.calendarEvents[index] = action.payload;
       }
     },
-    
+
     // 删除日历事件
     removeCalendarEvent: (state, action: PayloadAction<string>) => {
       state.calendarEvents = state.calendarEvents.filter(e => e.id !== action.payload);
     },
-    
+
     // 设置选中日期
     setSelectedDate: (state, action: PayloadAction<string | null>) => {
       state.selectedDate = action.payload;
     },
-    
+
     // 设置视图模式
     setViewMode: (state, action: PayloadAction<ViewMode>) => {
       state.viewMode = action.payload;
     },
-    
+
     // 设置过滤器
     setFilters: (state, action: PayloadAction<ScheduleState['filters']>) => {
       state.filters = { ...state.filters, ...action.payload };
     },
-    
+
     // 清除过滤器
     clearFilters: (state) => {
       state.filters = {};
     },
-    
+
     // 批量更新日程状态
     batchUpdateScheduleStatus: (state, action: PayloadAction<{
       ids: string[];
@@ -142,7 +141,7 @@ const scheduleSlice = createSlice({
         }
       });
     },
-    
+
     // 重置状态
     resetScheduleState: (state) => {
       state.schedules = [];
@@ -193,24 +192,24 @@ export const selectScheduleFilters = (state: { schedule: ScheduleState }) => sta
 // 复合选择器
 export const selectFilteredSchedules = (state: { schedule: ScheduleState }) => {
   const { schedules, filters } = state.schedule;
-  
+
   return schedules.filter(schedule => {
     // 状态过滤
     if (filters.status && schedule.status !== filters.status) {
       return false;
     }
-    
+
     // 日期范围过滤
     if (filters.dateRange) {
       const scheduleDate = new Date(schedule.weddingDate);
       const startDate = new Date(filters.dateRange.start);
       const endDate = new Date(filters.dateRange.end);
-      
+
       if (scheduleDate < startDate || scheduleDate > endDate) {
         return false;
       }
     }
-    
+
     return true;
   });
 };

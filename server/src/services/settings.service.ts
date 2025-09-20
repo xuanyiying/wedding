@@ -1,80 +1,31 @@
-import { SystemConfig } from '../models';
 import { EmailService } from './email.service';
+import SystemConfig, { ConfigType } from '../models/SystemConfig';
 import { logger } from '../utils/logger';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { ConfigType } from '../models/SystemConfig';
 
 export class SettingsService {
   /**
-   * 获取所有设置
+   * 获取所有设置（管理员）
    */
   static async getSettings() {
     try {
-      const configs = await SystemConfig.findAll({
-        order: [
-          ['category', 'ASC'],
-          ['sortOrder', 'ASC'],
-        ],
-      });
-
-      const settings: any = {
-        site: {},
-        siteTheme: {},
-        email: {},
-        seo: {},
-        homepageSections: {},
-        contactEmail: '',
-        contactPhone: '',
-      };
-
-      configs.forEach(config => {
-        const configKey = config.configKey;
-        let value: any = config.configValue || config.defaultValue;
-
-        // 对JSON类型的配置进行解析
-        if (config.configType === ConfigType.JSON) {
-          try {
-            value = JSON.parse(value || '{}');
-          } catch {
-            value = {};
-          }
-        } else if (config.configType === ConfigType.BOOLEAN) {
-          value = value === 'true' || value === '1';
-        } else if (config.configType === ConfigType.NUMBER) {
-          value = Number(value);
-        }
-
-        // 根据配置键映射到对应的结构
-        switch (configKey) {
-          case 'site':
-            settings.site = value;
-            break;
-          case 'siteTheme':
-            settings.siteTheme = value;
-            break;
-          case 'email':
-            settings.email = value;
-            break;
-          case 'seo':
-            settings.seo = value;
-            break;
-          case 'homepageSections':
-            settings.homepageSections = value;
-            break;
-          case 'contactEmail':
-            settings.contactEmail = value;
-            break;
-          case 'contactPhone':
-            settings.contactPhone = value;
-            break;
-        }
-      });
-
-      return settings;
+      return await this.getAllConfigs();
     } catch (error) {
       logger.error('获取设置失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 获取网站配置（公开）
+   */
+  static async getSiteConfig() {
+    try {
+      return await this.getPublicConfigs();
+    } catch (error) {
+      logger.error('获取网站配置失败:', error);
       throw error;
     }
   }
@@ -84,84 +35,36 @@ export class SettingsService {
    */
   static async updateSiteSettings(siteSettings: any) {
     try {
-      const updates = [];
-
-      // 更新site配置
-      if (siteSettings.site) {
-        updates.push({
-          key: 'site',
-          value: JSON.stringify(siteSettings.site),
-          type: ConfigType.JSON,
-          category: 'site',
-        });
-      }
-
-      // 更新siteTheme配置
-      if (siteSettings.siteTheme) {
-        updates.push({
-          key: 'siteTheme',
-          value: JSON.stringify(siteSettings.siteTheme),
-          type: ConfigType.JSON,
-          category: 'site',
-        });
-      }
-
-      // 更新email配置
-      if (siteSettings.email) {
-        updates.push({
-          key: 'email',
-          value: JSON.stringify(siteSettings.email),
-          type: ConfigType.JSON,
-          category: 'email',
-        });
-      }
-
-      // 更新seo配置
-      if (siteSettings.seo) {
-        updates.push({
-          key: 'seo',
-          value: JSON.stringify(siteSettings.seo),
-          type: ConfigType.JSON,
-          category: 'seo',
-        });
-      }
-
-      // 更新homepageSections配置
-      if (siteSettings.homepageSections) {
-        updates.push({
-          key: 'homepageSections',
-          value: JSON.stringify(siteSettings.homepageSections),
-          type: ConfigType.JSON,
-          category: 'site',
-        });
-      }
-
-      // 更新联系信息
-      if (siteSettings.contactEmail) {
-        updates.push({
-          key: 'contactEmail',
-          value: siteSettings.contactEmail,
-          type: ConfigType.STRING,
-          category: 'site',
-        });
-      }
-
-      if (siteSettings.contactPhone) {
-        updates.push({
-          key: 'contactPhone',
-          value: siteSettings.contactPhone,
-          type: ConfigType.STRING,
-          category: 'site',
-        });
-      }
-
-      for (const update of updates) {
-        if (update.value !== undefined && update.value !== null) {
-          await this.updateOrCreateConfig(update.key, update.value, update.type, update.category);
-        }
-      }
+      await this.updateConfigs('site', siteSettings);
+      logger.info('网站设置更新成功');
     } catch (error) {
       logger.error('更新网站设置失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 更新网站配置
+   */
+  static async updateSiteConfig(config: any) {
+    try {
+      // 根据配置内容确定类别
+      if (config.theme) {
+        await this.updateConfigs('theme', config);
+      }
+      if (config.homepageSections) {
+        await this.updateConfigs('homepage', config);
+      }
+      if (config.site) {
+        await this.updateConfigs('site', config);
+      }
+      if (config.seo) {
+        await this.updateConfigs('seo', config);
+      }
+
+      logger.info('网站配置更新成功');
+    } catch (error) {
+      logger.error('更新网站配置失败:', error);
       throw error;
     }
   }
@@ -171,7 +74,8 @@ export class SettingsService {
    */
   static async updateEmailSettings(emailSettings: any) {
     try {
-      await this.updateOrCreateConfig('email', JSON.stringify(emailSettings), ConfigType.JSON, 'email');
+      await this.updateConfigs('email', emailSettings);
+      logger.info('邮件设置更新成功');
     } catch (error) {
       logger.error('更新邮件设置失败:', error);
       throw error;
@@ -183,22 +87,8 @@ export class SettingsService {
    */
   static async updateSecuritySettings(securitySettings: any) {
     try {
-      const updates = [
-        {
-          key: 'enable_registration',
-          value: securitySettings.enableRegistration?.toString(),
-          type: ConfigType.BOOLEAN,
-        },
-        { key: 'enable_captcha', value: securitySettings.enableCaptcha?.toString(), type: ConfigType.BOOLEAN },
-        { key: 'session_timeout', value: securitySettings.sessionTimeout?.toString(), type: ConfigType.NUMBER },
-        { key: 'max_login_attempts', value: securitySettings.maxLoginAttempts?.toString(), type: ConfigType.NUMBER },
-        { key: 'ip_whitelist', value: JSON.stringify(securitySettings.ipWhitelist || []), type: ConfigType.JSON },
-        { key: 'password_policy', value: JSON.stringify(securitySettings.passwordPolicy || {}), type: ConfigType.JSON },
-      ];
-
-      for (const update of updates) {
-        await this.updateOrCreateConfig(update.key, update.value, update.type, 'security');
-      }
+      await this.updateConfigs('security', securitySettings);
+      logger.info('安全设置更新成功');
     } catch (error) {
       logger.error('更新安全设置失败:', error);
       throw error;
@@ -210,11 +100,21 @@ export class SettingsService {
    */
   static async testEmail({ to, subject, content }: { to: string; subject: string; content: string }) {
     try {
+      // 获取邮件配置
+      const emailConfig = await this.getConfigValue('email', {});
+
+      if (!emailConfig.smtpHost || !emailConfig.smtpUser) {
+        throw new Error('邮件配置不完整，请先配置SMTP设置');
+      }
+
       await EmailService.sendEmail({
         to,
-        subject: subject || '测试邮件',
-        html: content || '<p>这是一封测试邮件，如果您收到此邮件，说明邮件配置正确。</p>',
+        subject,
+        html: content,
+        from: emailConfig.emailFrom || emailConfig.smtpUser,
       });
+
+      logger.info(`测试邮件发送成功: ${to}`);
     } catch (error) {
       logger.error('测试邮件发送失败:', error);
       throw error;
@@ -226,9 +126,9 @@ export class SettingsService {
    */
   static async clearCache() {
     try {
-      // 这里可以实现具体的缓存清理逻辑
-      // 例如清理 Redis 缓存、文件缓存等
-      logger.info('缓存清理完成');
+      // 这里可以添加具体的缓存清理逻辑
+      // 例如清理 Redis 缓存、内存缓存等
+      logger.info('缓存清理成功');
     } catch (error) {
       logger.error('清理缓存失败:', error);
       throw error;
@@ -249,10 +149,8 @@ export class SettingsService {
         fs.mkdirSync(backupDir, { recursive: true });
       }
 
-      // 这里需要根据实际使用的数据库类型实现备份逻辑
-      // 示例：MySQL 备份命令
-      // const command = `mysqldump -u ${username} -p${password} ${database} > ${backupPath}`;
-      // await execAsync(command);
+      // 这里应该根据实际使用的数据库类型实现备份逻辑
+      // 例如 MySQL: mysqldump, PostgreSQL: pg_dump 等
 
       logger.info(`数据库备份完成: ${backupPath}`);
       return backupPath;
@@ -275,12 +173,12 @@ export class SettingsService {
         memory: {
           total: os.totalmem(),
           free: os.freemem(),
-          used: process.memoryUsage(),
+          used: process.memoryUsage()
         },
         cpu: os.cpus(),
         loadAverage: os.loadavg(),
         hostname: os.hostname(),
-        networkInterfaces: os.networkInterfaces(),
+        networkInterfaces: os.networkInterfaces()
       };
 
       return systemInfo;
@@ -291,79 +189,211 @@ export class SettingsService {
   }
 
   /**
-   * 获取网站配置
+   * 获取特定配置项
    */
-  static async getSiteConfig() {
+  static async getConfigValue(key: string, defaultValue?: any) {
+    try {
+      return await this._getConfigValue(key, defaultValue);
+    } catch (error) {
+      logger.error(`获取配置项 ${key} 失败:`, error);
+      return defaultValue;
+    }
+  }
+
+  /**
+   * 设置配置项
+   */
+  static async setConfigValue(key: string, value: any, category = 'general', isPublic = false) {
+    try {
+      await this._setConfigValue(key, value, category, isPublic);
+      logger.info(`配置项 ${key} 设置成功`);
+    } catch (error) {
+      logger.error(`设置配置项 ${key} 失败:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * 获取所有公开配置
+   */
+  private static async getPublicConfigs(): Promise<any> {
+    try {
+      const configs = await SystemConfig.getPublicConfigs();
+      return this.transformConfigsToSettings(configs);
+    } catch (error) {
+      logger.error('获取公开配置失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 获取所有配置（管理员）
+   */
+  private static async getAllConfigs(): Promise<any> {
     try {
       const configs = await SystemConfig.findAll({
-        where: { category: 'site', isPublic: true },
-        order: [['sortOrder', 'ASC']],
+        order: [['category', 'ASC'], ['sortOrder', 'ASC']]
+      });
+      return this.transformConfigsToSettings(configs);
+    } catch (error) {
+      logger.error('获取所有配置失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 更新配置
+   */
+  private static async updateConfigs(category: string, settings: any): Promise<void> {
+    try {
+      const configs = this.transformSettingsToConfigs(settings, category);
+
+      for (const config of configs) {
+        await SystemConfig.upsert({
+          configKey: config.configKey,
+          configValue: config.configValue,
+          configType: config.configType as ConfigType,
+          category: config.category,
+          isPublic: config.isPublic,
+          isEditable: true,
+          sortOrder: 0
+        });
+      }
+
+      logger.info(`配置类别 ${category} 更新成功`);
+    } catch (error) {
+      logger.error(`更新配置类别 ${category} 失败:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * 获取特定配置项
+   */
+  private static async _getConfigValue(key: string, defaultValue?: any): Promise<any> {
+    try {
+      const config = await SystemConfig.findByKey(key);
+      return config ? config.getParsedValue() : defaultValue;
+    } catch (error) {
+      logger.error(`获取配置项 ${key} 失败:`, error);
+      return defaultValue;
+    }
+  }
+
+  /**
+   * 设置配置项
+   */
+  private static async _setConfigValue(
+    key: string,
+    value: any,
+    category = 'general',
+    isPublic = false
+  ): Promise<void> {
+    try {
+      let configType = ConfigType.STRING;
+      let configValue = String(value);
+
+      if (typeof value === 'number') {
+        configType = ConfigType.NUMBER;
+      } else if (typeof value === 'boolean') {
+        configType = ConfigType.BOOLEAN;
+        configValue = String(value);
+      } else if (typeof value === 'object' && value !== null) {
+        configType = ConfigType.JSON;
+        configValue = JSON.stringify(value);
+      }
+
+      await SystemConfig.upsert({
+        configKey: key,
+        configValue,
+        configType,
+        category,
+        isPublic,
+        isEditable: true,
+        sortOrder: 0
       });
 
-      const config: any = {};
-      configs.forEach(item => {
-        let value = item.configValue || item.defaultValue;
+      logger.info(`配置项 ${key} 设置成功`);
+    } catch (error) {
+      logger.error(`设置配置项 ${key} 失败:`, error);
+      throw error;
+    }
+  }
 
-        if (item.configType === ConfigType.BOOLEAN) {
-          value = (value === 'true' || value === '1').toString();
-        } else if (item.configType === ConfigType.NUMBER) {
-          value = Number(value).toString();
-        } else if (item.configType === ConfigType.JSON) {
-          try {
-            value = JSON.parse(value || '{}');
-          } catch {
-            value = '{}';
-          }
+  /**
+   * 删除配置项
+   */
+  static async deleteConfig(key: string): Promise<void> {
+    try {
+      await SystemConfig.destroy({ where: { configKey: key } });
+      logger.info(`配置项 ${key} 删除成功`);
+    } catch (error) {
+      logger.error(`删除配置项 ${key} 失败:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * 将配置数组转换为设置对象
+   */
+  private static transformConfigsToSettings(configs: any[]): any {
+    const settings: any = {};
+
+    configs.forEach(config => {
+      const keys = config.configKey.split('.');
+      let current = settings;
+
+      for (let i = 0; i < keys.length - 1; i++) {
+        if (!current[keys[i]]) {
+          current[keys[i]] = {};
+        }
+        current = current[keys[i]];
+      }
+
+      const lastKey = keys[keys.length - 1];
+      current[lastKey] = config.getParsedValue();
+    });
+
+    return settings;
+  }
+
+  /**
+   * 将设置对象转换为配置数组
+   */
+  private static transformSettingsToConfigs(settings: any, category: string, prefix = ''): any[] {
+    const configs: any[] = [];
+
+    Object.entries(settings).forEach(([key, value]) => {
+      const configKey = prefix ? `${prefix}.${key}` : key;
+
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        // 递归处理嵌套对象
+        configs.push(...this.transformSettingsToConfigs(value, category, configKey));
+      } else {
+        // 处理基本类型
+        let configType = ConfigType.STRING;
+        let configValue = String(value);
+
+        if (typeof value === 'number') {
+          configType = ConfigType.NUMBER;
+        } else if (typeof value === 'boolean') {
+          configType = ConfigType.BOOLEAN;
+          configValue = String(value);
+        } else if (Array.isArray(value) || (typeof value === 'object' && value !== null)) {
+          configType = ConfigType.JSON;
+          configValue = JSON.stringify(value);
         }
 
-        config[item.configKey] = value;
-      });
-
-      return config;
-    } catch (error) {
-      logger.error('获取网站配置失败:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * 更新网站配置
-   */
-  static async updateSiteConfig(config: any) {
-    try {
-      for (const [key, value] of Object.entries(config)) {
-        await this.updateOrCreateConfig(key, value as string, ConfigType.STRING, 'site');
-      }
-    } catch (error) {
-      logger.error('更新网站配置失败:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * 更新或创建配置项
-   */
-  private static async updateOrCreateConfig(key: string, value: string, type: ConfigType, category: string) {
-    try {
-      const [config] = await SystemConfig.findOrCreate({
-        where: { configKey: key },
-        defaults: {
-          configKey: key,
-          configValue: value,
-          configType: type,
+        configs.push({
+          configKey,
+          configValue,
+          configType,
           category,
-          isPublic: false,
-          isEditable: true,
-          sortOrder: 0,
-        },
-      });
-
-      if (config.configValue !== value) {
-        await config.update({ configValue: value });
+          isPublic: category !== 'email' && category !== 'security'
+        });
       }
-    } catch (error) {
-      logger.error(`更新配置项失败 ${key}:`, error);
-      throw error;
-    }
+    });
+
+    return configs;
   }
 }

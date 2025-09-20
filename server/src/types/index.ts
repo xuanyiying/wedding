@@ -1,11 +1,4 @@
 
-// 事件类型枚举
-export enum EventType {
-  WEDDING = 'wedding', // 婚礼
-  CONSULTATION = 'consultation', // 咨询
-  OTHER = 'other', // 其他
-}
-
 export enum UserRole {
   SUPER_ADMIN = 'super_admin',
   ADMIN = 'admin',
@@ -70,15 +63,19 @@ export enum ResourceType {
 
 // Enums defined according to database-design.md
 export enum ScheduleStatus {
-  AVAILABLE = 'available', // 可预约
-  BOOKED = 'booked', // 已预定
-  CONFIRMED = 'confirmed', // 已确认
-  COMPLETED = 'completed', // 已完成
-  CANCELLED = 'cancelled', // 已取消
-  DELETED = 'deleted', // 已删除
-  EXPIRED = 'expired', // 已过期
-  BUSY = 'busy', // 忙碌
-  VACATION = 'vacation', // 休假
+  AVAILABLE = 'available',
+  BOOKED = 'booked',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
+  RESERVE = 'reserve', // 预留
+}
+
+export enum EventType {
+  WEDDING = 'wedding', // 婚礼
+  ENGAGEMENT = 'engagement', // 订婚
+  ANNIVERSARY = 'anniversary', // 纪念日
+  CONSULTATION = 'consultation', // 咨询
+  OTHER = 'other', // 其他
 }
 
 export enum WeddingTime {

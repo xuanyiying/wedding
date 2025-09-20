@@ -5,6 +5,7 @@ import { MenuOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import { ThemeMode } from '../../types';
 import { scrollToElement, scrollToTop } from '../../utils/scroll';
+import { useSiteSettings } from '../../hooks/useSiteSettings';
 
 const { Header } = Layout;
 
@@ -86,7 +87,27 @@ const NavContainer = styled.div`
   margin: 0 auto;
 
   @media (max-width: 768px) {
-    display: none;
+    display: flex;
+    position: fixed;
+    top: 64px;
+    left: 0;
+    right: 0;
+    background: var(--client-header-bg);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--client-border-color);
+    padding: 8px 16px;
+    z-index: 999;
+    box-shadow: var(--client-shadow-sm);
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    
+    &::-webkit-scrollbar {
+      display: none;
+    }
+    
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 `;
 
@@ -113,6 +134,20 @@ const StyledMenu = styled(Menu)`
       background: var(--client-primary-color);
     }
   }
+
+  @media (max-width: 768px) {
+    display: flex;
+    flex-direction: row;
+    min-width: max-content;
+    
+    .ant-menu-item {
+      flex-shrink: 0;
+      margin: 0 4px;
+      padding: 6px 12px;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+  }
 `;
 
 
@@ -125,9 +160,7 @@ const MobileMenuButton = styled(Button)`
   height: 40px;
   
   @media (max-width: 768px) {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: none; /* 隐藏汉堡菜单按钮，因为菜单现在固定显示 */
   }
 `;
 
@@ -135,14 +168,27 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
+  const { settings } = useSiteSettings();
 
-  const menuItems = [
-    { key: '/', label: '首页', sectionId: 'hero' },
-    { key: '/team', label: '团队', sectionId: 'team' },
-    { key: '/works', label: '作品', sectionId: 'portfolio' },
-    { key: '/schedule', label: '档期', sectionId: 'schedule' },
-    { key: '/contact', label: '联系', sectionId: 'contact' },
+  // 默认菜单项
+  const defaultMenuItems = [
+    { key: '/', label: '首页', path: '/', sectionId: 'hero', visible: true, order: 1 },
+    { key: '/team', label: '团队', path: '/team', sectionId: 'team', visible: true, order: 2 },
+    { key: '/works', label: '作品', path: '/works', sectionId: 'portfolio', visible: true, order: 3 },
+    { key: '/schedule', label: '档期', path: '/schedule', sectionId: 'schedule', visible: true, order: 4 },
+    { key: '/contact', label: '联系', path: '/contact', sectionId: 'contact', visible: true, order: 5 },
   ];
+
+  // 使用动态配置的菜单项，如果没有配置则使用默认值
+  const configuredMenuItems = settings?.navigation?.menuItems || defaultMenuItems;
+  const menuItems = configuredMenuItems
+    .filter(item => item.visible)
+    .sort((a, b) => a.order - b.order)
+    .map(item => ({
+      key: item.path,
+      label: item.label,
+      sectionId: item.sectionId
+    }));
 
   // 处理菜单点击
   const handleMenuClick = (path: string, sectionId?: string) => {

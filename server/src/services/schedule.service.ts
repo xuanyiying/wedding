@@ -1,13 +1,12 @@
 import { Op, WhereOptions } from 'sequelize';
 import { Schedule, ScheduleAttributes, ScheduleCreationAttributes, Team, TeamMember, User } from '../models';
 import { logger } from '../utils/logger';
-import { ScheduleStatus, EventType, WeddingTime, UserRole, UserStatus, TeamMemberStatus, TeamStatus } from '../types';
+import { ScheduleStatus, WeddingTime, UserRole, UserStatus, TeamMemberStatus, TeamStatus } from '../types';
 interface GetSchedulesParams {
   page: number;
   pageSize: number;
   userId?: string;
   status?: ScheduleStatus;
-  eventType?: EventType;
   startDate?: string;
   endDate?: string;
 }
@@ -15,7 +14,6 @@ interface GetSchedulesParams {
 interface GetPublicSchedulesParams {
   page: number;
   pageSize: number;
-  eventType?: EventType;
   startDate?: string;
   endDate?: string;
 }
@@ -184,40 +182,6 @@ export class ScheduleService {
   }
 
   /**
-   * 确认档期
-   */
-  static async confirmSchedule(id: string, currentUserId: string, notes?: string) {
-    const schedule = await Schedule.findOne({
-      where: { id },
-    });
-
-    if (!schedule) {
-      throw new Error('档期不存在');
-    }
-
-    // 检查权限
-    if (schedule.userId !== currentUserId) {
-      throw new Error('无权限操作此档期');
-    }
-
-    // 检查状态
-    if (schedule.status !== ScheduleStatus.BOOKED) {
-      throw new Error('状态不允许：只有已预定的档期才能确认');
-    }
-
-    const updateData: Partial<ScheduleAttributes> = {
-      status: ScheduleStatus.CONFIRMED,
-    };
-
-    if (notes) {
-      updateData.notes = notes;
-    }
-
-    await schedule.update(updateData);
-    return this.getScheduleById(id);
-  }
-
-  /**
    * 检查档期冲突
    */
   static async checkScheduleConflict(userId: string, weddingDate: Date, weddingTime: WeddingTime, excludeId?: string) {
@@ -238,7 +202,7 @@ export class ScheduleService {
           [Op.between]: [startDate, endDate],
         },
       },
-      attributes: ['id', 'title', 'weddingDate', 'weddingTime', 'status', 'eventType'],
+      attributes: ['id', 'title', 'weddingDate', 'weddingTime', 'status'],
       order: [
         ['weddingDate', 'ASC'],
         ['weddingTime', 'ASC'],
@@ -261,7 +225,6 @@ export class ScheduleService {
           id: schedule.id,
           title: schedule.title,
           status: schedule.status,
-          eventType: schedule.eventType,
           weddingDate: weddingDate.getFullYear() + '-' + (weddingDate.getMonth() + 1) + '-' + weddingDate.getDate(),
           weddingTime: schedule.weddingTime,
         });
@@ -281,7 +244,7 @@ export class ScheduleService {
    * 获取公开档期
    */
   static async getPublicSchedules(params: GetPublicSchedulesParams) {
-    const { page, pageSize, eventType, startDate, endDate } = params;
+    const { page, pageSize, startDate, endDate } = params;
     const offset = (page - 1) * pageSize;
 
     const where: WhereOptions = {
@@ -290,10 +253,6 @@ export class ScheduleService {
         [Op.in]: [ScheduleStatus.AVAILABLE, ScheduleStatus.BOOKED],
       },
     };
-
-    if (eventType) {
-      where.eventType = eventType;
-    }
 
     if (startDate && endDate) {
       where.startTime = {
@@ -341,11 +300,11 @@ export class ScheduleService {
       where.userId = userId;
     }
 
-    const [total, available, booked, confirmed, completed] = await Promise.all([
+    const [total, available, booked, reserved, completed] = await Promise.all([
       Schedule.count({ where }),
       Schedule.count({ where: { ...where, status: ScheduleStatus.AVAILABLE } }),
       Schedule.count({ where: { ...where, status: ScheduleStatus.BOOKED } }),
-      Schedule.count({ where: { ...where, status: ScheduleStatus.CONFIRMED } }),
+      Schedule.count({ where: { ...where, status: ScheduleStatus.RESERVE } }),
       Schedule.count({ where: { ...where, status: ScheduleStatus.COMPLETED } }),
     ]);
 
@@ -353,7 +312,7 @@ export class ScheduleService {
       total,
       available,
       booked,
-      confirmed,
+      reserved,
       completed,
     };
   }
@@ -371,7 +330,7 @@ export class ScheduleService {
           [Op.gte]: now,
         },
         status: {
-          [Op.in]: [ScheduleStatus.BOOKED, ScheduleStatus.CONFIRMED],
+          [Op.in]: [ScheduleStatus.BOOKED, ScheduleStatus.RESERVE],
         },
       },
       order: [
@@ -379,7 +338,7 @@ export class ScheduleService {
         ['weddingTime', 'ASC'],
       ],
       limit,
-      attributes: ['id', 'title', 'weddingDate', 'weddingTime', 'status', 'eventType', 'location'],
+      attributes: ['id', 'title', 'weddingDate', 'weddingTime', 'status', 'location'],
     });
 
     return schedules;
@@ -402,7 +361,7 @@ export class ScheduleService {
           [Op.between]: [new Date(startDate), new Date(endDate)],
         },
         status: {
-          [Op.in]: [ScheduleStatus.CONFIRMED, ScheduleStatus.BOOKED],
+          [Op.in]: [ScheduleStatus.AVAILABLE, ScheduleStatus.BOOKED],
         },
       },
       include: [
@@ -539,3 +498,17 @@ export class ScheduleService {
     };
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+

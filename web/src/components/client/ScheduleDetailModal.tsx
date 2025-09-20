@@ -1,8 +1,7 @@
 import React from 'react';
 import { Modal, Typography, Tag, Row, Col } from 'antd';
 import { CalendarOutlined, ClockCircleOutlined, EnvironmentOutlined, UserOutlined } from '@ant-design/icons';
-import type { Schedule, EventType } from '../../types';
-import { getEventTypeColor } from '../../utils/styleUtils';
+import type { Schedule } from '../../types';
 import styled from 'styled-components';
 
 const { Title, Paragraph, Text } = Typography;
@@ -44,20 +43,6 @@ interface ScheduleDetailModalProps {
 const ScheduleDetailModal: React.FC<ScheduleDetailModalProps> = ({ event, visible, onClose }) => {
   if (!event) return null;
 
-    const getEventTypeTag = (type: EventType) => {
-    const typeMap: { [key: string]: string } = {
-      wedding: '婚礼',
-      engagement: '订婚',
-      anniversary: '周年庆',
-      other: '其他',
-    };
-
-    const text = typeMap[type] || '其他';
-    const color = getEventTypeColor(type);
-
-    return <Tag color={color}>{text}</Tag>;
-  };
-
   return (
     <DetailModal
       title="档期详情"
@@ -86,10 +71,6 @@ const ScheduleDetailModal: React.FC<ScheduleDetailModalProps> = ({ event, visibl
       <DetailSection>
         <h4>描述</h4>
         <Paragraph>{event.description || '暂无描述'}</Paragraph>
-      </DetailSection>
-      <DetailSection>
-        <h4>类型</h4>
-        {getEventTypeTag(event.eventType)}
       </DetailSection>
     </DetailModal>
   );

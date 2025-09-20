@@ -48,10 +48,8 @@ const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
         return '#90EE90';
       case ScheduleStatus.BOOKED:
         return '#1890ff';
-      case 'PENDING':
+      case ScheduleStatus.RESERVE:
         return '#FFB366';
-      case ScheduleStatus.CONFIRMED:
-        return '#FF8C00';
       case ScheduleStatus.COMPLETED:
         return '#52c41a';
       case ScheduleStatus.CANCELLED:
@@ -68,10 +66,8 @@ const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
         return <Tag style={{ color: '#90EE90', borderColor: '#90EE90' }}>可预约</Tag>;
       case ScheduleStatus.BOOKED:
         return <Tag style={{ color: '#1890ff', borderColor: '#1890ff' }}>已预订</Tag>;
-      case 'PENDING':
+      case ScheduleStatus.RESERVE:
         return <Tag style={{ color: '#FFB366', borderColor: '#FFB366' }}>待确认</Tag>;
-      case ScheduleStatus.CONFIRMED:
-        return <Tag style={{ color: '#FF8C00', borderColor: '#FF8C00' }}>已确认</Tag>;
       case ScheduleStatus.COMPLETED:
         return <Tag style={{ color: '#52c41a', borderColor: '#52c41a' }}>已完成</Tag>;
       case ScheduleStatus.CANCELLED:
@@ -79,19 +75,6 @@ const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
       default:
         return <Tag style={{ color: '#90EE90', borderColor: '#90EE90' }}>{status}</Tag>;
     }
-  };
-
-  // 类型标签
-  const getTypeTag = (type: string) => {
-    const typeMap = {
-      wedding: { color: 'red', text: '婚礼' },
-      engagement: { color: 'blue', text: '订婚' },
-      anniversary: { color: 'purple', text: '纪念日' },
-      other: { color: 'default', text: '其他' }
-    };
-
-    const config = typeMap[type as keyof typeof typeMap];
-    return <Tag color={config.color}>{config.text}</Tag>;
   };
 
   return (
@@ -163,7 +146,6 @@ const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
                       <Space>
                         <span>{schedule.title || schedule.customerName}</span>
                         {getStatusTag(schedule.status)}
-                        {schedule.eventType && getTypeTag(schedule.eventType)}
                       </Space>
                     }
                     description={

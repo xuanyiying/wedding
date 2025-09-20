@@ -49,13 +49,13 @@ export class DashboardService {
       // 预订统计
       const bookingWhere = {
         ...where,
-        status: { [Op.in]: [ScheduleStatus.BOOKED, ScheduleStatus.CONFIRMED, ScheduleStatus.COMPLETED] },
+        status: { [Op.in]: [ScheduleStatus.BOOKED, ScheduleStatus.RESERVE, ScheduleStatus.COMPLETED] },
       };
 
       const [totalBookings, confirmedBookings, pendingBookings, completedBookings] = await Promise.all([
         Schedule.count({ where: bookingWhere }),
-        Schedule.count({ where: { ...bookingWhere, status: ScheduleStatus.CONFIRMED } }),
         Schedule.count({ where: { ...bookingWhere, status: ScheduleStatus.BOOKED } }),
+        Schedule.count({ where: { ...bookingWhere, status: ScheduleStatus.RESERVE } }),
         Schedule.count({ where: { ...bookingWhere, status: ScheduleStatus.COMPLETED } }),
       ]);
 
@@ -171,24 +171,24 @@ export class DashboardService {
         totalSchedules: totalBookings,
         totalWorks: totalWorks,
         publishedWorks: publishedWorks,
-        
+
         // 预订统计
         totalBookings: totalBookings,
         confirmedBookings: confirmedBookings,
         pendingBookings: pendingBookings,
         completedBookings: completedBookings,
         todayBookings: todayBookings,
-        
+
         // 收入统计
         totalRevenue: parseFloat(revenue.totalRevenue || '0'),
         averageBookingValue: parseFloat(revenue.avgBookingValue || '0'),
         todayRevenue: todayRevenue || 0,
-        
+
         // 趋势数据
         bookingTrend: Math.round(bookingTrend * 100) / 100,
         userTrend: Math.round(userTrend * 100) / 100,
         workTrend: Math.round(workTrend * 100) / 100,
-        
+
         // 兼容旧结构
         bookings: {
           total: totalBookings,
@@ -222,7 +222,7 @@ export class DashboardService {
       const { period, year, month, userId } = params;
 
       const where: WhereOptions = {
-        status: ScheduleStatus.COMPLETED,
+        isPaid: true,
       };
 
       if (userId) {
@@ -305,7 +305,7 @@ export class DashboardService {
       const { period, days = 30, userId } = params;
 
       const where: WhereOptions = {
-        status: { [Op.in]: [ScheduleStatus.BOOKED, ScheduleStatus.CONFIRMED, ScheduleStatus.COMPLETED] },
+        status: { [Op.in]: [ScheduleStatus.BOOKED, ScheduleStatus.RESERVE, ScheduleStatus.COMPLETED] },
       };
 
       if (userId) {
@@ -385,7 +385,7 @@ export class DashboardService {
       const { startDate, endDate, userId } = params;
 
       const where: WhereOptions = {
-        status: { [Op.in]: [ScheduleStatus.BOOKED, ScheduleStatus.CONFIRMED, ScheduleStatus.COMPLETED] },
+        status: { [Op.in]: [ScheduleStatus.BOOKED, ScheduleStatus.RESERVE, ScheduleStatus.CANCELLED] },
       };
 
       if (userId) {
@@ -402,20 +402,17 @@ export class DashboardService {
         }
       }
 
-      const eventTypeData = await Schedule.findAll({
+      const data = await Schedule.findAll({
         where,
         attributes: [
-          'eventType',
           [Schedule.sequelize!.fn('COUNT', Schedule.sequelize!.col('id')), 'count'],
           [Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'revenue'],
         ],
-        group: ['eventType'],
         order: [[Schedule.sequelize!.fn('COUNT', Schedule.sequelize!.col('id')), 'DESC']],
         raw: true,
       });
 
-      return eventTypeData.map((item: any) => ({
-        eventType: item.eventType,
+      return data.map((item: any) => ({
         count: parseInt(item.count || '0'),
         revenue: parseFloat(item.revenue || '0'),
       }));
@@ -474,9 +471,9 @@ export class DashboardService {
             actionType = '预订';
             description = `新预订: ${activity.title}`;
             break;
-          case ScheduleStatus.CONFIRMED:
-            actionType = '确认';
-            description = `确认预订: ${activity.title}`;
+          case ScheduleStatus.RESERVE:
+            actionType = '预留';
+            description = `预留: ${activity.title}`;
             break;
           case ScheduleStatus.COMPLETED:
             actionType = '完成';
@@ -515,7 +512,7 @@ export class DashboardService {
       const { startDate, endDate, userId } = params;
 
       const where: WhereOptions = {
-        status: { [Op.in]: [ScheduleStatus.BOOKED, ScheduleStatus.CONFIRMED, ScheduleStatus.COMPLETED] },
+        status: { [Op.in]: [ScheduleStatus.BOOKED, ScheduleStatus.RESERVE, ScheduleStatus.COMPLETED] },
       };
 
       if (userId) {
@@ -584,7 +581,7 @@ export class DashboardService {
       const { startDate, endDate, userId } = params;
 
       const where: WhereOptions = {
-        status: { [Op.in]: [ScheduleStatus.BOOKED, ScheduleStatus.CONFIRMED, ScheduleStatus.COMPLETED] },
+        status: { [Op.in]: [ScheduleStatus.BOOKED, ScheduleStatus.RESERVE, ScheduleStatus.COMPLETED] },
       };
 
       if (userId) {
@@ -683,14 +680,14 @@ export class DashboardService {
         totalSchedules,
         availableSchedules,
         bookedSchedules,
-        confirmedSchedules,
+        reserveSchedules,
         completedSchedules,
         cancelledSchedules,
       ] = await Promise.all([
         Schedule.count({ where }),
         Schedule.count({ where: { ...where, status: ScheduleStatus.AVAILABLE } }),
         Schedule.count({ where: { ...where, status: ScheduleStatus.BOOKED } }),
-        Schedule.count({ where: { ...where, status: ScheduleStatus.CONFIRMED } }),
+        Schedule.count({ where: { ...where, status: ScheduleStatus.RESERVE } }),
         Schedule.count({ where: { ...where, status: ScheduleStatus.COMPLETED } }),
         Schedule.count({ where: { ...where, status: ScheduleStatus.CANCELLED } }),
       ]);
@@ -702,10 +699,10 @@ export class DashboardService {
         date.setMonth(date.getMonth() - i);
         const year = date.getFullYear();
         const month = date.getMonth() + 1;
-        
+
         const monthStart = new Date(year, month - 1, 1);
         const monthEnd = new Date(year, month, 0, 23, 59, 59);
-        
+
         const monthWhere = {
           ...where,
           createdAt: {
@@ -730,10 +727,10 @@ export class DashboardService {
         totalSchedules,
         availableSchedules,
         bookedSchedules,
-        confirmedSchedules,
+        reserveSchedules,
         completedSchedules,
         cancelledSchedules,
-        pendingSchedules: bookedSchedules, // 待确认的档期
+        pendingSchedules: reserveSchedules, // 待确认的档期
         monthlyStats,
       };
     } catch (error) {
@@ -750,7 +747,7 @@ export class DashboardService {
       const { startDate, endDate, userId } = params;
 
       const where: WhereOptions = {
-        status: { [Op.in]: [ScheduleStatus.BOOKED, ScheduleStatus.CONFIRMED, ScheduleStatus.COMPLETED] },
+        status: { [Op.in]: [ScheduleStatus.BOOKED, ScheduleStatus.RESERVE, ScheduleStatus.COMPLETED] },
       };
 
       if (userId) {
