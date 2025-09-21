@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
 
 import { type Team } from '../../types';
 import HeroSection from '../../components/client/HeroSection';
@@ -75,7 +74,6 @@ const HomePage: React.FC = () => {
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedMember, setSelectedMember] = useState<ClientTeamMember | null>(null);
-  const navigate = useNavigate();
 
   // 使用站点设置和主题钩子
   const { settings } = useSiteSettings();
