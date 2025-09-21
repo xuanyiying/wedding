@@ -6,11 +6,11 @@ import {
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { PageHeader } from '../../components/admin/common';
-import { ConfigProvider } from '../../contexts/ConfigContext';
+import { SettingsProvider } from '../../contexts/SettingsContext';
 import {
   SiteConfig,
   HomepageConfig
-} from '../../components/admin/config';
+} from '../../components/admin/settings';
 
 const SettingsContainer = styled.div`
   padding: 24px;
@@ -39,7 +39,7 @@ const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('site');
 
   return (
-    <ConfigProvider>
+    <SettingsProvider>
       <SettingsContainer>
         <PageHeader title="系统设置" />
 
@@ -68,7 +68,7 @@ const SettingsPage: React.FC = () => {
           ]}
         />
       </SettingsContainer>
-    </ConfigProvider>
+    </SettingsProvider>
   );
 };
 

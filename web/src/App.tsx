@@ -63,13 +63,13 @@ function AppInitializer() {
       try {
         const response = await settingsService.getSiteConfig();
         const config = response.data;
-        
+
         if (config) {
           // 应用网站标题
           if (config.siteName) {
             document.title = config.siteName;
           }
-          
+
           // 应用favicon
           if (config.favicon) {
             const favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement;
@@ -82,7 +82,7 @@ function AppInitializer() {
               document.head.appendChild(newFavicon);
             }
           }
-          
+
           // 应用meta描述
           if (config.siteDescription) {
             let metaDescription = document.querySelector('meta[name="description"]') as HTMLMetaElement;
@@ -100,7 +100,7 @@ function AppInitializer() {
         console.error('Failed to load site config:', error);
       }
     };
-    
+
     applySiteConfig();
   }, []);
 
@@ -110,7 +110,7 @@ function AppInitializer() {
 // AppContent组件，用于正确使用useApp hook
 function AppContent() {
   const { message } = AntdApp.useApp();
-  
+
   // 设置全局message API
   React.useEffect(() => {
     setMessageApi(message);
@@ -124,12 +124,13 @@ function AppContent() {
         <Route path="/" element={<ClientLayout />}>
           <Route index element={<HomePage />} />
           <Route path="team" element={<TeamPage />} />
+          <Route path="team/:id" element={<TeamPage />} />
           <Route path="works" element={<WorksPage />} />
           <Route path="works/:id" element={<WorkDetailPage />} />
           <Route path="schedule" element={<SchedulePage />} />
           <Route path="contact" element={<ContactPage />} />
         </Route>
-        
+
         {/* 后台管理系统路由 */}
         <Route path="/admin/login" element={<LoginPage />} />
         <Route path="/admin/change-password" element={<ChangePasswordPage />} />
@@ -145,7 +146,7 @@ function AppContent() {
           <Route path="settings" element={<SettingsPage />} />
           <Route path="issues" element={<IssuesPage />} />
         </Route>
-        
+
         {/* 404 重定向 */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

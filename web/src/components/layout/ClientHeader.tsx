@@ -45,20 +45,33 @@ const StyledHeader = styled(Header)`
   }
 `;
 
-const Logo = styled.div`
+const LogoContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-right: 24px;
+  height: 100%;
+`;
+
+const LogoWrapper = styled.div`
   display: flex;
   align-items: center;
-  font-size: 22px;
-  font-weight: 600;
-  color: var(--client-primary-color);
-  letter-spacing: -0.02em;
-  text-decoration: none;
+  justify-content: center;
+`;
+
+const SiteName = styled.div`
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--client-text-primary);
+  margin-top: 4px;
+  text-align: center;
+  line-height: 1.2;
 `;
 
 const LogoIcon = styled.div`
   width: 32px;
   height: 32px;
-  margin-right: 12px;
   background: var(--client-gradient-primary);
   border-radius: var(--client-border-radius);
   display: flex;
@@ -73,7 +86,6 @@ const LogoIcon = styled.div`
 const LogoImage = styled.img`
   width: 32px;
   height: 32px;
-  margin-right: 12px;
   border-radius: var(--client-border-radius);
 `;
 
@@ -85,6 +97,7 @@ const NavContainer = styled.div`
   flex: 1;
   max-width: 800px;
   margin: 0 auto;
+  height: 100%;
 
   @media (max-width: 768px) {
     display: flex;
@@ -114,6 +127,8 @@ const NavContainer = styled.div`
 const StyledMenu = styled(Menu)`
   background: transparent;
   border: none;
+  height: 100%;
+  line-height: 64px;
   
   .ant-menu-item {
     color: var(--client-text-primary);
@@ -123,6 +138,10 @@ const StyledMenu = styled(Menu)`
     padding: 8px 16px;
     border-radius: var(--client-border-radius);
     font-size: 15px;
+    height: auto;
+    line-height: normal;
+    display: flex;
+    align-items: center;
     
     &:hover {
       color: var(--client-primary-color);
@@ -204,7 +223,7 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
         return;
       }
     }
-    
+
     // 否则导航到对应页面
     if (path !== location.pathname) {
       navigate(path);
@@ -226,7 +245,7 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
       const mappedPath = sectionToPath[activeSection];
       return menuItems.find(item => item.key === mappedPath)?.key || '/';
     }
-    
+
     // 非首页或没有activeSection时，使用当前路径
     return menuItems.find(item => item.key === location.pathname)?.key || '/';
   };
@@ -237,18 +256,20 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
     <StyledHeader>
       <NavContainer>
         <Link to="/" style={{ textDecoration: 'none' }}>
-        <Logo>
-          {logoUrl ? <LogoImage src={logoUrl} alt="site logo" /> : <LogoIcon> </LogoIcon>}
-          <span>{siteName || '陆合·合悦Club'}</span>
-        </Logo>
-      </Link>
+          <LogoContainer>
+            <LogoWrapper>
+              {logoUrl ? <LogoImage src={logoUrl} alt="site logo" /> : <LogoIcon> </LogoIcon>}
+            </LogoWrapper>
+            <SiteName>{siteName || '陆合·合悦'}</SiteName>
+          </LogoContainer>
+        </Link>
         <StyledMenu
           mode="horizontal"
           selectedKeys={[selectedKey]}
           items={menuItems.map(item => ({
             key: item.key,
             label: (
-              <span 
+              <span
                 onClick={(e) => {
                   e.preventDefault();
                   handleMenuClick(item.key, item.sectionId);
@@ -280,7 +301,7 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
           items={menuItems.map(item => ({
             key: item.key,
             label: (
-              <span 
+              <span
                 onClick={(e) => {
                   e.preventDefault();
                   handleMenuClick(item.key, item.sectionId);

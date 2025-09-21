@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { useTeamData, type ClientTeamMember } from '../../hooks/useTeamData';
 import { type Team } from '../../types';
@@ -9,6 +9,7 @@ import TeamMemberDetailModal from '../../components/client/TeamMemberDetailModal
 import { useSiteSettings } from '../../hooks';
 import { usePageView } from '../../hooks/usePageView';
 import { PageViewService } from '../../services/pageViewService';
+import { teamService } from '../../services';
 
 const PageContainer = styled.div`
   max-width: 1200px;
@@ -23,31 +24,57 @@ const TeamPage: React.FC = () => {
   const [selectedMember, setSelectedMember] = useState<ClientTeamMember | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+  const [teamsLoading, setTeamsLoading] = useState(false);
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
   const { settings } = useSiteSettings();
-  
+
   // 团队页面整体访问统计
   usePageView('team_page', 'main');
-  
+
   // 选中团队的访问统计
   React.useEffect(() => {
     if (selectedTeam) {
       PageViewService.recordPageView('team', selectedTeam.id);
     }
   }, [selectedTeam?.id]);
+
   const { teamMembers, loading: membersLoading } = useTeamData({
     teamId: selectedTeam?.id,
     includeMembers: !!selectedTeam,
   });
 
+  // 如果URL中有团队ID，直接加载该团队信息
+  useEffect(() => {
+    if (id) {
+      const loadTeam = async () => {
+        setTeamsLoading(true);
+        try {
+          const response = await teamService.getTeamById(id);
+          setSelectedTeam(response.data);
+        } catch (error) {
+          console.error('Failed to load team:', error);
+        } finally {
+          setTeamsLoading(false);
+        }
+      };
 
+      loadTeam();
+    }
+  }, [id]);
 
   const handleTeamSelect = (team: Team) => {
     setSelectedTeam(team);
+    // 记录团队页面访问
+    PageViewService.recordPageView('team', team.id);
+    // 更新URL但不刷新页面
+    navigate(`/team/${team.id}`, { replace: true });
   };
 
   const handleBackToTeams = () => {
     setSelectedTeam(null);
+    // 返回到团队列表页面
+    navigate('/team', { replace: true });
   };
 
   const handleViewDetails = (userId: string) => {
@@ -71,16 +98,19 @@ const TeamPage: React.FC = () => {
   return (
     <PageContainer>
       {!selectedTeam ? (
-        <TeamList 
-          onTeamSelect={handleTeamSelect}
-          limit={3} title={settings?.homepageSections?.team?.title || ''} 
-          description={settings?.homepageSections?.team?.description || ''}        />
+        settings?.homepageSections?.team?.visible && (
+          <TeamList
+            onTeamSelect={handleTeamSelect}
+            title={settings?.homepageSections?.team?.title || ''}
+            description={settings?.homepageSections?.team?.description || ''}
+          />
+        )
       ) : (
-        <TeamMemberList 
-          team={selectedTeam} 
-          members={teamMembers} 
-          loading={membersLoading} 
-          onBack={handleBackToTeams} 
+        <TeamMemberList
+          team={selectedTeam}
+          members={teamMembers}
+          loading={membersLoading || teamsLoading}
+          onBack={handleBackToTeams}
           onViewDetails={handleViewDetails}
           onMemberClick={handleMemberClick}
         />

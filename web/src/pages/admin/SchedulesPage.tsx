@@ -56,7 +56,7 @@ const SchedulesPage: React.FC = () => {
     teamId: '',
     userId: '',
     date: null,
-    mealType: 'lunch',
+    weddingTime: 'lunch',
   });
   // 初始化admin主题和用户认证
   const { initTheme } = useTheme();

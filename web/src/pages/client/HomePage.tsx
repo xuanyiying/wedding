@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { useNavigate } from 'react-router-dom';
 
 import { type Team } from '../../types';
 import HeroSection from '../../components/client/HeroSection';
@@ -16,6 +17,8 @@ import TeamShowcaseSection from '../../components/client/TeamShowcaseSection';
 import { useSiteSettings } from '../../hooks';
 import { useTheme } from '../../hooks/useTheme';
 import { applyThemeSettings } from '../../utils/themeUtils';
+import TeamMemberList from '../../components/client/TeamMemberList';
+import { useTeamData } from '../../hooks/useTeamData';
 
 interface OutletContextType {
   setActiveSection: (sectionId: string) => void;
@@ -64,10 +67,15 @@ const HeroSectionWrapper = styled.section`
   position: relative;
 `;
 
+const TeamSectionWrapper = styled.div`
+  padding: 2rem 0;
+`;
+
 const HomePage: React.FC = () => {
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedMember, setSelectedMember] = useState<ClientTeamMember | null>(null);
+  const navigate = useNavigate();
 
   // 使用站点设置和主题钩子
   const { settings } = useSiteSettings();
@@ -75,11 +83,17 @@ const HomePage: React.FC = () => {
 
   const { setActiveSection } = useOutletContext<OutletContextType>();
 
+  // 获取团队成员数据
+  const { teamMembers, loading: membersLoading } = useTeamData({
+    teamId: selectedTeam?.id,
+    includeMembers: !!selectedTeam,
+  });
+
   // 应用主题设置
   useEffect(() => {
     // 初始化客户端主题
     initTheme('client');
-    
+
     // 如果有自定义主题设置，应用它们
     if (settings?.theme) {
       // 确保 theme 对象包含所有必需的属性
@@ -97,10 +111,27 @@ const HomePage: React.FC = () => {
   const handleTeamSelect = (team: Team) => {
     setSelectedTeam(team);
   };
-  
+
+  const handleBackToTeams = () => {
+    setSelectedTeam(null);
+  };
+
   const handleCloseModal = () => {
     setModalVisible(false);
     setSelectedMember(null);
+  };
+
+  const handleViewDetails = (userId: string) => {
+    const member = teamMembers.find(m => m.userId === userId);
+    if (member) {
+      setSelectedMember(member);
+      setModalVisible(true);
+    }
+  };
+
+  const handleMemberClick = (member: ClientTeamMember) => {
+    setSelectedMember(member);
+    setModalVisible(true);
   };
 
   const heroSectionSettings = settings?.homepageSections?.hero;
@@ -123,30 +154,45 @@ const HomePage: React.FC = () => {
       />
 
       {/* Hero Section */}
-      <HeroSectionWrapper id="hero">
-        <HeroSection
-          title={heroSectionSettings?.title || '完美婚礼，从这里开始'}
-          description={heroSectionSettings?.description || '专业的婚礼策划团队，为您打造独一无二的梦想婚礼'}
-          ctaText={heroSectionSettings?.ctaText || '开始策划您的婚礼'}
-          ctaLink={heroSectionSettings?.ctaLink || '/contact'}
-        />
-      </HeroSectionWrapper>
+      {settings?.homepageSections?.hero?.visible && (
+        <HeroSectionWrapper id="hero">
+          <HeroSection
+            title={heroSectionSettings?.title || '完美婚礼，从这里开始'}
+            description={heroSectionSettings?.description || '专业的婚礼策划团队，为您打造独一无二的梦想婚礼'}
+            ctaText={heroSectionSettings?.ctaText || '开始策划您的婚礼'}
+            ctaLink={heroSectionSettings?.ctaLink || '/contact'}
+          />
+        </HeroSectionWrapper>
+      )}
 
       {/* Team Section */}
       {settings?.homepageSections?.team?.visible && (
         <SectionWrapper id="team">
-          <TeamList
-            title={settings.homepageSections.team.title}
-            description={settings.homepageSections.team.description}
-            onTeamSelect={handleTeamSelect}
-          />
+          {!selectedTeam ? (
+            <TeamList
+              title={settings.homepageSections.team.title}
+              description={settings.homepageSections.team.description}
+              onTeamSelect={handleTeamSelect}
+            />
+          ) : (
+            <TeamSectionWrapper>
+              <TeamMemberList
+                team={selectedTeam}
+                members={teamMembers}
+                loading={membersLoading}
+                onBack={handleBackToTeams}
+                onViewDetails={handleViewDetails}
+                onMemberClick={handleMemberClick}
+              />
+            </TeamSectionWrapper>
+          )}
         </SectionWrapper>
       )}
 
       {/* Team Showcase */}
-      {settings?.homepageSections?.teamShowcase?.visible && (
+      {settings?.homepageSections?.teamShowcase?.visible && !selectedTeam && (
         <TeamShowcaseSection
-          team={selectedTeam as Team}
+          team={selectedTeam as unknown as Team}
           title={settings.homepageSections.teamShowcase.title}
           description={settings.homepageSections.teamShowcase.description}
           visible={settings.homepageSections.teamShowcase.visible}
@@ -154,7 +200,7 @@ const HomePage: React.FC = () => {
       )}
 
       {/* Portfolio Showcase */}
-      {settings?.homepageSections?.portfolio?.visible && (
+      {settings?.homepageSections?.portfolio?.visible && !selectedTeam && (
         <SectionWrapper id="portfolio">
           <ShowcaseSection
             title={portfolioSectionSettings?.title || "精选作品"}
@@ -168,10 +214,10 @@ const HomePage: React.FC = () => {
       )}
 
       {/* Schedule Section */}
-      {settings?.homepageSections?.schedule?.visible && (
+      {settings?.homepageSections?.schedule?.visible && !selectedTeam && (
         <SectionWrapper id="schedule">
           <ScheduleSection
-            team={selectedTeam as Team}
+            team={selectedTeam as unknown as Team}
             title={scheduleSectionSettings?.title || "我们的档期"}
             description={scheduleSectionSettings?.description || "查看我们团队的档期安排，计划您的重要日子。"}
           />
@@ -179,7 +225,7 @@ const HomePage: React.FC = () => {
       )}
 
       {/* Contact Section */}
-      {settings?.homepageSections?.contact?.visible && (
+      {settings?.homepageSections?.contact?.visible && !selectedTeam && (
         <SectionWrapper id="contact">
           <ShowcaseSection
             title={contactSectionSettings?.title || "联系我们"}

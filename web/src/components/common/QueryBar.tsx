@@ -115,7 +115,7 @@ export interface QueryFilters {
   teamId?: string;
   userId?: string;
   date?: Dayjs | null;
-  mealType?: 'lunch' | 'dinner'; // 仅用于档期页面
+  weddingTime?: 'lunch' | 'dinner'; // 仅用于档期页面
 }
 
 export interface QueryBarProps {
@@ -303,8 +303,8 @@ const QueryBar: React.FC<QueryBarProps> = ({
           <div className="query-item-meal">
             <Select
               placeholder="选择时段"
-              value={filters.mealType}
-              onChange={(value) => handleFilterChange('mealType', value)}
+              value={filters.weddingTime}
+              onChange={(value) => handleFilterChange('weddingTime', value)}
               allowClear
             >
               <Option value="lunch">午宴</Option>

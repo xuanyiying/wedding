@@ -12,7 +12,7 @@ import {
   GlobalOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
-import { useConfig } from '../../../contexts/ConfigContext';
+import { useSettings } from '../../../contexts/SettingsContext';
 import { SimpleUploader } from '../../common/SimpleUploader';
 
 const { TextArea } = Input;
@@ -61,9 +61,9 @@ interface SiteSettingsForm {
   };
 }
 
-const SiteConfig: React.FC = () => {
+const SiteSettings: React.FC = () => {
   const [form] = Form.useForm();
-  const { state, updateSettings, saveSettings } = useConfig();
+  const { state, updateSettings, saveSettings } = useSettings();
   const [homepageBackgroundImage, setHomepageBackgroundImage] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string>('');
   const [faviconUrl, setFaviconUrl] = useState<string>('');
@@ -386,4 +386,4 @@ const SiteConfig: React.FC = () => {
   );
 };
 
-export default SiteConfig;
+export default SiteSettings;

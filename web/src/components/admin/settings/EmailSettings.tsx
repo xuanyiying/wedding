@@ -15,7 +15,7 @@ import {
   MailOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
-import { useEmailConfig } from '../../../contexts/ConfigContext';
+import { useEmailSettings } from '../../../contexts/SettingsContext';
 import { settingsService } from '../../../services';
 
 const SettingSection = styled.div`
@@ -49,9 +49,9 @@ interface EmailSettingsForm {
   enableSSL: boolean;
 }
 
-const EmailConfig: React.FC = () => {
+const EmailSettings: React.FC = () => {
   const [form] = Form.useForm();
-  const { email, loading, isDirty, updateEmail, saveEmail } = useEmailConfig();
+  const { email, loading, updateEmail, saveEmail } = useEmailSettings();
 
   // 初始化表单数据
   useEffect(() => {
@@ -213,4 +213,4 @@ const EmailConfig: React.FC = () => {
   );
 };
 
-export default EmailConfig;
+export default EmailSettings;

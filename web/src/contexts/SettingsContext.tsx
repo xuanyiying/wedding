@@ -4,7 +4,7 @@ import { settingsService } from '../services';
 import type { SiteSettings } from '../types';
 
 // 配置状态类型
-interface ConfigState {
+interface SettingsState {
   settings: SiteSettings | null;
   loading: boolean;
   error: string | null;
@@ -12,7 +12,7 @@ interface ConfigState {
 }
 
 // 配置动作类型
-type ConfigAction =
+type SettingsAction =
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_SETTINGS'; payload: SiteSettings }
   | { type: 'UPDATE_SETTINGS'; payload: Partial<SiteSettings> }
@@ -21,8 +21,8 @@ type ConfigAction =
   | { type: 'RESET_SETTINGS' };
 
 // 配置上下文类型
-interface ConfigContextType {
-  state: ConfigState;
+interface SettingsContextType {
+  state: SettingsState;
   loadSettings: () => Promise<void>;
   updateSettings: (updates: Partial<SiteSettings>) => void;
   saveSettings: (section?: keyof SiteSettings) => Promise<boolean>;
@@ -30,7 +30,7 @@ interface ConfigContextType {
   markDirty: () => void;
 }
 
-const initialState: ConfigState = {
+const initialState: SettingsState = {
   settings: null,
   loading: false,
   error: null,
@@ -38,7 +38,7 @@ const initialState: ConfigState = {
 };
 
 // 配置 reducer
-function configReducer(state: ConfigState, action: ConfigAction): ConfigState {
+function SettingsReducer(state: SettingsState, action: SettingsAction): SettingsState {
   switch (action.type) {
     case 'SET_LOADING':
       return { ...state, loading: action.payload };
@@ -61,11 +61,11 @@ function configReducer(state: ConfigState, action: ConfigAction): ConfigState {
   }
 }
 
-const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
+const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 // 配置提供者组件
-export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, dispatch] = useReducer(configReducer, initialState);
+export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [state, dispatch] = useReducer(SettingsReducer, initialState);
 
   // 加载设置
   const loadSettings = useCallback(async () => {
@@ -130,7 +130,7 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     loadSettings();
   }, [loadSettings]);
 
-  const contextValue: ConfigContextType = {
+  const contextValue: SettingsContextType = {
     state,
     loadSettings,
     updateSettings,
@@ -140,24 +140,24 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   return (
-    <ConfigContext.Provider value={contextValue}>
+    <SettingsContext.Provider value={contextValue}>
       {children}
-    </ConfigContext.Provider>
+    </SettingsContext.Provider>
   );
 };
 
 // 使用配置的钩子
-export const useConfig = (): ConfigContextType => {
-  const context = useContext(ConfigContext);
+export const useSettings = (): SettingsContextType => {
+  const context = useContext(SettingsContext);
   if (!context) {
-    throw new Error('useConfig must be used within a ConfigProvider');
+    throw new Error('useSettings must be used within a SettingsProvider');
   }
   return context;
 };
 
 // 特定配置部分的钩子
-export const useThemeConfig = () => {
-  const { state, updateSettings, saveSettings } = useConfig();
+export const useThemeSettings = () => {
+  const { state, updateSettings, saveSettings } = useSettings();
   
   const updateTheme = useCallback((themeUpdates: Partial<SiteSettings['theme']>) => {
     updateSettings({
@@ -179,8 +179,8 @@ export const useThemeConfig = () => {
   };
 };
 
-export const useEmailConfig = () => {
-  const { state, updateSettings, saveSettings } = useConfig();
+export const useEmailSettings = () => {
+  const { state, updateSettings, saveSettings } = useSettings();
   
   const updateEmail = useCallback((emailUpdates: Partial<SiteSettings['email']>) => {
     updateSettings({

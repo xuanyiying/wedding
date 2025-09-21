@@ -13,7 +13,7 @@ import {
   HomeOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
-import { useConfig } from '../../../contexts/ConfigContext';
+import { useSettings } from '../../../contexts/SettingsContext';
 
 const SettingSection = styled.div`
   margin-bottom: 40px;
@@ -38,7 +38,7 @@ const SettingSection = styled.div`
 
 const HomepageConfig: React.FC = () => {
   const [form] = Form.useForm();
-  const { state, updateSettings, saveSettings } = useConfig();
+  const { state, updateSettings, saveSettings } = useSettings();
 
   // 初始化表单数据
   useEffect(() => {
@@ -192,7 +192,7 @@ const HomepageConfig: React.FC = () => {
           loading={state.loading} 
           icon={<SaveOutlined />}
         >
-          保存首页配置
+          保存
         </Button>
       </Form.Item>
     </Form>

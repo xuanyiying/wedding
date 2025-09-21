@@ -11,7 +11,6 @@ import {
   Typography,
   Tooltip,
   Alert,
-  Card,
 } from 'antd';
 import {
   SaveOutlined,
@@ -23,7 +22,7 @@ import {
   CheckCircleOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
-import { useThemeConfig } from '../../../contexts/ConfigContext';
+import { useThemeSettings } from '../../../contexts/SettingsContext';
 import { useTheme } from '../../../hooks/useTheme';
 import { applyThemeSettings } from '../../../utils/themeUtils';
 import { showSuccessNotification } from '../../common/SuccessNotification';
@@ -238,9 +237,9 @@ const SaveButtonGroup = styled.div`
   }
 `;
 
-const ThemeConfig: React.FC = () => {
+const ThemeSettings: React.FC = () => {
   const [form] = Form.useForm();
-  const { theme, loading, isDirty, updateTheme, saveTheme } = useThemeConfig();
+  const { theme, loading, updateTheme, saveTheme } = useThemeSettings();
   const { initTheme } = useTheme();
 
   // 主题相关状态
@@ -687,4 +686,4 @@ const ThemeConfig: React.FC = () => {
   );
 };
 
-export default ThemeConfig;
+export default ThemeSettings;

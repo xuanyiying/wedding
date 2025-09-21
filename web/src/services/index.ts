@@ -365,8 +365,8 @@ export const teamService = {
     return http.get('/team', { params });
   },
 
-  // 根据团队id获取团队=0 `
-  getTeam: (id: string): Promise<ApiResponse<Team>> => {
+  // 根据团队id获取团队
+  getTeamById: (id: string): Promise<ApiResponse<Team>> => {
     return http.get(`/team/${id}`);
   },
 
@@ -589,7 +589,7 @@ export const fileService = {
     return http.delete(`/files/${id}`);
   },
   getFile: (id: string): Promise<ApiResponse<FileInfo>> => {
-    return http.get(`/files/${id}`);  
+    return http.get(`/files/${id}`);
   },
 
   uploadVedioCover: (file: File, vedioFileId: string): Promise<ApiResponse<string>> => {
