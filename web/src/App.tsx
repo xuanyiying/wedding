@@ -61,7 +61,7 @@ function AppInitializer() {
   useEffect(() => {
     const applySiteConfig = async () => {
       try {
-        const response = await settingsService.getSiteConfig();
+        const response = await settingsService.getSiteSettings();
         const config = response.data;
 
         if (config) {

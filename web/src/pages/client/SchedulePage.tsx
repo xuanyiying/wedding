@@ -9,6 +9,7 @@ import TeamMemberDetailModal from '../../components/client/TeamMemberDetailModal
 import type { ClientTeamMember } from '../../hooks/useTeamData';
 import { useSiteSettings } from '../../hooks';
 import dayjs from 'dayjs';
+import { transformTeamMember } from '../../utils/team';
 
 const { Title, Paragraph } = Typography;
 
@@ -68,15 +69,14 @@ const SchedulePage: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const { settings} = useSiteSettings();
+  const today = dayjs();
 
   const { teamMembers } = useTeamData({
     includeMembers: true,
     activeOnly: true,
   });
-
   // 页面加载时自动查询当天档期
   useEffect(() => {
-    const today = dayjs();
     handleQuery({ date: today });
   }, [teamMembers]);
 
@@ -84,22 +84,21 @@ const SchedulePage: React.FC = () => {
   const handleQuery = async (filters: QueryFilters) => {
     setLoading(true);
     try {
-      const response = await scheduleService.getSchedules({
-        userId: filters.userId,
-        startDate: filters.date?.format('YYYY-MM-DD') || undefined,
-        endDate: filters.date?.format('YYYY-MM-DD') || undefined,
-        status: 'available',
-        page: 1,
-        limit: 100,
-      });
-      
+      console.info('available hosts', filters)
+      const response = await scheduleService.getAvailableHosts(
+        {
+          teamId:filters.teamId || 'all',
+          weddingDate:filters.date?.format('YYYY-MM-DD') || today.format('YYYY-MM-DD'),
+          weddingTime:  filters.weddingTime || 'lunch'
+        }
+      );
+      console.log('available hosts', response);
       if (response.success && response.data) {
-        // 从档期数据中提取有档期的团队成员ID
-        const busyMemberIds = [...new Set(response.data.schedules.map(schedule => schedule.userId))];
-        // 筛选出没有档期的团队成员
-        const availableTeamMembers = teamMembers.filter(member => 
-          !busyMemberIds.includes(member.userId)
-        );
+        let availableTeamMembers = response.data.hosts.map(transformTeamMember);
+        if(filters.userId){
+          availableTeamMembers =  availableTeamMembers.filter(item => item.userId === filters.userId);
+        }
+
         setAvailableMembers(availableTeamMembers);
       } else {
         // 如果没有档期数据，说明所有成员都可用
@@ -135,9 +134,9 @@ const SchedulePage: React.FC = () => {
   return (
     <PageContainer>
       <PageHeader>
-        <PageTitle level={1}>{settings?.homepageSections?.schedule?.title || '档期查询'}</PageTitle>
+        <PageTitle level={1}>{settings?.homepage?.schedule?.title || '档期查询'}</PageTitle>
         <Paragraph style={{ fontSize: '1.1rem', color: 'var(--client-text-secondary)', maxWidth: 600, margin: '0 auto' }}>
-          {settings?.homepageSections?.schedule?.description || '查看我们团队的档期安排，选择合适的时间为您的特殊日子预约专业的主持服务。'}
+          {settings?.homepage?.schedule?.description || '查看我们团队的档期安排，选择合适的时间为您的特殊日子预约专业的主持服务。'}
         </Paragraph>
       </PageHeader>
 

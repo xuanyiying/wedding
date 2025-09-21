@@ -12,9 +12,13 @@ import {
 import {
   SaveOutlined,
   HomeOutlined,
+  WechatOutlined,
+  VideoCameraOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { useSettings } from '../../../contexts/SettingsContext';
+
+const { TextArea } = Input;
 
 const SettingSection = styled.div`
   margin-bottom: 40px;
@@ -37,7 +41,7 @@ const SettingSection = styled.div`
   }
 `;
 
-const HomepageConfig: React.FC = () => {
+const HomepageSettings: React.FC = () => {
   const [form] = Form.useForm();
   const { state, updateHomepageSettings, saveHomepageSettings } = useSettings();
 
@@ -45,41 +49,51 @@ const HomepageConfig: React.FC = () => {
   useEffect(() => {
     if (state.homepage) {
       const homepageData = state.homepage;
-
+      
       const sectionsData = {
         hero: {
           title: homepageData.hero?.title || '',
           subtitle: homepageData.hero?.subtitle || '',
+          description: homepageData.hero?.description || '',
           backgroundImage: homepageData.hero?.backgroundImage || '',
           ctaText: homepageData.hero?.ctaText || '',
           ctaLink: homepageData.hero?.ctaLink || '',
           visible: homepageData.hero?.visible || false,
         },
-        about: {
-          title: homepageData.about?.title || '',
-          content: homepageData.about?.content || '',
-          image: homepageData.about?.image || '',
-          visible: homepageData.about?.visible || false,
+        team: {
+          title: homepageData.team?.title || '',
+          subtitle: homepageData.team?.subtitle || '',
+          description: homepageData.team?.description || '',
+          visible: homepageData.team?.visible || false,
         },
-        services: {
-          title: homepageData.services?.title || '',
-          visible: homepageData.services?.visible || false,
+        teamShowcase: {
+          title: homepageData.teamShowcase?.title || '',
+          subtitle: homepageData.teamShowcase?.subtitle || '',
+          description: homepageData.teamShowcase?.description || '',
+          visible: homepageData.teamShowcase?.visible || false,
         },
-        gallery: {
-          title: homepageData.gallery?.title || '',
-          visible: homepageData.gallery?.visible || false,
+        portfolio: {
+          title: homepageData.portfolio?.title || '',
+          subtitle: homepageData.portfolio?.subtitle || '',
+          description: homepageData.portfolio?.description || '',
+          visible: homepageData.portfolio?.visible || false,
         },
-        testimonials: {
-          title: homepageData.testimonials?.title || '',
-          visible: homepageData.testimonials?.visible || false,
+        schedule: {
+          title: homepageData.schedule?.title || '',
+          subtitle: homepageData.schedule?.subtitle || '',
+          description: homepageData.schedule?.description || '',
+          visible: homepageData.schedule?.visible || false,
         },
         contact: {
           title: homepageData.contact?.title || '',
           subtitle: homepageData.contact?.subtitle || '',
+          description: homepageData.contact?.description || '',
+          backgroundImage: homepageData.contact?.backgroundImage || '',
           email: homepageData.contact?.email || '',
           phone: homepageData.contact?.phone || '',
           address: homepageData.contact?.address || '',
           wechat: homepageData.contact?.wechat || '',
+          xiaohongshu: homepageData.contact?.xiaohongshu || '',
           douyin: homepageData.contact?.douyin || '',
           visible: homepageData.contact?.visible || false,
         }
@@ -97,49 +111,49 @@ const HomepageConfig: React.FC = () => {
       // 构建完整的首页设置数据结构
       const homepageData = {
         hero: {
-          ...state.homepage.hero,
           title: values.hero?.title || '',
           subtitle: values.hero?.subtitle || '',
+          description: values.hero?.description || '',
           backgroundImage: values.hero?.backgroundImage || state.homepage.hero?.backgroundImage || '',
           ctaText: values.hero?.ctaText || state.homepage.hero?.ctaText || '',
           ctaLink: values.hero?.ctaLink || state.homepage.hero?.ctaLink || '',
           visible: values.hero?.visible || false,
         },
-        about: {
-          ...state.homepage.about,
-          title: values.about?.title || '',
-          content: values.about?.content || '',
-          image: values.about?.image || state.homepage.about?.image || '',
-          visible: values.about?.visible || false,
+        team: {
+          title: values.team?.title || '',
+          subtitle: values.team?.subtitle || '',
+          description: values.team?.description || '',
+          visible: values.team?.visible || false,
         },
-        services: {
-          ...state.homepage.services,
-          title: values.services?.title || '',
-          visible: values.services?.visible || false,
-          items: state.homepage.services?.items || [],
+        teamShowcase: {
+          title: values.teamShowcase?.title || '',
+          subtitle: values.teamShowcase?.subtitle || '',
+          description: values.teamShowcase?.description || '',
+          visible: values.teamShowcase?.visible || false,
         },
-        gallery: {
-          ...state.homepage.gallery,
-          title: values.gallery?.title || '',
-          visible: values.gallery?.visible || false,
-          images: state.homepage.gallery?.images || [],
+        portfolio: {
+          title: values.portfolio?.title || '',
+          subtitle: values.portfolio?.subtitle || '',
+          description: values.portfolio?.description || '',
+          visible: values.portfolio?.visible || false,
         },
-        testimonials: {
-          ...state.homepage.testimonials,
-          title: values.testimonials?.title || '',
-          visible: values.testimonials?.visible || false,
-          items: state.homepage.testimonials?.items || [],
+        schedule: {
+          title: values.schedule?.title || '',
+          subtitle: values.schedule?.subtitle || '',
+          description: values.schedule?.description || '',
+          visible: values.schedule?.visible || false,
         },
         contact: {
-          ...state.homepage.contact,
           title: values.contact?.title || '',
           subtitle: values.contact?.subtitle || '',
+          description: values.contact?.description || '',
+          backgroundImage: values.contact?.backgroundImage || state.homepage.contact?.backgroundImage || '',
           email: values.contact?.email || '',
           phone: values.contact?.phone || '',
           address: values.contact?.address || '',
           wechat: values.contact?.wechat || '',
+          xiaohongshu: values.contact?.xiaohongshu || '',
           douyin: values.contact?.douyin || '',
-          backgroundImage: state.homepage.contact?.backgroundImage || '',
           visible: values.contact?.visible || false,
         }
       };
@@ -177,104 +191,151 @@ const HomepageConfig: React.FC = () => {
         <div className="section-description">配置首页的内容和显示</div>
 
         <Row gutter={[16, 16]}>
-          {[
-            { key: 'hero', title: '首页横幅', hasSubtitle: true, hasBackgroundImage: true },
-            { key: 'about', title: '关于我们', hasContent: true },
-            { key: 'services', title: '服务项目' },
-            { key: 'gallery', title: '作品展示' },
-            { key: 'testimonials', title: '客户评价' },
-            { key: 'contact', title: '联系我们', hasContactInfo: true }
-          ].map(section => (
-            <Col xs={24} sm={24} md={12} lg={12} key={section.key}>
-              <Card title={section.title} style={{ marginBottom: 16 }}>
-                <Form.Item
-                  name={[section.key, 'title']}
-                  label="标题"
-                >
-                  <Input placeholder={`请输入${section.title}标题`} />
-                </Form.Item>
+          {/* 首页横幅 */}
+          <Col xs={24} sm={24} md={12} lg={12}>
+            <Card title="首页横幅" style={{ marginBottom: 16 }}>
+              <Form.Item name={['hero', 'title']} label="标题">
+                <Input placeholder="请输入首页横幅标题" />
+              </Form.Item>
+              <Form.Item name={['hero', 'subtitle']} label="副标题">
+                <Input placeholder="请输入副标题" />
+              </Form.Item>
+              <Form.Item name={['hero', 'description']} label="描述">
+                <TextArea placeholder="请输入描述" rows={3} />
+              </Form.Item>
+              <Form.Item name={['hero', 'ctaText']} label="按钮文本">
+                <Input placeholder="请输入按钮文本" />
+              </Form.Item>
+              <Form.Item name={['hero', 'ctaLink']} label="按钮链接">
+                <Input placeholder="请输入按钮链接" />
+              </Form.Item>
+              <Form.Item name={['hero', 'visible']} label="启用" valuePropName="checked">
+                <Switch />
+              </Form.Item>
+            </Card>
+          </Col>
 
-                {section.hasSubtitle && (
-                  <Form.Item
-                    name={[section.key, 'subtitle']}
-                    label="副标题"
-                  >
-                    <Input placeholder="请输入副标题" />
+          {/* 团队介绍 */}
+          <Col xs={24} sm={24} md={12} lg={12}>
+            <Card title="团队介绍" style={{ marginBottom: 16 }}>
+              <Form.Item name={['team', 'title']} label="标题">
+                <Input placeholder="请输入团队介绍标题" />
+              </Form.Item>
+              <Form.Item name={['team', 'subtitle']} label="副标题">
+                <Input placeholder="请输入副标题" />
+              </Form.Item>
+              <Form.Item name={['team', 'description']} label="描述">
+                <TextArea placeholder="请输入描述" rows={3} />
+              </Form.Item>
+              <Form.Item name={['team', 'visible']} label="启用" valuePropName="checked">
+                <Switch />
+              </Form.Item>
+            </Card>
+          </Col>
+
+          {/* 团队风采 */}
+          <Col xs={24} sm={24} md={12} lg={12}>
+            <Card title="团队风采" style={{ marginBottom: 16 }}>
+              <Form.Item name={['teamShowcase', 'title']} label="标题">
+                <Input placeholder="请输入团队风采标题" />
+              </Form.Item>
+              <Form.Item name={['teamShowcase', 'subtitle']} label="副标题">
+                <Input placeholder="请输入副标题" />
+              </Form.Item>
+              <Form.Item name={['teamShowcase', 'description']} label="描述">
+                <TextArea placeholder="请输入描述" rows={3} />
+              </Form.Item>
+              <Form.Item name={['teamShowcase', 'visible']} label="启用" valuePropName="checked">
+                <Switch />
+              </Form.Item>
+            </Card>
+          </Col>
+
+          {/* 精选作品 */}
+          <Col xs={24} sm={24} md={12} lg={12}>
+            <Card title="精选作品" style={{ marginBottom: 16 }}>
+              <Form.Item name={['portfolio', 'title']} label="标题">
+                <Input placeholder="请输入精选作品标题" />
+              </Form.Item>
+              <Form.Item name={['portfolio', 'subtitle']} label="副标题">
+                <Input placeholder="请输入副标题" />
+              </Form.Item>
+              <Form.Item name={['portfolio', 'description']} label="描述">
+                <TextArea placeholder="请输入描述" rows={3} />
+              </Form.Item>
+              <Form.Item name={['portfolio', 'visible']} label="启用" valuePropName="checked">
+                <Switch />
+              </Form.Item>
+            </Card>
+          </Col>
+
+          {/* 档期查询 */}
+          <Col xs={24} sm={24} md={12} lg={12}>
+            <Card title="档期查询" style={{ marginBottom: 16 }}>
+              <Form.Item name={['schedule', 'title']} label="标题">
+                <Input placeholder="请输入档期查询标题" />
+              </Form.Item>
+              <Form.Item name={['schedule', 'subtitle']} label="副标题">
+                <Input placeholder="请输入副标题" />
+              </Form.Item>
+              <Form.Item name={['schedule', 'description']} label="描述">
+                <TextArea placeholder="请输入描述" rows={3} />
+              </Form.Item>
+              <Form.Item name={['schedule', 'visible']} label="启用" valuePropName="checked">
+                <Switch />
+              </Form.Item>
+            </Card>
+          </Col>
+
+          {/* 联系我们 */}
+          <Col xs={24} sm={24} md={12} lg={12}>
+            <Card title="联系我们" style={{ marginBottom: 16 }}>
+              <Form.Item name={['contact', 'title']} label="标题">
+                <Input placeholder="请输入联系我们标题" />
+              </Form.Item>
+              <Form.Item name={['contact', 'subtitle']} label="副标题">
+                <Input placeholder="请输入副标题" />
+              </Form.Item>
+              <Form.Item name={['contact', 'description']} label="描述">
+                <TextArea placeholder="请输入描述" rows={3} />
+              </Form.Item>
+              <Row gutter={8}>
+                <Col span={12}>
+                  <Form.Item name={['contact', 'email']} label="邮箱">
+                    <Input placeholder="联系邮箱" />
                   </Form.Item>
-                )}
-
-                {section.hasContent && (
-                  <Form.Item
-                    name={[section.key, 'content']}
-                    label="内容"
-                  >
-                    <Input.TextArea placeholder="请输入内容" rows={3} />
+                </Col>
+                <Col span={12}>
+                  <Form.Item name={['contact', 'phone']} label="电话">
+                    <Input placeholder="联系电话" />
                   </Form.Item>
-                )}
-
-                {section.hasContactInfo && (
-                  <>
-                    <Form.Item
-                      name={[section.key, 'subtitle']}
-                      label="副标题"
-                    >
-                      <Input placeholder="请输入副标题" />
-                    </Form.Item>
-                    <Row gutter={8}>
-                      <Col span={12}>
-                        <Form.Item
-                          name={[section.key, 'email']}
-                          label="邮箱"
-                        >
-                          <Input placeholder="联系邮箱" />
-                        </Form.Item>
-                      </Col>
-                      <Col span={12}>
-                        <Form.Item
-                          name={[section.key, 'phone']}
-                          label="电话"
-                        >
-                          <Input placeholder="联系电话" />
-                        </Form.Item>
-                      </Col>
-                    </Row>
-                    <Form.Item
-                      name={[section.key, 'address']}
-                      label="地址"
-                    >
-                      <Input placeholder="联系地址" />
-                    </Form.Item>
-                    <Row gutter={8}>
-                      <Col span={12}>
-                        <Form.Item
-                          name={[section.key, 'wechat']}
-                          label="微信"
-                        >
-                          <Input placeholder="微信号" />
-                        </Form.Item>
-                      </Col>
-                      <Col span={12}>
-                        <Form.Item
-                          name={[section.key, 'douyin']}
-                          label="抖音"
-                        >
-                          <Input placeholder="抖音号" />
-                        </Form.Item>
-                      </Col>
-                    </Row>
-                  </>
-                )}
-
-                <Form.Item
-                  name={[section.key, 'visible']}
-                  label="启用"
-                  valuePropName="checked"
-                >
-                  <Switch />
-                </Form.Item>
-              </Card>
-            </Col>
-          ))}
+                </Col>
+              </Row>
+              <Form.Item name={['contact', 'address']} label="地址">
+                <Input placeholder="联系地址" />
+              </Form.Item>
+              <Row gutter={8}>
+                <Col span={8}>
+                  <Form.Item name={['contact', 'wechat']} label="微信">
+                    <Input placeholder="微信号" prefix={<WechatOutlined />} />
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item name={['contact', 'xiaohongshu']} label="小红书">
+                    <Input placeholder="小红书号" />
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item name={['contact', 'douyin']} label="抖音">
+                    <Input placeholder="抖音号" prefix={<VideoCameraOutlined />} />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Form.Item name={['contact', 'visible']} label="启用" valuePropName="checked">
+                <Switch />
+              </Form.Item>
+            </Card>
+          </Col>
         </Row>
       </SettingSection>
 
@@ -292,4 +353,4 @@ const HomepageConfig: React.FC = () => {
   );
 };
 
-export default HomepageConfig;
+export default HomepageSettings;

@@ -123,7 +123,7 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, t
       const queryParams = {
         teamId: team?.id || 'all',
         weddingDate: filters.date?.format('YYYY-MM-DD') || today.format('YYYY-MM-DD'),
-        weddingTime: filters.mealType as string || 'lunch',
+        weddingTime: (filters as any).mealType as string || 'lunch',
       };
 
       const result = await scheduleService.getAvailableHosts(queryParams);
@@ -157,7 +157,7 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, t
     
     const initQuery = async () => {
       if (!isMounted) return;
-      await handleQuery({ date: today, mealType: 'lunch' });
+      await handleQuery({ date: today, mealType: 'lunch' } as any);
     };
     
     const timer = setTimeout(initQuery, 100);
@@ -171,7 +171,7 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, t
   // 当team变化时重新查询
   useEffect(() => {
     if (team?.id && hasQueried) {
-      handleQuery({ date: today, mealType: 'lunch' });
+      handleQuery({ date: today, mealType: 'lunch' } as any);
     }
   }, [team?.id]);
 

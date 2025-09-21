@@ -13,11 +13,11 @@ import ScheduleSection from '../../components/ScheduleSection';
 import { type ClientTeamMember } from '../../hooks/useTeamData';
 import TeamList from '../../components/client/TeamList';
 import TeamShowcaseSection from '../../components/client/TeamShowcaseSection';
-import { useSiteSettings } from '../../hooks';
 import { useTheme } from '../../hooks/useTheme';
 import { applyThemeSettings } from '../../utils/themeUtils';
 import TeamMemberList from '../../components/client/TeamMemberList';
 import { useTeamData } from '../../hooks/useTeamData';
+import useAppSettings from '../../hooks/useAppSettings';
 
 interface OutletContextType {
   setActiveSection: (sectionId: string) => void;
@@ -76,7 +76,7 @@ const HomePage: React.FC = () => {
   const [selectedMember, setSelectedMember] = useState<ClientTeamMember | null>(null);
 
   // 使用站点设置和主题钩子
-  const { settings } = useSiteSettings();
+  const { settings, loading } = useAppSettings();
   const { initTheme } = useTheme();
 
   const { setActiveSection } = useOutletContext<OutletContextType>();
@@ -132,10 +132,20 @@ const HomePage: React.FC = () => {
     setModalVisible(true);
   };
 
-  const heroSectionSettings = settings?.homepageSections?.hero;
-  const portfolioSectionSettings = settings?.homepageSections?.portfolio;
-  const scheduleSectionSettings = settings?.homepageSections?.schedule;
-  const contactSectionSettings = settings?.homepageSections?.contact;
+  // 处理加载状态
+  if (loading || !settings) {
+    return <div>加载中...</div>;
+  }
+
+  // 从新的设置结构中提取数据
+  const heroSectionSettings = settings?.homepage?.hero;
+  const portfolioSectionSettings = settings?.homepage?.portfolio;
+  const scheduleSectionSettings = settings?.homepage?.schedule;
+  const contactSectionSettings = settings?.homepage?.contact;
+
+  // 安全访问设置属性
+  const teamSection = settings?.homepage?.team;
+  const teamShowcaseSection = settings?.homepage?.teamShowcase;
 
   return (
     <PageContainer>
@@ -152,7 +162,7 @@ const HomePage: React.FC = () => {
       />
 
       {/* Hero Section */}
-      {settings?.homepageSections?.hero?.visible && (
+      {settings?.homepage?.hero?.visible !== false && (
         <HeroSectionWrapper id="hero">
           <HeroSection
             title={heroSectionSettings?.title || '完美婚礼，从这里开始'}
@@ -164,12 +174,12 @@ const HomePage: React.FC = () => {
       )}
 
       {/* Team Section */}
-      {settings?.homepageSections?.team?.visible && (
+      {teamSection?.visible !== false && (
         <SectionWrapper id="team">
           {!selectedTeam ? (
             <TeamList
-              title={settings.homepageSections.team.title}
-              description={settings.homepageSections.team.description}
+              title={teamSection?.title || '我们的团队'}
+              description={teamSection?.description || '专业的婚礼策划团队，为您打造独一无二的梦想婚礼'}
               onTeamSelect={handleTeamSelect}
             />
           ) : (
@@ -188,17 +198,17 @@ const HomePage: React.FC = () => {
       )}
 
       {/* Team Showcase */}
-      {settings?.homepageSections?.teamShowcase?.visible && !selectedTeam && selectedTeam && (
+      {(teamShowcaseSection?.visible ?? true) !== false && !selectedTeam && selectedTeam && (
         <TeamShowcaseSection
           team={selectedTeam}
-          title={settings.homepageSections.teamShowcase.title}
-          description={settings.homepageSections.teamShowcase.description}
-          visible={settings.homepageSections.teamShowcase.visible}
+          title={teamShowcaseSection?.title || '团队展示'}
+          description={teamShowcaseSection?.description || '了解我们的专业团队'}
+          visible={(teamShowcaseSection?.visible ?? true) !== false}
         />
       )}
 
       {/* Portfolio Showcase */}
-      {settings?.homepageSections?.portfolio?.visible && !selectedTeam && (
+      {settings?.homepage?.portfolio?.visible !== false && !selectedTeam && (
         <SectionWrapper id="portfolio">
           <ShowcaseSection
             title={portfolioSectionSettings?.title || "精选作品"}
@@ -212,7 +222,7 @@ const HomePage: React.FC = () => {
       )}
 
       {/* Schedule Section */}
-      {settings?.homepageSections?.schedule?.visible && !selectedTeam && selectedTeam && (
+      {settings?.homepage?.schedule?.visible !== false && !selectedTeam && selectedTeam && (
         <SectionWrapper id="schedule">
           <ScheduleSection
             team={selectedTeam}
@@ -223,7 +233,7 @@ const HomePage: React.FC = () => {
       )}
 
       {/* Contact Section */}
-      {settings?.homepageSections?.contact?.visible && !selectedTeam && (
+      {settings?.homepage?.contact?.visible !== false && !selectedTeam && (
         <SectionWrapper id="contact">
           <ShowcaseSection
             title={contactSectionSettings?.title || "联系我们"}

@@ -94,7 +94,6 @@ const SiteSettings: React.FC = () => {
           title: siteData.seo?.title || '',
           description: siteData.seo?.description || '',
           keywords: siteData.seo?.keywords || '',
-          ogImage: siteData.seo?.ogImage || '',
         }
       });
     }

@@ -5,7 +5,6 @@ import authSlice from './slices/authSlice';
 import appSlice from './slices/appSlice';
 import scheduleSlice from './slices/scheduleSlice';
 import workSlice from './slices/workSlice';
-import bookingSlice from './slices/bookingSlice';
 
 export const store = configureStore({
   reducer: {
@@ -17,7 +16,6 @@ export const store = configureStore({
     app: appSlice,
     schedule: scheduleSlice,
     work: workSlice,
-    booking: bookingSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

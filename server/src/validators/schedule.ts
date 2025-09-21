@@ -14,6 +14,7 @@ export const scheduleValidators = {
       startDate: Joi.date().iso().optional(),
       endDate: Joi.date().iso().min(Joi.ref('startDate')).optional(),
       isPublic: Joi.boolean().optional(),
+      limit: Joi.number().integer().min(1).max(100).optional(), // 添加limit参数支持
       _t: Joi.number().optional(), // 允许时间戳参数，用于防止缓存
     }),
   },

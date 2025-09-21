@@ -1,108 +1,4 @@
 
-export interface SiteSettings {
-  theme?: {
-    darkMode?: boolean;
-    colors?: {
-      primary: string; // 主题色
-      secondary: string; // 次主题色
-      background: string;
-      text: string;
-      accent?: string; // 强调色
-    };
-    fonts?: {
-      primary: string;
-      secondary: string;
-    };
-    spacing?: {
-      containerPadding: string;
-      sectionPadding: string;
-    };
-    borderRadius?: number;
-    fontSize?: number;
-    compactMode?: boolean;
-    clientThemeVariant?: string;
-  };
-  site?: {
-    name: string;
-    description: string;
-    keywords: string;
-    logo: string;
-    favicon: string;
-  };
-  email?: {
-    smtpHost: string;
-    smtpPort: number;
-    smtpUser: string;
-    smtpPassword: string;
-    smtpSecure: boolean;
-    emailFrom: string;
-    emailFromName: string;
-  };
-  seo?: {
-    title: string; // 标题
-    description: string; // 描述
-    keywords: string; // 关键词
-  };
-  // 首页section配置
-  homepageSections?: {
-    hero?: {
-      backgroundImage?: string; // 背景图片
-      visible?: boolean;
-      title?: string; // 标题
-      description?: string; // 描述
-      ctaText?: string; // 调用-to-action文本
-      ctaLink?: string; // 调用-to-action链接
-    };
-    team?: {
-      visible?: boolean; // 是否可见
-      title?: string; // 标题
-      subtitle?: string; // 副标题
-      description?: string; // 描述
-    };
-    teamShowcase?: {
-      visible?: boolean;
-      title?: string;
-      subtitle?: string;
-      description?: string;
-    };
-    portfolio?: {
-      visible?: boolean;
-      title?: string;
-      subtitle?: string;
-      description?: string;
-    };
-    schedule?: {
-      visible?: boolean;
-      title?: string;
-      subtitle?: string;
-      description?: string;
-    };
-    contact?: {
-      visible?: boolean;
-      title?: string;
-      subtitle?: string;
-      description?: string;
-      address?: string;
-      phone?: string;
-      email?: string;
-      wechat?: string;
-      xiaohongshu?: string;
-      douyin?: string;
-    };
-  };
-  // 导航菜单配置
-  navigation?: {
-    menuItems: Array<{
-      key: string;
-      label: string;
-      path: string;
-      sectionId?: string;
-      visible: boolean;
-      order: number;
-    }>;
-  };
-}
-
 export const UserRole = {
   ADMIN: 'admin',
   USER: 'user',
@@ -724,4 +620,176 @@ export const FileCategory = {
 export interface UploadFile extends File {
   category?: string;
   fileType?: 'video' | 'image';
+}
+
+
+
+// 网站设置接口
+export interface SiteSettings {
+  name: string;
+  description: string;
+  keywords: string;
+  logo: string;
+  favicon: string;
+  contactEmail: string;
+  contactPhone: string;
+  address: string;
+  icp: string;
+  copyright: string;
+  // SEO设置合并到网站设置中
+  seo: {
+    title: string;
+    description: string;
+    keywords: string;
+  };
+}
+
+// 首页设置接口
+export interface HomepageSettings {
+  /** 首页横幅区域设置 */
+  hero: {
+    /** 标题 */
+    title: string;
+    /** 副标题 */
+    subtitle: string;
+    /** 描述 */
+    description: string;
+    /** 背景图片路径 */
+    backgroundImage: string;
+    /** 按钮文本 */
+    ctaText: string;
+    /** 按钮链接 */
+    ctaLink: string;
+    /** 是否可见 */
+    visible: boolean;
+  };
+
+  /** 团队介绍区域设置 */
+  team: {
+    /** 标题 */
+    title: string;
+    /** 副标题 */
+    subtitle: string;
+    /** 描述 */
+    description: string;
+    /** 是否可见 */
+    visible: boolean;
+  };
+
+  /** 团队风采展示区域设置 */
+  teamShowcase: {
+    /** 标题 */
+    title: string;
+    /** 副标题 */
+    subtitle: string;
+    /** 描述 */
+    description: string;
+    /** 是否可见 */
+    visible: boolean;
+  };
+
+  /** 作品展示区域设置 */
+  portfolio: {
+    /** 标题 */
+    title: string;
+    /** 副标题 */
+    subtitle: string;
+    /** 描述 */
+    description: string;
+    /** 是否可见 */
+    visible: boolean;
+  };
+
+  /** 档期查询区域设置 */
+  schedule: {
+    /** 标题 */
+    title: string;
+    /** 副标题 */
+    subtitle: string;
+    /** 描述 */
+    description: string;
+    /** 是否可见 */
+    visible: boolean;
+  };
+
+  /** 联系我们区域设置 */
+  contact: {
+    /** 标题 */
+    title: string;
+    /** 副标题 */
+    subtitle: string;
+    /** 描述 */
+    description: string;
+    /** 背景图片路径 */
+    backgroundImage: string;
+    /** 联系邮箱 */
+    email: string;
+    /** 联系电话 */
+    phone: string;
+    /** 联系地址 */
+    address: string;
+    /** 微信 */
+    wechat: string;
+    /** 小红书 */
+    xiaohongshu: string;
+    /** 抖音 */
+    douyin: string;
+    /** 是否可见 */
+    visible: boolean;
+  };
+
+  /** 关于我们区域设置（可选） */
+  about?: {
+    /** 标题 */
+    title: string;
+    /** 内容 */
+    content: string;
+    /** 图片路径 */
+    image: string;
+    /** 是否可见 */
+    visible: boolean;
+  };
+}
+
+// 主题设置接口
+export interface ThemeSettings {
+  colors: {
+    primary: string;
+    secondary: string;
+    accent: string;
+    background: string;
+    text: string;
+  };
+  fonts: {
+    primary: string;
+    secondary: string;
+  };
+  spacing: {
+    containerPadding: string;
+    sectionPadding: string;
+  };
+  borderRadius: number;
+  fontSize: number;
+  compactMode: boolean;
+  darkMode: boolean;
+  clientThemeVariant: string;
+}
+
+// 邮件设置接口
+export interface EmailSettings {
+  smtpHost: string;
+  smtpPort: number;
+  smtpUser: string;
+  smtpPassword: string;
+  smtpSecure: boolean;
+  emailFrom: string;
+  emailFromName: string;
+}
+
+
+export interface AppSettings {
+  site: SiteSettings;
+  homepage: HomepageSettings;
+  theme: ThemeSettings;
+  email: EmailSettings;
 }

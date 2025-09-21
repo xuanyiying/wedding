@@ -220,82 +220,81 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
           <StyledTabs
             activeKey={activeTab}
             onChange={setActiveTab}
-            items={[
-              {
-                key: 'schedule',
-                label: (
-                  <span>
-                    <CalendarOutlined />
-                    档期
-                  </span>
-                ),
-                children: (
-                  <div>
-                    <DetailSection>
-                      <h4>近期档期</h4>
-                      {schedulesLoading ? (
-                        <LoadingContainer>
-                          <Spin size="small" />
-                        </LoadingContainer>
-                      ) : (
-                        <ScheduleCalendar
-                          schedules={memberSchedules.map(schedule => ({
-                            ...schedule,
-                            hostName: member?.name || '未知'
-                          }))}
-                          loading={schedulesLoading}
-                          theme="client"
-                          showLegend={false}
-                          fullscreen={false}
+            items={[{
+              key: 'profile',
+              label: (
+                <span>
+                  <UserOutlined />
+                  个人资料
+                </span>
+              ),
+              children: (
+                <div>
+                  <DetailSection>
+                    {worksLoading ? (
+                      <LoadingContainer>
+                        <Spin size="small" />
+                      </LoadingContainer>
+                    ) : mediaProfiles.length > 0 ?
+                      mediaProfiles.map((m) => (
+                        <WorkItem key={m.id}>
+                          {m.fileType === FileType.VIDEO && m.thumbnailUrl && m.fileUrl ?
+                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+                              <img
+                                src={m.thumbnailUrl}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
+                              <PlayButton>
+                                <PlayCircleOutlined />
+                              </PlayButton>
+                            </div> :
+                            <Image preview={false}
+                              src={m.fileUrl}
+                            />}
+                        </WorkItem>
+                      )) : (
+                        <Empty
+                          image={Empty.PRESENTED_IMAGE_SIMPLE}
+                          description="暂无公开作品"
+                          style={{ margin: '20px 0' }}
                         />
                       )}
-                    </DetailSection>
-                  </div>
-                )
-              },
-              {
-                key: 'profile',
-                label: (
-                  <span>
-                    <UserOutlined />
-                    个人资料
-                  </span>
-                ),
-                children: (
-                  <div>
-                    <DetailSection>
-                      {worksLoading ? (
-                        <LoadingContainer>
-                          <Spin size="small" />
-                        </LoadingContainer>
-                      ) : mediaProfiles.length > 0 ?
-                        mediaProfiles.map((m) => (
-                          <WorkItem key={m.id}>
-                            {m.fileType === FileType.VIDEO && m.thumbnailUrl && m.fileUrl ?
-                              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-                                <img
-                                  src={m.thumbnailUrl}
-                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                />
-                                <PlayButton>
-                                  <PlayCircleOutlined />
-                                </PlayButton>
-                              </div> :
-                              <Image preview={false}
-                                src={m.fileUrl}
-                              />}
-                          </WorkItem>
-                        )) : (
-                          <Empty
-                            image={Empty.PRESENTED_IMAGE_SIMPLE}
-                            description="暂无公开作品"
-                            style={{ margin: '20px 0' }}
-                          />
-                        )}
-                    </DetailSection>
-                  </div>
-                )
-              }
+                  </DetailSection>
+                </div>
+              )
+            },
+            {
+              key: 'schedule',
+              label: (
+                <span>
+                  <CalendarOutlined />
+                  档期
+                </span>
+              ),
+              children: (
+                <div>
+                  <DetailSection>
+                    <h4>近期档期</h4>
+                    {schedulesLoading ? (
+                      <LoadingContainer>
+                        <Spin size="small" />
+                      </LoadingContainer>
+                    ) : (
+                      <ScheduleCalendar
+                        schedules={memberSchedules.map(schedule => ({
+                          ...schedule,
+                          hostName: member?.name || '未知'
+                        }))}
+                        loading={schedulesLoading}
+                        theme="client"
+                        showLegend={false}
+                        fullscreen={false}
+                      />
+                    )}
+                  </DetailSection>
+                </div>
+              )
+            }
             ]}
           />
         </div>

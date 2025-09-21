@@ -3,7 +3,7 @@ import { Card, Avatar, Tag, Button, Typography } from 'antd';
 import styled from 'styled-components';
 import { TeamMemberStatus } from '../../types';
 
-const { Title, Paragraph } = Typography;
+const { Title } = Typography;
 
 interface TeamMemberCardProps {
   userId: string;
@@ -87,16 +87,6 @@ const StatusTag = styled(Tag)`
   }
 `;
 
-const SpecialtyTag = styled(Tag)`
-  &&& {
-    margin: 2px;
-    border-radius: var(--client-border-radius);
-    font-size: 0.75rem;
-    background: var(--client-bg-layout);
-    border: 1px solid var(--client-border-color);
-    color: var(--client-text-secondary);
-  }
-`;
 
 const DetailButton = styled(Button)`
   &&& {
@@ -117,8 +107,6 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
   name,
   avatar,
   status,
-  specialties,
-  experienceYears,
   onViewDetails,
   onMemberClick,
   loading = false
@@ -147,16 +135,7 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
           {getStatusText(status)}
         </StatusTag>
       )}
-      <div style={{ marginBottom: 16 }}>
-        {specialties && specialties.length > 0 && specialties.slice(0, 3).map((specialty) => (
-          <SpecialtyTag key={specialty}>{specialty}</SpecialtyTag>
-        ))}
-      </div>
-      {specialties && specialties.length > 0 && experienceYears > 0 && (
-        <Paragraph style={{ color: 'var(--client-text-secondary)', fontSize: '0.85rem', marginBottom: 20 }}>
-          {experienceYears}年婚礼主持经验
-        </Paragraph>
-      )}
+
       <DetailButton type="primary" onClick={handleViewDetails}>
         查看详情
       </DetailButton>

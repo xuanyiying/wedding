@@ -578,33 +578,6 @@ export const settingsService = {
   updateEmailSettings: (data: any): Promise<ApiResponse<null>> => {
     return http.put('/settings/email', data);
   },
-
-  // 获取网站配置（兼容）
-  getSiteConfig: (): Promise<ApiResponse<{
-    siteName: string;
-    siteDescription: string;
-    logo: string;
-    favicon: string;
-    contactInfo: {
-      phone: string;
-      email: string;
-      address: string;
-      wechat: string;
-      qq: string;
-    };
-    socialMedia: {
-      weibo: string;
-      wechat: string;
-      douyin: string;
-    };
-  }>> => {
-    return http.get('/settings/site-config');
-  },
-
-  // 更新网站配置（兼容）
-  updateSiteConfig: (data: any): Promise<ApiResponse<null>> => {
-    return http.put('/settings/site-config', data);
-  },
 };
 
 export const fileService = {

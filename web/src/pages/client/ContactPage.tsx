@@ -1,16 +1,17 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Card, Row, Col, Typography, Space, Button } from 'antd';
-import { 
-  PhoneOutlined, 
-  MailOutlined, 
+import {
+  PhoneOutlined,
+  MailOutlined,
   EnvironmentOutlined,
   WechatOutlined,
   HeartOutlined
 } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import ContactForm from '../../components/client/ContactForm';
-import { useConfig } from '../../hooks/useConfig';
+import { useAppSettings } from '../../hooks';
+import type { HomepageSettings } from '../../types';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -110,10 +111,9 @@ const SocialButton = styled(Button)`
 `;
 
 const ContactPage: React.FC = () => {
-  const { config, loading } = useConfig(false);
-  
-  const contactInfo = config.homepageSections?.contact || {};
+  const { settings, loading } = useAppSettings();
 
+  const contact = settings?.homepage.contact as HomepageSettings['contact'] || {};
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -156,10 +156,10 @@ const ContactPage: React.FC = () => {
         >
           <motion.div variants={itemVariants}>
             <Title level={1} style={{ textAlign: 'center', marginBottom: 16, color: '#2c3e50' }}>
-              {contactInfo.title || '联系我们'}
+              {contact.title || '联系我们'}
             </Title>
             <Paragraph style={{ textAlign: 'center', fontSize: 18, color: '#7f8c8d', marginBottom: 48 }}>
-              {contactInfo.description || '让我们一起记录您最美好的时刻'}
+              {contact.description || '让我们一起记录您最美好的时刻'}
             </Paragraph>
           </motion.div>
 
@@ -171,65 +171,65 @@ const ContactPage: React.FC = () => {
                     <HeartOutlined style={{ color: '#d4af37', marginRight: 8 }} />
                     联系方式
                   </Title>
-                  
+
                   <ContactInfo>
-                    {contactInfo.address && (
+                    {contact.address && (
                       <ContactItem>
                         <EnvironmentOutlined />
                         <div>
                           <Text strong>工作室地址</Text>
                           <br />
-                          <Text type="secondary">{contactInfo.address}</Text>
+                          <Text type="secondary">{contact.address}</Text>
                         </div>
                       </ContactItem>
                     )}
-                    
-                    {contactInfo.phone && (
+
+                    {contact.phone && (
                       <ContactItem>
                         <PhoneOutlined />
                         <div>
                           <Text strong>联系电话</Text>
                           <br />
-                          <Text type="secondary">{contactInfo.phone}</Text>
+                          <Text type="secondary">{contact.phone}</Text>
                         </div>
                       </ContactItem>
                     )}
-                    
-                    {contactInfo.email && (
+
+                    {contact.email && (
                       <ContactItem>
                         <MailOutlined />
                         <div>
                           <Text strong>邮箱地址</Text>
                           <br />
-                          <Text type="secondary">{contactInfo.email}</Text>
+                          <Text type="secondary">{contact.email}</Text>
                         </div>
                       </ContactItem>
                     )}
-                    
-                    {contactInfo.wechat && (
+
+                    {contact.wechat && (
                       <ContactItem>
                         <WechatOutlined />
                         <div>
                           <Text strong>微信号</Text>
                           <br />
-                          <Text type="secondary">{contactInfo.wechat}</Text>
+                          <Text type="secondary">{contact.wechat}</Text>
                         </div>
                       </ContactItem>
                     )}
                   </ContactInfo>
-                  
+
                   <Space wrap style={{ marginTop: 24 }}>
-                    {contactInfo.wechat && (
+                    {contact.wechat && (
                       <SocialButton className="wechat" icon={<WechatOutlined />}>
                         微信咨询
                       </SocialButton>
                     )}
-                    {contactInfo.xiaohongshu && (
+                    {contact.xiaohongshu && (
                       <SocialButton className="xiaohongshu">
                         小红书
                       </SocialButton>
                     )}
-                    {contactInfo.douyin && (
+                    {contact.douyin && (
                       <SocialButton className="douyin">
                         抖音
                       </SocialButton>
@@ -238,7 +238,7 @@ const ContactPage: React.FC = () => {
                 </ContactCard>
               </motion.div>
             </Col>
-            
+
             <Col xs={24} lg={12}>
               <motion.div variants={itemVariants}>
                 <ContactCard>

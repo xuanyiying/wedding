@@ -1,116 +1,115 @@
 import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
 import { message } from 'antd';
 import { settingsService } from '../services';
+import type { EmailSettings, HomepageSettings, SiteSettings, ThemeSettings } from '../types';
 
-// 网站设置接口
-interface SiteSettings {
-  name: string;
-  description: string;
-  keywords: string;
-  logo: string;
-  favicon: string;
-  contactEmail: string;
-  contactPhone: string;
-  address: string;
-  icp: string;
-  copyright: string;
-  // SEO设置合并到网站设置中
-  seo: {
-    title: string;
-    description: string;
-    keywords: string;
-    ogImage: string;
-  };
-}
-
-// 首页设置接口
-interface HomepageSettings {
-  hero: {
-    title: string;
-    subtitle: string;
-    backgroundImage: string;
-    ctaText: string;
-    ctaLink: string;
-    visible: boolean;
-  };
-  about: {
-    title: string;
-    content: string;
-    image: string;
-    visible: boolean;
-  };
-  services: {
-    title: string;
-    visible: boolean;
-    items: Array<{
-      title: string;
-      description: string;
-      icon: string;
-      image: string;
-    }>;
-  };
-  gallery: {
-    title: string;
-    visible: boolean;
-    images: string[];
-  };
-  testimonials: {
-    title: string;
-    visible: boolean;
-    items: Array<{
-      name: string;
-      content: string;
-      avatar: string;
-      rating: number;
-    }>;
-  };
-  contact: {
-    title: string;
-    subtitle: string;
-    backgroundImage: string;
-    email: string;
-    phone: string;
-    address: string;
-    wechat: string;
-    douyin: string;
-    visible: boolean;
-  };
-}
-
-// 主题设置接口
-interface ThemeSettings {
-  colors: {
-    primary: string;
-    secondary: string;
-    accent: string;
-    background: string;
-    text: string;
-  };
-  fonts: {
-    primary: string;
-    secondary: string;
-  };
-  spacing: {
-    containerPadding: string;
-    sectionPadding: string;
-  };
-  borderRadius: number;
-  fontSize: number;
-  compactMode: boolean;
-  darkMode: boolean;
-  clientThemeVariant: string;
-}
-
-// 邮件设置接口
-interface EmailSettings {
-  smtpHost: string;
-  smtpPort: number;
-  smtpUser: string;
-  smtpPassword: string;
-  smtpSecure: boolean;
-  emailFrom: string;
-  emailFromName: string;
-}
+// 默认设置值
+const defaultSettings = {
+  site: {
+    name: '婚礼服务平台',
+    description: '专业的婚礼策划与服务平台，为您打造完美的婚礼体验',
+    keywords: '婚礼策划,婚礼摄影,婚礼主持,婚礼服务,婚庆公司',
+    logo: './assets/images/logo.png',
+    favicon: './assets/images/favicon.ico',
+    contactEmail: 'contact@wedding.com',
+    contactPhone: '400-123-4567',
+    address: '',
+    icp: '',
+    copyright: '',
+    seo: {
+      title: '婚礼服务平台 - 专业婚礼策划与服务',
+      description: '专业的婚礼策划与服务平台，提供婚礼摄影、婚礼主持、婚礼策划等一站式服务',
+      keywords: '婚礼策划,婚礼摄影,婚礼主持,婚礼服务,婚庆公司'
+    }
+  },
+  homepage: {
+    hero: {
+      backgroundImage: '/images/hero-bg.jpg',
+      visible: true,
+      title: '完美婚礼，从这里开始',
+      subtitle: '',
+      description: '专业团队为您打造梦想中的婚礼',
+      ctaText: '立即咨询',
+      ctaLink: '/contact'
+    },
+    team: {
+      visible: true,
+      title: '专业团队',
+      subtitle: '经验丰富的婚礼策划师',
+      description: '专业团队为您打造梦想中的婚礼'
+    },
+    teamShowcase: {
+      visible: true,
+      title: '团队风采',
+      subtitle: '展示我们的专业实力',
+      description: '查看我们团队的精彩瞬间'
+    },
+    portfolio: {
+      visible: true,
+      title: '精选作品',
+      subtitle: '见证每一个美好时刻',
+      description: '浏览我们的婚礼摄影作品集'
+    },
+    schedule: {
+      visible: true,
+      title: '档期查询',
+      subtitle: '查询可预约的主持人',
+      description: '查询可预约的主持人'
+    },
+    contact: {
+      visible: true,
+      title: '联系我们',
+      subtitle: '随时为您提供咨询',
+      description: '多种方式联系我们的团队',
+      backgroundImage: '',
+      address: '北京市朝阳区婚礼大厦',
+      phone: '400-123-4567',
+      email: 'contact@wedding.com',
+      wechat: 'wedding_service',
+      xiaohongshu: 'wedding_xiaohongshu',
+      douyin: 'wedding_douyin'
+    }
+  } as HomepageSettings,
+  theme: {
+    colors: {
+      primary: '#1890ff',
+      secondary: '#52c41a',
+      accent: '#722ed1',
+      background: '#ffffff',
+      text: '#000000'
+    },
+    fonts: {
+      primary: 'Arial, sans-serif',
+      secondary: 'Georgia, serif'
+    },
+    spacing: {
+      containerPadding: '20px',
+      sectionPadding: '40px'
+    },
+    borderRadius: 4,
+    fontSize: 14,
+    compactMode: false,
+    darkMode: false,
+    clientThemeVariant: 'default'
+  },
+  email: {
+    smtpHost: 'smtp.gmail.com',
+    smtpPort: 587,
+    smtpUser: '',
+    smtpPassword: '',
+    smtpSecure: true,
+    emailFrom: 'noreply@wedding.com',
+    emailFromName: '婚礼服务平台'
+  },
+  loading: false,
+  error: null,
+  isDirty: {
+    site: false,
+    homepage: false,
+    theme: false,
+    email: false
+  }
+};
 
 // 设置状态接口
 interface SettingsState {
@@ -158,116 +157,13 @@ interface SettingsContextType {
   resetSettings: () => void;
 }
 
-// 默认设置值
-const defaultSettings: SettingsState = {
-  site: {
-    name: '',
-    description: '',
-    keywords: '',
-    logo: '',
-    favicon: '',
-    contactEmail: '',
-    contactPhone: '',
-    address: '',
-    icp: '',
-    copyright: '',
-    seo: {
-      title: '',
-      description: '',
-      keywords: '',
-      ogImage: '',
-    },
-  },
-  homepage: {
-    hero: {
-      title: '',
-      subtitle: '',
-      backgroundImage: '',
-      ctaText: '',
-      ctaLink: '',
-      visible: true,
-    },
-    about: {
-      title: '',
-      content: '',
-      image: '',
-      visible: true,
-    },
-    services: {
-      title: '',
-      visible: true,
-      items: [],
-    },
-    gallery: {
-      title: '',
-      visible: true,
-      images: [],
-    },
-    testimonials: {
-      title: '',
-      visible: true,
-      items: [],
-    },
-    contact: {
-      title: '',
-      subtitle: '',
-      backgroundImage: '',
-      email: '',
-      phone: '',
-      address: '',
-      wechat: '',
-      douyin: '',
-      visible: true,
-    },
-  },
-  theme: {
-    colors: {
-      primary: '#D4A574',
-      secondary: '#F5E6D3',
-      accent: '#B8956A',
-      background: '#FEFCF9',
-      text: '#5D4E37',
-    },
-    fonts: {
-      primary: 'Arial, sans-serif',
-      secondary: 'Georgia, serif',
-    },
-    spacing: {
-      containerPadding: '16px',
-      sectionPadding: '24px',
-    },
-    borderRadius: 8,
-    fontSize: 14,
-    compactMode: false,
-    darkMode: false,
-    clientThemeVariant: 'elegant-rose',
-  },
-  email: {
-    smtpHost: '',
-    smtpPort: 587,
-    smtpUser: '',
-    smtpPassword: '',
-    smtpSecure: false,
-    emailFrom: '',
-    emailFromName: '',
-  },
-  loading: false,
-  error: null,
-  isDirty: {
-    site: false,
-    homepage: false,
-    theme: false,
-    email: false,
-  },
-};
-
 // 深度合并对象的辅助函数
 function deepMerge(target: any, source: any): any {
   if (!source || typeof source !== 'object') return source;
   if (!target || typeof target !== 'object') return source;
-  
+
   const result = { ...target };
-  
+
   for (const key in source) {
     if (source.hasOwnProperty(key)) {
       if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
@@ -277,7 +173,7 @@ function deepMerge(target: any, source: any): any {
       }
     }
   }
-  
+
   return result;
 }
 
@@ -286,7 +182,7 @@ function settingsReducer(state: SettingsState, action: SettingsAction): Settings
   switch (action.type) {
     case 'SET_LOADING':
       return { ...state, loading: action.payload };
-    
+
     case 'SET_SITE_SETTINGS':
       console.log('🔄 SET_SITE_SETTINGS:', action.payload);
       return {
@@ -296,7 +192,7 @@ function settingsReducer(state: SettingsState, action: SettingsAction): Settings
         error: null,
         isDirty: { ...state.isDirty, site: false },
       };
-    
+
     case 'SET_HOMEPAGE_SETTINGS':
       console.log('🔄 SET_HOMEPAGE_SETTINGS:', action.payload);
       return {
@@ -306,7 +202,7 @@ function settingsReducer(state: SettingsState, action: SettingsAction): Settings
         error: null,
         isDirty: { ...state.isDirty, homepage: false },
       };
-    
+
     case 'SET_THEME_SETTINGS':
       console.log('🔄 SET_THEME_SETTINGS:', action.payload);
       return {
@@ -316,7 +212,7 @@ function settingsReducer(state: SettingsState, action: SettingsAction): Settings
         error: null,
         isDirty: { ...state.isDirty, theme: false },
       };
-    
+
     case 'SET_EMAIL_SETTINGS':
       console.log('🔄 SET_EMAIL_SETTINGS:', action.payload);
       return {
@@ -326,7 +222,7 @@ function settingsReducer(state: SettingsState, action: SettingsAction): Settings
         error: null,
         isDirty: { ...state.isDirty, email: false },
       };
-    
+
     case 'UPDATE_SITE_SETTINGS':
       console.log('🔄 UPDATE_SITE_SETTINGS:', action.payload);
       return {
@@ -334,7 +230,7 @@ function settingsReducer(state: SettingsState, action: SettingsAction): Settings
         site: deepMerge(state.site, action.payload),
         isDirty: { ...state.isDirty, site: true },
       };
-    
+
     case 'UPDATE_HOMEPAGE_SETTINGS':
       console.log('🔄 UPDATE_HOMEPAGE_SETTINGS:', action.payload);
       return {
@@ -342,7 +238,7 @@ function settingsReducer(state: SettingsState, action: SettingsAction): Settings
         homepage: deepMerge(state.homepage, action.payload),
         isDirty: { ...state.isDirty, homepage: true },
       };
-    
+
     case 'UPDATE_THEME_SETTINGS':
       console.log('🔄 UPDATE_THEME_SETTINGS:', action.payload);
       return {
@@ -350,7 +246,7 @@ function settingsReducer(state: SettingsState, action: SettingsAction): Settings
         theme: deepMerge(state.theme, action.payload),
         isDirty: { ...state.isDirty, theme: true },
       };
-    
+
     case 'UPDATE_EMAIL_SETTINGS':
       console.log('🔄 UPDATE_EMAIL_SETTINGS:', action.payload);
       return {
@@ -358,19 +254,19 @@ function settingsReducer(state: SettingsState, action: SettingsAction): Settings
         email: { ...state.email, ...action.payload },
         isDirty: { ...state.isDirty, email: true },
       };
-    
+
     case 'SET_ERROR':
       return { ...state, error: action.payload, loading: false };
-    
+
     case 'MARK_CLEAN':
       return {
         ...state,
         isDirty: { ...state.isDirty, [action.payload]: false },
       };
-    
+
     case 'RESET_SETTINGS':
       return defaultSettings;
-    
+
     default:
       return state;
   }
@@ -393,22 +289,22 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         settingsService.getThemeSettings(),
         settingsService.getEmailSettings()
       ]);
-      
+
       const siteData = {
         ...defaultSettings.site,
         ...(siteResponse.data || {})
       };
-      
+
       const homepageData = {
         ...defaultSettings.homepage,
         ...(homepageResponse.data || {})
       };
-      
+
       const themeData = {
         ...defaultSettings.theme,
         ...(themeResponse.data || {})
       };
-      
+
       const emailData = {
         ...defaultSettings.email,
         ...(emailResponse.data || {})
@@ -461,10 +357,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       console.log('💾 保存网站设置 (全量更新):', state.site);
-      
+
       // 使用新的分离API进行全量更新
       await settingsService.createSiteSettings(state.site);
-      
+
       dispatch({ type: 'MARK_CLEAN', payload: 'site' });
       message.success('网站设置保存成功');
       return true;
@@ -484,10 +380,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       console.log('💾 保存首页设置 (全量更新):', state.homepage);
-      
+
       // 使用新的分离API进行全量更新
       await settingsService.createHomepageSettings(state.homepage);
-      
+
       dispatch({ type: 'MARK_CLEAN', payload: 'homepage' });
       message.success('首页设置保存成功');
       return true;
@@ -507,10 +403,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       console.log('💾 保存主题设置 (全量更新):', state.theme);
-      
+
       // 使用新的分离API进行全量更新
       await settingsService.createThemeSettings(state.theme);
-      
+
       dispatch({ type: 'MARK_CLEAN', payload: 'theme' });
       message.success('主题设置保存成功');
       return true;
@@ -530,10 +426,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       console.log('💾 保存邮件设置 (全量更新):', state.email);
-      
+
       // 使用新的分离API进行全量更新
       await settingsService.createEmailSettings(state.email);
-      
+
       dispatch({ type: 'MARK_CLEAN', payload: 'email' });
       message.success('邮件设置保存成功');
       return true;

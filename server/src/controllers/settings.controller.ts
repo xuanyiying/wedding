@@ -6,11 +6,11 @@ import { logger } from '../utils/logger';
 /**
  * 获取系统设置
  */
-export const getSettings = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getAllSettings = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     logger.info('🔍 收到获取设置请求');
-    const settings = await SettingsService.getSettings();
-    logger.info('🔍 返回设置数据:', JSON.stringify(settings, null, 2));
+    const settings = await SettingsService.getAllSettings();
+    logger.info('🔍 返回设置数据:', settings);
     Resp.success(res, settings, '获取设置成功');
   } catch (error) {
     logger.error('❌ 获取设置失败:', error);
@@ -24,6 +24,7 @@ export const getSettings = async (_req: Request, res: Response, next: NextFuncti
 export const updateSiteSettings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const settings = req.body;
+    logger.info('📝 更新网站设置:', settings);
     await SettingsService.updateSiteSettings(settings);
     Resp.success(res, null, '网站设置更新成功');
   } catch (error) {
@@ -37,7 +38,9 @@ export const updateSiteSettings = async (req: Request, res: Response, next: Next
  */
 export const updateHomepageSettings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const settings = req.body;
+    const settings = req.body
+    logger.info('📝 更新首页设置:', settings);
+
     await SettingsService.updateHomepageSettings(settings);
     Resp.success(res, null, '首页设置更新成功');
   } catch (error) {
@@ -52,25 +55,12 @@ export const updateHomepageSettings = async (req: Request, res: Response, next: 
 export const updateThemeSettings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const settings = req.body;
+    logger.info('📝 更新主题设置:', settings);
+
     await SettingsService.updateThemeSettings(settings);
     Resp.success(res, null, '主题设置更新成功');
   } catch (error) {
     logger.error('更新主题设置失败:', error);
-    next(error);
-  }
-};
-
-export const updateHomepageSections = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const settings = req.body;
-    // 只更新homepageSections部分
-    const homepageSectionsData = {
-      homepageSections: settings.homepageSections
-    };
-    await SettingsService.updateSiteSettings(homepageSectionsData);
-    Resp.success(res, null, '首页配置更新成功');
-  } catch (error) {
-    logger.error('更新首页配置失败:', error);
     next(error);
   }
 };
@@ -85,20 +75,6 @@ export const updateEmailSettings = async (req: Request, res: Response, next: Nex
     Resp.success(res, null, '邮件设置更新成功');
   } catch (error) {
     logger.error('更新邮件设置失败:', error);
-    next(error);
-  }
-};
-
-/**
- * 更新安全设置
- */
-export const updateSecuritySettings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const settings = req.body;
-    await SettingsService.updateSecuritySettings(settings);
-    Resp.success(res, null, '安全设置更新成功');
-  } catch (error) {
-    logger.error('更新安全设置失败:', error);
     next(error);
   }
 };
@@ -131,36 +107,11 @@ export const clearCache = async (_req: Request, res: Response, next: NextFunctio
 };
 
 /**
- * 数据库备份
- */
-export const backupDatabase = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const backupPath = await SettingsService.backupDatabase();
-    Resp.success(res, { backupPath }, '数据库备份成功');
-  } catch (error) {
-    logger.error('数据库备份失败:', error);
-    next(error);
-  }
-};
-
-/**
- * 获取系统信息
- */
-export const getSystemInfo = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const systemInfo = await SettingsService.getSystemInfo();
-    Resp.success(res, systemInfo, '获取系统信息成功');
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
  * 获取网站配置
  */
-export const getSiteConfig = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getSiteSettings = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const config = await SettingsService.getSiteConfig();
+    const config = await SettingsService.getConfigValue('site');
     Resp.success(res, config, '获取网站配置成功');
   } catch (error) {
     logger.error('获取网站配置失败:', error);
@@ -171,13 +122,33 @@ export const getSiteConfig = async (_req: Request, res: Response, next: NextFunc
 /**
  * 更新网站配置
  */
-export const updateSiteConfig = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getHomepageSettings = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const config = req.body;
-    await SettingsService.updateSiteConfig(config);
-    Resp.success(res, null, '网站配置更新成功');
+    const config = await SettingsService.getConfigValue('homepage');
+    Resp.success(res, config, '获取网站配置成功');
   } catch (error) {
-    logger.error('更新网站配置失败:', error);
+    logger.error('获取网站配置失败:', error);
+    next(error);
+  }
+};
+
+export const getEmailSettings = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const config = await SettingsService.getConfigValue('email');
+    await SettingsService.getConfigValue(config);
+    Resp.success(res, null, '首页配置更新成功');
+  } catch (error) {
+    logger.error('更新首页配置失败:', error);
+    next(error);
+  }
+};
+export const getThemeSettings = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const config = await SettingsService.getConfigValue('theme');
+    await SettingsService.getConfigValue(config);
+    Resp.success(res, null, '主题配置更新成功');
+  } catch (error) {
+    logger.error('更新主题配置失败:', error);
     next(error);
   }
 };

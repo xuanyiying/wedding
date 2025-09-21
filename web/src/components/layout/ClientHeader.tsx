@@ -5,7 +5,7 @@ import { MenuOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import { ThemeMode } from '../../types';
 import { scrollToElement, scrollToTop } from '../../utils/scroll';
-import { useSiteSettings } from '../../hooks/useSiteSettings';
+import useAppSettings from '../../hooks/useAppSettings';
 
 const { Header } = Layout;
 
@@ -187,7 +187,25 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
-  const { settings } = useSiteSettings();
+  const { settings, loading } = useAppSettings();
+
+  // 处理加载状态
+  if (loading) {
+    return (
+      <StyledHeader>
+        <NavContainer>
+          <Link to="/" style={{ textDecoration: 'none' }}>
+            <LogoContainer>
+              <LogoWrapper>
+                {logoUrl ? <LogoImage src={logoUrl} alt="site logo" /> : <LogoIcon> </LogoIcon>}
+              </LogoWrapper>
+              <SiteName>{siteName || '陆合·合悦'}</SiteName>
+            </LogoContainer>
+          </Link>
+        </NavContainer>
+      </StyledHeader>
+    );
+  }
 
   // 默认菜单项
   const defaultMenuItems = [
@@ -198,28 +216,22 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
     { key: '/contact', label: '联系', path: '/contact', sectionId: 'contact', visible: true, order: 5 },
   ];
 
-  // 使用动态配置的菜单项，如果没有配置则使用默认值
   // 根据homepageSections的可见性过滤菜单项
-  const configuredMenuItems = settings?.navigation?.menuItems || defaultMenuItems;
-  const menuItems = configuredMenuItems
+  const menuItems = defaultMenuItems
     .filter(item => {
-      // 如果有navigation配置，使用navigation中的visible属性
-      if (settings?.navigation?.menuItems) {
-        return item.visible !== false;
-      }
       // 否则根据homepageSections的visible属性判断
-      if (settings?.homepageSections) {
+      if (settings?.homepage) {
         switch (item.sectionId) {
           case 'hero':
-            return settings.homepageSections.hero?.visible !== false;
+            return settings.homepage.hero?.visible !== false;
           case 'team':
-            return settings.homepageSections.team?.visible !== false;
+            return settings?.homepage?.team?.visible !== false;
           case 'portfolio':
-            return settings.homepageSections.portfolio?.visible !== false;
+            return settings?.homepage?.portfolio?.visible !== false;
           case 'schedule':
-            return settings.homepageSections.schedule?.visible !== false;
+            return settings?.homepage?.schedule?.visible !== false;
           case 'contact':
-            return settings.homepageSections.contact?.visible !== false;
+            return settings?.homepage?.contact?.visible !== false;
           default:
             return true;
         }

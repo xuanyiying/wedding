@@ -5,7 +5,7 @@ import { type Team } from '../../types';
 import PageHeader from './PageHeader';
 import { TeamCard } from './TeamCardStyles';
 import { useTeamData } from '../../hooks/useTeamData';
-import { useSiteSettings } from '../../hooks/useSiteSettings';
+import useAppSettings from '../../hooks/useAppSettings';
 
 const { Title, Text } = Typography;
 
@@ -21,14 +21,14 @@ const TeamList: React.FC<TeamListProps> = ({ onTeamSelect, limit, title, descrip
     includeMembers: false,
     activeOnly: true,
   });
-  
-  const { settings } = useSiteSettings();
+
+  const { settings } = useAppSettings();
 
   const displayedTeams = limit ? teams.slice(0, limit) : teams;
 
   // 使用动态配置的标题和描述，如果没有传入props则使用默认值
-  const pageTitle = title || settings?.homepageSections?.team?.title || '专业团队';
-  const pageDescription = description || settings?.homepageSections?.team?.description || '我们拥有多个专业的婚礼服务团队，每个团队都有丰富的经验和专业技能，为您提供完美的婚礼体验。';
+  const pageTitle = title || settings?.homepage?.team?.title || '专业团队';
+  const pageDescription = description || settings?.homepage?.team?.description || '我们拥有多个专业的婚礼服务团队，每个团队都有丰富的经验和专业技能，为您提供完美的婚礼体验。';
 
   return (
     <>

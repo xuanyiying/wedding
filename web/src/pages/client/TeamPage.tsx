@@ -6,7 +6,7 @@ import { type Team } from '../../types';
 import TeamList from '../../components/client/TeamList';
 import TeamMemberList from '../../components/client/TeamMemberList';
 import TeamMemberDetailModal from '../../components/client/TeamMemberDetailModal';
-import { useSiteSettings } from '../../hooks';
+import { useAppSettings } from '../../hooks';
 import { usePageView } from '../../hooks/usePageView';
 import { PageViewService } from '../../services/pageViewService';
 import { teamService } from '../../services';
@@ -27,7 +27,7 @@ const TeamPage: React.FC = () => {
   const [teamsLoading, setTeamsLoading] = useState(false);
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { settings } = useSiteSettings();
+  const { settings } = useAppSettings();
 
   // 团队页面整体访问统计
   usePageView('team_page', 'main');
@@ -51,7 +51,7 @@ const TeamPage: React.FC = () => {
         setTeamsLoading(true);
         try {
           const response = await teamService.getTeamById(id);
-          setSelectedTeam(response.data);
+          setSelectedTeam(response.data || null);
         } catch (error) {
           console.error('Failed to load team:', error);
         } finally {
@@ -98,11 +98,11 @@ const TeamPage: React.FC = () => {
   return (
     <PageContainer>
       {!selectedTeam ? (
-        settings?.homepageSections?.team?.visible && (
+        settings?.homepage?.team?.visible && (
           <TeamList
             onTeamSelect={handleTeamSelect}
-            title={settings?.homepageSections?.team?.title || ''}
-            description={settings?.homepageSections?.team?.description || ''}
+            title={settings?.homepage?.team?.title || ''}
+            description={settings?.homepage?.team?.description || ''}
           />
         )
       ) : (

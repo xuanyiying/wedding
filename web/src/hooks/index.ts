@@ -4,7 +4,8 @@ import { throttle, getDeviceType } from '../utils';
 import { DEBOUNCE_DELAY } from '../constants';
 
 // 导出站点设置钩子
-export { useSiteSettings } from './useSiteSettings';
+export { useAppSettings } from './useAppSettings';
+export { default as useSiteSettings } from './useAppSettings';
 
 /**
  * 防抖Hook
@@ -14,17 +15,17 @@ export { useSiteSettings } from './useSiteSettings';
  */
 export const useDebounce = <T>(value: T, delay: number = DEBOUNCE_DELAY.SEARCH): T => {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
-  
+
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedValue(value);
     }, delay);
-    
+
     return () => {
       clearTimeout(handler);
     };
   }, [value, delay]);
-  
+
   return debouncedValue;
 };
 
@@ -39,11 +40,11 @@ export const useThrottle = <T extends (...args: any[]) => any>(
   delay: number
 ): T => {
   const throttledCallback = useRef(throttle(callback, delay));
-  
+
   useEffect(() => {
     throttledCallback.current = throttle(callback, delay);
   }, [callback, delay]);
-  
+
   return throttledCallback.current as T;
 };
 
@@ -66,7 +67,7 @@ export const useLocalStorage = <T>(
       return initialValue;
     }
   });
-  
+
   const setValue = useCallback(
     (value: T | ((val: T) => T)) => {
       try {
@@ -79,7 +80,7 @@ export const useLocalStorage = <T>(
     },
     [key, storedValue]
   );
-  
+
   return [storedValue, setValue];
 };
 
@@ -102,7 +103,7 @@ export const useSessionStorage = <T>(
       return initialValue;
     }
   });
-  
+
   const setValue = useCallback(
     (value: T | ((val: T) => T)) => {
       try {
@@ -115,7 +116,7 @@ export const useSessionStorage = <T>(
     },
     [key, storedValue]
   );
-  
+
   return [storedValue, setValue];
 };
 
@@ -129,7 +130,7 @@ export const useWindowSize = () => {
     height: window.innerHeight,
     deviceType: getDeviceType(),
   });
-  
+
   useEffect(() => {
     const handleResize = throttle(() => {
       setWindowSize({
@@ -138,14 +139,14 @@ export const useWindowSize = () => {
         deviceType: getDeviceType(),
       });
     }, 100);
-    
+
     window.addEventListener('resize', handleResize);
-    
+
     return () => {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
-  
+
   return windowSize;
 };
 
@@ -158,7 +159,7 @@ export const useScrollPosition = () => {
     x: window.pageXOffset,
     y: window.pageYOffset,
   });
-  
+
   useEffect(() => {
     const handleScroll = throttle(() => {
       setScrollPosition({
@@ -166,14 +167,14 @@ export const useScrollPosition = () => {
         y: window.pageYOffset,
       });
     }, 50);
-    
+
     window.addEventListener('scroll', handleScroll);
-    
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
-  
+
   return scrollPosition;
 };
 
@@ -183,20 +184,20 @@ export const useScrollPosition = () => {
  */
 export const useOnlineStatus = (): boolean => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  
+
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
-    
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-    
+
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
-  
+
   return isOnline;
 };
 
@@ -216,10 +217,10 @@ export const useClickOutside = (
       }
       handler(event);
     };
-    
+
     document.addEventListener('mousedown', listener);
     document.addEventListener('touchstart', listener);
-    
+
     return () => {
       document.removeEventListener('mousedown', listener);
       document.removeEventListener('touchstart', listener);
@@ -245,9 +246,9 @@ export const useKeyPress = (
         handler(keyboardEvent);
       }
     };
-    
+
     element.addEventListener('keydown', listener);
-    
+
     return () => {
       element.removeEventListener('keydown', listener);
     };
@@ -268,10 +269,10 @@ export const useAsyncState = <T>() => {
     loading: false,
     error: null,
   });
-  
+
   const execute = useCallback(async (asyncFunction: () => Promise<T>) => {
     setState({ data: null, loading: true, error: null });
-    
+
     try {
       const data = await asyncFunction();
       setState({ data, loading: false, error: null });
@@ -281,7 +282,7 @@ export const useAsyncState = <T>() => {
       throw error;
     }
   }, []);
-  
+
   return { ...state, execute };
 };
 
@@ -293,10 +294,10 @@ export const useAsyncState = <T>() => {
 export const useCountdown = (initialTime: number) => {
   const [time, setTime] = useState(initialTime);
   const [isActive, setIsActive] = useState(false);
-  
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    
+
     if (isActive && time > 0) {
       interval = setInterval(() => {
         setTime(time => time - 1);
@@ -304,17 +305,17 @@ export const useCountdown = (initialTime: number) => {
     } else if (time === 0) {
       setIsActive(false);
     }
-    
+
     return () => clearInterval(interval);
   }, [isActive, time]);
-  
+
   const start = useCallback(() => setIsActive(true), []);
   const pause = useCallback(() => setIsActive(false), []);
   const reset = useCallback(() => {
     setTime(initialTime);
     setIsActive(false);
   }, [initialTime]);
-  
+
   return { time, isActive, start, pause, reset };
 };
 
@@ -328,32 +329,32 @@ export const usePagination = (initialPage: number = 1, initialPageSize: number =
   const [current, setCurrent] = useState(initialPage);
   const [pageSize, setPageSize] = useState(initialPageSize);
   const [total, setTotal] = useState(0);
-  
+
   const totalPages = useMemo(() => Math.ceil(total / pageSize), [total, pageSize]);
-  
+
   const goToPage = useCallback((page: number) => {
     setCurrent(Math.max(1, Math.min(page, totalPages)));
   }, [totalPages]);
-  
+
   const nextPage = useCallback(() => {
     goToPage(current + 1);
   }, [current, goToPage]);
-  
+
   const prevPage = useCallback(() => {
     goToPage(current - 1);
   }, [current, goToPage]);
-  
+
   const changePageSize = useCallback((newPageSize: number) => {
     setPageSize(newPageSize);
     setCurrent(1); // 重置到第一页
   }, []);
-  
+
   const reset = useCallback(() => {
     setCurrent(initialPage);
     setPageSize(initialPageSize);
     setTotal(0);
   }, [initialPage, initialPageSize]);
-  
+
   return {
     current,
     pageSize,
@@ -375,15 +376,15 @@ export const usePagination = (initialPage: number = 1, initialPageSize: number =
 export const useQueryParams = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   const queryParams = useMemo(() => {
     return new URLSearchParams(location.search);
   }, [location.search]);
-  
+
   const setQueryParams = useCallback(
     (params: Record<string, string | number | boolean | null | undefined>) => {
       const newParams = new URLSearchParams(location.search);
-      
+
       Object.entries(params).forEach(([key, value]) => {
         if (value === null || value === undefined || value === '') {
           newParams.delete(key);
@@ -391,7 +392,7 @@ export const useQueryParams = () => {
           newParams.set(key, String(value));
         }
       });
-      
+
       navigate({
         pathname: location.pathname,
         search: newParams.toString(),
@@ -399,14 +400,14 @@ export const useQueryParams = () => {
     },
     [location.pathname, location.search, navigate]
   );
-  
+
   const getQueryParam = useCallback(
     (key: string): string | null => {
       return queryParams.get(key);
     },
     [queryParams]
   );
-  
+
   return { queryParams, setQueryParams, getQueryParam };
 };
 
@@ -419,7 +420,7 @@ export const useFormState = <T extends Record<string, any>>(initialValues: T) =>
   const [values, setValues] = useState<T>(initialValues);
   const [errors, setErrors] = useState<Partial<Record<keyof T, string>>>({});
   const [touched, setTouched] = useState<Partial<Record<keyof T, boolean>>>({});
-  
+
   const setValue = useCallback((name: keyof T, value: any) => {
     setValues(prev => ({ ...prev, [name]: value }));
     // 清除该字段的错误
@@ -427,25 +428,25 @@ export const useFormState = <T extends Record<string, any>>(initialValues: T) =>
       setErrors(prev => ({ ...prev, [name]: undefined }));
     }
   }, [errors]);
-  
+
   const setError = useCallback((name: keyof T, error: string) => {
     setErrors(prev => ({ ...prev, [name]: error }));
   }, []);
-  
+
   const setFieldTouched = useCallback((name: keyof T, isTouched: boolean = true) => {
     setTouched(prev => ({ ...prev, [name]: isTouched }));
   }, []);
-  
+
   const reset = useCallback(() => {
     setValues(initialValues);
     setErrors({});
     setTouched({});
   }, [initialValues]);
-  
+
   const isValid = useMemo(() => {
     return Object.keys(errors).length === 0;
   }, [errors]);
-  
+
   return {
     values,
     errors,

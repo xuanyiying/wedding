@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { throttle } from '../../utils/scroll';
-import { useSiteSettings } from '../../hooks/useSiteSettings';
+import useAppSettings from '../../hooks/useAppSettings';
 
 interface ScrollNavigationProps {
   sections: Array<{
@@ -18,29 +18,32 @@ const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
   headerHeight = 64
 }) => {
   const location = useLocation();
-  const { settings } = useSiteSettings();
+  const { settings, loading } = useAppSettings();
   const [activeSection, setActiveSection] = useState<string>('');
 
   // 根据homepageSections的可见性过滤sections
-  const visibleSections = sections.filter(section => {
-    if (settings?.homepageSections) {
+  const visibleSections = React.useMemo(() => {
+    if (loading || !settings?.homepage) {
+      return sections;
+    }
+    
+    return sections.filter(section => {
       switch (section.id) {
         case 'hero':
-          return settings.homepageSections.hero?.visible !== false;
+          return settings.homepage.hero?.visible !== false;
         case 'team':
-          return settings.homepageSections.team?.visible !== false;
+          return settings.homepage.team?.visible !== false;
         case 'portfolio':
-          return settings.homepageSections.portfolio?.visible !== false;
+          return settings.homepage.portfolio?.visible !== false;
         case 'schedule':
-          return settings.homepageSections.schedule?.visible !== false;
+          return settings.homepage.schedule?.visible !== false;
         case 'contact':
-          return settings.homepageSections.contact?.visible !== false;
+          return settings.homepage.contact?.visible !== false;
         default:
           return true;
       }
-    }
-    return true;
-  });
+    });
+  }, [loading, settings?.homepage, sections]);
 
   // 暴露当前活跃section给外部组件
   useEffect(() => {
@@ -146,6 +149,11 @@ const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
       window.removeEventListener('resize', handleScroll);
     };
   }, [location.pathname, throttledHandleScroll, handleScroll, activeSection, visibleSections]);
+
+  // 处理加载状态 - 移到组件末尾，确保所有Hooks都被调用
+  if (loading) {
+    return null;
+  }
 
   return null; // 这是一个逻辑组件，不渲染任何UI
 };

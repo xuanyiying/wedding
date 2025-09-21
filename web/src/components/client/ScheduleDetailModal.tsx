@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Typography, Tag, Row, Col } from 'antd';
+import { Modal, Typography, Row, Col } from 'antd';
 import { CalendarOutlined, ClockCircleOutlined, EnvironmentOutlined, UserOutlined } from '@ant-design/icons';
 import type { Schedule } from '../../types';
 import styled from 'styled-components';
