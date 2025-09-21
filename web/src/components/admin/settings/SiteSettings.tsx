@@ -11,7 +11,6 @@ import {
 import {
   SaveOutlined,
   GlobalOutlined,
-  PictureOutlined,
   LinkOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
@@ -106,7 +105,7 @@ const SiteSettings: React.FC = () => {
     try {
       console.log('📝 表单提交的值:', values);
       console.log('📝 当前设置状态:', state.site);
-      
+
       // 构建完整的网站设置数据结构
       const siteData = {
         name: values.name || '',
@@ -131,14 +130,14 @@ const SiteSettings: React.FC = () => {
 
       // 先更新本地状态
       updateSiteSettings(siteData);
-      
+
       // 保存到服务器
       const success = await saveSiteSettings();
-      
+
       if (!success) {
         throw new Error('网站设置保存失败');
       }
-      
+
       message.success('网站设置保存成功');
     } catch (error) {
       console.error('❌ 保存设置失败:', error);
@@ -311,7 +310,6 @@ const SiteSettings: React.FC = () => {
                     </div>
                   ) : (
                     <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-                      <div style={{ fontSize: '48px', marginBottom: '12px' }}>🏷️</div>
                       <div>点击或拖拽上传Logo</div>
                       <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>建议尺寸：200x60px，格式：PNG/JPG，最大2MB</div>
                     </div>
@@ -359,7 +357,6 @@ const SiteSettings: React.FC = () => {
                     </div>
                   ) : (
                     <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-                      <div style={{ fontSize: '48px', marginBottom: '12px' }}>🏷️</div>
                       <div>点击或拖拽上传图标</div>
                       <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>建议尺寸：32x32px，格式：ICO/PNG，最大2MB</div>
                     </div>

@@ -16,7 +16,6 @@ import type {
   Team,
   MediaFile,
   FileType,
-  SiteSettings,
   FileInfo,
 } from '../types';
 

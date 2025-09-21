@@ -45,7 +45,7 @@ const HomepageConfig: React.FC = () => {
   useEffect(() => {
     if (state.homepage) {
       const homepageData = state.homepage;
-      
+
       const sectionsData = {
         hero: {
           title: homepageData.hero?.title || '',
@@ -93,7 +93,7 @@ const HomepageConfig: React.FC = () => {
     try {
       console.log('📝 表单提交的值:', values);
       console.log('📝 当前首页设置状态:', state.homepage);
-      
+
       // 构建完整的首页设置数据结构
       const homepageData = {
         hero: {
@@ -148,14 +148,14 @@ const HomepageConfig: React.FC = () => {
 
       // 先更新本地状态
       updateHomepageSettings(homepageData);
-      
+
       // 保存到服务器
       const success = await saveHomepageSettings();
-      
+
       if (!success) {
         throw new Error('首页设置保存失败');
       }
-      
+
       message.success('首页配置保存成功');
     } catch (error) {
       console.error('保存首页配置失败:', error);
@@ -175,7 +175,7 @@ const HomepageConfig: React.FC = () => {
           首页配置
         </div>
         <div className="section-description">配置首页的内容和显示</div>
-        
+
         <Row gutter={[16, 16]}>
           {[
             { key: 'hero', title: '首页横幅', hasSubtitle: true, hasBackgroundImage: true },
@@ -193,7 +193,7 @@ const HomepageConfig: React.FC = () => {
                 >
                   <Input placeholder={`请输入${section.title}标题`} />
                 </Form.Item>
-                
+
                 {section.hasSubtitle && (
                   <Form.Item
                     name={[section.key, 'subtitle']}
@@ -202,7 +202,7 @@ const HomepageConfig: React.FC = () => {
                     <Input placeholder="请输入副标题" />
                   </Form.Item>
                 )}
-                
+
                 {section.hasContent && (
                   <Form.Item
                     name={[section.key, 'content']}
@@ -211,7 +211,7 @@ const HomepageConfig: React.FC = () => {
                     <Input.TextArea placeholder="请输入内容" rows={3} />
                   </Form.Item>
                 )}
-                
+
                 {section.hasContactInfo && (
                   <>
                     <Form.Item
@@ -264,7 +264,7 @@ const HomepageConfig: React.FC = () => {
                     </Row>
                   </>
                 )}
-                
+
                 <Form.Item
                   name={[section.key, 'visible']}
                   label="启用"
@@ -277,12 +277,12 @@ const HomepageConfig: React.FC = () => {
           ))}
         </Row>
       </SettingSection>
-      
+
       <Form.Item>
-        <Button 
-          type="primary" 
-          htmlType="submit" 
-          loading={state.loading} 
+        <Button
+          type="primary"
+          htmlType="submit"
+          loading={state.loading}
           icon={<SaveOutlined />}
         >
           保存

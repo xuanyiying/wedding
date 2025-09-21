@@ -386,34 +386,32 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const loadSettings = useCallback(async () => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      // 暂时使用兼容接口，后续需要后端支持分离的API
-      const response = await settingsService.getSettings();
-      const serverData = response.data || {};
+      // 使用新的分离API分别加载各个模块的设置
+      const [siteResponse, homepageResponse, themeResponse, emailResponse] = await Promise.all([
+        settingsService.getSiteSettings(),
+        settingsService.getHomepageSettings(),
+        settingsService.getThemeSettings(),
+        settingsService.getEmailSettings()
+      ]);
       
-      // 解析分离的数据结构
       const siteData = {
         ...defaultSettings.site,
-        ...serverData.site,
-        seo: {
-          ...defaultSettings.site.seo,
-          ...serverData.seo
-        }
+        ...(siteResponse.data || {})
       };
       
       const homepageData = {
         ...defaultSettings.homepage,
-        ...serverData.homepage,
-        ...serverData.homepageSections
+        ...(homepageResponse.data || {})
       };
       
       const themeData = {
         ...defaultSettings.theme,
-        ...serverData.theme
+        ...(themeResponse.data || {})
       };
       
       const emailData = {
         ...defaultSettings.email,
-        ...serverData.email
+        ...(emailResponse.data || {})
       };
 
       console.log('🔍 解析后的设置数据:', {
@@ -458,14 +456,14 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     dispatch({ type: 'UPDATE_EMAIL_SETTINGS', payload: updates });
   }, []);
 
-  // 保存网站设置 - 全量更新
+  // 保存网站设置 - 使用新的分离API
   const saveSiteSettings = useCallback(async (): Promise<boolean> => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       console.log('💾 保存网站设置 (全量更新):', state.site);
       
-      // 暂时使用兼容接口进行全量更新
-      await settingsService.updateSiteSettings(state.site);
+      // 使用新的分离API进行全量更新
+      await settingsService.createSiteSettings(state.site);
       
       dispatch({ type: 'MARK_CLEAN', payload: 'site' });
       message.success('网站设置保存成功');
@@ -481,14 +479,14 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [state.site]);
 
-  // 保存首页设置 - 全量更新
+  // 保存首页设置 - 使用新的分离API
   const saveHomepageSettings = useCallback(async (): Promise<boolean> => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       console.log('💾 保存首页设置 (全量更新):', state.homepage);
       
-      // 暂时使用兼容接口进行全量更新
-      await settingsService.updateHomepageSettings(state.homepage);
+      // 使用新的分离API进行全量更新
+      await settingsService.createHomepageSettings(state.homepage);
       
       dispatch({ type: 'MARK_CLEAN', payload: 'homepage' });
       message.success('首页设置保存成功');
@@ -504,14 +502,14 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [state.homepage]);
 
-  // 保存主题设置 - 全量更新
+  // 保存主题设置 - 使用新的分离API
   const saveThemeSettings = useCallback(async (): Promise<boolean> => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       console.log('💾 保存主题设置 (全量更新):', state.theme);
       
-      // 暂时使用兼容接口进行全量更新
-      await settingsService.updateThemeSettings(state.theme);
+      // 使用新的分离API进行全量更新
+      await settingsService.createThemeSettings(state.theme);
       
       dispatch({ type: 'MARK_CLEAN', payload: 'theme' });
       message.success('主题设置保存成功');
@@ -527,14 +525,14 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [state.theme]);
 
-  // 保存邮件设置 - 全量更新
+  // 保存邮件设置 - 使用新的分离API
   const saveEmailSettings = useCallback(async (): Promise<boolean> => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       console.log('💾 保存邮件设置 (全量更新):', state.email);
       
-      // 暂时使用兼容接口进行全量更新
-      await settingsService.updateEmailSettings(state.email);
+      // 使用新的分离API进行全量更新
+      await settingsService.createEmailSettings(state.email);
       
       dispatch({ type: 'MARK_CLEAN', payload: 'email' });
       message.success('邮件设置保存成功');
