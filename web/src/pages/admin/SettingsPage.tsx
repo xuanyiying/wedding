@@ -8,8 +8,8 @@ import styled from 'styled-components';
 import { PageHeader } from '../../components/admin/common';
 import { SettingsProvider } from '../../contexts/SettingsContext';
 import {
-  SiteConfig,
-  HomepageConfig
+  SiteSettings,
+  HomepageSettings
 } from '../../components/admin/settings';
 
 const SettingsContainer = styled.div`
@@ -52,7 +52,7 @@ const SettingsPage: React.FC = () => {
               label: <span><GlobalOutlined />网站设置</span>,
               children: (
                 <TabCard>
-                  <SiteConfig />
+                  <SiteSettings />
                 </TabCard>
               )
             },
@@ -61,7 +61,7 @@ const SettingsPage: React.FC = () => {
               label: <span><HomeOutlined />首页配置</span>,
               children: (
                 <TabCard>
-                  <HomepageConfig />
+                  <HomepageSettings />
                 </TabCard>
               )
             },

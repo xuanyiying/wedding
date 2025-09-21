@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { throttle } from '../../utils/scroll';
+import { useSiteSettings } from '../../hooks/useSiteSettings';
 
 interface ScrollNavigationProps {
   sections: Array<{
@@ -17,8 +18,30 @@ const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
   headerHeight = 64
 }) => {
   const location = useLocation();
+  const { settings } = useSiteSettings();
   const [activeSection, setActiveSection] = useState<string>('');
-  
+
+  // 根据homepageSections的可见性过滤sections
+  const visibleSections = sections.filter(section => {
+    if (settings?.homepageSections) {
+      switch (section.id) {
+        case 'hero':
+          return settings.homepageSections.hero?.visible !== false;
+        case 'team':
+          return settings.homepageSections.team?.visible !== false;
+        case 'portfolio':
+          return settings.homepageSections.portfolio?.visible !== false;
+        case 'schedule':
+          return settings.homepageSections.schedule?.visible !== false;
+        case 'contact':
+          return settings.homepageSections.contact?.visible !== false;
+        default:
+          return true;
+      }
+    }
+    return true;
+  });
+
   // 暴露当前活跃section给外部组件
   useEffect(() => {
     if (onSectionChange && activeSection) {
@@ -28,17 +51,17 @@ const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
 
   // 优化的滚动处理函数
   const handleScroll = useCallback(() => {
-    if (location.pathname !== '/') {
+    if (location.pathname !== '/' || visibleSections.length === 0) {
       return;
     }
 
     const scrollPosition = window.scrollY;
     const windowHeight = window.innerHeight;
     const documentHeight = document.documentElement.scrollHeight;
-    
+
     // 如果滚动到页面底部，激活最后一个section
     if (scrollPosition + windowHeight >= documentHeight - 10) {
-      const lastSection = sections[sections.length - 1];
+      const lastSection = visibleSections[visibleSections.length - 1];
       if (lastSection && activeSection !== lastSection.id) {
         setActiveSection(lastSection.id);
         return;
@@ -49,22 +72,22 @@ const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
     let currentSection = '';
     let maxVisibleArea = 0;
 
-    for (const sectionConfig of sections) {
+    for (const sectionConfig of visibleSections) {
       const section = document.getElementById(sectionConfig.id);
       if (!section) continue;
 
       const rect = section.getBoundingClientRect();
       const sectionTop = rect.top + scrollPosition;
       const sectionBottom = sectionTop + rect.height;
-      
+
       // 计算section在视窗中的可见区域
       const viewportTop = scrollPosition + headerHeight;
       const viewportBottom = scrollPosition + windowHeight;
-      
+
       const visibleTop = Math.max(sectionTop, viewportTop);
       const visibleBottom = Math.min(sectionBottom, viewportBottom);
       const visibleArea = Math.max(0, visibleBottom - visibleTop);
-      
+
       // 选择可见面积最大的section作为当前活跃section
       if (visibleArea > maxVisibleArea) {
         maxVisibleArea = visibleArea;
@@ -75,13 +98,13 @@ const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
     // 如果没有找到可见的section，使用传统的偏移量方法作为后备
     if (!currentSection) {
       const adjustedScrollPosition = scrollPosition + headerHeight + 50;
-      
-      for (let i = sections.length - 1; i >= 0; i--) {
-        const section = document.getElementById(sections[i].id);
+
+      for (let i = visibleSections.length - 1; i >= 0; i--) {
+        const section = document.getElementById(visibleSections[i].id);
         if (section) {
           const sectionTop = section.offsetTop;
           if (adjustedScrollPosition >= sectionTop) {
-            currentSection = sections[i].id;
+            currentSection = visibleSections[i].id;
             break;
           }
         }
@@ -92,7 +115,7 @@ const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
     if (currentSection && currentSection !== activeSection) {
       setActiveSection(currentSection);
     }
-  }, [location.pathname, sections, activeSection, headerHeight]);
+  }, [location.pathname, visibleSections, activeSection, headerHeight]);
 
   // 节流处理的滚动监听
   const throttledHandleScroll = useCallback(
@@ -102,7 +125,7 @@ const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
 
   useEffect(() => {
     // 只在首页启用滚动监听
-    if (location.pathname !== '/') {
+    if (location.pathname !== '/' || visibleSections.length === 0) {
       // 重置activeSection当不在首页时
       if (activeSection) {
         setActiveSection('');
@@ -112,17 +135,17 @@ const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
 
     // 初始检查
     handleScroll();
-    
+
     // 添加滚动监听
     window.addEventListener('scroll', throttledHandleScroll, { passive: true });
     window.addEventListener('resize', handleScroll, { passive: true });
-    
+
     // 清理函数
     return () => {
       window.removeEventListener('scroll', throttledHandleScroll);
       window.removeEventListener('resize', handleScroll);
     };
-  }, [location.pathname, throttledHandleScroll, handleScroll, activeSection]);
+  }, [location.pathname, throttledHandleScroll, handleScroll, activeSection, visibleSections]);
 
   return null; // 这是一个逻辑组件，不渲染任何UI
 };

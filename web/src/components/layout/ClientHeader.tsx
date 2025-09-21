@@ -199,9 +199,33 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
   ];
 
   // 使用动态配置的菜单项，如果没有配置则使用默认值
+  // 根据homepageSections的可见性过滤菜单项
   const configuredMenuItems = settings?.navigation?.menuItems || defaultMenuItems;
   const menuItems = configuredMenuItems
-    .filter(item => item.visible)
+    .filter(item => {
+      // 如果有navigation配置，使用navigation中的visible属性
+      if (settings?.navigation?.menuItems) {
+        return item.visible !== false;
+      }
+      // 否则根据homepageSections的visible属性判断
+      if (settings?.homepageSections) {
+        switch (item.sectionId) {
+          case 'hero':
+            return settings.homepageSections.hero?.visible !== false;
+          case 'team':
+            return settings.homepageSections.team?.visible !== false;
+          case 'portfolio':
+            return settings.homepageSections.portfolio?.visible !== false;
+          case 'schedule':
+            return settings.homepageSections.schedule?.visible !== false;
+          case 'contact':
+            return settings.homepageSections.contact?.visible !== false;
+          default:
+            return true;
+        }
+      }
+      return item.visible !== false;
+    })
     .sort((a, b) => a.order - b.order)
     .map(item => ({
       key: item.path,
@@ -251,6 +275,24 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
   };
 
   const selectedKey = getSelectedKey();
+
+  // 如果没有可见的菜单项，不渲染导航菜单
+  if (menuItems.length === 0) {
+    return (
+      <StyledHeader>
+        <NavContainer>
+          <Link to="/" style={{ textDecoration: 'none' }}>
+            <LogoContainer>
+              <LogoWrapper>
+                {logoUrl ? <LogoImage src={logoUrl} alt="site logo" /> : <LogoIcon> </LogoIcon>}
+              </LogoWrapper>
+              <SiteName>{siteName || '陆合·合悦'}</SiteName>
+            </LogoContainer>
+          </Link>
+        </NavContainer>
+      </StyledHeader>
+    );
+  }
 
   return (
     <StyledHeader>

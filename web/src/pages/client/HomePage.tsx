@@ -144,7 +144,7 @@ const HomePage: React.FC = () => {
       <ScrollNavigation
         sections={[
           { id: 'hero', path: '/' },
-          { id: 'team', path: '/' },
+          { id: 'team', path: '/team' },
           { id: 'portfolio', path: '/works' },
           { id: 'schedule', path: '/schedule' },
           { id: 'contact', path: '/contact' }
@@ -190,9 +190,9 @@ const HomePage: React.FC = () => {
       )}
 
       {/* Team Showcase */}
-      {settings?.homepageSections?.teamShowcase?.visible && !selectedTeam && (
+      {settings?.homepageSections?.teamShowcase?.visible && !selectedTeam && selectedTeam && (
         <TeamShowcaseSection
-          team={selectedTeam as unknown as Team}
+          team={selectedTeam}
           title={settings.homepageSections.teamShowcase.title}
           description={settings.homepageSections.teamShowcase.description}
           visible={settings.homepageSections.teamShowcase.visible}
@@ -214,10 +214,10 @@ const HomePage: React.FC = () => {
       )}
 
       {/* Schedule Section */}
-      {settings?.homepageSections?.schedule?.visible && !selectedTeam && (
+      {settings?.homepageSections?.schedule?.visible && !selectedTeam && selectedTeam && (
         <SectionWrapper id="schedule">
           <ScheduleSection
-            team={selectedTeam as unknown as Team}
+            team={selectedTeam}
             title={scheduleSectionSettings?.title || "我们的档期"}
             description={scheduleSectionSettings?.description || "查看我们团队的档期安排，计划您的重要日子。"}
           />
