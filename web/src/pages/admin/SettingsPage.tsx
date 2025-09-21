@@ -3,13 +3,17 @@ import { Tabs } from 'antd';
 import {
   GlobalOutlined,
   HomeOutlined,
+  BgColorsOutlined,
+  MailOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { PageHeader } from '../../components/admin/common';
 import { SettingsProvider } from '../../contexts/SettingsContext';
 import {
   SiteSettings,
-  HomepageSettings
+  HomepageSettings,
+  ThemeSettings,
+  EmailSettings
 } from '../../components/admin/settings';
 
 const SettingsContainer = styled.div`
@@ -62,6 +66,24 @@ const SettingsPage: React.FC = () => {
               children: (
                 <TabCard>
                   <HomepageSettings />
+                </TabCard>
+              )
+            },
+            {
+              key: 'theme',
+              label: <span><BgColorsOutlined />主题设置</span>,
+              children: (
+                <TabCard>
+                  <ThemeSettings />
+                </TabCard>
+              )
+            },
+            {
+              key: 'email',
+              label: <span><MailOutlined />邮件设置</span>,
+              children: (
+                <TabCard>
+                  <EmailSettings />
                 </TabCard>
               )
             },

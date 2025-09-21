@@ -2,6 +2,8 @@ import { Router } from 'express';
 import {
   getSettings,
   updateSiteSettings,
+  updateHomepageSettings,
+  updateThemeSettings,
   updateEmailSettings,
   updateSecuritySettings,
   testEmail,
@@ -27,6 +29,8 @@ router.use(authMiddleware, requireAdmin);
 
 // 更新设置
 router.put('/site', updateSiteSettings);
+router.put('/homepage', updateHomepageSettings);
+router.put('/theme', updateThemeSettings);
 router.put('/homepage-sections', updateHomepageSections);
 router.put('/email', updateEmailSettings);
 router.put('/security', updateSecuritySettings);

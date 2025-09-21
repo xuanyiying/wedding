@@ -15,7 +15,7 @@ import {
   MailOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
-import { useEmailSettings } from '../../../contexts/SettingsContext';
+import { useSettings } from '../../../contexts/SettingsContext';
 import { settingsService } from '../../../services';
 
 const SettingSection = styled.div`
@@ -51,38 +51,57 @@ interface EmailSettingsForm {
 
 const EmailSettings: React.FC = () => {
   const [form] = Form.useForm();
-  const { email, loading, updateEmail, saveEmail } = useEmailSettings();
+  const { state, updateEmailSettings, saveEmailSettings } = useSettings();
 
   // 初始化表单数据
   useEffect(() => {
-    if (email) {
+    if (state.email) {
       const formData: EmailSettingsForm = {
-        smtpHost: email.smtpHost || '',
-        smtpPort: email.smtpPort || 587,
-        smtpUser: email.smtpUser || '',
-        smtpPassword: email.smtpPassword || '',
-        enableSSL: email.smtpSecure || false,
-        fromEmail: email.emailFrom || '',
-        fromName: email.emailFromName || '',
+        smtpHost: state.email.smtpHost || '',
+        smtpPort: state.email.smtpPort || 587,
+        smtpUser: state.email.smtpUser || '',
+        smtpPassword: state.email.smtpPassword || '',
+        enableSSL: state.email.smtpSecure || false,
+        fromEmail: state.email.emailFrom || '',
+        fromName: state.email.emailFromName || '',
       };
       form.setFieldsValue(formData);
     }
-  }, [email, form]);
+  }, [state.email, form]);
 
   // 保存邮件设置
   const handleSave = async (values: EmailSettingsForm) => {
-    const emailData = {
-      smtpHost: values.smtpHost,
-      smtpPort: values.smtpPort,
-      smtpUser: values.smtpUser,
-      smtpPassword: values.smtpPassword,
-      smtpSecure: values.enableSSL,
-      emailFrom: values.fromEmail,
-      emailFromName: values.fromName,
-    };
+    try {
+      console.log('📝 表单提交的值:', values);
+      console.log('📝 当前邮件设置状态:', state.email);
+      
+      const emailData = {
+        smtpHost: values.smtpHost || '',
+        smtpPort: values.smtpPort || 587,
+        smtpUser: values.smtpUser || '',
+        smtpPassword: values.smtpPassword || '',
+        smtpSecure: values.enableSSL || false,
+        emailFrom: values.fromEmail || '',
+        emailFromName: values.fromName || '',
+      };
 
-    updateEmail(emailData);
-    await saveEmail();
+      console.log('📝 构建的邮件设置数据:', emailData);
+
+      // 先更新本地状态
+      updateEmailSettings(emailData);
+      
+      // 保存到服务器
+      const success = await saveEmailSettings();
+      
+      if (!success) {
+        throw new Error('邮件设置保存失败');
+      }
+      
+      message.success('邮件设置保存成功');
+    } catch (error) {
+      console.error('❌ 保存邮件设置失败:', error);
+      message.error('保存邮件设置失败，请重试');
+    }
   };
 
   // 测试邮件发送
@@ -200,11 +219,11 @@ const EmailSettings: React.FC = () => {
             type="primary" 
             htmlType="submit" 
             icon={<SaveOutlined />} 
-            loading={loading}
+            loading={state.loading}
           >
-            保存设置
+            保存邮件设置
           </Button>
-          <Button onClick={testEmail} loading={loading}>
+          <Button onClick={testEmail} loading={state.loading}>
             测试邮件发送
           </Button>
         </Space>

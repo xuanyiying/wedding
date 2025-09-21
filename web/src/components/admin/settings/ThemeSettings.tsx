@@ -11,6 +11,7 @@ import {
   Typography,
   Tooltip,
   Alert,
+  message,
 } from 'antd';
 import {
   SaveOutlined,
@@ -22,10 +23,7 @@ import {
   CheckCircleOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
-import { useThemeSettings } from '../../../contexts/SettingsContext';
-import { useTheme } from '../../../hooks/useTheme';
-import { applyThemeSettings } from '../../../utils/themeUtils';
-import { showSuccessNotification } from '../../common/SuccessNotification';
+import { useSettings } from '../../../contexts/SettingsContext';
 
 const { Title, Text } = Typography;
 
@@ -239,8 +237,7 @@ const SaveButtonGroup = styled.div`
 
 const ThemeSettings: React.FC = () => {
   const [form] = Form.useForm();
-  const { theme, loading, updateTheme, saveTheme } = useThemeSettings();
-  const { initTheme } = useTheme();
+  const { state, updateThemeSettings, saveThemeSettings } = useSettings();
 
   // 主题相关状态
   const [selectedPreset, setSelectedPreset] = useState<string>('');
@@ -255,7 +252,8 @@ const ThemeSettings: React.FC = () => {
 
   // 初始化表单数据
   useEffect(() => {
-    if (theme) {
+    if (state.theme) {
+      const theme = state.theme;
       const formData = {
         primaryColor: theme.colors?.primary || '#D4A574',
         secondaryColor: theme.colors?.secondary || '#F5E6D3',
@@ -285,7 +283,7 @@ const ThemeSettings: React.FC = () => {
         setSelectedPreset(theme.clientThemeVariant);
       }
     }
-  }, [theme, form]);
+  }, [state.theme, form]);
 
   // 选择主题预设
   const handlePresetSelect = (presetId: string) => {
@@ -305,7 +303,7 @@ const ThemeSettings: React.FC = () => {
       });
 
       // 更新主题配置
-      updateTheme({
+      updateThemeSettings({
         colors: preset.colors,
         clientThemeVariant: presetId
       });
@@ -314,12 +312,6 @@ const ThemeSettings: React.FC = () => {
       if (previewMode) {
         applyPreviewTheme(preset.colors);
       }
-
-      showSuccessNotification({
-        title: `已选择 ${preset.name} 主题`,
-        description: preset.description,
-        duration: 3
-      });
     }
   };
 
@@ -338,9 +330,6 @@ const ThemeSettings: React.FC = () => {
     setPreviewMode(!previewMode);
     if (!previewMode) {
       applyPreviewTheme(customColors);
-    } else {
-      // 恢复原始主题
-      initTheme('admin');
     }
   };
 
@@ -354,7 +343,7 @@ const ThemeSettings: React.FC = () => {
     setSelectedPreset('');
 
     // 更新主题配置
-    updateTheme({
+    updateThemeSettings({
       colors: newColors,
       clientThemeVariant: 'custom'
     });
@@ -367,42 +356,51 @@ const ThemeSettings: React.FC = () => {
 
   // 保存主题设置
   const handleSave = async (values: any) => {
-    const themeData = {
-      colors: {
-        primary: customColors.primary,
-        secondary: customColors.secondary,
-        accent: customColors.accent,
-        background: customColors.background,
-        text: customColors.text
-      },
-      fonts: {
-        primary: 'Arial',
-        secondary: 'Georgia'
-      },
-      spacing: {
-        containerPadding: values.spacing?.containerPadding || '16px',
-        sectionPadding: values.spacing?.sectionPadding || '24px'
-      },
-      borderRadius: values.borderRadius || 8,
-      compactMode: values.compactMode || false,
-      darkMode: values.darkMode || false,
-      fontSize: values.fontSize || 14,
-      clientThemeVariant: selectedPreset || 'custom'
-    };
+    try {
+      console.log('📝 表单提交的值:', values);
+      console.log('📝 当前主题设置状态:', state.theme);
+      
+      const themeData = {
+        colors: {
+          primary: customColors.primary,
+          secondary: customColors.secondary,
+          accent: customColors.accent,
+          background: customColors.background,
+          text: customColors.text
+        },
+        fonts: {
+          primary: 'Arial, sans-serif',
+          secondary: 'Georgia, serif'
+        },
+        spacing: {
+          containerPadding: values.spacing?.containerPadding || '16px',
+          sectionPadding: values.spacing?.sectionPadding || '24px'
+        },
+        borderRadius: values.borderRadius || 8,
+        compactMode: values.compactMode || false,
+        darkMode: values.darkMode || false,
+        fontSize: values.fontSize || 14,
+        clientThemeVariant: selectedPreset || 'custom'
+      };
 
-    updateTheme(themeData);
-    const success = await saveTheme();
+      console.log('📝 构建的主题设置数据:', themeData);
 
-    if (success) {
-      // 关闭预览模式并应用最终主题
-      setPreviewMode(false);
-      applyThemeSettings(themeData);
+      // 先更新本地状态
+      updateThemeSettings(themeData);
+      
+      // 保存到服务器
+      const success = await saveThemeSettings();
 
-      showSuccessNotification({
-        title: '主题设置保存成功！',
-        description: '您的婚礼主题配色已应用到客户端界面，访客将看到全新的视觉效果',
-        duration: 4
-      });
+      if (success) {
+        // 关闭预览模式
+        setPreviewMode(false);
+        message.success('主题设置保存成功');
+      } else {
+        throw new Error('主题设置保存失败');
+      }
+    } catch (error) {
+      console.error('❌ 保存主题设置失败:', error);
+      message.error('保存主题设置失败，请重试');
     }
   };
 
@@ -416,7 +414,7 @@ const ThemeSettings: React.FC = () => {
       text: '#5D4E37'
     });
     form.resetFields();
-    updateTheme({
+    updateThemeSettings({
       colors: {
         primary: '#D4A574',
         secondary: '#F5E6D3',
@@ -675,7 +673,7 @@ const ThemeSettings: React.FC = () => {
             type="primary"
             htmlType="submit"
             icon={<SaveOutlined />}
-            loading={loading}
+            loading={state.loading}
             size="large"
           >
             保存主题设置

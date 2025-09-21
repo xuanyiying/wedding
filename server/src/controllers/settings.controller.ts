@@ -8,10 +8,12 @@ import { logger } from '../utils/logger';
  */
 export const getSettings = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
+    logger.info('🔍 收到获取设置请求');
     const settings = await SettingsService.getSettings();
+    logger.info('🔍 返回设置数据:', JSON.stringify(settings, null, 2));
     Resp.success(res, settings, '获取设置成功');
   } catch (error) {
-    logger.error('获取设置失败:', error);
+    logger.error('❌ 获取设置失败:', error);
     next(error);
   }
 };
@@ -30,10 +32,42 @@ export const updateSiteSettings = async (req: Request, res: Response, next: Next
   }
 };
 
+/**
+ * 更新首页设置
+ */
+export const updateHomepageSettings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const settings = req.body;
+    await SettingsService.updateHomepageSettings(settings);
+    Resp.success(res, null, '首页设置更新成功');
+  } catch (error) {
+    logger.error('更新首页设置失败:', error);
+    next(error);
+  }
+};
+
+/**
+ * 更新主题设置
+ */
+export const updateThemeSettings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const settings = req.body;
+    await SettingsService.updateThemeSettings(settings);
+    Resp.success(res, null, '主题设置更新成功');
+  } catch (error) {
+    logger.error('更新主题设置失败:', error);
+    next(error);
+  }
+};
+
 export const updateHomepageSections = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const settings = req.body;
-    await SettingsService.updateSiteSettings(settings);
+    // 只更新homepageSections部分
+    const homepageSectionsData = {
+      homepageSections: settings.homepageSections
+    };
+    await SettingsService.updateSiteSettings(homepageSectionsData);
     Resp.success(res, null, '首页配置更新成功');
   } catch (error) {
     logger.error('更新首页配置失败:', error);
