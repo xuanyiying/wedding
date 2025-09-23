@@ -7,11 +7,11 @@ import {
   Tag,
   Input,
   Select,
-  message,
   Typography,
   Row,
   Col,
-  Statistic
+  Statistic,
+  App
 } from 'antd';
 import {
   PlusOutlined,
@@ -32,6 +32,7 @@ const { Option } = Select;
 
 
 const IssuesPage: React.FC = () => {
+  const { message: messageApi } = App.useApp();
 
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(false);
@@ -62,16 +63,35 @@ const IssuesPage: React.FC = () => {
         priority: filters.priority,
         status: filters.status
       });
-      
-      setIssues(response.issues);
-      setPagination({
-        page: response.pagination.page,
-        pageSize: response.pagination.pageSize,
-        total: response.pagination.total
-      });
+
+      // 检查响应数据结构
+      if (response && response.data) {
+        setIssues(response.data.issues);
+        setPagination({
+          page: response.data.pagination.page,
+          pageSize: response.data.pagination.pageSize,
+          total: response.data.pagination.total
+        });
+      } else {
+        // 如果响应结构不正确，设置默认值
+        setIssues([]);
+        setPagination({
+          page: 1,
+          pageSize: 20,
+          total: 0
+        });
+        console.warn('API响应数据结构不正确:', response);
+      }
     } catch (error) {
-      message.error('加载问题列表失败');
+      messageApi.error('加载问题列表失败');
       console.error('加载问题列表失败:', error);
+      // 出错时也设置默认值
+      setIssues([]);
+      setPagination({
+        page: 1,
+        pageSize: 20,
+        total: 0
+      });
     } finally {
       setLoading(false);
     }
@@ -113,7 +133,7 @@ const IssuesPage: React.FC = () => {
     setCreateModalVisible(false);
     loadIssues();
     loadStats();
-    message.success('问题创建成功');
+    messageApi.success('问题创建成功');
   };
 
   const handleViewDetail = (issue: Issue) => {
@@ -173,9 +193,9 @@ const IssuesPage: React.FC = () => {
       render: (type: IssueType) => (
         <Tag color={getTypeColor(type)}>
           {type === IssueType.BUG ? '缺陷' :
-           type === IssueType.FEATURE ? '功能' :
-           type === IssueType.ENHANCEMENT ? '优化' :
-           type === IssueType.DOCUMENTATION ? '文档' : '其他'}
+            type === IssueType.FEATURE ? '功能' :
+              type === IssueType.ENHANCEMENT ? '优化' :
+                type === IssueType.DOCUMENTATION ? '文档' : '其他'}
         </Tag>
       )
     },
@@ -187,8 +207,8 @@ const IssuesPage: React.FC = () => {
       render: (priority: IssuePriority) => (
         <Tag color={getPriorityColor(priority)}>
           {priority === IssuePriority.LOW ? '低' :
-           priority === IssuePriority.MEDIUM ? '中' :
-           priority === IssuePriority.HIGH ? '高' : '紧急'}
+            priority === IssuePriority.MEDIUM ? '中' :
+              priority === IssuePriority.HIGH ? '高' : '紧急'}
         </Tag>
       )
     },
@@ -200,9 +220,9 @@ const IssuesPage: React.FC = () => {
       render: (status: IssueStatus) => (
         <Tag color={getStatusColor(status)}>
           {status === IssueStatus.OPEN ? '待处理' :
-           status === IssueStatus.IN_PROGRESS ? '处理中' :
-           status === IssueStatus.RESOLVED ? '已解决' :
-           status === IssueStatus.CLOSED ? '已关闭' : '已拒绝'}
+            status === IssueStatus.IN_PROGRESS ? '处理中' :
+              status === IssueStatus.RESOLVED ? '已解决' :
+                status === IssueStatus.CLOSED ? '已关闭' : '已拒绝'}
         </Tag>
       )
     },
@@ -256,7 +276,7 @@ const IssuesPage: React.FC = () => {
   return (
     <div>
       <Title level={2}>问题管理</Title>
-      
+
       {/* 统计卡片 */}
       {stats && (
         <Row gutter={16} style={{ marginBottom: 24 }}>

@@ -1,4 +1,5 @@
 
+import type { ApiResponse } from '../types';
 import type {
   Issue,
   CreateIssueRequest,
@@ -25,25 +26,22 @@ export const issueService = {
     reporterId?: string;
     sortBy?: string;
     sortOrder?: string;
-  }): Promise<IssueListResponse> {
-    const response = await request.get('/issues', { params });
-    return response.data;
+  }): Promise<ApiResponse<IssueListResponse>> {
+    return await request.get('/issues', { params });
   },
 
   /**
    * 获取问题统计
    */
   async getIssueStats(): Promise<IssueStats> {
-    const response = await request.get('/issues/stats');
-    return response.data;
+    return await request.get('/issues/stats');
   },
 
   /**
    * 获取单个问题详情
    */
   async getIssue(id: string): Promise<Issue> {
-    const response = await request.get(`/issues/${id}`);
-    return response.data;
+    return await request.get(`/issues/${id}`);
   },
 
   /**
@@ -58,8 +56,7 @@ export const issueService = {
    * 更新问题
    */
   async updateIssue(id: string, data: UpdateIssueRequest): Promise<Issue> {
-    const response = await request.put(`/issues/${id}`, data);
-    return response.data;
+    return await request.put(`/issues/${id}`, data);
   },
 
   /**
@@ -73,8 +70,7 @@ export const issueService = {
    * 投票问题
    */
   async voteIssue(id: string, data: VoteRequest): Promise<VoteResponse> {
-    const response = await request.post(`/issues/${id}/vote`, data);
-    return response.data;
+    return await request.post(`/issues/${id}/vote`, data);
   }
 };
 

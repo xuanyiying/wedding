@@ -80,7 +80,7 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = ({
     const isImage = file.type.startsWith('image/');
     const isVideo = file.type.startsWith('video/');
     const isText = file.type.startsWith('text/') || file.type === 'application/pdf';
-    
+
     if (!isImage && !isVideo && !isText) {
       message.error('只能上传图片、视频或文本文件');
       return false;
@@ -109,7 +109,7 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = ({
       onCancel={handleCancel}
       footer={null}
       width={800}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form
         form={form}

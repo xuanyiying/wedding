@@ -479,30 +479,10 @@ export const settingsService = {
     return http.get('/settings/site');
   },
 
-  // 创建网站设置（全量）
-  createSiteSettings: (data: any): Promise<ApiResponse<null>> => {
-    return http.post('/settings/site', data);
-  },
-
-  // 删除网站设置
-  deleteSiteSettings: (): Promise<ApiResponse<null>> => {
-    return http.delete('/settings/site');
-  },
-
   // ========== 首页设置模块 ==========
   // 获取首页设置
   getHomepageSettings: (): Promise<ApiResponse<any>> => {
     return http.get('/settings/homepage');
-  },
-
-  // 创建首页设置（全量）
-  createHomepageSettings: (data: any): Promise<ApiResponse<null>> => {
-    return http.post('/settings/homepage', data);
-  },
-
-  // 删除首页设置
-  deleteHomepageSettings: (): Promise<ApiResponse<null>> => {
-    return http.delete('/settings/homepage');
   },
 
   // ========== 主题设置模块 ==========
@@ -511,32 +491,11 @@ export const settingsService = {
     return http.get('/settings/theme');
   },
 
-  // 创建主题设置（全量）
-  createThemeSettings: (data: any): Promise<ApiResponse<null>> => {
-    return http.post('/settings/theme', data);
-  },
-
-  // 删除主题设置
-  deleteThemeSettings: (): Promise<ApiResponse<null>> => {
-    return http.delete('/settings/theme');
-  },
-
   // ========== 邮件设置模块 ==========
   // 获取邮件设置
   getEmailSettings: (): Promise<ApiResponse<any>> => {
     return http.get('/settings/email');
   },
-
-  // 创建邮件设置（全量）
-  createEmailSettings: (data: any): Promise<ApiResponse<null>> => {
-    return http.post('/settings/email', data);
-  },
-
-  // 删除邮件设置
-  deleteEmailSettings: (): Promise<ApiResponse<null>> => {
-    return http.delete('/settings/email');
-  },
-
   // ========== 通用功能 ==========
   // 测试邮件
   testEmail: (data: { to: string; subject: string; content: string }): Promise<ApiResponse<null>> => {
@@ -561,22 +520,22 @@ export const settingsService = {
 
   // 更新网站设置（兼容）
   updateSiteSettings: (data: any): Promise<ApiResponse<null>> => {
-    return http.put('/settings/site', data);
+    return http.post('/settings/site', data);
   },
 
   // 更新首页设置（兼容）
   updateHomepageSettings: (data: any): Promise<ApiResponse<null>> => {
-    return http.put('/settings/homepage', data);
+    return http.post('/settings/homepage', data);
   },
 
   // 更新主题设置（兼容）
   updateThemeSettings: (data: any): Promise<ApiResponse<null>> => {
-    return http.put('/settings/theme', data);
+    return http.post('/settings/theme', data);
   },
 
   // 更新邮件设置（兼容）
   updateEmailSettings: (data: any): Promise<ApiResponse<null>> => {
-    return http.put('/settings/email', data);
+    return http.post('/settings/email', data);
   },
 };
 
