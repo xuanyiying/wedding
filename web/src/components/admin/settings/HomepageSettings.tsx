@@ -16,7 +16,8 @@ import {
   VideoCameraOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
-import { useSettings } from '../../../contexts/SettingsContext';
+import { useAppSettings } from '../../../hooks/useAppSettings';
+import { settingsService } from '../../../services';
 
 const { TextArea } = Input;
 
@@ -43,13 +44,13 @@ const SettingSection = styled.div`
 
 const HomepageSettings: React.FC = () => {
   const [form] = Form.useForm();
-  const { state, updateHomepageSettings, saveHomepageSettings } = useSettings();
+  const { settings, loading, refetch } = useAppSettings();
 
   // 初始化表单数据
   useEffect(() => {
-    if (state.homepage) {
-      const homepageData = state.homepage;
-      
+    if (settings?.homepage) {
+      const homepageData = settings.homepage;
+
       const sectionsData = {
         hero: {
           title: homepageData.hero?.title || '',
@@ -100,13 +101,13 @@ const HomepageSettings: React.FC = () => {
       };
       form.setFieldsValue(sectionsData);
     }
-  }, [state.homepage, form]);
+  }, [settings, form]);
 
   // 保存首页配置
   const handleSave = async (values: any) => {
     try {
       console.log('📝 表单提交的值:', values);
-      console.log('📝 当前首页设置状态:', state.homepage);
+      console.log('📝 当前首页设置状态:', settings?.homepage);
 
       // 构建完整的首页设置数据结构
       const homepageData = {
@@ -114,9 +115,9 @@ const HomepageSettings: React.FC = () => {
           title: values.hero?.title || '',
           subtitle: values.hero?.subtitle || '',
           description: values.hero?.description || '',
-          backgroundImage: values.hero?.backgroundImage || state.homepage.hero?.backgroundImage || '',
-          ctaText: values.hero?.ctaText || state.homepage.hero?.ctaText || '',
-          ctaLink: values.hero?.ctaLink || state.homepage.hero?.ctaLink || '',
+          backgroundImage: values.hero?.backgroundImage || settings?.homepage?.hero?.backgroundImage || '',
+          ctaText: values.hero?.ctaText || settings?.homepage?.hero?.ctaText || '',
+          ctaLink: values.hero?.ctaLink || settings?.homepage?.hero?.ctaLink || '',
           visible: values.hero?.visible || false,
         },
         team: {
@@ -147,7 +148,7 @@ const HomepageSettings: React.FC = () => {
           title: values.contact?.title || '',
           subtitle: values.contact?.subtitle || '',
           description: values.contact?.description || '',
-          backgroundImage: values.contact?.backgroundImage || state.homepage.contact?.backgroundImage || '',
+          backgroundImage: values.contact?.backgroundImage || settings?.homepage?.contact?.backgroundImage || '',
           email: values.contact?.email || '',
           phone: values.contact?.phone || '',
           address: values.contact?.address || '',
@@ -160,15 +161,12 @@ const HomepageSettings: React.FC = () => {
 
       console.log('📝 构建的首页设置数据:', homepageData);
 
-      // 先更新本地状态
-      updateHomepageSettings(homepageData);
+      // 调用API保存首页设置
+      await settingsService.updateHomepageSettings(homepageData);
+      console.log('✅ 首页设置保存成功');
 
-      // 保存到服务器
-      const success = await saveHomepageSettings();
-
-      if (!success) {
-        throw new Error('首页设置保存失败');
-      }
+      // 重新获取设置以更新状态
+      await refetch();
 
       message.success('首页配置保存成功');
     } catch (error) {
@@ -343,7 +341,7 @@ const HomepageSettings: React.FC = () => {
         <Button
           type="primary"
           htmlType="submit"
-          loading={state.loading}
+          loading={loading}
           icon={<SaveOutlined />}
         >
           保存

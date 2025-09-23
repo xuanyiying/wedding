@@ -68,7 +68,7 @@ const SchedulePage: React.FC = () => {
   const [selectedMember, setSelectedMember] = useState<ClientTeamMember | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { settings} = useSiteSettings();
+  const { settings } = useSiteSettings();
   const today = dayjs();
 
   const { teamMembers } = useTeamData({
@@ -78,7 +78,7 @@ const SchedulePage: React.FC = () => {
   // 页面加载时自动查询当天档期
   useEffect(() => {
     handleQuery({ date: today });
-  }, [teamMembers]);
+  }, []); // 移除了teamMembers依赖，避免无限循环
 
   // 查询没有档期的团队成员
   const handleQuery = async (filters: QueryFilters) => {
@@ -87,16 +87,16 @@ const SchedulePage: React.FC = () => {
       console.info('available hosts', filters)
       const response = await scheduleService.getAvailableHosts(
         {
-          teamId:filters.teamId || 'all',
-          weddingDate:filters.date?.format('YYYY-MM-DD') || today.format('YYYY-MM-DD'),
-          weddingTime:  filters.weddingTime || 'lunch'
+          teamId: filters.teamId || 'all',
+          weddingDate: filters.date?.format('YYYY-MM-DD') || today.format('YYYY-MM-DD'),
+          weddingTime: filters.weddingTime || 'lunch'
         }
       );
       console.log('available hosts', response);
       if (response.success && response.data) {
         let availableTeamMembers = response.data.hosts.map(transformTeamMember);
-        if(filters.userId){
-          availableTeamMembers =  availableTeamMembers.filter(item => item.userId === filters.userId);
+        if (filters.userId) {
+          availableTeamMembers = availableTeamMembers.filter(item => item.userId === filters.userId);
         }
 
         setAvailableMembers(availableTeamMembers);
@@ -147,7 +147,7 @@ const SchedulePage: React.FC = () => {
           showMealFilter={true}
           loading={loading}
         />
-        
+
         {loading ? (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
             <Spin size="large" />

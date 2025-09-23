@@ -37,7 +37,7 @@ const SchedulesPage: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
-  
+
   // 模态框相关状态
   const [form] = Form.useForm();
   const [weddingDate, setWeddingDate] = useState<Dayjs | null>(null);
@@ -62,7 +62,7 @@ const SchedulesPage: React.FC = () => {
   const { initTheme } = useTheme();
   const user = useAppSelector((state) => state.auth.user);
   const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN;
-  
+
   useEffect(() => {
     initTheme('admin');
   }, [initTheme]);
@@ -101,10 +101,10 @@ const SchedulesPage: React.FC = () => {
       console.log('Loading schedules with params:', params);
       const response = await scheduleService.getSchedules(params);
       console.log('Schedules API response:', response);
-      
+
       const scheduleData = response.data?.schedules || [];
       console.log('Schedule data:', scheduleData);
-      
+
       setSchedules(scheduleData);
     } catch (error) {
       console.error('加载档期数据失败:', error);
@@ -130,7 +130,7 @@ const SchedulesPage: React.FC = () => {
   const openModal = (schedule?: Schedule) => {
     setEditingSchedule(schedule || null);
     setModalVisible(true);
-    
+
     // 重置模态框状态
     if (schedule) {
       // 编辑模式
@@ -159,10 +159,15 @@ const SchedulesPage: React.FC = () => {
         message.error('存在档期冲突，请选择其他时间');
         return;
       }
-      
+
+      // 如果isPaid为true，自动将状态设置为完成
+      if (values.isPaid === true) {
+        values.status = 'completed';
+      }
+
       const scheduleData = {
         ...values,
-        weddingDate: values.weddingDate.format('YYYY-MM-DD'),
+        weddingDate: values.weddingDate ? values.weddingDate.format('YYYY-MM-DD') : null,
       };
 
       if (editingSchedule) {
@@ -231,7 +236,7 @@ const SchedulesPage: React.FC = () => {
       const response = await scheduleService.checkScheduleConflict({
         userId: user.id,
         weddingDate: weddingDate.format('YYYY-MM-DD'),
-        weddingTime:  selectedWeddingTime,
+        weddingTime: selectedWeddingTime,
         excludeId: editingSchedule?.id // 编辑时排除当前档期
       });
       setConflictSchedules(response.data?.conflicts || []);
@@ -280,19 +285,19 @@ const SchedulesPage: React.FC = () => {
   return (
     <SchedulesContainer>
       {/* 统计组件 */}
-       <ScheduleStats
-          schedules={schedules}
-          selectedTeam={selectedTeam}
-          teamMembers={teamMembers}
-          statsTimeRange="month"
-          statusFilter="all"
-          customDateRange={[null, null]}
-          showDetailedStats={false}
-          onStatsTimeRangeChange={() => {}}
-          onStatusFilterChange={() => {}}
-          onCustomDateRangeChange={() => {}}
-          onShowDetailedStatsChange={() => {}}
-        />
+      <ScheduleStats
+        schedules={schedules}
+        selectedTeam={selectedTeam}
+        teamMembers={teamMembers}
+        statsTimeRange="month"
+        statusFilter="all"
+        customDateRange={[null, null]}
+        showDetailedStats={false}
+        onStatsTimeRangeChange={() => { }}
+        onStatusFilterChange={() => { }}
+        onCustomDateRangeChange={() => { }}
+        onShowDetailedStatsChange={() => { }}
+      />
 
       {/* 条件查询栏 */}
       <QueryBar
@@ -318,57 +323,57 @@ const SchedulesPage: React.FC = () => {
                 </Button>
               </Space>
             </div>
-            
+
             {/* 档期显示组件 */}
-             <ScheduleDisplay
-                   filteredEvents={schedules.map(s => ({ ...s, hostName: s.user?.realName || s.user?.nickname || '未分配' }))}
-                   selectedDate={selectedDate}
-                   selectedDateSchedules={schedules.filter(s => dayjs(s.weddingDate).isSame(selectedDate, 'day')).map(s => ({ ...s, hostName: s.user?.realName || s.user?.nickname || '未分配' }))}
-                   onDateSelect={handleDateSelect}
-                   onEventClick={handleEventClick}
-                   onAddSchedule={() => openModal()}
-                   onEditSchedule={(schedule: Schedule) => openModal(schedule)}
-                   onDeleteSchedule={async (id: string) => {
-                     try {
-                       await scheduleService.deleteSchedule(id);
-                       message.success('删除成功');
-                       loadSchedules();
-                     } catch (error) {
-                       message.error('删除失败');
-                     }
-                   }}
-                   loading={loading}
-                 />
+            <ScheduleDisplay
+              filteredEvents={schedules.map(s => ({ ...s, hostName: s.user?.realName || s.user?.nickname || '未分配' }))}
+              selectedDate={selectedDate}
+              selectedDateSchedules={schedules.filter(s => dayjs(s.weddingDate).isSame(selectedDate, 'day')).map(s => ({ ...s, hostName: s.user?.realName || s.user?.nickname || '未分配' }))}
+              onDateSelect={handleDateSelect}
+              onEventClick={handleEventClick}
+              onAddSchedule={() => openModal()}
+              onEditSchedule={(schedule: Schedule) => openModal(schedule)}
+              onDeleteSchedule={async (id: string) => {
+                try {
+                  await scheduleService.deleteSchedule(id);
+                  message.success('删除成功');
+                  loadSchedules();
+                } catch (error) {
+                  message.error('删除失败');
+                }
+              }}
+              loading={loading}
+            />
           </ContentCard>
         </Col>
       </Row>
 
       {/* 添加/编辑档期模态框 */}
-       <ScheduleEditModal
-         visible={modalVisible}
-         editingSchedule={editingSchedule}
-         form={form}
-         user={user}
-         isAdmin={isAdmin}
-         weddingDate={weddingDate}
-         selectedWeddingTime={selectedWeddingTime}
-         availableHosts={availableHosts}
-         searchLoading={searchLoading}
-         searchModalVisible={searchModalVisible}
-         conflictSchedules={conflictSchedules}
-         onCancel={() => {
-           setModalVisible(false);
-           setConflictSchedules([]);
-           setAvailableHosts([]);
-         }}
-         onSave={handleSave}
-         onDelete={handleDelete}
-         onWeddingDateChange={handleWeddingDateChange}
-         onWeddingTimeChange={handleWeddingTimeChange}
-         onSearchAvailableHosts={handleSearchAvailableHosts}
-         onCheckScheduleConflict={handleCheckScheduleConflict}
-         setSearchModalVisible={setSearchModalVisible}
-       />
+      <ScheduleEditModal
+        visible={modalVisible}
+        editingSchedule={editingSchedule}
+        form={form}
+        user={user}
+        isAdmin={isAdmin}
+        weddingDate={weddingDate}
+        selectedWeddingTime={selectedWeddingTime}
+        availableHosts={availableHosts}
+        searchLoading={searchLoading}
+        searchModalVisible={searchModalVisible}
+        conflictSchedules={conflictSchedules}
+        onCancel={() => {
+          setModalVisible(false);
+          setConflictSchedules([]);
+          setAvailableHosts([]);
+        }}
+        onSave={handleSave}
+        onDelete={handleDelete}
+        onWeddingDateChange={handleWeddingDateChange}
+        onWeddingTimeChange={handleWeddingTimeChange}
+        onSearchAvailableHosts={handleSearchAvailableHosts}
+        onCheckScheduleConflict={handleCheckScheduleConflict}
+        setSearchModalVisible={setSearchModalVisible}
+      />
     </SchedulesContainer>
   );
 };

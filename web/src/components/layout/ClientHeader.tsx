@@ -142,6 +142,7 @@ const StyledMenu = styled(Menu)`
     line-height: normal;
     display: flex;
     align-items: center;
+    border-bottom: none; /* 移除底部边框 */
     
     &:hover {
       color: var(--client-primary-color);
@@ -151,6 +152,7 @@ const StyledMenu = styled(Menu)`
     &.ant-menu-item-selected {
       color: var(--client-text-inverse);
       background: var(--client-primary-color);
+      border-bottom: none; /* 移除选中项的底部边框 */
     }
   }
 
@@ -165,6 +167,7 @@ const StyledMenu = styled(Menu)`
       padding: 6px 12px;
       font-size: 14px;
       white-space: nowrap;
+      border-bottom: none; /* 移除移动端底部边框 */
     }
   }
 `;

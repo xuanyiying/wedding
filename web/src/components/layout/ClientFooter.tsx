@@ -1,24 +1,29 @@
 import React from 'react';
 import { Layout, Row, Col, Space, Divider } from 'antd';
-import { PhoneOutlined, MailOutlined, EnvironmentOutlined, WechatOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
+import useAppSettings from '../../hooks/useAppSettings';
 
 const { Footer } = Layout;
 
 const StyledFooter = styled(Footer)`
   background: var(--client-bg-layout);
   color: var(--client-text-secondary);
-  padding: 48px 32px 24px;
+  padding: 48px 0 24px; /* 移除左右内边距 */
   border-top: 1px solid var(--client-border-color);
   
   @media (max-width: 768px) {
-    padding: 32px 16px 16px;
+    padding: 32px 0 16px; /* 移除移动端左右内边距 */
   }
 `;
 
 const FooterContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
+  padding: 0 32px; /* 在容器上添加左右内边距 */
+  
+  @media (max-width: 768px) {
+    padding: 0 16px; /* 移动端调整内边距 */
+  }
 `;
 
 const FooterSection = styled.div`
@@ -45,15 +50,12 @@ const FooterSection = styled.div`
   }
 `;
 
-const ContactItem = styled.div`
+// 添加垂直居中容器
+const VerticalCenterContainer = styled.div`
   display: flex;
-  align-items: center;
-  margin-bottom: 12px;
-  
-  .anticon {
-    margin-right: 8px;
-    color: var(--client-primary-color);
-  }
+  flex-direction: column;
+  justify-content: flex-start;
+  height: 100%;
 `;
 
 const Copyright = styled.div`
@@ -63,66 +65,47 @@ const Copyright = styled.div`
   margin-top: 24px;
   padding-top: 24px;
   border-top: 1px solid var(--client-border-color);
+  
+  @media (max-width: 768px) {
+    text-align: left; /* 移动端左对齐 */
+  }
 `;
 
 const ClientFooter: React.FC = () => {
+  const { settings } = useAppSettings();
+
+  // 使用配置数据或默认值
+  const icp = settings?.site?.icp || '沪ICP备12345678号-1';
+  const copyright = settings?.site?.copyright || '© 2024 陆合·合悦Club. 保留所有权利.';
+
   return (
     <StyledFooter>
       <FooterContainer>
-        <Row gutter={[32, 24]}>
-          <Col xs={24} sm={12} md={6}>
-            <FooterSection>
-              <h3>关于我们</h3>
-              <p>陆合·合悦Club是一支专业的婚礼主持团队，致力于为每一对新人打造独特而难忘的婚礼体验。</p>
-              <p>我们拥有丰富的主持经验和专业的服务团队，为您的特殊日子增添完美的仪式感。</p>
-            </FooterSection>
+        <Row gutter={[48, 32]} justify="center" align="top">
+          <Col xs={24} sm={12} md={8}>
+            <VerticalCenterContainer>
+              <FooterSection>
+                <h3>关于我们</h3>
+                <p>陆合·合悦Club是一支专业的婚礼主持团队，致力于为每一对新人打造独特而难忘的婚礼体验。</p>
+                <p>我们拥有丰富的主持经验和专业的服务团队，为您的特殊日子增添完美的仪式感。</p>
+              </FooterSection>
+            </VerticalCenterContainer>
           </Col>
-          
-          <Col xs={24} sm={12} md={6}>
-            <FooterSection>
-              <h3>服务项目</h3>
-              <p><a href="/works">婚礼主持</a></p>
-              <p><a href="/works">订婚仪式</a></p>
-              <p><a href="/works">周年庆典</a></p>
-              <p><a href="/works">特殊活动</a></p>
-            </FooterSection>
-          </Col>
-          
-          <Col xs={24} sm={12} md={6}>
-            <FooterSection>
-              <h3>快速链接</h3>
-              <p><a href="/team">团队介绍</a></p>
-              <p><a href="/works">作品展示</a></p>
-              <p><a href="/schedule">档期查询</a></p>
-              <p><a href="/contact">联系我们</a></p>
-            </FooterSection>
-          </Col>
-          
-          <Col xs={24} sm={12} md={6}>
-            <FooterSection>
-              <h3>联系方式</h3>
-              <ContactItem>
-                <PhoneOutlined />
-                <span>400-888-8888</span>
-              </ContactItem>
-              <ContactItem>
-                <MailOutlined />
-                <span>contact@luheheyue.com</span>
-              </ContactItem>
-              <ContactItem>
-                <EnvironmentOutlined />
-                <span>上海市黄浦区南京东路123号</span>
-              </ContactItem>
-              <ContactItem>
-                <WechatOutlined />
-                <span>微信：LuHeHeYueClub</span>
-              </ContactItem>
-            </FooterSection>
+          <Col xs={24} sm={6} md={4}>
+            <VerticalCenterContainer>
+              <FooterSection>
+                <h3>快速链接</h3>
+                <p><a href="/team">团队介绍</a></p>
+                <p><a href="/works">作品展示</a></p>
+                <p><a href="/schedule">档期查询</a></p>
+                <p><a href="/contact">联系我们</a></p>
+              </FooterSection>
+            </VerticalCenterContainer>
           </Col>
         </Row>
-        
+
         <Copyright>
-          <p>© 2024 陆合·合悦Club. 保留所有权利. | 沪ICP备12345678号-1</p>
+          <p>{copyright} | {icp}</p>
           <Space split={<Divider type="vertical" />}>
             <a href="/privacy">隐私政策</a>
             <a href="/terms">服务条款</a>

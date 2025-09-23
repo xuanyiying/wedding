@@ -21,7 +21,7 @@ const StyledCard = styled(Card)`
   &&& {
     background: var(--client-bg-container);
     border-radius: var(--client-border-radius-lg);
-    padding: 32px 24px;
+    padding: 24px 16px; /* 减小内边距 */
     text-align: center;
     border: 1px solid var(--client-border-color);
     transition: all 0.3s ease;
@@ -32,7 +32,7 @@ const StyledCard = styled(Card)`
     &:hover {
       border-color: var(--client-primary-color);
       box-shadow: var(--client-shadow-lg);
-      transform: translateY(-4px);
+      transform: translateY(-2px); /* 减小悬停效果 */
     }
 
     .ant-card-body {
@@ -43,11 +43,11 @@ const StyledCard = styled(Card)`
 
 const TeamAvatar = styled(Avatar)`
   &&& {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 24px;
+    width: 64px; /* 减小头像大小 */
+    height: 64px;
+    margin: 0 auto 16px; /* 减小间距 */
     background: var(--client-gradient-primary);
-    font-size: 1.5rem;
+    font-size: 1.2rem; /* 调整字体大小 */
     font-weight: 500;
     box-shadow: var(--client-shadow-sm);
     color: var(--client-text-inverse);
@@ -56,9 +56,9 @@ const TeamAvatar = styled(Avatar)`
 
 const TeamName = styled(Title)`
   &&& {
-    font-size: 1.1rem;
+    font-size: 1rem; /* 减小字体大小 */
     font-weight: 600;
-    margin-bottom: 8px;
+    margin-bottom: 6px; /* 减小间距 */
     color: var(--client-text-primary);
   }
 `;
@@ -66,12 +66,12 @@ const TeamName = styled(Title)`
 
 const StatusTag = styled(Tag)`
   &&& {
-    padding: 6px 12px;
+    padding: 4px 8px; /* 减小内边距 */
     border-radius: var(--client-border-radius);
-    font-size: 0.8rem;
+    font-size: 0.75rem; /* 减小字体大小 */
     font-weight: 400;
     border: 1px solid;
-    margin-bottom: 16px;
+    margin-bottom: 12px; /* 减小间距 */
 
     &.available {
       background: var(--client-bg-container);
@@ -93,6 +93,8 @@ const DetailButton = styled(Button)`
     background: var(--client-primary-color);
     border-color: var(--client-primary-color);
     color: var(--client-text-inverse);
+    font-size: 0.8rem; /* 减小字体大小 */
+    padding: 4px 12px; /* 减小按钮大小 */
     
     &:hover {
       background: var(--client-primary-hover);

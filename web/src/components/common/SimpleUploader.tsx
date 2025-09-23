@@ -173,7 +173,6 @@ export const SimpleUploader: React.FC<SimpleUploaderProps> = ({
             clearInterval(interval);
             setUploadProgress(100);
             setUploadStatus('success');
-            // 修复类型错误：正确访问MediaFile的fileUrl属性
             setUploadedUrl(result.data?.fileUrl || '');
 
             message.success('上传成功');

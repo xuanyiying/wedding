@@ -6,7 +6,7 @@ export const clientTheme = {
     light: '#333333',
     dark: '#000000',
   },
-  
+
   // 功能色彩
   functional: {
     success: '#52c41a',
@@ -16,7 +16,7 @@ export const clientTheme = {
     purple: '#722ed1',
     cyan: '#13c2c2',
   },
-  
+
   // 文字颜色
   text: {
     primary: '#000000',
@@ -24,41 +24,41 @@ export const clientTheme = {
     tertiary: '#555555',
     light: '#777777',
   },
-  
+
   // 背景色系
   background: {
     primary: '#FFFFFF',
     secondary: '#F5F5F5',
     tertiary: '#E5E5E5',
   },
-  
+
   // 边框和交互
   border: {
     primary: '#E5E5E5',
     light: '#F5F5F5',
     divider: '#E5E5E5',
   },
-  
+
   // 交互色彩
   interaction: {
     hover: '#F5F5F5',
     accent: '#000000',
   },
-  
+
   // 圆角设计
   borderRadius: {
     small: '8px',
     medium: '12px',
     large: '16px',
   },
-  
-  // 阴影效果
+
+  // 阴影效果 - 使用更柔和的颜色
   shadow: {
-    small: '0 2px 8px rgba(0, 0, 0, 0.05)',
-    medium: '0 6px 16px rgba(0, 0, 0, 0.08)',
-    large: '0 12px 32px rgba(0, 0, 0, 0.1)',
+    small: '0 2px 8px rgba(51, 51, 51, 0.1)',  // 使用主题主色的柔和阴影
+    medium: '0 6px 16px rgba(51, 51, 51, 0.15)',
+    large: '0 12px 32px rgba(51, 51, 51, 0.2)',
   },
-  
+
   // 渐变色彩
   gradient: {
     primary: 'linear-gradient(135deg, #333333 0%, #000000 100%)',
@@ -70,7 +70,7 @@ export const clientTheme = {
     shine: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%)',
     primaryHover: 'linear-gradient(135deg, #333333 0%, #000000 100%)',
   },
-  
+
   // 布局相关
   layout: {
     container: '#FFFFFF',
@@ -79,7 +79,7 @@ export const clientTheme = {
     headerDark: 'rgba(0, 0, 0, 0.85)',
     footer: '#F5F5F5',
   },
-  
+
   // 特殊状态
   state: {
     inverse: '#FFFFFF',
@@ -95,7 +95,7 @@ export const clientDarkTheme = {
     light: '#F8F9FA',
     dark: '#F0F0F0',
   },
-  
+
   // 功能色彩
   functional: {
     success: '#52c41a',
@@ -105,7 +105,7 @@ export const clientDarkTheme = {
     purple: '#722ed1',
     cyan: '#13c2c2',
   },
-  
+
   // 文字颜色
   text: {
     primary: '#333333',
@@ -113,41 +113,41 @@ export const clientDarkTheme = {
     tertiary: '#999999',
     light: '#CCCCCC',
   },
-  
+
   // 背景色系
   background: {
     primary: '#FFFFFF',
     secondary: '#FAFAFA',
     tertiary: '#F5F5F5',
   },
-  
+
   // 边框和交互
   border: {
     primary: '#E8E8E8',
     light: '#F0F0F0',
     divider: '#E8E8E8',
   },
-  
+
   // 交互色彩
   interaction: {
     hover: '#F8F9FA',
     accent: '#333333',
   },
-  
+
   // 圆角设计
   borderRadius: {
     small: '8px',
     medium: '12px',
     large: '16px',
   },
-  
-  // 阴影效果
+
+  // 阴影效果 - 使用更柔和的颜色
   shadow: {
-    small: '0 2px 8px rgba(0, 0, 0, 0.06)',
-    medium: '0 6px 16px rgba(0, 0, 0, 0.1)',
-    large: '0 12px 32px rgba(0, 0, 0, 0.12)',
+    small: '0 2px 8px rgba(51, 51, 51, 0.12)',  // 使用主题主色的柔和阴影
+    medium: '0 6px 16px rgba(51, 51, 51, 0.18)',
+    large: '0 12px 32px rgba(51, 51, 51, 0.25)',
   },
-  
+
   // 渐变色彩
   gradient: {
     primary: 'linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%)',
@@ -159,7 +159,7 @@ export const clientDarkTheme = {
     shine: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%)',
     primaryHover: 'linear-gradient(135deg, #F8F9FA 0%, #F0F0F0 100%)',
   },
-  
+
   // 布局相关
   layout: {
     container: '#FFFFFF',
@@ -168,7 +168,7 @@ export const clientDarkTheme = {
     headerDark: 'rgba(0, 0, 0, 0.85)',
     footer: '#FAFAFA',
   },
-  
+
   // 特殊状态
   state: {
     inverse: '#333333',

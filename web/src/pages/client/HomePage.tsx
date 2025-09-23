@@ -198,7 +198,7 @@ const HomePage: React.FC = () => {
       )}
 
       {/* Team Showcase */}
-      {(teamShowcaseSection?.visible ?? true) !== false && !selectedTeam && selectedTeam && (
+      {(teamShowcaseSection?.visible ?? true) !== false && selectedTeam && (
         <TeamShowcaseSection
           team={selectedTeam}
           title={teamShowcaseSection?.title || '团队展示'}
@@ -222,7 +222,7 @@ const HomePage: React.FC = () => {
       )}
 
       {/* Schedule Section */}
-      {settings?.homepage?.schedule?.visible !== false && !selectedTeam && selectedTeam && (
+      {settings?.homepage?.schedule?.visible !== false && selectedTeam && (
         <SectionWrapper id="schedule">
           <ScheduleSection
             team={selectedTeam}

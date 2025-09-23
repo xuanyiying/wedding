@@ -15,7 +15,7 @@ import {
   MailOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
-import { useSettings } from '../../../contexts/SettingsContext';
+import { useAppSettings } from '../../../hooks/useAppSettings';
 import { settingsService } from '../../../services';
 
 const SettingSection = styled.div`
@@ -51,30 +51,30 @@ interface EmailSettingsForm {
 
 const EmailSettings: React.FC = () => {
   const [form] = Form.useForm();
-  const { state, updateEmailSettings, saveEmailSettings } = useSettings();
+  const { settings, loading, refetch } = useAppSettings();
 
   // 初始化表单数据
   useEffect(() => {
-    if (state.email) {
+    if (settings?.email) {
       const formData: EmailSettingsForm = {
-        smtpHost: state.email.smtpHost || '',
-        smtpPort: state.email.smtpPort || 587,
-        smtpUser: state.email.smtpUser || '',
-        smtpPassword: state.email.smtpPassword || '',
-        enableSSL: state.email.smtpSecure || false,
-        fromEmail: state.email.emailFrom || '',
-        fromName: state.email.emailFromName || '',
+        smtpHost: settings.email.smtpHost || '',
+        smtpPort: settings.email.smtpPort || 587,
+        smtpUser: settings.email.smtpUser || '',
+        smtpPassword: settings.email.smtpPassword || '',
+        enableSSL: settings.email.smtpSecure || false,
+        fromEmail: settings.email.emailFrom || '',
+        fromName: settings.email.emailFromName || '',
       };
       form.setFieldsValue(formData);
     }
-  }, [state.email, form]);
+  }, [settings, form]);
 
   // 保存邮件设置
   const handleSave = async (values: EmailSettingsForm) => {
     try {
       console.log('📝 表单提交的值:', values);
-      console.log('📝 当前邮件设置状态:', state.email);
-      
+      console.log('📝 当前邮件设置状态:', settings?.email);
+
       const emailData = {
         smtpHost: values.smtpHost || '',
         smtpPort: values.smtpPort || 587,
@@ -87,16 +87,13 @@ const EmailSettings: React.FC = () => {
 
       console.log('📝 构建的邮件设置数据:', emailData);
 
-      // 先更新本地状态
-      updateEmailSettings(emailData);
-      
-      // 保存到服务器
-      const success = await saveEmailSettings();
-      
-      if (!success) {
-        throw new Error('邮件设置保存失败');
-      }
-      
+      // 调用API保存邮件设置
+      await settingsService.updateEmailSettings(emailData);
+      console.log('✅ 邮件设置保存成功');
+
+      // 重新获取设置以更新状态
+      await refetch();
+
       message.success('邮件设置保存成功');
     } catch (error) {
       console.error('❌ 保存邮件设置失败:', error);
@@ -215,15 +212,15 @@ const EmailSettings: React.FC = () => {
 
       <Form.Item>
         <Space>
-          <Button 
-            type="primary" 
-            htmlType="submit" 
-            icon={<SaveOutlined />} 
-            loading={state.loading}
+          <Button
+            type="primary"
+            htmlType="submit"
+            icon={<SaveOutlined />}
+            loading={loading}
           >
             保存邮件设置
           </Button>
-          <Button onClick={testEmail} loading={state.loading}>
+          <Button onClick={testEmail} loading={loading}>
             测试邮件发送
           </Button>
         </Space>

@@ -111,7 +111,7 @@ export const clearCache = async (_req: Request, res: Response, next: NextFunctio
  */
 export const getSiteSettings = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const config = await SettingsService.getConfigValue('site');
+    const config = await SettingsService.getConfigValue('settings.site');
     Resp.success(res, config, '获取网站配置成功');
   } catch (error) {
     logger.error('获取网站配置失败:', error);
@@ -120,35 +120,40 @@ export const getSiteSettings = async (_req: Request, res: Response, next: NextFu
 };
 
 /**
- * 更新网站配置
+ * 获取首页配置
  */
 export const getHomepageSettings = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const config = await SettingsService.getConfigValue('homepage');
-    Resp.success(res, config, '获取网站配置成功');
+    const config = await SettingsService.getConfigValue('settings.homepage');
+    Resp.success(res, config, '获取首页配置成功');
   } catch (error) {
-    logger.error('获取网站配置失败:', error);
+    logger.error('获取首页配置失败:', error);
     next(error);
   }
 };
 
-export const getEmailSettings = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+/**
+ * 获取主题配置
+ */
+export const getThemeSettings = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const config = await SettingsService.getConfigValue('email');
-    await SettingsService.getConfigValue(config);
-    Resp.success(res, null, '首页配置更新成功');
+    const config = await SettingsService.getConfigValue('settings.theme');
+    Resp.success(res, config, '获取主题配置成功');
   } catch (error) {
-    logger.error('更新首页配置失败:', error);
+    logger.error('获取主题配置失败:', error);
     next(error);
   }
 };
-export const getThemeSettings = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+
+/**
+ * 获取邮件配置
+ */
+export const getEmailSettings = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const config = await SettingsService.getConfigValue('theme');
-    await SettingsService.getConfigValue(config);
-    Resp.success(res, null, '主题配置更新成功');
+    const config = await SettingsService.getConfigValue('settings.email');
+    Resp.success(res, config, '获取邮件配置成功');
   } catch (error) {
-    logger.error('更新主题配置失败:', error);
+    logger.error('获取邮件配置失败:', error);
     next(error);
   }
 };

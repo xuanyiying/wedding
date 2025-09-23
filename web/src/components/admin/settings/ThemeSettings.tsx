@@ -23,7 +23,8 @@ import {
   CheckCircleOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
-import { useSettings } from '../../../contexts/SettingsContext';
+import { useAppSettings } from '../../../hooks/useAppSettings';
+import { settingsService } from '../../../services';
 
 const { Title, Text } = Typography;
 
@@ -237,7 +238,7 @@ const SaveButtonGroup = styled.div`
 
 const ThemeSettings: React.FC = () => {
   const [form] = Form.useForm();
-  const { state, updateThemeSettings, saveThemeSettings } = useSettings();
+  const { settings, loading, refetch } = useAppSettings();
 
   // 主题相关状态
   const [selectedPreset, setSelectedPreset] = useState<string>('');
@@ -252,8 +253,8 @@ const ThemeSettings: React.FC = () => {
 
   // 初始化表单数据
   useEffect(() => {
-    if (state.theme) {
-      const theme = state.theme;
+    if (settings?.theme) {
+      const theme = settings.theme;
       const formData = {
         primaryColor: theme.colors?.primary || '#D4A574',
         secondaryColor: theme.colors?.secondary || '#F5E6D3',
@@ -266,9 +267,9 @@ const ThemeSettings: React.FC = () => {
         darkMode: theme.darkMode || false,
         clientThemeVariant: theme.clientThemeVariant || 'custom'
       };
-      
+
       form.setFieldsValue(formData);
-      
+
       if (theme.colors) {
         setCustomColors({
           primary: theme.colors.primary || '#D4A574',
@@ -278,12 +279,12 @@ const ThemeSettings: React.FC = () => {
           text: theme.colors.text || '#5D4E37'
         });
       }
-      
+
       if (theme.clientThemeVariant && theme.clientThemeVariant !== 'custom') {
         setSelectedPreset(theme.clientThemeVariant);
       }
     }
-  }, [state.theme, form]);
+  }, [settings, form]);
 
   // 选择主题预设
   const handlePresetSelect = (presetId: string) => {
@@ -302,11 +303,8 @@ const ThemeSettings: React.FC = () => {
         clientThemeVariant: presetId
       });
 
-      // 更新主题配置
-      updateThemeSettings({
-        colors: preset.colors,
-        clientThemeVariant: presetId
-      });
+      // 重新获取设置以更新状态
+      refetch();
 
       // 实时预览
       if (previewMode) {
@@ -342,11 +340,8 @@ const ThemeSettings: React.FC = () => {
     // 清除预设选择
     setSelectedPreset('');
 
-    // 更新主题配置
-    updateThemeSettings({
-      colors: newColors,
-      clientThemeVariant: 'custom'
-    });
+    // 重新获取设置以更新状态
+    refetch();
 
     // 实时预览
     if (previewMode) {
@@ -358,8 +353,8 @@ const ThemeSettings: React.FC = () => {
   const handleSave = async (values: any) => {
     try {
       console.log('📝 表单提交的值:', values);
-      console.log('📝 当前主题设置状态:', state.theme);
-      
+      console.log('📝 当前主题设置状态:', settings?.theme);
+
       const themeData = {
         colors: {
           primary: customColors.primary,
@@ -385,19 +380,16 @@ const ThemeSettings: React.FC = () => {
 
       console.log('📝 构建的主题设置数据:', themeData);
 
-      // 先更新本地状态
-      updateThemeSettings(themeData);
-      
-      // 保存到服务器
-      const success = await saveThemeSettings();
+      // 调用API保存主题设置
+      await settingsService.updateThemeSettings(themeData);
+      console.log('✅ 主题设置保存成功');
 
-      if (success) {
-        // 关闭预览模式
-        setPreviewMode(false);
-        message.success('主题设置保存成功');
-      } else {
-        throw new Error('主题设置保存失败');
-      }
+      // 重新获取设置以更新状态
+      await refetch();
+
+      // 关闭预览模式
+      setPreviewMode(false);
+      message.success('主题设置保存成功');
     } catch (error) {
       console.error('❌ 保存主题设置失败:', error);
       message.error('保存主题设置失败，请重试');
@@ -414,16 +406,7 @@ const ThemeSettings: React.FC = () => {
       text: '#5D4E37'
     });
     form.resetFields();
-    updateThemeSettings({
-      colors: {
-        primary: '#D4A574',
-        secondary: '#F5E6D3',
-        accent: '#B8956A',
-        background: '#FEFCF9',
-        text: '#5D4E37'
-      },
-      clientThemeVariant: 'custom'
-    });
+    refetch();
   };
 
   return (
@@ -673,7 +656,7 @@ const ThemeSettings: React.FC = () => {
             type="primary"
             htmlType="submit"
             icon={<SaveOutlined />}
-            loading={state.loading}
+            loading={loading}
             size="large"
           >
             保存主题设置

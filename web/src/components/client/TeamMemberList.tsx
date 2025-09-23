@@ -32,21 +32,21 @@ interface TeamMemberListProps {
 const TeamMemberList: React.FC<TeamMemberListProps> = ({ team, members, loading, onBack, onViewDetails, onMemberClick }) => {
   return (
     <>
-      <BackButton 
-        icon={<ArrowLeftOutlined />} 
+      <BackButton
+        icon={<ArrowLeftOutlined />}
         onClick={onBack}
       >
         返回团队列表
       </BackButton>
-      
-      <PageHeader 
-        title={`${team.name} - 团队成员`}
+
+      <PageHeader
+        title={team.name}
         description={team.description || "查看我们专业团队的成员信息，每一位成员都致力于为您打造完美的婚礼体验。"}
       />
-      
-      <Row gutter={[30, 30]}>
+
+      <Row gutter={[24, 24]}>
         {members.map((member) => (
-          <Col xs={24} sm={12} lg={8} key={member.id}>
+          <Col xs={12} sm={8} lg={6} key={member.id}>
             <TeamMemberCard
               userId={member.userId}
               name={member.name}

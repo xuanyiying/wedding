@@ -65,7 +65,7 @@ const ScheduleStats: React.FC<ScheduleStatsProps> = ({
 
   const filteredSchedules = getFilteredSchedules();
   const totalSchedules = filteredSchedules.length;
-  const confirmedSchedules = filteredSchedules.filter(s => s.status === ScheduleStatus.CONFIRMED).length;
+  const completeddSchedules = filteredSchedules.filter(s => s.isPaid).length;
   const bookedSchedules = filteredSchedules.filter(s => s.status === ScheduleStatus.BOOKED).length;
   const cancelledSchedules = filteredSchedules.filter(s => s.status === ScheduleStatus.CANCELLED).length;
 
@@ -80,8 +80,8 @@ const ScheduleStats: React.FC<ScheduleStatsProps> = ({
       </Col>
       <Col xs={24} sm={12} md={6}>
         <StatCard
-          title="已确认"
-          value={confirmedSchedules}
+          title="已完成"
+          value={completeddSchedules}
           prefix={<CalendarOutlined style={{ color: '#52c41a' }} />}
         />
       </Col>

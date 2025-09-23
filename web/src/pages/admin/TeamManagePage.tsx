@@ -78,7 +78,6 @@ const TeamManagePage: React.FC = () => {
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [searchText, setSearchText] = useState('');
-  const [statusFilter, setStatusFilter] = useState<TeamStatus | undefined>();
   const [form] = Form.useForm();
   const [inviteForm] = Form.useForm();
 
@@ -104,7 +103,6 @@ const TeamManagePage: React.FC = () => {
     try {
       const response = await teamService.getTeams({
         search: searchText || undefined,
-        status: statusFilter,
       });
       if (response.success) {
         setTeams(response.data?.teams || []);
@@ -118,7 +116,7 @@ const TeamManagePage: React.FC = () => {
 
   useEffect(() => {
     fetchTeams();
-  }, [searchText, statusFilter]);
+  }, [searchText]);
 
   // 获取可邀请的用户列表
   const fetchAvailableUsers = async (teamId: string, page = 1, search = '') => {
@@ -187,7 +185,7 @@ const TeamManagePage: React.FC = () => {
 
   // 保存团队
   const handleSave = async (values: any) => {
-    try { 
+    try {
       const teamData = {
         ...values,
         serviceAreas: values.serviceAreas ? values.serviceAreas.split(',').map((s: string) => s.trim()).filter(Boolean) : [],
@@ -519,17 +517,6 @@ const TeamManagePage: React.FC = () => {
             onChange={(e) => setSearchText(e.target.value)}
             style={{ width: '100%', maxWidth: 300, minWidth: 200 }}
           />
-          <Select
-            placeholder="状态筛选"
-            value={statusFilter}
-            onChange={setStatusFilter}
-            allowClear
-            style={{ width: '100%', maxWidth: 120, minWidth: 100 }}
-          >
-            <Option value={TeamStatusEnum.ACTIVE}>正常</Option>
-            <Option value={TeamStatusEnum.DISABLED}>禁用</Option>
-            <Option value={TeamStatusEnum.PENDING}>待审核</Option>
-          </Select>
         </SearchBar>
       </ContentCard>
 

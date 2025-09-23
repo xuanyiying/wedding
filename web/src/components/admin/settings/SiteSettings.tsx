@@ -10,13 +10,13 @@ import {
 } from 'antd';
 import {
   SaveOutlined,
-  GlobalOutlined,
   LinkOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
-import { useSettings } from '../../../contexts/SettingsContext';
+import { useAppSettings } from '../../../hooks/useAppSettings';
 import { SimpleUploader } from '../../common/SimpleUploader';
+import { settingsService } from '../../../services';
 
 const { TextArea } = Input;
 
@@ -62,14 +62,14 @@ interface SiteSettingsForm {
 
 const SiteSettings: React.FC = () => {
   const [form] = Form.useForm();
-  const { state, updateSiteSettings, saveSiteSettings } = useSettings();
+  const { settings, loading, refetch } = useAppSettings();
   const [logoUrl, setLogoUrl] = useState<string>('');
   const [faviconUrl, setFaviconUrl] = useState<string>('');
 
   // 初始化表单数据
   useEffect(() => {
-    if (state.site) {
-      const siteData = state.site;
+    if (settings?.site) {
+      const siteData = settings.site;
 
       if (siteData.logo) {
         setLogoUrl(siteData.logo);
@@ -97,13 +97,13 @@ const SiteSettings: React.FC = () => {
         }
       });
     }
-  }, [state.site, form]);
+  }, [settings, form]);
 
   // 保存网站设置
   const handleSave = async (values: SiteSettingsForm) => {
     try {
       console.log('📝 表单提交的值:', values);
-      console.log('📝 当前设置状态:', state.site);
+      console.log('📝 当前设置状态:', settings?.site);
 
       // 构建完整的网站设置数据结构
       const siteData = {
@@ -127,15 +127,12 @@ const SiteSettings: React.FC = () => {
 
       console.log('📝 构建的网站设置数据:', siteData);
 
-      // 先更新本地状态
-      updateSiteSettings(siteData);
+      // 调用API保存网站设置
+      await settingsService.updateSiteSettings(siteData);
+      console.log('✅ 网站设置保存成功');
 
-      // 保存到服务器
-      const success = await saveSiteSettings();
-
-      if (!success) {
-        throw new Error('网站设置保存失败');
-      }
+      // 重新获取设置以更新状态
+      await refetch();
 
       message.success('网站设置保存成功');
     } catch (error) {
@@ -145,9 +142,10 @@ const SiteSettings: React.FC = () => {
   };
 
   const handleUploadSuccess = (result: any, type: 'logo' | 'favicon') => {
+    console.log('📝 上传结果:', result);
     if (result && result.data) {
-      const fileUrl = result.data.fileUrl || result.data.url || '';
-
+      const fileUrl = result.data.fileUrl;
+      console.log('📝 上传成功，文件地址:', fileUrl);
       if (type === 'logo') {
         setLogoUrl(fileUrl);
         form.setFieldsValue({ logo: fileUrl });
@@ -171,12 +169,6 @@ const SiteSettings: React.FC = () => {
       onFinish={handleSave}
     >
       <SettingSection>
-        <div className="section-title">
-          <GlobalOutlined />
-          基本信息
-        </div>
-        <div className="section-description">配置网站的基本信息和联系方式</div>
-
         <Card style={{ marginBottom: 16 }}>
           <Row gutter={16}>
             <Col span={12}>
@@ -405,14 +397,6 @@ const SiteSettings: React.FC = () => {
                 <Input placeholder="请输入SEO关键词，用逗号分隔" />
               </Form.Item>
             </Col>
-            <Col span={12}>
-              <Form.Item
-                name={['seo', 'ogImage']}
-                label="分享图片URL"
-              >
-                <Input placeholder="请输入分享图片URL" />
-              </Form.Item>
-            </Col>
           </Row>
         </Card>
       </SettingSection>
@@ -422,7 +406,7 @@ const SiteSettings: React.FC = () => {
           type="primary"
           htmlType="submit"
           icon={<SaveOutlined />}
-          loading={state.loading}
+          loading={loading}
         >
           保存网站设置
         </Button>

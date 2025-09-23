@@ -44,19 +44,19 @@ const ScheduleStats: React.FC<ScheduleStatsProps> = ({
         case 'month':
           return scheduleDate.isSame(now, 'month');
         case 'quarter':
-          const currentQuarter = Math.floor(now.month() / 3);
+          { const currentQuarter = Math.floor(now.month() / 3);
           const scheduleQuarter = Math.floor(scheduleDate.month() / 3);
-          return scheduleDate.year() === now.year() && scheduleQuarter === currentQuarter;
+          return scheduleDate.year() === now.year() && scheduleQuarter === currentQuarter; }
         case 'year':
           return scheduleDate.isSame(now, 'year');
         case 'custom':
           if (!customDateRange[0] || !customDateRange[1]) {
             return true;
           }
-          return scheduleDate.isSame(customDateRange[0], 'day') || 
-                 scheduleDate.isAfter(customDateRange[0], 'day') &&
-                 (scheduleDate.isSame(customDateRange[1], 'day') || 
-                 scheduleDate.isBefore(customDateRange[1], 'day'));
+          return scheduleDate.isSame(customDateRange[0], 'day') ||
+            scheduleDate.isAfter(customDateRange[0], 'day') &&
+            (scheduleDate.isSame(customDateRange[1], 'day') ||
+              scheduleDate.isBefore(customDateRange[1], 'day'));
         default:
           return false;
       }
@@ -65,16 +65,16 @@ const ScheduleStats: React.FC<ScheduleStatsProps> = ({
 
   // 统计数据计算
   const filteredSchedules = getFilteredSchedulesByTimeRange(statsTimeRange);
-  const statusFilteredSchedules = statusFilter === 'all' 
-    ? filteredSchedules 
+  const statusFilteredSchedules = statusFilter === 'all'
+    ? filteredSchedules
     : filteredSchedules.filter(s => s.status === statusFilter);
-  
+
   const stats = {
     total: schedules.length,
     current: filteredSchedules.length,
     available: filteredSchedules.filter(s => s.status === ScheduleStatus.AVAILABLE).length,
-    confirmed: filteredSchedules.filter(s => s.status === ScheduleStatus.CONFIRMED).length,
-    completed: filteredSchedules.filter(s => s.status === ScheduleStatus.COMPLETED).length,
+    confirmed: filteredSchedules.filter(s => s.status === ScheduleStatus.BOOKED).length,
+    completed: filteredSchedules.filter(s => s.status === ScheduleStatus.RESERVE).length,
     revenue: Number(filteredSchedules.filter(s => s.status === ScheduleStatus.COMPLETED)
       .reduce((sum, s) => sum + (s.price || 0), 0)).toFixed(2),
     filtered: statusFilteredSchedules.length,
@@ -85,7 +85,7 @@ const ScheduleStats: React.FC<ScheduleStatsProps> = ({
   // 团队统计
   const getTeamStats = () => {
     if (!selectedTeam || teamMembers.length === 0) return [];
-    
+
     return teamMembers.map(member => {
       const memberSchedules = statusFilteredSchedules.filter(s => s.userId === member.id);
       return {
@@ -137,9 +137,9 @@ const ScheduleStats: React.FC<ScheduleStatsProps> = ({
               <Option value="all">全部状态</Option>
               <Option value={ScheduleStatus.AVAILABLE}>可预约</Option>
               <Option value={ScheduleStatus.BOOKED}>已预订</Option>
-              <Option value={ScheduleStatus.CONFIRMED}>已确认</Option>
               <Option value={ScheduleStatus.COMPLETED}>已完成</Option>
               <Option value={ScheduleStatus.CANCELLED}>已取消</Option>
+              <Option value={ScheduleStatus.RESERVE}>预留</Option>
             </Select>
           </Space>
         </Col>
@@ -172,14 +172,14 @@ const ScheduleStats: React.FC<ScheduleStatsProps> = ({
           <StatCard
             title="总收入"
             value={`¥${statusFilter === 'all' ? stats.revenue : stats.filteredRevenue}`}
-            prefix={<MoneyCollectOutlined  style={{ color: '#f5222d' }} />}
+            prefix={<MoneyCollectOutlined style={{ color: '#f5222d' }} />}
           />
         </Col>
       </Row>
 
       {/* 团队统计 */}
       {selectedTeam && teamStats.length > 0 && (
-        <Card 
+        <Card
           title={(
             <Space>
               <TeamOutlined />

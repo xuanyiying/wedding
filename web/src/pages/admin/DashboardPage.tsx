@@ -3,9 +3,9 @@ import {
   Row,
   Col,
   Button,
-  Calendar,
   message,
-  Table} from 'antd';
+  Table
+} from 'antd';
 import { TrendType } from '../../types';
 import {
   UserOutlined,
@@ -14,11 +14,10 @@ import {
   MessageOutlined,
   EyeOutlined
 } from '@ant-design/icons';
-import { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
-import { dashboardService, scheduleService } from '../../services';
+import { dashboardService } from '../../services';
 import { PageViewService } from '../../services/pageViewService';
 import { useAppSelector } from '../../store/hooks';
 import { useTheme } from '../../hooks/useTheme';
@@ -81,7 +80,7 @@ const DashboardPage: React.FC = () => {
   const [stats, setStats] = useState<StatData[]>([]);
   const [popularPages, setPopularPages] = useState<PopularPage[]>([]);
   const [viewTrends, setViewTrends] = useState<ViewTrend[]>([]);
-  
+
   // 检查用户是否为管理员
   const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN;
 
@@ -103,7 +102,7 @@ const DashboardPage: React.FC = () => {
         let adminStatsResponse: any;
         let popularPagesResponse: any;
         let viewTrendsResponse: any;
-        
+
         if (isAdmin) {
           // 管理员获取全部统计数据
           const results = await Promise.all([
@@ -112,7 +111,7 @@ const DashboardPage: React.FC = () => {
             PageViewService.getPopularPages('work', 10),
             PageViewService.getViewTrends('work', undefined, 7)
           ]);
-          
+
           statsResponse = results[0];
           adminStatsResponse = results[1];
           popularPagesResponse = results[2];
@@ -125,7 +124,7 @@ const DashboardPage: React.FC = () => {
             PageViewService.getPopularPages('work', 10),
             PageViewService.getViewTrends('work', undefined, 7)
           ]);
-          
+
           statsResponse = results[0];
           adminStatsResponse = results[1];
           popularPagesResponse = results[2];
@@ -137,7 +136,7 @@ const DashboardPage: React.FC = () => {
 
         // 根据用户角色设置不同的统计数据
         const formattedStats: StatData[] = [];
-        
+
         if (isAdmin) {
           // 管理员看到全部统计
           formattedStats.push(
@@ -200,7 +199,7 @@ const DashboardPage: React.FC = () => {
         console.log('Formatted Stats:', formattedStats);
 
         setStats(formattedStats);
-        
+
         // 只有管理员才显示热门页面和访问趋势
         if (isAdmin) {
           const mappedPopularPages = (popularPagesResponse || []).map((page: any) => ({
@@ -211,14 +210,14 @@ const DashboardPage: React.FC = () => {
           }));
           setPopularPages(mappedPopularPages);
           // 确保 viewTrendsResponse 是数组
-          const viewTrendsArray = Array.isArray(viewTrendsResponse) ? viewTrendsResponse : 
-                                 (viewTrendsResponse?.data && Array.isArray(viewTrendsResponse.data)) ? viewTrendsResponse.data : [];
+          const viewTrendsArray = Array.isArray(viewTrendsResponse) ? viewTrendsResponse :
+            (viewTrendsResponse?.data && Array.isArray(viewTrendsResponse.data)) ? viewTrendsResponse.data : [];
           setViewTrends(viewTrendsArray);
         } else {
           setPopularPages([]);
           setViewTrends([]);
         }
-        
+
         setLoading(false);
       } catch (error) {
         console.error('加载仪表盘数据失败:', error);
@@ -230,64 +229,6 @@ const DashboardPage: React.FC = () => {
 
     loadData();
   }, []);
-  // 日历数据状态
-  const [calendarData, setCalendarData] = useState<Record<string, { total: number; type: string }>>({});
-
-  // 获取日历数据
-  const fetchCalendarData = async (year: number, month: number, userId?: string) => {
-    try {
-      if (!userId) {
-        userId = user?.id;
-      }
-      if (!userId) {
-        message.error('请选择主持人查看档期');
-        return;
-      }
-      const response = await scheduleService.getUserScheduleCalendar(userId, year, month);
-      console.log('getUserScheduleCalendar response:', response);
-      const data = response.data;
-
-      // 转换数据格式
-      const formattedData: Record<string, { total: number; type: string }> = {};
-      data?.forEach((dayData: any) => {
-        if (dayData.schedules && dayData.schedules.length > 0) {
-          const total = dayData.schedules.length;
-          // 根据档期状态确定类型
-          const hasConfirmed = dayData.schedules.some((s: any) => s.status === 'confirmed');
-          const hasPending = dayData.schedules.some((s: any) => s.status === 'pending');
-
-          let type = 'default';
-          if (hasConfirmed) {
-            type = 'success';
-          } else if (hasPending) {
-            type = 'warning';
-          }
-
-          formattedData[dayData.date] = { total, type };
-        }
-      });
-
-      setCalendarData(formattedData);
-    } catch (error) {
-      console.error('获取日历数据失败:', error);
-    }
-  };
-
-
-
-  // 日历面板变化时重新获取数据
-  const onPanelChange = (value: Dayjs, mode: string) => {
-    if (mode === 'month') {
-      fetchCalendarData(value.year(), value.month() + 1);
-    }
-  };
-
-  // 初始化时获取当前月份的日历数据
-  useEffect(() => {
-    const now = dayjs();
-    fetchCalendarData(now.year(), now.month() + 1);
-  }, []);
-
   // 热门页面表格列配置
   const popularPagesColumns = [
     {
@@ -322,20 +263,6 @@ const DashboardPage: React.FC = () => {
       sorter: (a: PopularPage, b: PopularPage) => a.uniqueViews - b.uniqueViews
     }
   ];
-
-
-  const dateCellRender = (value: Dayjs) => {
-    const dateKey = value.format('YYYY-MM-DD');
-    const data = calendarData[dateKey];
-    if (data) {
-      return (
-        <div style={{ textAlign: 'center', fontSize: '12px' }}>
-          <div>{data.total}个档期</div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <PageContainer>
@@ -413,9 +340,9 @@ const DashboardPage: React.FC = () => {
               <h3 style={{ marginBottom: 16, color: 'var(--admin-text-primary)' }}>访问趋势</h3>
               <div style={{ padding: '16px 0' }}>
                 {Array.isArray(viewTrends) && viewTrends.map((trend, index) => (
-                  <div key={index} style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+                  <div key={index} style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '8px 0',
                     borderBottom: index < (Array.isArray(viewTrends) ? viewTrends.length : 0) - 1 ? '1px solid var(--admin-border-color)' : 'none'
@@ -423,7 +350,7 @@ const DashboardPage: React.FC = () => {
                     <span style={{ color: 'var(--admin-text-secondary)' }}>
                       {dayjs(trend.date).format('MM-DD')}
                     </span>
-                    <span style={{ 
+                    <span style={{
                       color: 'var(--admin-text-primary)',
                       fontWeight: 600
                     }}>
@@ -432,8 +359,8 @@ const DashboardPage: React.FC = () => {
                   </div>
                 ))}
                 {(!Array.isArray(viewTrends) || viewTrends.length === 0) && !loading && (
-                  <div style={{ 
-                    textAlign: 'center', 
+                  <div style={{
+                    textAlign: 'center',
                     color: 'var(--admin-text-secondary)',
                     padding: '32px 0'
                   }}>
@@ -445,66 +372,6 @@ const DashboardPage: React.FC = () => {
           </Col>
         </Row>
       )}
-
-
-      {/* 最近活动 */}
-      {/*<Col xs={24} lg={8}>
-          <ContentCard>
-            <h3 style={{ marginBottom: 16, color: 'var(--admin-text-primary)' }}>最近活动</h3>
-            <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-              {activities.length > 0 ? (
-                activities.map(activity => (
-                  <ActivityItem key={activity.id}>
-                    <Avatar icon={getActivityIcon(activity.type)} />
-                    <div className="activity-content">
-                       <div className="activity-title">{activity.title}</div>
-                       <div>{activity.description}</div>
-                       <div className="activity-time">{dayjs(activity.time).format('MM-DD HH:mm')}</div>
-                     </div>
-                  </ActivityItem>
-                ))
-              ) : (
-                <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--admin-text-tertiary)' }}>
-                  暂无活动记录
-                </div>
-              )}
-            </div>
-          </ContentCard>
-        </Col>*/}
-
-      {/* 系统状态 */}
-      {/* <Col xs={24} lg={8}>
-          <ContentCard title="系统状态" loading={loading}>
-            <Space direction="vertical" style={{ width: '100%' }}>
-              <div>
-                <Text>CPU使用率</Text>
-                <Progress percent={45} size="small" />
-              </div>
-              <div>
-                <Text>内存使用率</Text>
-                <Progress percent={67} size="small" status="active" />
-              </div>
-              <div>
-                <Text>磁盘使用率</Text>
-                <Progress percent={23} size="small" />
-              </div>
-              <div>
-                <Text>网络状态</Text>
-                <Progress percent={89} size="small" status="success" />
-              </div>
-            </Space>
-          </ContentCard>
-        </Col>*/}
-
-
-      <ContentCard>
-        <h3 style={{ marginBottom: 16, color: 'var(--admin-text-primary)' }}>档期日历</h3>
-        <Calendar
-          fullscreen={false}
-          cellRender={dateCellRender}
-          onPanelChange={onPanelChange}
-        />
-      </ContentCard>
 
     </PageContainer>
   );

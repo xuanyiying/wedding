@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { throttle } from '../../utils/scroll';
 import useAppSettings from '../../hooks/useAppSettings';
@@ -20,13 +20,14 @@ const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
   const location = useLocation();
   const { settings, loading } = useAppSettings();
   const [activeSection, setActiveSection] = useState<string>('');
+  const activeSectionRef = useRef<string>('');
 
   // 根据homepageSections的可见性过滤sections
-  const visibleSections = React.useMemo(() => {
+  const visibleSections = useMemo(() => {
     if (loading || !settings?.homepage) {
       return sections;
     }
-    
+
     return sections.filter(section => {
       switch (section.id) {
         case 'hero':
@@ -52,7 +53,7 @@ const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
     }
   }, [activeSection, onSectionChange]);
 
-  // 优化的滚动处理函数
+  // 优化的滚动处理函数 - 使用ref避免依赖activeSection
   const handleScroll = useCallback(() => {
     if (location.pathname !== '/' || visibleSections.length === 0) {
       return;
@@ -65,7 +66,8 @@ const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
     // 如果滚动到页面底部，激活最后一个section
     if (scrollPosition + windowHeight >= documentHeight - 10) {
       const lastSection = visibleSections[visibleSections.length - 1];
-      if (lastSection && activeSection !== lastSection.id) {
+      if (lastSection && activeSectionRef.current !== lastSection.id) {
+        activeSectionRef.current = lastSection.id;
         setActiveSection(lastSection.id);
         return;
       }
@@ -114,17 +116,23 @@ const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
       }
     }
 
-    // 更新活跃section
-    if (currentSection && currentSection !== activeSection) {
+    // 更新活跃section（只有当确实发生变化时才更新）
+    if (currentSection && activeSectionRef.current !== currentSection) {
+      activeSectionRef.current = currentSection;
       setActiveSection(currentSection);
     }
-  }, [location.pathname, visibleSections, activeSection, headerHeight]);
+  }, [location.pathname, visibleSections, headerHeight]);
 
   // 节流处理的滚动监听
-  const throttledHandleScroll = useCallback(
-    throttle(handleScroll, 16), // 约60fps的更新频率
+  const throttledHandleScroll = useMemo(
+    () => throttle(handleScroll, 16), // 约60fps的更新频率
     [handleScroll]
   );
+
+  // 同步ref和state
+  useEffect(() => {
+    activeSectionRef.current = activeSection;
+  }, [activeSection]);
 
   useEffect(() => {
     // 只在首页启用滚动监听
@@ -132,6 +140,7 @@ const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
       // 重置activeSection当不在首页时
       if (activeSection) {
         setActiveSection('');
+        activeSectionRef.current = '';
       }
       return;
     }
@@ -148,7 +157,7 @@ const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
       window.removeEventListener('scroll', throttledHandleScroll);
       window.removeEventListener('resize', handleScroll);
     };
-  }, [location.pathname, throttledHandleScroll, handleScroll, activeSection, visibleSections]);
+  }, [location.pathname, throttledHandleScroll, visibleSections.length, handleScroll]);
 
   // 处理加载状态 - 移到组件末尾，确保所有Hooks都被调用
   if (loading) {

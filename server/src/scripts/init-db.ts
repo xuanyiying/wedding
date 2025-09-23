@@ -21,7 +21,7 @@ import {
   FileType,
   OssType,
 } from '../types';
-import { SettingsService } from '@/services/settings.service';
+import { SettingsService } from '../services/settings.service';
 export class DatabaseInitializer {
   private userIdMap: { [key: string]: string } = {};
   private teamIdMap: { [key: string]: string } = {};
@@ -917,77 +917,133 @@ export class DatabaseInitializer {
    */
   async initializeDefaultConfigs(): Promise<void> {
     try {
-      const defaultConfigs = [
-        // 网站基本信息
-        { key: 'site.name', value: '婚礼主持工作室', category: 'site', isPublic: true },
-        { key: 'site.description', value: '专业的婚礼主持服务', category: 'site', isPublic: true },
-        { key: 'site.keywords', value: '婚礼主持,婚纱主持,主持工作室', category: 'site', isPublic: true },
-        { key: 'site.logo', value: '', category: 'site', isPublic: true },
-        { key: 'site.favicon', value: '', category: 'site', isPublic: true },
-
-        // SEO 配置
-        { key: 'seo.title', value: '婚礼主持工作室', category: 'seo', isPublic: true },
-        { key: 'seo.description', value: '专业的婚礼主持服务', category: 'seo', isPublic: true },
-        { key: 'seo.keywords', value: '婚礼主持', category: 'seo', isPublic: true },
-
-        // 主题配置
-        { key: 'theme.darkMode', value: false, category: 'theme', isPublic: true },
-        { key: 'theme.colors.primary', value: '#d4af37', category: 'theme', isPublic: true },
-        { key: 'theme.colors.secondary', value: '#8b7355', category: 'theme', isPublic: true },
-        { key: 'theme.colors.background', value: '#ffffff', category: 'theme', isPublic: true },
-        { key: 'theme.colors.text', value: '#333333', category: 'theme', isPublic: true },
-        { key: 'theme.colors.accent', value: '#f5f5f5', category: 'theme', isPublic: true },
-        { key: 'theme.fonts.primary', value: 'Inter, sans-serif', category: 'theme', isPublic: true },
-        { key: 'theme.fonts.secondary', value: 'Playfair Display, serif', category: 'theme', isPublic: true },
-        { key: 'theme.spacing.containerPadding', value: '20px', category: 'theme', isPublic: true },
-        { key: 'theme.spacing.sectionPadding', value: '80px 0', category: 'theme', isPublic: true },
-
-        // 首页配置
-        { key: 'homepageSections.hero.visible', value: true, category: 'homepage', isPublic: true },
-        { key: 'homepageSections.hero.title', value: '专业团队为您打造梦想中的婚礼', category: 'homepage', isPublic: true },
-        {
-          key: 'homepageSections.hero.description', value: '专业团队为您打造梦想中的婚礼', category: 'homepage', isPublic: true
-        },
-        { key: 'homepageSections.hero.backgroundImage', value: '', category: 'homepage', isPublic: true },
-        { key: 'homepageSections.hero.ctaText', value: '了解更多', category: 'homepage', isPublic: true },
-        { key: 'homepageSections.hero.ctaLink', value: '#portfolio', category: 'homepage', isPublic: true },
-
-        { key: 'homepageSections.team.visible', value: true, category: 'homepage', isPublic: true },
-        { key: 'homepageSections.team.title', value: '专业团队', category: 'homepage', isPublic: true },
-        { key: 'homepageSections.team.subtitle', value: '经验丰富的主持师', category: 'homepage', isPublic: true },
-        { key: 'homepageSections.team.description', value: '我们的团队拥有多年婚礼主持经验', category: 'homepage', isPublic: true },
-
-        { key: 'homepageSections.portfolio.visible', value: true, category: 'homepage', isPublic: true },
-        { key: 'homepageSections.portfolio.title', value: '作品展示', category: 'homepage', isPublic: true },
-        { key: 'homepageSections.portfolio.subtitle', value: '精选案例', category: 'homepage', isPublic: true },
-        { key: 'homepageSections.portfolio.description', value: '查看我们的精选婚礼主持作品', category: 'homepage', isPublic: true },
-
-        { key: 'homepageSections.contact.visible', value: true, category: 'homepage', isPublic: true },
-        { key: 'homepageSections.contact.title', value: '联系我们', category: 'homepage', isPublic: true },
-        { key: 'homepageSections.contact.subtitle', value: '预约咨询', category: 'homepage', isPublic: true },
-        { key: 'homepageSections.contact.description', value: '联系我们获取专业的婚礼主持服务', category: 'homepage', isPublic: true },
-        { key: 'homepageSections.contact.address', value: '', category: 'homepage', isPublic: true },
-        { key: 'homepageSections.contact.phone', value: '', category: 'homepage', isPublic: true },
-        { key: 'homepageSections.contact.email', value: '', category: 'homepage', isPublic: true },
-        { key: 'homepageSections.contact.wechat', value: '', category: 'homepage', isPublic: true },
-        { key: 'homepageSections.contact.xiaohongshu', value: '', category: 'homepage', isPublic: true },
-        { key: 'homepageSections.contact.douyin', value: '', category: 'homepage', isPublic: true },
-
-        // 邮件配置
-        { key: 'email.smtpHost', value: '', category: 'email', isPublic: false },
-        { key: 'email.smtpPort', value: 587, category: 'email', isPublic: false },
-        { key: 'email.smtpUser', value: '', category: 'email', isPublic: false },
-        { key: 'email.smtpPassword', value: '', category: 'email', isPublic: false },
-        { key: 'email.smtpSecure', value: false, category: 'email', isPublic: false },
-        { key: 'email.emailFrom', value: '', category: 'email', isPublic: false },
-        { key: 'email.emailFromName', value: '婚礼主持工作室', category: 'email', isPublic: false },
-      ];
-
-      for (const config of defaultConfigs) {
-        const existing = await SystemConfig.findByKey(config.key);
-        if (!existing) {
-          await SettingsService.setConfigValue(config.key, config.value, config.category, config.isPublic);
+      // 网站设置
+      const siteSettings = {
+        name: '婚礼主持工作室',
+        description: '专业的婚礼主持服务',
+        keywords: '婚礼主持,婚纱主持,主持工作室',
+        logo: '',
+        favicon: '',
+        contactEmail: '',
+        contactPhone: '',
+        address: '',
+        icp: '',
+        copyright: '',
+        seo: {
+          title: '婚礼主持工作室',
+          description: '专业的婚礼主持服务',
+          keywords: '婚礼主持'
         }
+      };
+
+      // 首页设置
+      const homepageSettings = {
+        hero: {
+          title: '专业团队为您打造梦想中的婚礼',
+          subtitle: '',
+          description: '专业团队为您打造梦想中的婚礼',
+          backgroundImage: '',
+          ctaText: '了解更多',
+          ctaLink: '#portfolio',
+          visible: true
+        },
+        team: {
+          title: '专业团队',
+          subtitle: '经验丰富的主持师',
+          description: '我们的团队拥有多年婚礼主持经验',
+          visible: true
+        },
+        teamShowcase: {
+          title: '团队风采',
+          subtitle: '展示我们的专业实力',
+          description: '查看我们团队的精彩瞬间',
+          visible: true
+        },
+        portfolio: {
+          title: '作品展示',
+          subtitle: '精选案例',
+          description: '查看我们的精选婚礼主持作品',
+          visible: true
+        },
+        schedule: {
+          title: '档期查询',
+          subtitle: '预约咨询',
+          description: '查看我们的档期安排，预约专业的主持服务',
+          visible: true
+        },
+        contact: {
+          title: '联系我们',
+          subtitle: '预约咨询',
+          description: '联系我们获取专业的婚礼主持服务',
+          backgroundImage: '',
+          email: '',
+          phone: '',
+          address: '',
+          wechat: '',
+          xiaohongshu: '',
+          douyin: '',
+          visible: true
+        }
+      };
+
+      // 主题设置
+      const themeSettings = {
+        colors: {
+          primary: '#d4af37',
+          secondary: '#8b7355',
+          accent: '#f5f5f5',
+          background: '#ffffff',
+          text: '#333333'
+        },
+        fonts: {
+          primary: 'Inter, sans-serif',
+          secondary: 'Playfair Display, serif'
+        },
+        spacing: {
+          containerPadding: '20px',
+          sectionPadding: '80px 0'
+        },
+        borderRadius: 4,
+        fontSize: 14,
+        compactMode: false,
+        darkMode: false,
+        clientThemeVariant: 'default'
+      };
+
+      // 邮件设置
+      const emailSettings = {
+        smtpHost: '',
+        smtpPort: 587,
+        smtpUser: '',
+        smtpPassword: '',
+        smtpSecure: false,
+        emailFrom: '',
+        emailFromName: '婚礼主持工作室'
+      };
+
+      // 检查并初始化各模块设置
+      const siteConfig = await SystemConfig.findOne({ where: { configKey: 'settings.site' } });
+      if (!siteConfig) {
+        await SettingsService.updateSiteSettings(siteSettings);
+        logger.info('网站设置初始化完成');
+      }
+
+      const homepageConfig = await SystemConfig.findOne({ where: { configKey: 'settings.homepage' } });
+      if (!homepageConfig) {
+        await SettingsService.updateHomepageSettings(homepageSettings);
+        logger.info('首页设置初始化完成');
+      }
+
+      const themeConfig = await SystemConfig.findOne({ where: { configKey: 'settings.theme' } });
+      if (!themeConfig) {
+        await SettingsService.updateThemeSettings(themeSettings);
+        logger.info('主题设置初始化完成');
+      }
+
+      const emailConfig = await SystemConfig.findOne({ where: { configKey: 'settings.email' } });
+      if (!emailConfig) {
+        await SettingsService.updateEmailSettings(emailSettings);
+        logger.info('邮件设置初始化完成');
       }
 
       logger.info('默认配置初始化完成');

@@ -28,6 +28,7 @@ import TeamManagePage from './pages/admin/TeamManagePage';
 import ProfilePage from './pages/admin/ProfilePage';
 import ContactsPage from './pages/admin/ContactsPage';
 import IssuesPage from './pages/admin/IssuesPage';
+import { SettingsProvider } from './contexts/SettingsContext'; // 导入SettingsProvider
 
 // Ant Design 主题配置
 const theme = {
@@ -66,8 +67,8 @@ function AppInitializer() {
 
         if (config) {
           // 应用网站标题
-          if (config.siteName) {
-            document.title = config.siteName;
+          if (config.name) {
+            document.title = config.name;
           }
 
           // 应用favicon
@@ -84,14 +85,14 @@ function AppInitializer() {
           }
 
           // 应用meta描述
-          if (config.siteDescription) {
+          if (config.description) {
             let metaDescription = document.querySelector('meta[name="description"]') as HTMLMetaElement;
             if (metaDescription) {
-              metaDescription.content = config.siteDescription;
+              metaDescription.content = config.description;
             } else {
               metaDescription = document.createElement('meta');
               metaDescription.name = 'description';
-              metaDescription.content = config.siteDescription;
+              metaDescription.content = config.description;
               document.head.appendChild(metaDescription);
             }
           }
@@ -159,7 +160,9 @@ function App() {
     <Provider store={store}>
       <ConfigProvider locale={zhCN} theme={theme}>
         <AntdApp>
-          <AppContent />
+          <SettingsProvider> {/* 添加SettingsProvider包装 */}
+            <AppContent />
+          </SettingsProvider>
         </AntdApp>
       </ConfigProvider>
     </Provider>

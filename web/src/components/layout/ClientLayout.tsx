@@ -22,25 +22,26 @@ const StyledContent = styled(Content)`
 const ClientLayout: React.FC = () => {
   const { themeMode, toggleThemeMode, initTheme, applyThemeSettings } = useTheme();
   const [activeSection, setActiveSection] = useState('hero');
-  const [siteName, setSiteName] = useState<string | undefined>(undefined);
-  const [logoUrl, setLogoUrl] = useState<string | undefined>(undefined);
+  const [siteSettings, setSiteSettings] = useState<any>(null);
   const location = useLocation();
 
-  // 从服务器获取主题设置
+  // 从服务器获取主题设置和网站设置
   useEffect(() => {
-    const loadThemeSettings = async () => {
+    const loadSettings = async () => {
       try {
-        const response = await settingsService.getSettings();
-        const settings = response.data;
+        // 获取网站设置
+        const siteResponse = await settingsService.getSiteSettings();
+        const siteData = siteResponse.data;
 
-        if (settings) {
-          setSiteName(settings.site?.name);
-          setLogoUrl(settings.site?.logo);
+        if (siteData) {
+          setSiteSettings(siteData);
 
-          if (settings.theme?.colors) {
-            initTheme('client', settings.theme.darkMode ? 'dark' : 'light');
-            applyThemeSettings(settings.theme);
+          // 应用主题设置
+          if (siteData.theme?.colors) {
+            initTheme('client', siteData.theme.darkMode ? 'dark' : 'light');
+            applyThemeSettings(siteData.theme);
           } else {
+            // 如果没有配置，使用默认主题
             initTheme('client', 'light');
           }
         } else {
@@ -48,25 +49,29 @@ const ClientLayout: React.FC = () => {
           initTheme('client');
         }
       } catch (error) {
-        console.error('Failed to load theme settings:', error);
+        console.error('Failed to load settings:', error);
         // 出错时使用默认主题
         initTheme('client');
       }
     };
-    
-    loadThemeSettings();
-  }, [initTheme]);
+
+    loadSettings();
+  }, [initTheme, applyThemeSettings]);
 
   const toggleTheme = () => {
     toggleThemeMode();
   };
 
+  // 使用配置数据或默认值
+  const siteName = siteSettings?.name || '婚礼服务平台';
+  const logoUrl = siteSettings?.logo || './assets/images/logo.png';
+
   return (
     <StyledLayout>
-      <ClientHeader 
-        theme={themeMode} 
-        onThemeToggle={toggleTheme} 
-        activeSection={location.pathname === '/' ? activeSection : ''} 
+      <ClientHeader
+        theme={themeMode}
+        onThemeToggle={toggleTheme}
+        activeSection={location.pathname === '/' ? activeSection : ''}
         siteName={siteName}
         logoUrl={logoUrl}
       />

@@ -202,7 +202,8 @@ export class SettingsService {
    */
   private static async _getConfigValue(key: string, defaultValue?: any): Promise<any> {
     try {
-      const config = await SystemConfig.findByKey('settings.'+key);
+      // 修复键格式问题，应该直接使用 key 而不是 'settings.' + key
+      const config = await SystemConfig.findByKey(key);
       return config ? config.getParsedValue() : defaultValue;
     } catch (error) {
       logger.error(`获取配置项 ${key} 失败:`, error);

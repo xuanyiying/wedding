@@ -56,6 +56,8 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-prod}
       - PORT=3000
+      - LOG_FILE=/app/logs/app.log
+      - LOG_ERROR_FILE=/app/logs/error.log
     volumes:
       - ./deployment/uploads:/app/uploads
       - ./deployment/logs/api:/app/logs

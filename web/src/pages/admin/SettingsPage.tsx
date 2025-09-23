@@ -8,7 +8,6 @@ import {
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { PageHeader } from '../../components/admin/common';
-import { SettingsProvider } from '../../contexts/SettingsContext';
 import {
   SiteSettings,
   HomepageSettings,
@@ -43,54 +42,52 @@ const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('site');
 
   return (
-    <SettingsProvider>
-      <SettingsContainer>
-        <PageHeader title="系统设置" />
+    <SettingsContainer>
+      <PageHeader title="系统设置" />
 
-        <Tabs
-          activeKey={activeTab}
-          onChange={setActiveTab}
-          items={[
-            {
-              key: 'site',
-              label: <span><GlobalOutlined />网站设置</span>,
-              children: (
-                <TabCard>
-                  <SiteSettings />
-                </TabCard>
-              )
-            },
-            {
-              key: 'homepage',
-              label: <span><HomeOutlined />首页配置</span>,
-              children: (
-                <TabCard>
-                  <HomepageSettings />
-                </TabCard>
-              )
-            },
-            {
-              key: 'theme',
-              label: <span><BgColorsOutlined />主题设置</span>,
-              children: (
-                <TabCard>
-                  <ThemeSettings />
-                </TabCard>
-              )
-            },
-            {
-              key: 'email',
-              label: <span><MailOutlined />邮件设置</span>,
-              children: (
-                <TabCard>
-                  <EmailSettings />
-                </TabCard>
-              )
-            },
-          ]}
-        />
-      </SettingsContainer>
-    </SettingsProvider>
+      <Tabs
+        activeKey={activeTab}
+        onChange={setActiveTab}
+        items={[
+          {
+            key: 'site',
+            label: <span><GlobalOutlined />网站设置</span>,
+            children: (
+              <TabCard>
+                <SiteSettings />
+              </TabCard>
+            )
+          },
+          {
+            key: 'homepage',
+            label: <span><HomeOutlined />首页配置</span>,
+            children: (
+              <TabCard>
+                <HomepageSettings />
+              </TabCard>
+            )
+          },
+          {
+            key: 'theme',
+            label: <span><BgColorsOutlined />主题设置</span>,
+            children: (
+              <TabCard>
+                <ThemeSettings />
+              </TabCard>
+            )
+          },
+          {
+            key: 'email',
+            label: <span><MailOutlined />邮件设置</span>,
+            children: (
+              <TabCard>
+                <EmailSettings />
+              </TabCard>
+            )
+          },
+        ]}
+      />
+    </SettingsContainer>
   );
 };
 
