@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { UploadOutlined, LoadingOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
-import { Button, message, Progress } from 'antd';
+import { Button, Progress, App } from 'antd';
 import styled from 'styled-components';
 import { FileType } from '../../types';
 import { fileService } from '../../services';
@@ -125,6 +125,7 @@ export const SimpleUploader: React.FC<SimpleUploaderProps> = ({
     previewUrl,
     previewText = '点击或拖拽上传文件'
 }) => {
+    const { message } = App.useApp();
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
@@ -190,7 +191,7 @@ export const SimpleUploader: React.FC<SimpleUploaderProps> = ({
                 }
             }, 3000);
         }
-    }, [fileType, category, maxFileSize, onUploadSuccess, onUploadError, uploadStatus]);
+    }, [fileType, category, maxFileSize, onUploadSuccess, onUploadError, uploadStatus, message]);
 
     const handleInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;

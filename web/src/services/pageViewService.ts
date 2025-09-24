@@ -57,8 +57,7 @@ export class PageViewService {
    * 获取页面访问统计
    */
   static async getPageViewStats(pageType: 'team_member' | 'work' | 'team' | 'team_page', pageId: string): Promise<PageViewStats> {
-    const response = await request.get(`/page-views/stats/${pageType}/${pageId}`);
-    return (response.data as any).data;
+    return await request.get(`/page-views/stats/${pageType}/${pageId}`);
   }
 
   /**
@@ -68,10 +67,9 @@ export class PageViewService {
     pageType: 'team_member' | 'work' | 'team' | 'team_page',
     pageIds: string[]
   ): Promise<Record<string, PageViewStats>> {
-    const response = await request.post(`/page-views/stats/${pageType}/batch`, {
+    return  await request.post(`/page-views/stats/${pageType}/batch`, {
       pageIds,
     });
-    return (response.data as any).data;
   }
 
   /**
@@ -92,18 +90,16 @@ export class PageViewService {
    * 获取作品播放统计
    */
   static async getPlayStats(pageId: string): Promise<PlayStats> {
-    const response = await request.get(`/page-views/play/stats/${pageId}`);
-    return (response.data as any).data;
+    return await request.get(`/page-views/play/stats/${pageId}`);
   }
 
   /**
    * 批量获取作品播放统计
    */
   static async getBatchPlayStats(pageIds: string[]): Promise<Record<string, PlayStats>> {
-    const response = await request.post('/page-views/play/stats/batch', {
+    return await request.post('/page-views/play/stats/batch', {
       pageIds,
     });
-    return (response.data as any).data;
   }
 
   /**
@@ -120,8 +116,7 @@ export class PageViewService {
       params.endDate = timeRange.end.toISOString();
     }
 
-    const response = await request.get(`/page-views/popular/${pageType}`, { params });
-    return (response.data as any).data;
+    return await request.get(`/page-views/popular/${pageType}`, { params });
   }
 
   /**
@@ -137,17 +132,15 @@ export class PageViewService {
       params.pageId = pageId;
     }
 
-    const response = await request.get(`/page-views/trends/${pageType}`, { params });
-    return (response.data as any).data;
+    return await request.get(`/page-views/trends/${pageType}`, { params });
   }
 
   /**
    * 获取管理员统计概览
    */
   static async getAdminStats(days: number = 7): Promise<AdminStats> {
-    const response = await request.get('/page-views/admin/stats', {
+    return await request.get('/page-views/admin/stats', {
       params: { days },
     });
-    return (response.data as any).data;
   }
 }

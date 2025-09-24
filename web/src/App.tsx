@@ -9,6 +9,7 @@ import { store } from './store';
 import { useAuthInit } from './hooks/useAuthInit';
 import { setMessageApi } from './utils/request';
 import { settingsService } from './services';
+import { updateFavicon } from './utils/faviconUtils';
 import AdminLayout from './components/AdminLayout';
 import ClientLayout from './components/layout/ClientLayout';
 import LoginPage from './pages/admin/LoginPage';
@@ -73,15 +74,11 @@ function AppInitializer() {
 
           // 应用favicon
           if (config.favicon) {
-            const favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement;
-            if (favicon) {
-              favicon.href = config.favicon;
-            } else {
-              const newFavicon = document.createElement('link');
-              newFavicon.rel = 'icon';
-              newFavicon.href = config.favicon;
-              document.head.appendChild(newFavicon);
-            }
+            updateFavicon({
+              url: config.favicon,
+              type: config.favicon.endsWith('.png') ? 'image/png' : 'image/x-icon',
+              preventCache: true
+            });
           }
 
           // 应用meta描述

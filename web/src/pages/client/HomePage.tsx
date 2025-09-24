@@ -167,8 +167,6 @@ const HomePage: React.FC = () => {
           <HeroSection
             title={heroSectionSettings?.title || '完美婚礼，从这里开始'}
             description={heroSectionSettings?.description || '专业的婚礼策划团队，为您打造独一无二的梦想婚礼'}
-            ctaText={heroSectionSettings?.ctaText || '开始策划您的婚礼'}
-            ctaLink={heroSectionSettings?.ctaLink || '/contact'}
           />
         </HeroSectionWrapper>
       )}
@@ -222,7 +220,7 @@ const HomePage: React.FC = () => {
       )}
 
       {/* Schedule Section */}
-      {settings?.homepage?.schedule?.visible !== false && selectedTeam && (
+      {settings?.homepage?.schedule?.visible !== false  && (
         <SectionWrapper id="schedule">
           <ScheduleSection
             team={selectedTeam}
@@ -237,8 +235,6 @@ const HomePage: React.FC = () => {
         <SectionWrapper id="contact">
           <ShowcaseSection
             title={contactSectionSettings?.title || "联系我们"}
-            moreText="获取详细联系方式"
-            moreLink="/contact"
             id="contact"
           >
             <ContactForm />

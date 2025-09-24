@@ -81,8 +81,7 @@ const SectionDescription = styled(Typography.Paragraph)`
 interface ScheduleSectionProps {
   title: string;
   description: string;
-  team?: Team;
-
+  team?: Team | null;
 }
 
 const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, team }) => {

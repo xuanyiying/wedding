@@ -7,7 +7,7 @@ import {
   Row,
   Col,
   Card,
-  message,
+  App,
 } from 'antd';
 import {
   SaveOutlined,
@@ -18,6 +18,7 @@ import {
 import styled from 'styled-components';
 import { useAppSettings } from '../../../hooks/useAppSettings';
 import { settingsService } from '../../../services';
+import SimpleUploader from '../../common/SimpleUploader';
 
 const { TextArea } = Input;
 
@@ -43,9 +44,10 @@ const SettingSection = styled.div`
 `;
 
 const HomepageSettings: React.FC = () => {
+  const { message } = App.useApp();
   const [form] = Form.useForm();
   const { settings, loading, refetch } = useAppSettings();
-
+  const [backgroundImage, setBackgroundImage] = React.useState('');
   // 初始化表单数据
   useEffect(() => {
     if (settings?.homepage) {
@@ -57,8 +59,6 @@ const HomepageSettings: React.FC = () => {
           subtitle: homepageData.hero?.subtitle || '',
           description: homepageData.hero?.description || '',
           backgroundImage: homepageData.hero?.backgroundImage || '',
-          ctaText: homepageData.hero?.ctaText || '',
-          ctaLink: homepageData.hero?.ctaLink || '',
           visible: homepageData.hero?.visible || false,
         },
         team: {
@@ -89,7 +89,6 @@ const HomepageSettings: React.FC = () => {
           title: homepageData.contact?.title || '',
           subtitle: homepageData.contact?.subtitle || '',
           description: homepageData.contact?.description || '',
-          backgroundImage: homepageData.contact?.backgroundImage || '',
           email: homepageData.contact?.email || '',
           phone: homepageData.contact?.phone || '',
           address: homepageData.contact?.address || '',
@@ -100,9 +99,30 @@ const HomepageSettings: React.FC = () => {
         }
       };
       form.setFieldsValue(sectionsData);
+      // 同步设置背景图片状态
+      setBackgroundImage(homepageData.hero?.backgroundImage || '');
     }
   }, [settings, form]);
 
+  const handleUploadSuccess = (result: any) => {
+    console.log('📝 上传结果:', result);
+    if (result && result.data) {
+      const fileUrl = result.data.fileUrl;
+      // 正确设置嵌套的表单字段
+      form.setFieldsValue({
+        hero: {
+          ...form.getFieldValue('hero'),
+          backgroundImage: fileUrl
+        }
+      });
+      setBackgroundImage(fileUrl);
+      message.success('上传成功');
+    }
+  };
+
+  const handleUploadError = (error: Error) => {
+    message.error(`上传失败: ${error.message}`);
+  };
   // 保存首页配置
   const handleSave = async (values: any) => {
     try {
@@ -115,9 +135,9 @@ const HomepageSettings: React.FC = () => {
           title: values.hero?.title || '',
           subtitle: values.hero?.subtitle || '',
           description: values.hero?.description || '',
-          backgroundImage: values.hero?.backgroundImage || settings?.homepage?.hero?.backgroundImage || '',
-          ctaText: values.hero?.ctaText || settings?.homepage?.hero?.ctaText || '',
-          ctaLink: values.hero?.ctaLink || settings?.homepage?.hero?.ctaLink || '',
+          backgroundImage: values.hero?.backgroundImage
+            || settings?.homepage?.hero?.backgroundImage
+            || backgroundImage,
           visible: values.hero?.visible || false,
         },
         team: {
@@ -148,7 +168,6 @@ const HomepageSettings: React.FC = () => {
           title: values.contact?.title || '',
           subtitle: values.contact?.subtitle || '',
           description: values.contact?.description || '',
-          backgroundImage: values.contact?.backgroundImage || settings?.homepage?.contact?.backgroundImage || '',
           email: values.contact?.email || '',
           phone: values.contact?.phone || '',
           address: values.contact?.address || '',
@@ -201,11 +220,49 @@ const HomepageSettings: React.FC = () => {
               <Form.Item name={['hero', 'description']} label="描述">
                 <TextArea placeholder="请输入描述" rows={3} />
               </Form.Item>
-              <Form.Item name={['hero', 'ctaText']} label="按钮文本">
-                <Input placeholder="请输入按钮文本" />
-              </Form.Item>
-              <Form.Item name={['hero', 'ctaLink']} label="按钮链接">
-                <Input placeholder="请输入按钮链接" />
+              <Form.Item name={['hero', 'backgroundImage']} label="背景图片">
+
+                <SimpleUploader
+                  fileType="image"
+                  category="other"
+                  maxFileSize={5 * 1024 * 1024} // 5MB
+                  accept="image/*"
+                  onUploadSuccess={(result) => handleUploadSuccess(result)}
+                  onUploadError={handleUploadError}
+                >
+                  {(form.getFieldValue(['hero', 'backgroundImage']) || backgroundImage) ? (
+                    <div style={{ position: 'relative', width: '100%', height: '150px' }}>
+                      <img
+                        src={form.getFieldValue(['hero', 'backgroundImage']) || backgroundImage}
+                        alt="背景图片"
+                        style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '4px' }}
+                      />
+                      <div
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          background: 'rgba(0, 0, 0, 0.7)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: '4px',
+                          opacity: 0,
+                          transition: 'opacity 0.3s ease',
+                          cursor: 'pointer'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                        onMouseLeave={(e) => e.currentTarget.style.opacity = '0'}
+                      >
+                        <span style={{ color: 'white' }}>重新上传</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                      <div>点击或拖拽上传背景图片</div>
+                      <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>建议尺寸：200x60px，格式：PNG/JPG，最大2MB</div>
+                    </div>
+                  )}
+                </SimpleUploader>
               </Form.Item>
               <Form.Item name={['hero', 'visible']} label="启用" valuePropName="checked">
                 <Switch />

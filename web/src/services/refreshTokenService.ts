@@ -135,5 +135,3 @@ class RefreshTokenService {
 export const refreshTokenService = new RefreshTokenService();
 
 // 导出便捷函数
-export const refreshAccessToken = () => refreshTokenService.refreshAccessToken();
-export const getValidAccessToken = () => refreshTokenService.getValidAccessToken();
