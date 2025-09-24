@@ -64,20 +64,20 @@ const IssuesPage: React.FC = () => {
         status: filters.status
       });
 
-      // 检查响应数据结构
-      if (response && response.data) {
-        setIssues(response.data.issues);
+      // 安全地检查响应数据结构
+      if (response && response.data && response.data.issues && response.data.pagination) {
+        setIssues(Array.isArray(response.data.issues) ? response.data.issues : []);
         setPagination({
-          page: response.data.pagination.page,
-          pageSize: response.data.pagination.pageSize,
-          total: response.data.pagination.total
+          page: response.data.pagination.page || page,
+          pageSize: response.data.pagination.pageSize || pageSize,
+          total: response.data.pagination.total || 0
         });
       } else {
         // 如果响应结构不正确，设置默认值
         setIssues([]);
         setPagination({
-          page: 1,
-          pageSize: 20,
+          page: page,
+          pageSize: pageSize,
           total: 0
         });
         console.warn('API响应数据结构不正确:', response);
@@ -88,8 +88,8 @@ const IssuesPage: React.FC = () => {
       // 出错时也设置默认值
       setIssues([]);
       setPagination({
-        page: 1,
-        pageSize: 20,
+        page: page,
+        pageSize: pageSize,
         total: 0
       });
     } finally {

@@ -185,8 +185,6 @@ export type Language = typeof Language[keyof typeof Language];
 export type NotificationType = typeof NotificationType[keyof typeof NotificationType];
 export type ViewMode = typeof ViewMode[keyof typeof ViewMode];
 export type DeviceType = typeof DeviceType[keyof typeof DeviceType];
-export type Alignment = typeof Alignment[keyof typeof Alignment];
-export type MediaType = typeof MediaType[keyof typeof MediaType];
 export type TeamStatus = typeof TeamStatus[keyof typeof TeamStatus];
 export type TeamMemberStatus = typeof TeamMemberStatus[keyof typeof TeamMemberStatus];
 export type TeamMemberRole = typeof TeamMemberRole[keyof typeof TeamMemberRole];
@@ -255,7 +253,7 @@ export interface FileInfo {
   hashSha256?: string;
   bucketName?: string;
   downloadCount?: number;
-  metadata?: any;
+  metadata?: Record<string, unknown> | null;
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date;
@@ -422,54 +420,7 @@ export interface ContactForm {
 
 
 
-// 路由类型
-export interface RouteConfig {
-  path: string;
-  component: React.ComponentType;
-  exact?: boolean;
-  title?: string;
-  requireAuth?: boolean;
-  roles?: string[];
-}
 
-// 菜单项类型
-export interface MenuItem {
-  key: string;
-  label: string;
-  icon?: React.ReactNode;
-  path?: string;
-  children?: MenuItem[];
-  roles?: string[];
-}
-
-// 表格列配置类型
-export interface TableColumn {
-  key: string;
-  title: string;
-  dataIndex: string;
-  width?: number;
-  align?: Alignment;
-  sorter?: boolean;
-  render?: (value: unknown, record: unknown, index: number) => React.ReactNode;
-}
-
-// 表单字段类型
-export interface FormField {
-  name: string;
-  label: string;
-  type: FormFieldType;
-  required?: boolean;
-  rules?: Array<{
-    required?: boolean;
-    message?: string;
-    pattern?: RegExp;
-    min?: number;
-    max?: number;
-    validator?: (rule: unknown, value: unknown) => Promise<void>;
-  }>;
-  options?: { label: string; value: string | number | boolean }[];
-  placeholder?: string;
-}
 
 // 统计数据类型
 export interface DashboardStats {
@@ -507,22 +458,6 @@ export interface CalendarEvent {
   };
   color?: string;
 }
-
-// 上传文件类型
-export interface UploadFile {
-  uid: string;
-  name: string;
-  status: UploadStatus;
-  url?: string;
-  thumbUrl?: string;
-  response?: {
-    success?: boolean;
-    data?: unknown;
-    message?: string;
-    url?: string;
-  };
-}
-
 // 错误类型
 export interface AppError {
   code: string;
@@ -601,29 +536,6 @@ export interface AppState {
   loading: boolean;
   error: AppError | null;
 }
-
-//   category?: 'avatar' | 'work' | 'event' | 'profile' | 'cover' | 'favicon'|'logo' | 'other';
-
-export const FileCategory = {
-  AVATAR: 'avatar',
-  WORK: 'work',
-  EVENT: 'event',
-  PROFILE: 'profile',
-  COVER: 'cover',
-  FAVICON: 'favicon',
-  LOGO: 'logo',
-  OTHER: 'other',
-} as const;
-
-
-// 上传文件类型
-export interface UploadFile extends File {
-  category?: string;
-  fileType?: 'video' | 'image';
-}
-
-
-
 // 网站设置接口
 export interface SiteSettings {
   name: string;

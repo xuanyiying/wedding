@@ -1,55 +1,50 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Row,
-  Col,
-  Button,
-  message,
-  Table
-} from 'antd';
-import { TrendType } from '../../types';
+import React, { useState, useEffect } from "react";
+import { Row, Col, Button, message, Table } from "antd";
+import { TrendType } from "../../types";
 import {
   UserOutlined,
   CalendarOutlined,
   PictureOutlined,
   MessageOutlined,
-  EyeOutlined
-} from '@ant-design/icons';
-import dayjs from 'dayjs';
-import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
-import { dashboardService } from '../../services';
-import { PageViewService } from '../../services/pageViewService';
-import { useAppSelector } from '../../store/hooks';
-import { useTheme } from '../../hooks/useTheme';
-import { PageHeader, StatCard, ContentCard } from '../../components/admin/common';
-import { UserRole } from '../../types';
+  EyeOutlined,
+} from "@ant-design/icons";
+import dayjs from "dayjs";
+import styled from "styled-components";
+import { useNavigate } from "react-router-dom";
+import { dashboardService } from "../../services";
+import { PageViewService } from "../../services/pageViewService";
+import { useAppSelector } from "../../store/hooks";
+import { useTheme } from "../../hooks/useTheme";
+import {
+  PageHeader,
+  StatCard,
+  ContentCard,
+} from "../../components/admin/common";
+import { UserRole } from "../../types";
 
 const PageContainer = styled.div`
   background: var(--admin-bg-layout);
   min-height: 100vh;
-  
+
   .ant-typography-title {
     color: var(--admin-text-primary);
   }
-  
+
   .ant-typography {
     color: var(--admin-text-secondary);
   }
 `;
 
-
-
 const QuickActions = styled.div`
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
-  
+
   .ant-btn {
     flex: 1;
     min-width: 120px;
   }
 `;
-
 
 interface StatData {
   title: string;
@@ -72,7 +67,6 @@ interface ViewTrend {
   views: number;
 }
 
-
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const user = useAppSelector((state) => state.auth.user);
@@ -88,7 +82,7 @@ const DashboardPage: React.FC = () => {
   const { initTheme } = useTheme();
 
   useEffect(() => {
-    initTheme('admin');
+    initTheme("admin");
   }, [initTheme]);
 
   // 数据加载
@@ -108,8 +102,8 @@ const DashboardPage: React.FC = () => {
           const results = await Promise.all([
             dashboardService.getStats(),
             PageViewService.getAdminStats(7),
-            PageViewService.getPopularPages('work', 10),
-            PageViewService.getViewTrends('work', undefined, 7)
+            PageViewService.getPopularPages("work", 10),
+            PageViewService.getViewTrends("work", undefined, 7),
           ]);
 
           statsResponse = results[0];
@@ -121,8 +115,8 @@ const DashboardPage: React.FC = () => {
           const results = await Promise.all([
             dashboardService.getStats(),
             PageViewService.getAdminStats(7),
-            PageViewService.getPopularPages('work', 10),
-            PageViewService.getViewTrends('work', undefined, 7)
+            PageViewService.getPopularPages("work", 10),
+            PageViewService.getViewTrends("work", undefined, 7),
           ]);
 
           statsResponse = results[0];
@@ -141,87 +135,108 @@ const DashboardPage: React.FC = () => {
           // 管理员看到全部统计
           formattedStats.push(
             {
-              title: '总用户数',
+              title: "总用户数",
               value: Number(statsData.totalUsers) || 0,
               prefix: <UserOutlined />,
-              trend: (statsData.userTrend || 0) >= 0 ? TrendType.UP : TrendType.DOWN,
-              trendValue: Math.abs(statsData.userTrend || 0)
+              trend:
+                (statsData.userTrend || 0) >= 0 ? TrendType.UP : TrendType.DOWN,
+              trendValue: Math.abs(statsData.userTrend || 0),
             },
             {
-              title: '本月预订',
+              title: "本月预订",
               value: Number(statsData.monthlyBookings) || 0,
               prefix: <CalendarOutlined />,
-              trend: (statsData.bookingTrend || 0) >= 0 ? TrendType.UP : TrendType.DOWN,
-              trendValue: Math.abs(statsData.bookingTrend || 0)
+              trend:
+                (statsData.bookingTrend || 0) >= 0
+                  ? TrendType.UP
+                  : TrendType.DOWN,
+              trendValue: Math.abs(statsData.bookingTrend || 0),
             },
             {
-              title: '作品数量',
+              title: "作品数量",
               value: Number(statsData.totalWorks) || 0,
               prefix: <PictureOutlined />,
-              trend: (statsData.workTrend || 0) >= 0 ? TrendType.UP : TrendType.DOWN,
-              trendValue: Math.abs(statsData.workTrend || 0)
+              trend:
+                (statsData.workTrend || 0) >= 0 ? TrendType.UP : TrendType.DOWN,
+              trendValue: Math.abs(statsData.workTrend || 0),
             },
             {
-              title: '总浏览量',
+              title: "总浏览量",
               value: Number(adminStats.totalViews) || 0,
               prefix: <EyeOutlined />,
               trend: TrendType.UP,
-              trendValue: 0
-            }
+              trendValue: 0,
+            },
           );
         } else {
           // 普通用户只看到个人相关统计
           formattedStats.push(
             {
-              title: '我的档期',
+              title: "我的档期",
               value: Number(statsData.totalSchedules) || 0,
               prefix: <CalendarOutlined />,
-              trend: (statsData.bookingTrend || 0) >= 0 ? TrendType.UP : TrendType.DOWN,
-              trendValue: Math.abs(statsData.bookingTrend || 0)
+              trend:
+                (statsData.bookingTrend || 0) >= 0
+                  ? TrendType.UP
+                  : TrendType.DOWN,
+              trendValue: Math.abs(statsData.bookingTrend || 0),
             },
             {
-              title: '我的作品',
+              title: "我的作品",
               value: Number(statsData.totalWorks) || 0,
               prefix: <PictureOutlined />,
-              trend: (statsData.workTrend || 0) >= 0 ? TrendType.UP : TrendType.DOWN,
-              trendValue: Math.abs(statsData.workTrend || 0)
+              trend:
+                (statsData.workTrend || 0) >= 0 ? TrendType.UP : TrendType.DOWN,
+              trendValue: Math.abs(statsData.workTrend || 0),
             },
             {
-              title: '作品浏览量',
+              title: "作品浏览量",
               value: Number(adminStats.totalViews) || 0,
               prefix: <EyeOutlined />,
               trend: TrendType.UP,
-              trendValue: 0
-            }
+              trendValue: 0,
+            },
           );
         }
 
-        console.log('Formatted Stats:', formattedStats);
+        console.log("Formatted Stats:", formattedStats);
 
         setStats(formattedStats);
 
         // 只有管理员才显示热门页面和访问趋势
         if (isAdmin) {
-          const mappedPopularPages = (popularPagesResponse || []).map((page: any) => ({
-            pageType: (page as any).pageType || '',
-            pageId: page.pageId || '',
-            totalViews: page.totalViews || 0,
-            uniqueViews: page.uniqueViews || 0
-          }));
-          setPopularPages(mappedPopularPages);
-          // 确保 viewTrendsResponse 是数组
-          const viewTrendsArray = Array.isArray(viewTrendsResponse) ? viewTrendsResponse :
-            (viewTrendsResponse?.data && Array.isArray(viewTrendsResponse.data)) ? viewTrendsResponse.data : [];
-          setViewTrends(viewTrendsArray);
-        } else {
-          setPopularPages([]);
-          setViewTrends([]);
+          if (
+            popularPagesResponse?.data &&
+            popularPagesResponse.data.length > 0
+          ) {
+            const mappedPopularPages = popularPagesResponse.data.map(
+              (page: any) => ({
+                pageType: (page as any).pageType || "",
+                pageId: page.pageId || "",
+                totalViews: page.totalViews || 0,
+                uniqueViews: page.uniqueViews || 0,
+              }),
+            );
+            setPopularPages(mappedPopularPages);
+          }
+          if (viewTrendsResponse?.data && viewTrendsResponse.data.length > 0) {
+            // 确保 viewTrendsResponse 是数组
+            const viewTrendsArray = Array.isArray(viewTrendsResponse)
+              ? viewTrendsResponse
+              : viewTrendsResponse?.data &&
+                  Array.isArray(viewTrendsResponse.data)
+                ? viewTrendsResponse.data
+                : [];
+            setViewTrends(viewTrendsArray);
+          } else {
+            setPopularPages([]);
+            setViewTrends([]);
+          }
         }
-
         setLoading(false);
       } catch (error) {
-        console.error('加载仪表盘数据失败:', error);
-        message.error('加载数据失败，请稍后重试');
+        console.error("加载仪表盘数据失败:", error);
+        message.error("加载数据失败，请稍后重试");
       } finally {
         setLoading(false);
       }
@@ -232,44 +247,41 @@ const DashboardPage: React.FC = () => {
   // 热门页面表格列配置
   const popularPagesColumns = [
     {
-      title: '页面类型',
-      dataIndex: 'pageType',
-      key: 'pageType',
+      title: "页面类型",
+      dataIndex: "pageType",
+      key: "pageType",
       render: (type: string) => {
         const typeMap: Record<string, string> = {
-          'work': '作品',
-          'team_member': '团队成员',
-          'service': '服务',
-          'about': '关于我们'
+          work: "作品",
+          team_member: "团队成员",
+          service: "服务",
+          about: "关于我们",
         };
         return typeMap[type] || type;
-      }
+      },
     },
     {
-      title: '页面ID',
-      dataIndex: 'pageId',
-      key: 'pageId'
+      title: "页面ID",
+      dataIndex: "pageId",
+      key: "pageId",
     },
     {
-      title: '总浏览量',
-      dataIndex: 'totalViews',
-      key: 'totalViews',
-      sorter: (a: PopularPage, b: PopularPage) => a.totalViews - b.totalViews
+      title: "总浏览量",
+      dataIndex: "totalViews",
+      key: "totalViews",
+      sorter: (a: PopularPage, b: PopularPage) => a.totalViews - b.totalViews,
     },
     {
-      title: '独立访客',
-      dataIndex: 'uniqueViews',
-      key: 'uniqueViews',
-      sorter: (a: PopularPage, b: PopularPage) => a.uniqueViews - b.uniqueViews
-    }
+      title: "独立访客",
+      dataIndex: "uniqueViews",
+      key: "uniqueViews",
+      sorter: (a: PopularPage, b: PopularPage) => a.uniqueViews - b.uniqueViews,
+    },
   ];
 
   return (
     <PageContainer>
-      <PageHeader
-        title="仪表盘"
-        subtitle="欢迎回来！这里是您的数据概览"
-      />
+      <PageHeader title="仪表盘" subtitle="欢迎回来！这里是您的数据概览" />
 
       {/* 统计卡片 */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
@@ -286,33 +298,33 @@ const DashboardPage: React.FC = () => {
         ))}
       </Row>
 
-
-
       <ContentCard>
-        <h3 style={{ marginBottom: 16, color: 'var(--admin-text-primary)' }}>快速操作</h3>
+        <h3 style={{ marginBottom: 16, color: "var(--admin-text-primary)" }}>
+          快速操作
+        </h3>
         <QuickActions>
           <Button
             type="primary"
             icon={<CalendarOutlined />}
-            onClick={() => navigate('/admin/schedules')}
+            onClick={() => navigate("/admin/schedules")}
           >
             新建档期
           </Button>
           <Button
             icon={<UserOutlined />}
-            onClick={() => navigate('/admin/users')}
+            onClick={() => navigate("/admin/users")}
           >
             添加用户
           </Button>
           <Button
             icon={<PictureOutlined />}
-            onClick={() => navigate('/admin/works')}
+            onClick={() => navigate("/admin/works")}
           >
             上传作品
           </Button>
           <Button
             icon={<MessageOutlined />}
-            onClick={() => navigate('/admin/settings')}
+            onClick={() => navigate("/admin/settings")}
           >
             系统设置
           </Button>
@@ -324,7 +336,11 @@ const DashboardPage: React.FC = () => {
         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
           <Col xs={24} lg={12}>
             <ContentCard>
-              <h3 style={{ marginBottom: 16, color: 'var(--admin-text-primary)' }}>热门页面</h3>
+              <h3
+                style={{ marginBottom: 16, color: "var(--admin-text-primary)" }}
+              >
+                热门页面
+              </h3>
               <Table
                 columns={popularPagesColumns}
                 dataSource={popularPages}
@@ -337,42 +353,59 @@ const DashboardPage: React.FC = () => {
           </Col>
           <Col xs={24} lg={12}>
             <ContentCard>
-              <h3 style={{ marginBottom: 16, color: 'var(--admin-text-primary)' }}>访问趋势</h3>
-              <div style={{ padding: '16px 0' }}>
-                {Array.isArray(viewTrends) && viewTrends.map((trend, index) => (
-                  <div key={index} style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '8px 0',
-                    borderBottom: index < (Array.isArray(viewTrends) ? viewTrends.length : 0) - 1 ? '1px solid var(--admin-border-color)' : 'none'
-                  }}>
-                    <span style={{ color: 'var(--admin-text-secondary)' }}>
-                      {dayjs(trend.date).format('MM-DD')}
-                    </span>
-                    <span style={{
-                      color: 'var(--admin-text-primary)',
-                      fontWeight: 600
-                    }}>
-                      {trend.views} 次访问
-                    </span>
-                  </div>
-                ))}
-                {(!Array.isArray(viewTrends) || viewTrends.length === 0) && !loading && (
-                  <div style={{
-                    textAlign: 'center',
-                    color: 'var(--admin-text-secondary)',
-                    padding: '32px 0'
-                  }}>
-                    暂无访问数据
-                  </div>
-                )}
+              <h3
+                style={{ marginBottom: 16, color: "var(--admin-text-primary)" }}
+              >
+                访问趋势
+              </h3>
+              <div style={{ padding: "16px 0" }}>
+                {Array.isArray(viewTrends) &&
+                  viewTrends.map((trend, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "8px 0",
+                        borderBottom:
+                          index <
+                          (Array.isArray(viewTrends) ? viewTrends.length : 0) -
+                            1
+                            ? "1px solid var(--admin-border-color)"
+                            : "none",
+                      }}
+                    >
+                      <span style={{ color: "var(--admin-text-secondary)" }}>
+                        {dayjs(trend.date).format("MM-DD")}
+                      </span>
+                      <span
+                        style={{
+                          color: "var(--admin-text-primary)",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {trend.views} 次访问
+                      </span>
+                    </div>
+                  ))}
+                {(!Array.isArray(viewTrends) || viewTrends.length === 0) &&
+                  !loading && (
+                    <div
+                      style={{
+                        textAlign: "center",
+                        color: "var(--admin-text-secondary)",
+                        padding: "32px 0",
+                      }}
+                    >
+                      暂无访问数据
+                    </div>
+                  )}
               </div>
             </ContentCard>
           </Col>
         </Row>
       )}
-
     </PageContainer>
   );
 };
