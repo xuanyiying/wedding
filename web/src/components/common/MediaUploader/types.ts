@@ -2,6 +2,7 @@
  * 媒体上传组件类型定义
  */
 
+import type { FileCategory } from '../../../types';
 import type { DirectUploadResult, DirectUploadProgress } from '../../../utils/direct-upload';
 import type { VideoFrame } from '../../../utils/video-frame-extractor';
 
@@ -41,19 +42,19 @@ export interface MediaUploadConfig {
   multiple?: boolean; // 是否支持多文件
   maxCount?: number; // 最大文件数量
   maxSize?: number; // 单文件最大大小（字节）
-  
+
   // 图片配置
   imageMaxSize?: number; // 图片最大大小
   imageCompress?: boolean; // 是否压缩图片
   imageQuality?: number; // 图片压缩质量
-  
+
   // 视频配置
   videoMaxSize?: number; // 视频最大大小
   requireCover?: boolean; // 是否必须选择封面
   autoExtractCover?: boolean; // 是否自动提取封面
-  
+
   // 上传配置
-  category?: 'avatar' | 'work' | 'event' | 'profile' | 'cover' | 'favicon' | 'logo' | 'other';
+  category?: FileCategory;
   concurrent?: number; // 并发上传数
 }
 
@@ -102,22 +103,22 @@ export interface MediaUploaderProps extends MediaUploaderCallbacks {
   value?: MediaFileItem[];
   disabled?: boolean;
   loading?: boolean;
-  
+
   // 上传配置
   config?: MediaUploadConfig;
-  
+
   // 样式配置
   className?: string;
   style?: React.CSSProperties;
-  
+
   // 显示配置
   showUploadList?: boolean;
   showProgress?: boolean;
   listType?: 'text' | 'picture' | 'picture-card';
-  
+
   // 拖拽配置
   dragSort?: boolean;
-  
+
   // 预览配置
   previewable?: boolean;
 }

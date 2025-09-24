@@ -133,9 +133,11 @@ const WorksList: React.FC<WorksListProps> = ({ showFilters = true, showPaginatio
               <label>分类:</label>
               <Select value={selectedCategory} onChange={setSelectedCategory} style={{ width: 120 }}>
                 <Option value="all">全部</Option>
-                {Object.values(WorkCategory).map(cat => (
-                  <Option key={cat} value={cat}>{cat}</Option>
-                ))}
+                <Option value={WorkCategory.TEAM_BUILDING}>团建</Option>
+                <Option value={WorkCategory.WEDDING_HOST}>婚礼主持</Option>
+                <Option value={WorkCategory.WEDDING_PLANNING}>婚礼策划</Option>
+                <Option value={WorkCategory.WEDDING_PHOTOGRAPHY}>婚礼摄影</Option>
+                <Option value={WorkCategory.WEDDING_VIDEOGRAPHY}>婚礼摄像</Option>
               </Select>
             </FilterItem>
             <FilterItem>

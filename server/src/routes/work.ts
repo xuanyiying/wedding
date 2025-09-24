@@ -24,7 +24,7 @@ const router = Router();
  *           description: 作品描述
  *         category:
  *           type: string
- *           enum: [wedding, portrait, event, commercial]
+ *           enum: [team_building, wedding_host, wedding_planning, wedding_photography, wedding_videography]
  *           description: 作品分类
  *         tags:
  *           type: array
@@ -98,7 +98,7 @@ const router = Router();
  *         name: category
  *         schema:
  *           type: string
- *           enum: [wedding, portrait, event, commercial]
+ *           enum: [team_building, wedding_host, wedding_planning, wedding_photography, wedding_videography]
  *         description: 作品分类筛选
  *       - in: query
  *         name: tags

@@ -681,7 +681,7 @@ export class DatabaseInitializer {
               fileUrl: 'http://localhost:9000/wedding-service/2.jpg',
               fileSize: 1024,
               mimeType: 'image/png',
-              category: FileCategory.EVENT,
+              category: FileCategory.WORK,
               ossType: OssType.minio,
               userId: userId,
               thumbnailUrl: 'http://localhost:9000/wedding-service/2.jpg',

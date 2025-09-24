@@ -1,6 +1,6 @@
 import { Model, DataTypes, Sequelize, Optional } from 'sequelize';
 import User from './User';
-import {WorkCategory, WorkStatus } from '../types';
+import { WorkCategory, WorkStatus } from '../types';
 import { WorkType } from '../types';
 import File from './File';
 // Work attributes interface
@@ -115,7 +115,7 @@ export const initWork = (sequelize: Sequelize): void => {
       category: {
         type: DataTypes.ENUM(...Object.values(WorkCategory)),
         allowNull: false,
-        defaultValue: WorkCategory.WEDDING,
+        defaultValue: WorkCategory.WEDDING_HOST,
         comment: '作品分类',
       },
       fileIds: {

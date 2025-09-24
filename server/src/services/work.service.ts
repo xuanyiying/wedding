@@ -436,7 +436,7 @@ export class WorkService {
       where: {
         status: WorkStatus.PUBLISHED,
         isFeatured: true,
-        category: { [Op.ne]: WorkCategory.EVENT },
+        category: { [Op.ne]: WorkCategory.WEDDING_HOST },
       },
       include: [
         {

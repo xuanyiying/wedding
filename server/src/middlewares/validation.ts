@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { body, param, query, validationResult, ValidationChain } from 'express-validator';
 import { ValidationError } from './error';
-import { UserRole, UserStatus } from '../types';
+import { FileCategory, UserRole, UserStatus } from '../types';
 import { ValidationUtils } from '../utils/helpers';
 import Joi from 'joi';
 
@@ -197,17 +197,10 @@ export const uploadValidations = {
   image: [
     body('category')
       .optional()
-      .isIn(['avatar', 'cover', 'gallery', 'news', 'case'])
+      .isIn(Object.values(FileCategory))
       .withMessage('Category must be one of: avatar, cover, gallery, news, case'),
   ],
 
-  // 文档上传验证
-  document: [
-    body('category')
-      .optional()
-      .isIn(['contract', 'proposal', 'other'])
-      .withMessage('Category must be one of: contract, proposal, other'),
-  ],
 };
 
 // 创建验证中间件工厂

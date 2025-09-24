@@ -2,7 +2,7 @@ import React from 'react';
 import { PlayCircleOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import ImageCarousel from '../../client/ImageCarousel';
-import { FileType, type MediaFile } from '../../../types';
+import { FileType, type FileInfo } from '../../../types';
 
 const WorkMediaContainer = styled.div`
   position: relative;
@@ -75,26 +75,26 @@ const AbsoluteContent = styled.div`
 `;
 
 interface WorkMediaProps {
-  files: MediaFile[];
+  files: FileInfo[];
   isFeatured?: boolean;
   title: string;
   onClick?: () => void;
 }
 
-const WorkMedia: React.FC<WorkMediaProps> = ({ 
-  files, 
-  isFeatured = false, 
+const WorkMedia: React.FC<WorkMediaProps> = ({
+  files,
+  isFeatured = false,
   title,
-  onClick 
+  onClick
 }) => {
   // 判断是否为视频类型
   const hasVideo = files.some(file => file.fileType === FileType.VIDEO);
-  
+
   // 获取视频缩略图
-  const videoThumbnail = files.find(file => 
+  const videoThumbnail = files.find(file =>
     file.fileType === FileType.VIDEO && file.thumbnailUrl
   )?.thumbnailUrl;
-  
+
   // 获取图片URLs
   const imageUrls = files
     .filter(file => file.fileType === FileType.IMAGE && file.fileUrl)
@@ -107,10 +107,10 @@ const WorkMedia: React.FC<WorkMediaProps> = ({
       <WorkMediaContainer>
         <AspectRatioContainer>
           <AbsoluteContent>
-            <div 
-              style={{ 
-                width: '100%', 
-                height: '100%', 
+            <div
+              style={{
+                width: '100%',
+                height: '100%',
                 background: '#f5f5f5',
                 display: 'flex',
                 alignItems: 'center',
@@ -135,8 +135,8 @@ const WorkMedia: React.FC<WorkMediaProps> = ({
             {hasVideo ? (
               // 视频类型：显示缩略图并添加播放按钮
               <>
-                <img 
-                  src={videoThumbnail || '/placeholder.svg?height=300&width=400'} 
+                <img
+                  src={videoThumbnail || '/placeholder.svg?height=300&width=400'}
                   alt={title}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
@@ -149,7 +149,7 @@ const WorkMedia: React.FC<WorkMediaProps> = ({
               </>
             ) : (
               // 图片类型：使用轮播组件展示多张图片
-              <ImageCarousel 
+              <ImageCarousel
                 images={imageUrls}
                 height="100%"
                 showDots={imageUrls.length > 1}

@@ -137,19 +137,19 @@ const WorkCard: React.FC<WorkCardProps> = ({
   const getTypeIcon = (type: Work['type']) => {
     return type === 'video' ? '🎬' : '📷';
   };
-  
+
   const getTypeText = (type: Work['type']) => {
     return type === 'video' ? '视频' : '图片';
   };
-  
+
   const formatDate = (date: Date | null) => {
     return date ? dayjs(date).format('YYYY-MM-DD') : '未指定';
   };
-  
+
   const handleTogglePublic = (checked: boolean) => {
     onTogglePublic(work.id, checked);
   };
-  
+
   const handleToggleFeatured = (checked: boolean) => {
     onToggleFeatured(work.id, checked);
   };
@@ -160,14 +160,14 @@ const WorkCard: React.FC<WorkCardProps> = ({
       style={style}
       cover={
         <div style={{ position: 'relative', height: 100 }}>
-          <WorkMedia files={work.files} 
+          <WorkMedia files={work.files}
             isFeatured={work.isFeatured}
-            title={work.title} 
+            title={work.title}
             onClick={() => onPreview(work)}
           />
 
           <TagContainer>
-            {work.isFeatured && ( 
+            {work.isFeatured && (
               <Tag color="gold" icon={<StarOutlined />}>
                 精选
               </Tag>
@@ -178,7 +178,7 @@ const WorkCard: React.FC<WorkCardProps> = ({
               </Tag>
             )}
           </TagContainer>
-          
+
           <TypeBadge>
             {getTypeIcon(work.type)} {getTypeText(work.type)}
             {work.files.length > 1 && ` (${work.files.length})`}
@@ -213,10 +213,10 @@ const WorkCard: React.FC<WorkCardProps> = ({
       <Meta
         title={
           <Tooltip title={work.title}>
-            <div style={{ 
-              overflow: 'hidden', 
-              textOverflow: 'ellipsis', 
-              whiteSpace: 'nowrap' 
+            <div style={{
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
             }}>
               {work.title}
             </div>
@@ -238,14 +238,14 @@ const WorkCard: React.FC<WorkCardProps> = ({
                 {work.downloads}
               </StatItem>
             </StatsContainer>
-            
+
             <Paragraph
               ellipsis={{ rows: 2, tooltip: work.description }}
               style={{ margin: '8px 0', fontSize: 12, color: 'var(--admin-text-secondary)' }}
             >
               {work.description}
             </Paragraph>
-            
+
             <Space wrap size={[4, 4]} style={{ marginBottom: 8 }}>
               <Tag color="blue">{work.category}</Tag>
               {work.tags.slice(0, 2).map((tag, index) => (
@@ -255,13 +255,13 @@ const WorkCard: React.FC<WorkCardProps> = ({
                 <Tag>+{work.tags.length - 2}</Tag>
               )}
             </Space>
-            
+
             <div style={{ fontSize: 12, color: 'var(--admin-text-secondary)', marginBottom: 8 }}>
               <div>作者: {work.author}</div>
               {work.customer && <div>客户: {work.customer}</div>}
               {work.weddingDate && <div>地点: {formatDate(work.weddingDate)}</div>}
             </div>
-            
+
             <SwitchContainer>
               <Space>
                 <Text style={{ fontSize: 12 }}>公开:</Text>
@@ -271,7 +271,7 @@ const WorkCard: React.FC<WorkCardProps> = ({
                   onChange={handleTogglePublic}
                 />
               </Space>
-              
+
               {showFeaturedControl && (
                 <Space>
                   <Text style={{ fontSize: 12 }}>精选:</Text>

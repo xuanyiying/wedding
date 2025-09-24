@@ -21,6 +21,17 @@ export const ScheduleStatus = {
   RESERVE: 'reserve', // 预订留
 } as const;
 
+// 文件分类枚举
+export const FileCategory = {
+  AVATAR: 'avatar',
+  COVER: 'cover',
+  WORK: 'work',
+  OTHER: 'other',
+  PROFILE: 'profile',
+  FAVICON: 'favicon',
+  LOGO: 'logo',
+} as const;
+
 // 作品状态枚举
 export const WorkStatus = {
   DRAFT: 'draft',
@@ -36,8 +47,11 @@ export const WorkType = {
 
 // 作品分类枚举
 export const WorkCategory = {
-  WEDDING: 'wedding',
-  EVENT: 'event',
+  TEAM_BUILDING: 'team_building', // 团建
+  WEDDING_HOST: 'wedding_host', // 婚礼主持
+  WEDDING_PLANNING: 'wedding_planning', // 婚礼策划
+  WEDDING_PHOTOGRAPHY: 'wedding_photography', // 婚礼摄影
+  WEDDING_VIDEOGRAPHY: 'wedding_videography', // 婚礼摄像
 } as const;
 
 // 文件类型枚举
@@ -175,6 +189,7 @@ export type ScheduleStatus = typeof ScheduleStatus[keyof typeof ScheduleStatus];
 export type WorkType = typeof WorkType[keyof typeof WorkType];
 export type WorkCategory = typeof WorkCategory[keyof typeof WorkCategory];
 export type FileType = typeof FileType[keyof typeof FileType];
+export type FileCategory = typeof FileCategory[keyof typeof FileCategory];
 export type PaymentStatus = typeof PaymentStatus[keyof typeof PaymentStatus];
 export type UploadStatus = typeof UploadStatus[keyof typeof UploadStatus];
 export type FormFieldType = typeof FormFieldType[keyof typeof FormFieldType];

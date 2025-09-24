@@ -132,15 +132,17 @@ export enum WorkType {
 }
 
 export enum WorkCategory {
-  WEDDING = 'wedding', // 婚礼
-  EVENT = 'event', // 团建
+  TEAM_BUILDING = 'team_building', // 团建
+  WEDDING_HOST = 'wedding_host', // 婚礼主持
+  WEDDING_PLANNING = 'wedding_planning', // 婚礼策划
+  WEDDING_PHOTOGRAPHY = 'wedding_photography', // 婚礼摄影
+  WEDDING_VIDEOGRAPHY = 'wedding_videography', // 婚礼摄像
 }
 
 export enum FileCategory {
   AVATAR = 'avatar',
   COVER = 'cover',
   WORK = 'work',
-  EVENT = 'event',
   OTHER = 'other',
   PROFILE = 'profile',
   FAVICON = 'favicon',

@@ -2,12 +2,12 @@ import React, { useState, useCallback, useRef } from 'react';
 import { UploadOutlined, LoadingOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { Button, Progress, App } from 'antd';
 import styled from 'styled-components';
-import { FileType } from '../../types';
+import { FileType, FileCategory } from '../../types';
 import { fileService } from '../../services';
 
 interface SimpleUploaderProps {
-    fileType: 'image' | 'video';
-    category?: 'avatar' | 'work' | 'event' | 'profile' | 'cover' | 'favicon' | 'logo' | 'other';
+    fileType:  FileType;
+    category?: FileCategory;
     maxFileSize?: number;
     accept?: string;
     onUploadSuccess?: (result: any) => void;

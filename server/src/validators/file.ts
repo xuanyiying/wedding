@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import { FileType } from '../types';
+import { FileCategory, FileType } from '../types';
 
 export const fileValidators = {
   // 单文件上传
@@ -8,7 +8,7 @@ export const fileValidators = {
       fileType: Joi.string()
         .valid(...Object.values(FileType))
         .required(),
-      category: Joi.string().valid('avatar', 'cover', 'event', 'work', 'profile', 'logo', 'favicon','other').optional(),
+      category: Joi.string().valid(...Object.values(FileType)).optional(),
       description: Joi.string().trim().max(500).optional(),
     }),
   },
@@ -19,7 +19,7 @@ export const fileValidators = {
       fileType: Joi.string()
         .valid(...Object.values(FileType))
         .required(),
-      category: Joi.string().valid('avatar', 'cover', 'event', 'work', 'profile', 'other').optional(),
+      category: Joi.string().valid(...Object.values(FileCategory)).optional(),
       description: Joi.string().trim().max(500).optional(),
     }),
   },
@@ -33,8 +33,7 @@ export const fileValidators = {
       fileType: Joi.string()
         .valid(...Object.values(FileType))
         .optional(),
-      category: Joi.string().valid('avatar', 'cover', 'event', 'work', 'profile', 'other').optional(),
-      // status字段已移除，因为File模型中没有status字段
+      category: Joi.string().valid(...Object.values(FileCategory)).optional(),
       keyword: Joi.string().trim().max(100).optional(),
       sortBy: Joi.string().valid('createdAt', 'size', 'filename').default('createdAt'),
       sortOrder: Joi.string().valid('ASC', 'DESC').default('DESC'),
@@ -106,7 +105,7 @@ export const fileValidators = {
       filename: Joi.string().trim().min(1).max(255).required(),
       fileSize: Joi.number().integer().min(1).max(5 * 1024 * 1024 * 1024).required(), // 最大5GB
       mimeType: Joi.string().trim().min(1).max(100).required(),
-      category: Joi.string().valid('avatar', 'cover', 'event', 'work', 'profile', 'other').required(),
+      category: Joi.string().valid(...Object.values(FileCategory)).optional(),
       totalChunks: Joi.number().integer().min(1).max(1000).required(), // 最多1000个分块
     }),
   },

@@ -1,5 +1,5 @@
 import { DirectUploader, type DirectUploadResult, type DirectUploadProgress, type DirectUploadConfig } from '../utils/direct-upload';
-import { FileType } from '../types';
+import { FileCategory, FileType } from '../types';
 import { fileService } from '.';
 
 export class DirectUploadService {
@@ -30,7 +30,7 @@ export class DirectUploadService {
   /**
    * 上传单个文件
    */
-  async uploadFile(file: File, fileType: FileType, category?: "other" | "avatar" | "work" | "event" | "profile" | "cover" | "favicon" | "logo"): Promise<DirectUploadResult> {
+  async uploadFile(file: File, fileType: FileType, category?: "other" | "avatar" | "work" | "profile" | "cover" | "favicon" | "logo"): Promise<DirectUploadResult> {
     const config: DirectUploadConfig = {
       fileType: this.mapFileType(fileType),
       category: category || 'other',
@@ -43,7 +43,7 @@ export class DirectUploadService {
   /**
    * 批量上传文件
    */
-  async uploadFiles(files: File[], fileType: FileType, category?: 'avatar' | 'work' | 'event' | 'profile' | 'other'): Promise<DirectUploadResult[]> {
+  async uploadFiles(files: File[], fileType: FileType, category?: 'avatar' | 'work' | 'profile' | 'other'): Promise<DirectUploadResult[]> {
     const results: DirectUploadResult[] = [];
     const maxConcurrent = 3; // 最大并发数
     const delay = 500; // 请求间隔（毫秒）
@@ -131,7 +131,7 @@ export class DirectUploadService {
   /**
    * 上传通用媒体文件
    */
-  async uploadMedia(files: File[], category?: 'avatar' | 'work' | 'event' | 'profile' | 'cover' | 'other'): Promise<DirectUploadResult[]> {
+  async uploadMedia(files: File[], category?: FileCategory): Promise<DirectUploadResult[]> {
     const results: DirectUploadResult[] = [];
     const maxConcurrent = 3; // 最大并发数
     const delay = 500; // 请求间隔（毫秒）

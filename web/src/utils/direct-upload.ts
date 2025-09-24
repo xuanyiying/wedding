@@ -1,3 +1,4 @@
+import type { FileCategory } from '../types';
 import { uploadRequest } from './request';
 
 // 直传上传状态
@@ -24,7 +25,7 @@ export interface DirectUploadProgress {
 // 直传上传配置
 export interface DirectUploadConfig {
   fileType: 'video' | 'image';
-  category?: 'avatar' | 'work' | 'event' | 'profile' | 'cover' | 'favicon' | 'logo' | 'other';
+  category?: FileCategory;
   maxFileSize?: number;
   expires?: number; // 签名URL过期时间（秒）
   retryCount?: number; // 重试次数，默认3次

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Row, Col, Spin, Typography } from 'antd';
 import styled from 'styled-components';
 import { workService } from '../../services';
-import type { Team, Work } from '../../types';
+import { WorkCategory, type Team, type Work } from '../../types';
 import ImageCarousel from './ImageCarousel';
 
 const { Title, Paragraph } = Typography;
@@ -109,7 +109,7 @@ const TeamShowcaseSection: React.FC<TeamShowcaseSectionProps> = ({
         setLoading(true);
         // 获取团队建设分类的图片
         const response = await workService.getWorks({
-          category: 'event',
+          category: WorkCategory.TEAM_BUILDING,
           limit: 1, // 限制显示1个作品
           page: 1,
           teamId: team?.id

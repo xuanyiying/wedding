@@ -9,7 +9,7 @@ import type { Work } from './WorkCard';
 import { MediaUploader } from '../../common/MediaUploader';
 import type { DirectUploadResult } from '../../../utils/direct-upload';
 import { fileService } from '../../../services';
-import { FileType, type FileInfo } from '../../../types';
+import { FileType, type FileInfo, WorkCategory } from '../../../types';
 import { useAppSelector } from '../../../store/hooks';
 import type { RootState } from '../../../store';
 import './WorkForm.scss';
@@ -39,6 +39,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
   const [workMedias, setWorkMedias] = useState<FileInfo[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [workType, setWorkType] = useState<string>('');
+  const [workCategory, setWorkCategory] = useState<string>(''); // 添加作品分类状态
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [imageDimensions, setImageDimensions] = useState<Record<string, { width: number; height: number }>>({});
   const user = useAppSelector((state: RootState) => state.auth.user);
@@ -57,6 +58,11 @@ const WorkForm: React.FC<WorkFormProps> = ({
 
       if (initialValues.type) {
         setWorkType(initialValues.type);
+      }
+
+      // 设置作品分类初始值
+      if (initialValues.category) {
+        setWorkCategory(initialValues.category);
       }
 
       if (initialValues.files) {
@@ -80,6 +86,11 @@ const WorkForm: React.FC<WorkFormProps> = ({
     // 验证作品类型
     if (!workType) {
       errors.type = '请选择作品类型';
+    }
+
+    // 验证作品分类
+    if (!workCategory) {
+      errors.category = '请选择作品分类';
     }
 
     // 验证媒体文件
@@ -220,6 +231,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
         weddingDate: values.weddingDate?.format('YYYY-MM-DD'),
         tags,
         type: workType,
+        category: workCategory, // 添加作品分类到提交数据
         files: workMedias, // 包含上传的媒体文件
       };
 
@@ -234,6 +246,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
         setTags([]);
         setWorkMedias([]);
         setWorkType('');
+        setWorkCategory(''); // 重置作品分类
         setFormErrors({});
         message.success('作品创建成功！');
       } else {
@@ -267,8 +280,9 @@ const WorkForm: React.FC<WorkFormProps> = ({
   const canSubmit = () => {
     const hasTitle = form.getFieldValue('title')?.trim();
     const hasType = workType;
+    const hasCategory = workCategory; // 添加分类检查
     const hasMedia = workMedias.length > 0;
-    return hasTitle && hasType && hasMedia && !uploading;
+    return hasTitle && hasType && hasCategory && hasMedia && !uploading;
   };
 
   return (
@@ -376,6 +390,37 @@ const WorkForm: React.FC<WorkFormProps> = ({
         </Row>
 
         <Row gutter={[16, 16]}>
+          {/* 作品分类： 团建， 婚礼主持， 婚礼策划，婚礼摄影，婚礼摄像*/}
+          <Col xs={12} sm={12}>
+            <Form.Item
+              name="category"
+              label="作品分类"
+              rules={[{ required: true, message: '请选择作品分类' }]}
+              validateStatus={formErrors.category ? 'error' : ''}
+              help={formErrors.category}
+            >
+              <Select
+                placeholder="请选择作品分类"
+                value={workCategory}
+                defaultValue={WorkCategory.TEAM_BUILDING}
+                onChange={(value) => {
+                  setWorkCategory(value);
+                  // 清除分类错误
+                  setFormErrors(prev => {
+                    const newErrors = { ...prev };
+                    delete newErrors.category;
+                    return newErrors;
+                  });
+                }}
+              >
+                <Option value={WorkCategory.TEAM_BUILDING}>团建</Option>
+                <Option value={WorkCategory.WEDDING_HOST}>婚礼主持</Option>
+                <Option value={WorkCategory.WEDDING_PLANNING}>婚礼策划</Option>
+                <Option value={WorkCategory.WEDDING_PHOTOGRAPHY}>婚礼摄影</Option>
+                <Option value={WorkCategory.WEDDING_VIDEOGRAPHY}>婚礼摄像</Option>
+              </Select>
+            </Form.Item>
+          </Col>
           <Col xs={24} sm={24}>
             <Form.Item label="作品标签">
               <Space direction="vertical" style={{ width: '100%' }}>

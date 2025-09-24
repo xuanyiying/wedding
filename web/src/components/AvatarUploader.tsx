@@ -14,7 +14,7 @@ interface AvatarUploaderProps {
   disabled?: boolean;
   className?: string;
   style?: React.CSSProperties;
-  category: 'avatar' | 'work' | 'event' | 'other';
+  category: 'avatar';
 }
 
 const AvatarUploader: React.FC<AvatarUploaderProps> = ({
