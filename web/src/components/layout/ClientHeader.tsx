@@ -52,6 +52,7 @@ const LogoContainer = styled.div`
   justify-content: center;
   margin-right: 24px;
   height: 100%;
+  cursor: pointer; // 添加指针样式
 `;
 
 const LogoWrapper = styled.div`
@@ -210,6 +211,21 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
     );
   }
 
+  // 点击logo时返回首页并滚动到顶部
+  const handleLogoClick = () => {
+    if (location.pathname === '/') {
+      // 如果已经在首页，滚动到顶部
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      // 如果不在首页，导航到首页并滚动到顶部
+      navigate('/');
+      // 延迟滚动到顶部，确保页面已加载
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 100);
+    }
+  };
+
   // 默认菜单项
   const defaultMenuItems = [
     { key: '/', label: '首页', path: '/', sectionId: 'hero', visible: true, order: 1 },
@@ -312,14 +328,14 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
   return (
     <StyledHeader>
       <NavContainer>
-        <Link to="/" style={{ textDecoration: 'none' }}>
-          <LogoContainer>
-            <LogoWrapper>
-              {logoUrl ? <LogoImage src={logoUrl} alt="site logo" /> : <LogoIcon> </LogoIcon>}
-            </LogoWrapper>
-            <SiteName>{siteName || '陆合·合悦'}</SiteName>
-          </LogoContainer>
-        </Link>
+        {/* 修改LogoContainer，添加onClick事件 */}
+        <LogoContainer onClick={handleLogoClick}>
+          <LogoWrapper>
+            {logoUrl ? <LogoImage src={logoUrl} alt="site logo" /> : <LogoIcon> </LogoIcon>}
+          </LogoWrapper>
+          <SiteName>{siteName || '陆合·合悦'}</SiteName>
+        </LogoContainer>
+
         <StyledMenu
           mode="horizontal"
           selectedKeys={[selectedKey]}

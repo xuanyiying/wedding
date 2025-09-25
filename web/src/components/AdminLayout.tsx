@@ -34,6 +34,18 @@ const StyledSider = styled(Sider)`
     display: flex;
     flex-direction: column;
   }
+  
+  @media (max-width: 768px) {
+    position: fixed;
+    height: 100vh;
+    z-index: 1000;
+    transform: translateX(0);
+    transition: transform 0.3s ease;
+    
+    &.mobile-collapsed {
+      transform: translateX(-100%);
+    }
+  }
 `;
 
 const Logo = styled.div`
@@ -64,6 +76,10 @@ const StyledHeader = styled(Header)`
   position: sticky;
   top: 0;
   z-index: 10;
+  
+  @media (max-width: 768px) {
+    padding: 0 16px;
+  }
 `;
 
 const HeaderLeft = styled.div`
@@ -85,9 +101,11 @@ const StyledContent = styled(Content)`
   min-height: calc(100vh - 64px);
   overflow-x: auto;
   width: 100%;
+  transition: margin-left 0.3s ease;
   
   @media (max-width: 768px) {
     padding: 8px;
+    margin-left: 0;
   }
 `;
 
@@ -107,6 +125,28 @@ const UserInfo = styled.div`
   .username {
     font-weight: 500;
   }
+  
+  @media (max-width: 768px) {
+    padding: 4px 8px;
+    gap: 4px;
+  }
+`;
+
+const MobileMenuOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: none;
+  
+  @media (max-width: 768px) {
+    &.visible {
+      display: block;
+    }
+  }
 `;
 
 interface AdminLayoutProps {
@@ -115,6 +155,7 @@ interface AdminLayoutProps {
 
 const AdminLayout: React.FC<AdminLayoutProps> = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const {
@@ -124,6 +165,33 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
   const dispatch = useAppDispatch();
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const [logoutMutation] = useLogoutMutation();
+
+  // 检测是否为移动设备并设置默认折叠状态
+  useEffect(() => {
+    const checkIsMobile = () => {
+      return window.innerWidth <= 768;
+    };
+
+    // 设置初始折叠状态
+    const isMobile = checkIsMobile();
+    setCollapsed(isMobile);
+    setMobileMenuVisible(false);
+
+    // 监听窗口大小变化
+    const handleResize = () => {
+      const isMobile = checkIsMobile();
+      setCollapsed(isMobile);
+      if (!isMobile) {
+        setMobileMenuVisible(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   // 恢复认证状态
   useEffect(() => {
@@ -217,6 +285,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
       '/admin/works': '作品管理',
       '/admin/contacts': '联系人管理',
       '/admin/settings': '系统设置',
+      '/admin/issues': 'bug管理',
     };
 
     const pathSegments = location.pathname.split('/').filter(Boolean);
@@ -240,6 +309,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
   // 处理菜单点击
   const handleMenuClick = ({ key }: { key: string }) => {
     navigate(key);
+    // 在移动设备上点击菜单后隐藏菜单
+    if (window.innerWidth <= 768) {
+      setMobileMenuVisible(false);
+    }
   };
 
   // 处理登出
@@ -296,15 +369,28 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
     },
   ];
 
+  // 切换移动端菜单显示状态
+  const toggleMobileMenu = () => {
+    setMobileMenuVisible(!mobileMenuVisible);
+  };
+
+  // 隐藏移动端菜单
+  const hideMobileMenu = () => {
+    setMobileMenuVisible(false);
+  };
+
+  // 检查是否为移动设备
+  const isMobile = window.innerWidth <= 768;
 
   return (
     <StyledLayout>
       <StyledSider
         trigger={null}
         collapsible
-        collapsed={collapsed}
+        collapsed={isMobile ? !mobileMenuVisible : collapsed}
         theme="dark"
         width={256}
+        className={isMobile && !mobileMenuVisible ? 'mobile-collapsed' : ''}
       >
         <Logo className={collapsed ? 'collapsed' : ''}>
           {collapsed ? 'LH' : '婚礼主持俱乐部'}
@@ -320,13 +406,19 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
         />
       </StyledSider>
 
+      {/* 移动端菜单遮罩层 */}
+      <MobileMenuOverlay
+        className={mobileMenuVisible && isMobile ? 'visible' : ''}
+        onClick={hideMobileMenu}
+      />
+
       <Layout>
         <StyledHeader style={{ background: colorBgContainer }}>
           <HeaderLeft>
             <Button
               type="text"
-              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-              onClick={() => setCollapsed(!collapsed)}
+              icon={isMobile && mobileMenuVisible ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+              onClick={toggleMobileMenu}
               style={{
                 fontSize: '16px',
                 width: 64,

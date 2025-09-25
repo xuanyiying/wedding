@@ -64,7 +64,8 @@ const ClientLayout: React.FC = () => {
 
   // 使用配置数据或默认值
   const siteName = siteSettings?.name || '婚礼服务平台';
-  const logoUrl = siteSettings?.logo || './assets/images/logo.png';
+  // 修改默认logo路径为public目录下的路径
+  const logoUrl = siteSettings?.logo || '/assets/images/logo.png';
 
   return (
     <StyledLayout>
