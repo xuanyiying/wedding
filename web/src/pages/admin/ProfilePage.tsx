@@ -12,8 +12,6 @@ import {
   UserOutlined,
   PictureOutlined,
   GlobalOutlined,
-  EyeOutlined,
-  EyeInvisibleOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { userService, profileService } from '../../services';
@@ -285,7 +283,6 @@ const ProfilePage: React.FC = () => {
 
   const [saving, setSaving] = useState(false);
   const [isPublicProfilePublished, setIsPublicProfilePublished] = useState(false);
-  const [socialLinksVisible, setSocialLinksVisible] = useState(true);
 
   // 处理媒体文件数据，将嵌套的file对象属性合并到mediaFile中
   const processMediaFiles = (mediaFiles: any[]): MediaFile[] => {
@@ -586,137 +583,6 @@ const ProfilePage: React.FC = () => {
                     <p style={{ color: '#666', lineHeight: '1.6' }}>{currentUser.bio}</p>
                   </div>
                 )}
-
-                {/* 社交媒体 */}
-                {((currentUser?.socialLinks && Object.keys(currentUser.socialLinks).length > 0) || true) && (
-                  <div className="section">
-                    <div className="section-title" style={{ justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <GlobalOutlined />
-                        社交媒体
-                      </div>
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={socialLinksVisible ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-                        onClick={() => setSocialLinksVisible(!socialLinksVisible)}
-                        style={{
-                          color: '#666',
-                          padding: '4px 8px',
-                          height: 'auto',
-                          minWidth: 'auto',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                        title={socialLinksVisible ? '隐藏社交媒体' : '显示社交媒体'}
-                      />
-                    </div>
-                    {socialLinksVisible && (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-                        {currentUser?.socialLinks && Object.keys(currentUser.socialLinks).length > 0 ? (
-                          Object.entries(currentUser.socialLinks).map(([platform, url]) => {
-                            const linkUrl = typeof url === 'string' ? url : (url as any)?.value || '';
-                            return (
-                              <a
-                                key={platform}
-                                href={linkUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '6px',
-                                  padding: '6px 12px',
-                                  background: '#f5f5f5',
-                                  borderRadius: '16px',
-                                  color: '#666',
-                                  textDecoration: 'none',
-                                  fontSize: '14px',
-                                  transition: 'all 0.3s'
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = '#e6f7ff';
-                                  e.currentTarget.style.color = '#1890ff';
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = '#f5f5f5';
-                                  e.currentTarget.style.color = '#666';
-                                }}
-                              >
-                                <GlobalOutlined />
-                                {platform}
-                              </a>
-                            );
-                          })
-                        ) : (
-                          // 测试数据 - 当用户没有社交媒体数据时显示
-                          <>
-                            <a
-                              href="#"
-                              onClick={(e) => e.preventDefault()}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                padding: '6px 12px',
-                                background: '#f5f5f5',
-                                borderRadius: '16px',
-                                color: '#666',
-                                textDecoration: 'none',
-                                fontSize: '14px',
-                                transition: 'all 0.3s'
-                              }}
-                            >
-                              <GlobalOutlined />
-                              微信
-                            </a>
-                            <a
-                              href="#"
-                              onClick={(e) => e.preventDefault()}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                padding: '6px 12px',
-                                background: '#f5f5f5',
-                                borderRadius: '16px',
-                                color: '#666',
-                                textDecoration: 'none',
-                                fontSize: '14px',
-                                transition: 'all 0.3s'
-                              }}
-                            >
-                              <GlobalOutlined />
-                              微博
-                            </a>
-                            <a
-                              href="#"
-                              onClick={(e) => e.preventDefault()}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                padding: '6px 12px',
-                                background: '#f5f5f5',
-                                borderRadius: '16px',
-                                color: '#666',
-                                textDecoration: 'none',
-                                fontSize: '14px',
-                                transition: 'all 0.3s'
-                              }}
-                            >
-                              <GlobalOutlined />
-                              抖音
-                            </a>
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-
 
                 {/* 作品展示 */}
                 <div className="section">

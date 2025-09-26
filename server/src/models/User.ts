@@ -58,6 +58,7 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public location?: string;
   public contactInfo?: any;
   public socialLinks?: any;
+  public hideSocialLinks?: boolean;
   public lastLoginAt?: Date;
   public lastLoginIp?: string;
   public emailVerifiedAt?: Date;
@@ -173,6 +174,12 @@ export const initUser = (sequelize: Sequelize): void => {
         type: DataTypes.JSON,
         field: 'social_links',
         comment: '社交媒体链接',
+      },
+      hideSocialLinks: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        field: 'hide_social_links',
+        comment: '是否隐藏社交媒体链接',
       },
       lastLoginAt: {
         type: DataTypes.DATE,
