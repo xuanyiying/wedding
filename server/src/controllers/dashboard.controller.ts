@@ -169,6 +169,25 @@ export const getScheduleStats = async (
   }
 };
 
+export const getTodayScheduleStats = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.user?.id || undefined;
+
+    const stats = await DashboardService.getTodayScheduleStats({
+      userId,
+    });
+
+    Resp.success(res, stats, '获取今日档期统计成功');
+  } catch (error) {
+    logger.error('获取今日档期统计失败:', error);
+    next(error);
+  }
+};
+
 export const getPerformanceMetrics = async (
   req: AuthenticatedRequest,
   res: Response,

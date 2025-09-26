@@ -333,6 +333,44 @@ export const dashboardService = {
   }>>> => {
     return http.get('/dashboard/revenue', { params });
   },
+
+  // 获取今日档期统计
+  getTodayScheduleStats: (): Promise<ApiResponse<{
+    totalSchedules: number;
+    teamSchedules: number;
+    personalSchedules: number;
+    statusStats: {
+      available: number;
+      booked: number;
+      reserve: number;
+      completed: number;
+      cancelled: number;
+    };
+    teamPercentage: number;
+    personalPercentage: number;
+    scheduleList: Array<{
+      id: string;
+      title: string;
+      status: string;
+      startTime: string;
+      endTime: string;
+      location: string;
+      eventType: string;
+      weddingTime: string;
+      user: {
+        id: string;
+        name: string;
+        avatar: string;
+      };
+      customer: {
+        id: string;
+        name: string;
+      };
+    }>;
+    date: string;
+  }>> => {
+    return http.get('/dashboard/today-schedule-stats');
+  },
 };
 
 // 作品展示相关API

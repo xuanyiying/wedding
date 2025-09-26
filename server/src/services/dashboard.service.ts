@@ -1,7 +1,7 @@
 import { Op, WhereOptions } from 'sequelize';
-import { Schedule, User, Work } from '../models';
+import { Schedule, User, Work, Team, TeamMember } from '../models';
 import { logger } from '../utils/logger';
-import { ScheduleStatus } from '../types';
+import { ScheduleStatus, TeamStatus, TeamMemberStatus } from '../types';
 
 interface DashboardStatsParams {
   startDate?: string;
@@ -735,6 +735,144 @@ export class DashboardService {
       };
     } catch (error) {
       logger.error('获取档期统计失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 获取今日档期统计
+   */
+  static async getTodayScheduleStats(params: DashboardStatsParams = {}) {
+    try {
+      const { userId } = params;
+
+      // 获取今日日期范围
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const where: WhereOptions = {
+        weddingDate: {
+          [Op.gte]: today,
+          [Op.lt]: tomorrow,
+        },
+      };
+
+      if (userId) {
+        where.userId = userId;
+      }
+
+      // 获取今日总档期数量
+      const totalSchedules = await Schedule.count({ where });
+
+      // 获取今日团队档期数量（通过关联团队表查询）
+      const teamSchedules = await Schedule.count({
+        where,
+        include: [
+          {
+            model: User,
+            as: 'user',
+            include: [
+              {
+                model: TeamMember,
+                as: 'teamMemberships',
+                required: true, // 必须有团队成员关联
+                where: {
+                  status: TeamMemberStatus.ACTIVE,
+                },
+                include: [
+                  {
+                    model: Team,
+                    as: 'team',
+                    where: {
+                      status: TeamStatus.ACTIVE,
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      // 获取今日个人档期数量（总数减去团队档期）
+      const personalSchedules = totalSchedules - teamSchedules;
+
+      // 获取今日各状态档期统计
+      const [availableCount, bookedCount, reserveCount, completedCount, cancelledCount] = await Promise.all([
+        Schedule.count({ where: { ...where, status: ScheduleStatus.AVAILABLE } }),
+        Schedule.count({ where: { ...where, status: ScheduleStatus.BOOKED } }),
+        Schedule.count({ where: { ...where, status: ScheduleStatus.RESERVE } }),
+        Schedule.count({ where: { ...where, status: ScheduleStatus.COMPLETED } }),
+        Schedule.count({ where: { ...where, status: ScheduleStatus.CANCELLED } }),
+      ]);
+
+      // 获取今日档期详细列表（可选，用于展示详情）
+      const todayScheduleList = await Schedule.findAll({
+        where,
+        include: [
+          {
+            model: User,
+            as: 'user',
+            attributes: ['id', 'username', 'realName', 'avatarUrl'],
+          },
+          {
+            model: User,
+            as: 'customer',
+            attributes: ['id', 'username', 'realName'],
+            required: false,
+          },
+        ],
+        order: [['weddingTime', 'ASC']],
+        limit: 10, // 限制返回数量，避免数据过多
+      });
+
+      return {
+        // 基础统计
+        totalSchedules,
+        teamSchedules,
+        personalSchedules,
+        
+        // 状态统计
+        statusStats: {
+          available: availableCount,
+          booked: bookedCount,
+          reserve: reserveCount,
+          completed: completedCount,
+          cancelled: cancelledCount,
+        },
+
+        // 占比计算
+        teamPercentage: totalSchedules > 0 ? Math.round((teamSchedules / totalSchedules) * 100) : 0,
+        personalPercentage: totalSchedules > 0 ? Math.round((personalSchedules / totalSchedules) * 100) : 0,
+
+        // 今日档期列表
+        scheduleList: todayScheduleList.map((schedule: any) => ({
+          id: schedule.id,
+          title: schedule.title,
+          status: schedule.status,
+          startTime: schedule.startTime,
+          endTime: schedule.endTime,
+          location: schedule.location,
+          eventType: schedule.eventType,
+          weddingTime: schedule.weddingTime,
+          user: {
+            id: schedule.user?.id,
+            name: schedule.user?.realName || schedule.user?.username,
+            avatar: schedule.user?.avatarUrl,
+          },
+          customer: {
+            id: schedule.customer?.id,
+            name: schedule.customer?.realName || schedule.customer?.username || schedule.customerName,
+          },
+        })),
+
+        // 统计日期
+        date: today.toISOString().split('T')[0],
+      };
+    } catch (error) {
+      logger.error('获取今日档期统计失败:', error);
       throw error;
     }
   }
