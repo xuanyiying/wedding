@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ConfigProvider, App as AntdApp } from 'antd';
 import { Provider } from 'react-redux';
 import zhCN from 'antd/locale/zh_CN';
+import { TransitionGroup, CSSTransition } from 'react-transition-group';
 
 import './App.css';
 import { store } from './store';
@@ -117,38 +118,50 @@ function AppContent() {
   return (
     <Router>
       <AppInitializer />
-      <Routes>
-        {/* 前台展示系统路由 */}
-        <Route path="/" element={<ClientLayout />}>
-          <Route index element={<HomePage />} />
-          <Route path="team" element={<TeamPage />} />
-          <Route path="team/:id" element={<TeamPage />} />
-          <Route path="works" element={<WorksPage />} />
-          <Route path="works/:id" element={<WorkDetailPage />} />
-          <Route path="schedule" element={<SchedulePage />} />
-          <Route path="contact" element={<ContactPage />} />
-        </Route>
-
-        {/* 后台管理系统路由 */}
-        <Route path="/admin/login" element={<LoginPage />} />
-        <Route path="/admin/change-password" element={<ChangePasswordPage />} />
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="users" element={<UsersPage />} />
-          <Route path="team-manage" element={<TeamManagePage />} />
-          <Route path="schedules" element={<AdminSchedulesPage />} />
-          <Route path="works" element={<AdminWorksPage />} />
-          <Route path="contacts" element={<ContactsPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path="issues" element={<IssuesPage />} />
-        </Route>
-
-        {/* 404 重定向 */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <AnimatedRoutes />
     </Router>
+  );
+}
+
+function AnimatedRoutes() {
+  const location = useLocation();
+
+  return (
+    <TransitionGroup>
+      <CSSTransition key={location.key} classNames="fade" timeout={300}>
+        <Routes location={location}>
+          {/* 前台展示系统路由 */}
+          <Route path="/" element={<ClientLayout />}>
+            <Route index element={<HomePage />} />
+            <Route path="team" element={<TeamPage />} />
+            <Route path="team/:id" element={<TeamPage />} />
+            <Route path="works" element={<WorksPage />} />
+            <Route path="works/:id" element={<WorkDetailPage />} />
+            <Route path="schedule" element={<SchedulePage />} />
+            <Route path="contact" element={<ContactPage />} />
+          </Route>
+
+          {/* 后台管理系统路由 */}
+          <Route path="/admin/login" element={<LoginPage />} />
+          <Route path="/admin/change-password" element={<ChangePasswordPage />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="profile" element={<ProfilePage />} />
+            <Route path="users" element={<UsersPage />} />
+            <Route path="team-manage" element={<TeamManagePage />} />
+            <Route path="schedules" element={<AdminSchedulesPage />} />
+            <Route path="works" element={<AdminWorksPage />} />
+            <Route path="contacts" element={<ContactsPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="issues" element={<IssuesPage />} />
+          </Route>
+
+          {/* 404 重定向 */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </CSSTransition>
+    </TransitionGroup>
   );
 }
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { Layout, Row, Col, Space, Divider } from 'antd';
 import styled from 'styled-components';
 import useAppSettings from '../../hooks/useAppSettings';
+import { Link } from 'react-router-dom';
 
 const { Footer } = Layout;
 
@@ -95,10 +96,10 @@ const ClientFooter: React.FC = () => {
             <VerticalCenterContainer>
               <FooterSection>
                 <h3>快速链接</h3>
-                <p><a href="/team">团队介绍</a></p>
-                <p><a href="/works">作品展示</a></p>
-                <p><a href="/schedule">档期查询</a></p>
-                <p><a href="/contact">联系我们</a></p>
+                <p><Link to="/team">团队介绍</Link></p>
+                <p><Link to="/works">作品展示</Link></p>
+                <p><Link to="/schedule">档期查询</Link></p>
+                <p><Link to="/contact">联系我们</Link></p>
               </FooterSection>
             </VerticalCenterContainer>
           </Col>
