@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Layout, Menu, Button, Drawer } from 'antd';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { MenuOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import { ThemeMode } from '../../types';
@@ -52,7 +52,16 @@ const LogoContainer = styled.div`
   justify-content: center;
   margin-right: 24px;
   height: 100%;
-  cursor: pointer; // 添加指针样式
+  cursor: pointer;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.02);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
 `;
 
 const LogoWrapper = styled.div`
@@ -134,7 +143,7 @@ const StyledMenu = styled(Menu)`
   .ant-menu-item {
     color: var(--client-text-primary);
     font-weight: 500;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease; /* 减少过渡时间提高响应速度 */
     position: relative;
     padding: 8px 16px;
     border-radius: var(--client-border-radius);
@@ -143,17 +152,27 @@ const StyledMenu = styled(Menu)`
     line-height: normal;
     display: flex;
     align-items: center;
-    border-bottom: none; /* 移除底部边框 */
+    border-bottom: none;
     
     &:hover {
       color: var(--client-primary-color);
       background: var(--client-interaction-hover);
+      transform: translateY(-1px); /* 添加微妙的悬停效果 */
+    }
+    
+    &:active {
+      transform: translateY(0); /* 点击时的反馈 */
     }
     
     &.ant-menu-item-selected {
       color: var(--client-text-inverse);
       background: var(--client-primary-color);
-      border-bottom: none; /* 移除选中项的底部边框 */
+      border-bottom: none;
+      
+      &:hover {
+        background: var(--client-primary-color);
+        opacity: 0.9;
+      }
     }
   }
 
@@ -168,11 +187,18 @@ const StyledMenu = styled(Menu)`
       padding: 6px 12px;
       font-size: 14px;
       white-space: nowrap;
-      border-bottom: none; /* 移除移动端底部边框 */
+      border-bottom: none;
+      transition: all 0.1s ease; /* 移动端更快的响应 */
+      
+      /* 修复移动端文字显示问题 */
+      span {
+        display: block;
+        width: 100%;
+        text-align: center;
+      }
     }
   }
 `;
-
 
 const MobileMenuButton = styled(Button)`
   display: none;
@@ -183,7 +209,7 @@ const MobileMenuButton = styled(Button)`
   height: 40px;
   
   @media (max-width: 768px) {
-    display: none; /* 隐藏汉堡菜单按钮，因为菜单现在固定显示 */
+    display: none; /* 保持隐藏状态 */
   }
 `;
 
@@ -193,38 +219,54 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
   const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
   const { settings, loading } = useAppSettings();
 
+  // 使用 useCallback 优化性能
+  const handleLogoClick = useCallback(() => {
+    if (location.pathname === '/') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      navigate('/');
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 50); // 减少延迟时间
+    }
+  }, [location.pathname, navigate]);
+
+  // 优化菜单点击处理
+  const handleMenuClick = useCallback((path: string, sectionId?: string) => {
+    // 立即响应，不等待异步操作
+    if (location.pathname === '/' && sectionId) {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        if (sectionId === 'hero') {
+          scrollToTop();
+        } else {
+          scrollToElement(sectionId, 64);
+        }
+        return;
+      }
+    }
+
+    // 页面导航
+    if (path !== location.pathname) {
+      navigate(path);
+    }
+  }, [location.pathname, navigate]);
+
   // 处理加载状态
   if (loading) {
     return (
       <StyledHeader>
         <NavContainer>
-          <Link to="/" style={{ textDecoration: 'none' }}>
-            <LogoContainer>
-              <LogoWrapper>
-                {logoUrl ? <LogoImage src={logoUrl} alt="site logo" /> : <LogoIcon> </LogoIcon>}
-              </LogoWrapper>
-              <SiteName>{siteName || '陆合·合悦'}</SiteName>
-            </LogoContainer>
-          </Link>
+          <LogoContainer onClick={handleLogoClick}>
+            <LogoWrapper>
+              {logoUrl ? <LogoImage src={logoUrl} alt="site logo" /> : <LogoIcon> </LogoIcon>}
+            </LogoWrapper>
+            <SiteName>{siteName || '陆合·合悦'}</SiteName>
+          </LogoContainer>
         </NavContainer>
       </StyledHeader>
     );
   }
-
-  // 点击logo时返回首页并滚动到顶部
-  const handleLogoClick = () => {
-    if (location.pathname === '/') {
-      // 如果已经在首页，滚动到顶部
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      // 如果不在首页，导航到首页并滚动到顶部
-      navigate('/');
-      // 延迟滚动到顶部，确保页面已加载
-      setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }, 100);
-    }
-  };
 
   // 默认菜单项
   const defaultMenuItems = [
@@ -235,10 +277,9 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
     { key: '/contact', label: '联系', path: '/contact', sectionId: 'contact', visible: true, order: 5 },
   ];
 
-  // 根据homepageSections的可见性过滤菜单项
+  // 根据设置过滤菜单项
   const menuItems = defaultMenuItems
     .filter(item => {
-      // 否则根据homepageSections的visible属性判断
       if (settings?.homepage) {
         switch (item.sectionId) {
           case 'hero':
@@ -264,27 +305,6 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
       sectionId: item.sectionId
     }));
 
-  // 处理菜单点击
-  const handleMenuClick = (path: string, sectionId?: string) => {
-    // 如果当前在首页且目标section存在，则滚动到对应section
-    if (location.pathname === '/' && sectionId) {
-      const element = document.getElementById(sectionId);
-      if (element) {
-        if (sectionId === 'hero') {
-          scrollToTop();
-        } else {
-          scrollToElement(sectionId, 64);
-        }
-        return;
-      }
-    }
-
-    // 否则导航到对应页面
-    if (path !== location.pathname) {
-      navigate(path);
-    }
-  };
-
   const sectionToPath: Record<string, string> = {
     hero: '/',
     team: '/team',
@@ -295,31 +315,26 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
 
   // 优化导航高亮逻辑
   const getSelectedKey = () => {
-    // 如果在首页且有activeSection，根据section映射到对应的菜单项
     if (location.pathname === '/' && activeSection) {
       const mappedPath = sectionToPath[activeSection];
       return menuItems.find(item => item.key === mappedPath)?.key || '/';
     }
-
-    // 非首页或没有activeSection时，使用当前路径
     return menuItems.find(item => item.key === location.pathname)?.key || '/';
   };
 
   const selectedKey = getSelectedKey();
 
-  // 如果没有可见的菜单项，不渲染导航菜单
+  // 如果没有可见的菜单项，只显示logo
   if (menuItems.length === 0) {
     return (
       <StyledHeader>
         <NavContainer>
-          <Link to="/" style={{ textDecoration: 'none' }}>
-            <LogoContainer>
-              <LogoWrapper>
-                {logoUrl ? <LogoImage src={logoUrl} alt="site logo" /> : <LogoIcon> </LogoIcon>}
-              </LogoWrapper>
-              <SiteName>{siteName || '陆合·合悦'}</SiteName>
-            </LogoContainer>
-          </Link>
+          <LogoContainer onClick={handleLogoClick}>
+            <LogoWrapper>
+              {logoUrl ? <LogoImage src={logoUrl} alt="site logo" /> : <LogoIcon> </LogoIcon>}
+            </LogoWrapper>
+            <SiteName>{siteName || '陆合·合悦'}</SiteName>
+          </LogoContainer>
         </NavContainer>
       </StyledHeader>
     );
@@ -328,7 +343,6 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
   return (
     <StyledHeader>
       <NavContainer>
-        {/* 修改LogoContainer，添加onClick事件 */}
         <LogoContainer onClick={handleLogoClick}>
           <LogoWrapper>
             {logoUrl ? <LogoImage src={logoUrl} alt="site logo" /> : <LogoIcon> </LogoIcon>}
@@ -345,9 +359,14 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
               <span
                 onClick={(e) => {
                   e.preventDefault();
+                  e.stopPropagation();
                   handleMenuClick(item.key, item.sectionId);
                 }}
-                style={{ cursor: 'pointer' }}
+                style={{ 
+                  cursor: 'pointer',
+                  display: 'block',
+                  width: '100%'
+                }}
               >
                 {item.label}
               </span>
