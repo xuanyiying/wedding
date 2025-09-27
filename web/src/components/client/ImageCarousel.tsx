@@ -71,7 +71,7 @@ const ArrowButton = styled.button<{ direction: 'left' | 'right' }>`
   }
 `;
 
-const DotsContainer = styled.div`
+const ThumbnailsContainer = styled.div`
   position: absolute;
   bottom: 12px;
   left: 50%;
@@ -81,20 +81,23 @@ const DotsContainer = styled.div`
   z-index: 2;
 `;
 
-const Dot = styled.button.withConfig({
+const Thumbnail = styled.button.withConfig({
   shouldForwardProp: (prop) => prop !== 'active'
-})<{ active: boolean }>`
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  border: none;
-  background: ${props => props.active ? 'white' : 'rgba(255, 255, 255, 0.5)'};
+})<{ active: boolean; image: string }>`
+  width: 60px;
+  height: 40px;
+  border-radius: 4px;
+  border: ${props => props.active ? '2px solid white' : '2px solid rgba(255, 255, 255, 0.5)'};
+  background-image: url(${props => props.image});
+  background-size: cover;
+  background-position: center;
   cursor: pointer;
   transition: all 0.2s ease;
+  overflow: hidden;
   
   &:hover {
-    background: white;
-    transform: scale(1.2);
+    border-color: white;
+    transform: scale(1.1);
   }
 `;
 
@@ -222,15 +225,16 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
         )}
 
         {showDots && (
-          <DotsContainer>
-            {images.map((_, index) => (
-              <Dot
+          <ThumbnailsContainer>
+            {images.map((image, index) => (
+              <Thumbnail
                 key={index}
                 active={index === currentIndex}
+                image={image}
                 onClick={(e) => goToSlide(index, e)}
               />
             ))}
-          </DotsContainer>
+          </ThumbnailsContainer>
         )}
 
         <ImageCount>
