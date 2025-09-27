@@ -28,8 +28,8 @@ const StyledHeader = styled(Header)`
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--client-border-color);
   box-shadow: var(--client-shadow-sm);
-  padding: 0 32px;
-  height: 64px;
+  padding: 0 16px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -41,7 +41,7 @@ const StyledHeader = styled(Header)`
   }
 
   @media (max-width: 768px) {
-    padding: 0 16px;
+    padding: 0 8px;
   }
 `;
 
@@ -50,7 +50,7 @@ const LogoContainer = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-right: 24px;
+  margin-right: 12px;
   height: 100%;
   cursor: pointer;
   transition: transform 0.2s ease;
@@ -103,7 +103,7 @@ const NavContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 8px;
   flex: 1;
   max-width: 800px;
   margin: 0 auto;
@@ -145,7 +145,7 @@ const StyledMenu = styled(Menu)`
     font-weight: 500;
     transition: all 0.15s ease; /* 减少过渡时间提高响应速度 */
     position: relative;
-    padding: 8px 16px;
+    padding: 8px 12px;
     border-radius: var(--client-border-radius);
     font-size: 15px;
     height: auto;

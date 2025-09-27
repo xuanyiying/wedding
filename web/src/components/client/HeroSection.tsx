@@ -13,9 +13,9 @@ interface HeroSectionProps {
 
 // Hero Section Styles
 const HeroContainer = styled.section<{
-  backgroundImage?: string;
+  $backgroundImage?: string;
 }>`
-  background: ${({ backgroundImage }) => (backgroundImage ? `url(${backgroundImage})` : 'var(--client-gradient-hero)')};
+  background: ${({ $backgroundImage }) => ($backgroundImage ? `url(${$backgroundImage})` : 'var(--client-gradient-hero)')};
   background-size: cover;
   background-position: center;
   min-height: 100vh;
@@ -58,6 +58,7 @@ const HeroContainer = styled.section<{
 
   @media (max-width: 768px) {
     padding: 100px 16px 60px;
+    background-attachment: scroll; /* 确保移动设备上背景图片随滚动移动 */
   }
 `;
 
@@ -117,7 +118,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   backgroundImage
 }) => {
   return (
-    <HeroContainer className={className} id="hero" backgroundImage={backgroundImage}>
+    <HeroContainer className={className} id="hero" $backgroundImage={backgroundImage}>
       <HeroContent>
         <HeroTitle level={1}>{title}</HeroTitle>
         <HeroDescription>

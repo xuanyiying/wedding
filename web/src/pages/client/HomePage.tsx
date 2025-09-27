@@ -143,6 +143,11 @@ const HomePage: React.FC = () => {
   const scheduleSectionSettings = settings?.homepage?.schedule;
   const contactSectionSettings = settings?.homepage?.contact;
 
+  // Clean up the backgroundImage URL by removing backticks and trimming whitespace
+  const heroBackgroundImage = heroSectionSettings?.backgroundImage
+    ? heroSectionSettings.backgroundImage.replace(/`/g, '').trim()
+    : undefined;
+
   // 安全访问设置属性
   const teamSection = settings?.homepage?.team;
   const teamShowcaseSection = settings?.homepage?.teamShowcase;
@@ -167,6 +172,7 @@ const HomePage: React.FC = () => {
           <HeroSection
             title={heroSectionSettings?.title || '完美婚礼，从这里开始'}
             description={heroSectionSettings?.description || '专业的婚礼策划团队，为您打造独一无二的梦想婚礼'}
+            backgroundImage={heroBackgroundImage}
           />
         </HeroSectionWrapper>
       )}
