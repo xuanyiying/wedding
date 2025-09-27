@@ -8,7 +8,7 @@ export const fileValidators = {
       fileType: Joi.string()
         .valid(...Object.values(FileType))
         .required(),
-      category: Joi.string().valid(...Object.values(FileType)).optional(),
+      category: Joi.string().valid(...Object.values(FileCategory)).optional(),
       description: Joi.string().trim().max(500).optional(),
     }),
   },

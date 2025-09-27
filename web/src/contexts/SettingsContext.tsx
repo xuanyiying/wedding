@@ -97,7 +97,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
         .then(r => console.log("SettingsProvider: 初始化获取设置成功", r))
         .catch(err => console.error("SettingsProvider: 初始化获取设置失败", err));
     }
-  }, [fetchSettings]); // 只在组件挂载时执行一次
+  }, []); // 只在组件挂载时执行一次，移除fetchSettings依赖项
 
   const refetch = useCallback(async () => {
     try {

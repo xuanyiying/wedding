@@ -3,13 +3,12 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { ConfigProvider, App as AntdApp } from 'antd';
 import { Provider } from 'react-redux';
 import zhCN from 'antd/locale/zh_CN';
-import { TransitionGroup, CSSTransition } from 'react-transition-group';
 
 import './App.css';
 import { store } from './store';
+import { useAppSettings } from './hooks/useAppSettings';
 import { useAuthInit } from './hooks/useAuthInit';
 import { setMessageApi } from './utils/request';
-import { settingsService } from './services';
 import { updateFavicon } from './utils/faviconUtils';
 import AdminLayout from './components/AdminLayout';
 import ClientLayout from './components/layout/ClientLayout';
@@ -30,7 +29,7 @@ import TeamManagePage from './pages/admin/TeamManagePage';
 import ProfilePage from './pages/admin/ProfilePage';
 import ContactsPage from './pages/admin/ContactsPage';
 import IssuesPage from './pages/admin/IssuesPage';
-import { SettingsProvider } from './contexts/SettingsContext'; // 导入SettingsProvider
+import { SettingsProvider } from './contexts/SettingsContext';
 
 // Ant Design 主题配置
 const theme = {
@@ -59,49 +58,42 @@ const theme = {
 function AppInitializer() {
   // 使用认证初始化Hook
   useAuthInit();
+  
+  const { settings } = useAppSettings();
 
-  // 应用全局配置
+  // 应用全局配置 - 使用SettingsContext中的数据，避免重复请求
   useEffect(() => {
-    const applySiteConfig = async () => {
-      try {
-        const response = await settingsService.getSiteSettings();
-        const config = response.data;
+    if (settings) {
+      const config = settings;
 
-        if (config) {
-          // 应用网站标题
-          if (config.name) {
-            document.title = config.name;
-          }
-
-          // 应用favicon
-          if (config.favicon) {
-            updateFavicon({
-              url: config.favicon,
-              type: config.favicon.endsWith('.png') ? 'image/png' : 'image/x-icon',
-              preventCache: true
-            });
-          }
-
-          // 应用meta描述
-          if (config.description) {
-            let metaDescription = document.querySelector('meta[name="description"]') as HTMLMetaElement;
-            if (metaDescription) {
-              metaDescription.content = config.description;
-            } else {
-              metaDescription = document.createElement('meta');
-              metaDescription.name = 'description';
-              metaDescription.content = config.description;
-              document.head.appendChild(metaDescription);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load site config:', error);
+      // 应用网站标题
+      if (config.site?.name) {
+        document.title = config.site.name;
       }
-    };
 
-    applySiteConfig();
-  }, []);
+      // 应用favicon
+      if (config.site?.favicon) {
+        updateFavicon({
+          url: config.site.favicon,
+          type: config.site.favicon.endsWith('.png') ? 'image/png' : 'image/x-icon',
+          preventCache: true
+        });
+      }
+
+      // 应用meta描述
+      if (config.site?.description) {
+        let metaDescription = document.querySelector('meta[name="description"]') as HTMLMetaElement;
+        if (metaDescription) {
+          metaDescription.content = config.site.description;
+        } else {
+          metaDescription = document.createElement('meta');
+          metaDescription.name = 'description';
+          metaDescription.content = config.site.description;
+          document.head.appendChild(metaDescription);
+        }
+      }
+    }
+  }, [settings]); // 只在settings变化时执行
 
   return null;
 }
@@ -127,41 +119,37 @@ function AnimatedRoutes() {
   const location = useLocation();
 
   return (
-    <TransitionGroup>
-      <CSSTransition key={location.key} classNames="fade" timeout={300}>
-        <Routes location={location}>
-          {/* 前台展示系统路由 */}
-          <Route path="/" element={<ClientLayout />}>
-            <Route index element={<HomePage />} />
-            <Route path="team" element={<TeamPage />} />
-            <Route path="team/:id" element={<TeamPage />} />
-            <Route path="works" element={<WorksPage />} />
-            <Route path="works/:id" element={<WorkDetailPage />} />
-            <Route path="schedule" element={<SchedulePage />} />
-            <Route path="contact" element={<ContactPage />} />
-          </Route>
+    <Routes location={location}>
+      {/* 前台展示系统路由 */}
+      <Route path="/" element={<ClientLayout />}>
+        <Route index element={<HomePage />} />
+        <Route path="team" element={<TeamPage />} />
+        <Route path="team/:id" element={<TeamPage />} />
+        <Route path="works" element={<WorksPage />} />
+        <Route path="works/:id" element={<WorkDetailPage />} />
+        <Route path="schedule" element={<SchedulePage />} />
+        <Route path="contact" element={<ContactPage />} />
+      </Route>
 
-          {/* 后台管理系统路由 */}
-          <Route path="/admin/login" element={<LoginPage />} />
-          <Route path="/admin/change-password" element={<ChangePasswordPage />} />
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="profile" element={<ProfilePage />} />
-            <Route path="users" element={<UsersPage />} />
-            <Route path="team-manage" element={<TeamManagePage />} />
-            <Route path="schedules" element={<AdminSchedulesPage />} />
-            <Route path="works" element={<AdminWorksPage />} />
-            <Route path="contacts" element={<ContactsPage />} />
-            <Route path="settings" element={<SettingsPage />} />
-            <Route path="issues" element={<IssuesPage />} />
-          </Route>
+      {/* 后台管理系统路由 */}
+      <Route path="/admin/login" element={<LoginPage />} />
+      <Route path="/admin/change-password" element={<ChangePasswordPage />} />
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="profile" element={<ProfilePage />} />
+        <Route path="users" element={<UsersPage />} />
+        <Route path="team-manage" element={<TeamManagePage />} />
+        <Route path="schedules" element={<AdminSchedulesPage />} />
+        <Route path="works" element={<AdminWorksPage />} />
+        <Route path="contacts" element={<ContactsPage />} />
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="issues" element={<IssuesPage />} />
+      </Route>
 
-          {/* 404 重定向 */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </CSSTransition>
-    </TransitionGroup>
+      {/* 404 重定向 */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 

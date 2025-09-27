@@ -79,6 +79,11 @@ const ClientFooter: React.FC = () => {
   const icp = settings?.site?.icp || '沪ICP备12345678号-1';
   const copyright = settings?.site?.copyright || '© 2024 陆合·合悦Club. 保留所有权利.';
 
+  const teamRef = React.useRef(null);
+  const worksRef = React.useRef(null);
+  const scheduleRef = React.useRef(null);
+  const contactRef = React.useRef(null);
+
   return (
     <StyledFooter>
       <FooterContainer>
@@ -96,10 +101,10 @@ const ClientFooter: React.FC = () => {
             <VerticalCenterContainer>
               <FooterSection>
                 <h3>快速链接</h3>
-                <p><Link to="/team">团队介绍</Link></p>
-                <p><Link to="/works">作品展示</Link></p>
-                <p><Link to="/schedule">档期查询</Link></p>
-                <p><Link to="/contact">联系我们</Link></p>
+                <p><Link to="/team" ref={teamRef}>团队介绍</Link></p>
+                <p><Link to="/works" ref={worksRef}>作品展示</Link></p>
+                <p><Link to="/schedule" ref={scheduleRef}>档期查询</Link></p>
+                <p><Link to="/contact" ref={contactRef}>联系我们</Link></p>
               </FooterSection>
             </VerticalCenterContainer>
           </Col>

@@ -39,7 +39,6 @@ const ImageItem = styled.div`
     width: 100%;
     height: 100%;
     object-fit: cover;
-    cursor: pointer;
   }
 `;
 
@@ -132,15 +131,18 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
   const [isHovered, setIsHovered] = useState(false);
 
-  const goToSlide = (index: number) => {
+  const goToSlide = (index: number, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setCurrentIndex(index);
   };
 
-  const goToPrevious = () => {
+  const goToPrevious = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setCurrentIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
   };
 
-  const goToNext = () => {
+  const goToNext = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setCurrentIndex(prev => (prev === images.length - 1 ? 0 : prev + 1));
   };
 
@@ -220,7 +222,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
               <Dot
                 key={index}
                 active={index === currentIndex}
-                onClick={() => goToSlide(index)}
+                onClick={(e) => goToSlide(index, e)}
               />
             ))}
           </DotsContainer>

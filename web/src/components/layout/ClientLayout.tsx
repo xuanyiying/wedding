@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Layout } from 'antd';
 import { useTheme } from '../../hooks/useTheme';
-import { settingsService } from '../../services/';
+import { useAppSettings } from '../../hooks/useAppSettings';
 import ClientHeader from './ClientHeader';
 import ClientFooter from './ClientFooter';
 import styled from 'styled-components';
@@ -22,50 +22,37 @@ const StyledContent = styled(Content)`
 const ClientLayout: React.FC = () => {
   const { themeMode, toggleThemeMode, initTheme, applyThemeSettings } = useTheme();
   const [activeSection, setActiveSection] = useState('hero');
-  const [siteSettings, setSiteSettings] = useState<any>(null);
+  const { settings, loading } = useAppSettings();
   const location = useLocation();
 
-  // 从服务器获取主题设置和网站设置
+  // 使用SettingsContext中的数据初始化主题
   useEffect(() => {
-    const loadSettings = async () => {
+    if (settings && !loading) {
       try {
-        // 获取网站设置
-        const siteResponse = await settingsService.getSiteSettings();
-        const siteData = siteResponse.data;
-
-        if (siteData) {
-          setSiteSettings(siteData);
-
-          // 应用主题设置
-          if (siteData.theme?.colors) {
-            initTheme('client', siteData.theme.darkMode ? 'dark' : 'light');
-            applyThemeSettings(siteData.theme);
-          } else {
-            // 如果没有配置，使用默认主题
-            initTheme('client', 'light');
-          }
+        // 应用主题设置
+        if (settings.theme?.colors) {
+          initTheme('client', settings.theme.darkMode ? 'dark' : 'light');
+          applyThemeSettings(settings.theme);
         } else {
           // 如果没有配置，使用默认主题
-          initTheme('client');
+          initTheme('client', 'light');
         }
       } catch (error) {
         console.error('Failed to load settings:', error);
         // 出错时使用默认主题
         initTheme('client');
       }
-    };
-
-    loadSettings();
-  }, [initTheme, applyThemeSettings]);
+    }
+  }, [settings, loading, initTheme, applyThemeSettings]);
 
   const toggleTheme = () => {
     toggleThemeMode();
   };
 
   // 使用配置数据或默认值
-  const siteName = siteSettings?.name || '婚礼服务平台';
+  const siteName = settings?.site?.name || '婚礼服务平台';
   // 修改默认logo路径为public目录下的路径
-  const logoUrl = siteSettings?.logo || '/assets/images/logo.png';
+  const logoUrl = settings?.site?.logo || '/assets/images/logo.png';
 
   return (
     <StyledLayout>

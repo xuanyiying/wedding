@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import * as IssueController from '../controllers/Issue.controller';
-import { createIssueValidator, updateIssueValidator, voteIssueValidator } from '../validators/IssueValidator';
+import { createIssueValidator, updateIssueValidator, voteIssueValidator } from '../validators/issue';
 import { authMiddleware } from '@/middlewares';
 
 const router = Router();
