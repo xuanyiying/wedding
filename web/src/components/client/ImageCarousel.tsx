@@ -174,6 +174,10 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
     setIsHovered(false);
   };
 
+  const handleContainerClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   // 如果没有图片，返回null
   if (!images || images.length === 0) {
     return null;
@@ -195,6 +199,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
       className={className}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onClick={handleContainerClick}
     >
       <CarouselContainer height={height}>
         <ImageContainer translateX={-currentIndex * 100}>
