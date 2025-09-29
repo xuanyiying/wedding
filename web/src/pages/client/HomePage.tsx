@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 
 import { type Team } from '../../types';
-import HeroSection from '../../components/client/HeroSection';
 import ShowcaseSection from '../../components/client/ShowcaseSection';
 import { useOutletContext } from 'react-router-dom';
 import WorksList from '../../components/client/WorksList';
@@ -18,6 +17,7 @@ import { applyThemeSettings } from '../../utils/themeUtils';
 import TeamMemberList from '../../components/client/TeamMemberList';
 import { useTeamData } from '../../hooks/useTeamData';
 import useAppSettings from '../../hooks/useAppSettings';
+// 移除HeroSection的导入，因为我们不再使用它
 
 interface OutletContextType {
   setActiveSection: (sectionId: string) => void;
@@ -36,8 +36,8 @@ const SectionWrapper = styled.section`
   
   /* 确保section有足够的高度用于滚动检测 */
   &:first-child {
-    padding-top: 0;
-    min-height: 100vh;
+    padding-top: 2rem; /* 减少顶部内边距，因为我们移除了HeroSection */
+    min-height: 60vh;
   }
   
   &:last-child {
@@ -50,7 +50,8 @@ const SectionWrapper = styled.section`
     min-height: 50vh;
     
     &:first-child {
-      min-height: 90vh;
+      min-height: 50vh;
+      padding-top: 2rem;
     }
     
     &:last-child {
@@ -60,11 +61,7 @@ const SectionWrapper = styled.section`
   }
 `;
 
-const HeroSectionWrapper = styled.section`
-  scroll-margin-top: 64px;
-  min-height: 100vh;
-  position: relative;
-`;
+// 移除HeroSectionWrapper，因为我们不再使用HeroSection
 
 const TeamSectionWrapper = styled.div`
   padding: 2rem 0;
@@ -138,15 +135,10 @@ const HomePage: React.FC = () => {
   }
 
   // 从新的设置结构中提取数据
-  const heroSectionSettings = settings?.homepage?.hero;
+  // 移除heroSectionSettings，因为我们不再使用HeroSection
   const portfolioSectionSettings = settings?.homepage?.portfolio;
   const scheduleSectionSettings = settings?.homepage?.schedule;
   const contactSectionSettings = settings?.homepage?.contact;
-
-  // Clean up the backgroundImage URL by removing backticks and trimming whitespace
-  const heroBackgroundImage = heroSectionSettings?.backgroundImage
-    ? heroSectionSettings.backgroundImage.replace(/`/g, '').trim()
-    : undefined;
 
   // 安全访问设置属性
   const teamSection = settings?.homepage?.team;
@@ -156,8 +148,7 @@ const HomePage: React.FC = () => {
     <PageContainer>
       <ScrollNavigation
         sections={[
-          { id: 'hero', path: '/' },
-          { id: 'team', path: '/team' },
+          { id: 'team', path: '/' }, // 首页直接显示团队部分
           { id: 'portfolio', path: '/works' },
           { id: 'schedule', path: '/schedule' },
           { id: 'contact', path: '/contact' }
@@ -166,40 +157,27 @@ const HomePage: React.FC = () => {
         headerHeight={64}
       />
 
-      {/* Hero Section */}
-      {settings?.homepage?.hero?.visible !== false && (
-        <HeroSectionWrapper id="hero">
-          <HeroSection
-            title={heroSectionSettings?.title || '完美婚礼，从这里开始'}
-            description={heroSectionSettings?.description || '专业的婚礼策划团队，为您打造独一无二的梦想婚礼'}
-            backgroundImage={heroBackgroundImage}
+      {/* Team Section - 首页直接显示团队部分 */}
+      <SectionWrapper id="team">
+        {!selectedTeam ? (
+          <TeamList
+            title={teamSection?.title || '我们的团队'}
+            description={teamSection?.description || '专业的婚礼策划团队，为您打造独一无二的梦想婚礼'}
+            onTeamSelect={handleTeamSelect}
           />
-        </HeroSectionWrapper>
-      )}
-
-      {/* Team Section */}
-      {teamSection?.visible !== false && (
-        <SectionWrapper id="team">
-          {!selectedTeam ? (
-            <TeamList
-              title={teamSection?.title || '我们的团队'}
-              description={teamSection?.description || '专业的婚礼策划团队，为您打造独一无二的梦想婚礼'}
-              onTeamSelect={handleTeamSelect}
+        ) : (
+          <TeamSectionWrapper>
+            <TeamMemberList
+              team={selectedTeam}
+              members={teamMembers}
+              loading={membersLoading}
+              onBack={handleBackToTeams}
+              onViewDetails={handleViewDetails}
+              onMemberClick={handleMemberClick}
             />
-          ) : (
-            <TeamSectionWrapper>
-              <TeamMemberList
-                team={selectedTeam}
-                members={teamMembers}
-                loading={membersLoading}
-                onBack={handleBackToTeams}
-                onViewDetails={handleViewDetails}
-                onMemberClick={handleMemberClick}
-              />
-            </TeamSectionWrapper>
-          )}
-        </SectionWrapper>
-      )}
+          </TeamSectionWrapper>
+        )}
+      </SectionWrapper>
 
       {/* Team Showcase */}
       {(teamShowcaseSection?.visible ?? true) !== false && selectedTeam && (
@@ -215,7 +193,7 @@ const HomePage: React.FC = () => {
       {settings?.homepage?.portfolio?.visible !== false && !selectedTeam && (
         <SectionWrapper id="portfolio">
           <ShowcaseSection
-            title={portfolioSectionSettings?.title || "精选作品"}
+            title={portfolioSectionSettings?.title || "精选案例"}
             moreText="查看更多作品"
             moreLink="/works"
             id="portfolio"
@@ -226,7 +204,7 @@ const HomePage: React.FC = () => {
       )}
 
       {/* Schedule Section */}
-      {settings?.homepage?.schedule?.visible !== false  && (
+      {settings?.homepage?.schedule?.visible !== false && (
         <SectionWrapper id="schedule">
           <ScheduleSection
             team={selectedTeam}

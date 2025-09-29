@@ -1,18 +1,19 @@
 #!/bin/bash
 
 # =============================================================================
-# Wedding Club 部署脚本 - 支持多环境部署
+# Wedding Club 部署脚本 - 支持多环境部署（优化版）
 # =============================================================================
 # 使用方法:
 #   ./deploy.sh [环境] [操作] [选项]
 #   
 # 环境: dev, test, prod (默认: prod)
 # 操作: deploy, stop, restart, logs, status, clean (默认: deploy)
-# 选项: --force, --no-cache, --pull, --build-only
+# 选项: --force, --no-cache, --pull, --build-only, --skip-build, --services
 # 
 # 示例:
 #   ./deploy.sh prod deploy --force     # 强制部署生产环境
 #   ./deploy.sh dev restart             # 重启开发环境
+#   ./deploy.sh dev deploy --skip-build # 开发环境跳过构建
 #   ./deploy.sh test logs               # 查看测试环境日志
 # =============================================================================
 
@@ -33,6 +34,8 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # 默认参数
@@ -41,6 +44,12 @@ FORCE_FLAG=""
 NO_CACHE_FLAG=""
 PULL_FLAG=""
 BUILD_ONLY_FLAG=""
+SKIP_BUILD_FLAG=""
+SERVICES_FLAG=""
+
+# 开发环境特殊配置
+DEV_SKIP_SERVICES=("api" "web" "nginx")  # dev环境默认跳过构建的服务
+DEV_AVAILABLE_SERVICES=("mysql" "redis" "minio")  # dev环境可用的服务
 
 # =============================================================================
 # 工具函数
@@ -61,15 +70,23 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+log_dev() {
+    echo -e "${PURPLE}[DEV]${NC} $1"
+}
+
+log_build() {
+    echo -e "${CYAN}[BUILD]${NC} $1"
+}
+
 show_usage() {
     cat << EOF
-Wedding Club 部署脚本
+Wedding Club 部署脚本 - 优化版
 
 使用方法:
     $0 [环境] [操作] [选项]
 
 环境:
-    dev     - 开发环境
+    dev     - 开发环境 (默认跳过api和web构建)
     test    - 测试环境  
     prod    - 生产环境 (默认)
 
@@ -82,15 +99,28 @@ Wedding Club 部署脚本
     clean   - 清理资源
 
 选项:
-    --force      - 强制重新构建和部署
-    --no-cache   - 构建时不使用缓存
-    --pull       - 拉取最新基础镜像
-    --build-only - 仅构建，不启动服务
-    --help       - 显示帮助信息
+    --force         - 强制重新构建和部署
+    --no-cache      - 构建时不使用缓存
+    --pull          - 拉取最新基础镜像
+    --build-only    - 仅构建，不启动服务
+    --skip-build    - 跳过构建步骤（适用于dev环境）
+    --services      - 指定要操作的服务（逗号分隔）
+    --help          - 显示帮助信息
+
+开发环境特殊功能:
+    # 跳过api和web构建，仅启动基础服务
+    $0 dev deploy --skip-build
+    
+    # 仅启动指定服务
+    $0 dev deploy --services mysql,redis,minio
+    
+    # 强制构建所有服务（包括api和web）
+    $0 dev deploy --force
 
 示例:
     $0 prod deploy --force
-    $0 dev restart
+    $0 dev deploy --skip-build
+    $0 dev restart --services mysql,redis
     $0 test logs api
 EOF
 }
@@ -117,6 +147,14 @@ parse_args() {
                 BUILD_ONLY_FLAG="true"
                 shift
                 ;;
+            --skip-build)
+                SKIP_BUILD_FLAG="true"
+                shift
+                ;;
+            --services)
+                SERVICES_FLAG="$2"
+                shift 2
+                ;;
             --help)
                 show_usage
                 exit 0
@@ -135,6 +173,14 @@ validate_environment() {
     case $ENVIRONMENT in
         dev|test|prod)
             log_info "使用环境: $ENVIRONMENT"
+            
+            # 开发环境特殊提示
+            if [[ "$ENVIRONMENT" == "dev" ]]; then
+                log_dev "开发环境模式已启用"
+                if [[ -z "$SKIP_BUILD_FLAG" && -z "$FORCE_FLAG" ]]; then
+                    log_dev "提示: 使用 --skip-build 可跳过api和web构建，加快部署速度"
+                fi
+            fi
             ;;
         *)
             log_error "无效环境: $ENVIRONMENT"
@@ -231,12 +277,103 @@ create_directories() {
     done
 }
 
+# 检查是否需要跳过服务构建
+should_skip_service_build() {
+    local service="$1"
+    
+    # 如果强制构建，不跳过任何服务
+    if [[ -n "$FORCE_FLAG" ]]; then
+        return 1
+    fi
+    
+    # 如果明确指定跳过构建
+    if [[ -n "$SKIP_BUILD_FLAG" ]]; then
+        return 0
+    fi
+    
+    # 开发环境默认跳过api和web构建
+    if [[ "$ENVIRONMENT" == "dev" ]]; then
+        for skip_service in "${DEV_SKIP_SERVICES[@]}"; do
+            if [[ "$service" == "$skip_service" ]]; then
+                return 0
+            fi
+        done
+    fi
+    
+    return 1
+}
+
+# 获取需要构建的服务列表
+get_build_services() {
+    local all_services=("web" "api")
+    local build_services=()
+    
+    for service in "${all_services[@]}"; do
+        if ! should_skip_service_build "$service"; then
+            build_services+=("$service")
+        fi
+    done
+    
+    echo "${build_services[@]}"
+}
+
+# 获取需要启动的服务列表
+get_deploy_services() {
+    if [[ -n "$SERVICES_FLAG" ]]; then
+        # 用户指定的服务列表
+        echo "$SERVICES_FLAG" | tr ',' ' '
+    elif [[ "$ENVIRONMENT" == "dev" && -n "$SKIP_BUILD_FLAG" ]]; then
+        # 开发环境跳过构建时，只启动基础服务
+        echo "${DEV_AVAILABLE_SERVICES[@]}"
+    else
+        # 默认启动所有服务
+        echo ""
+    fi
+}
+
 # 构建镜像
 build_images() {
-    log_info "开始构建镜像..."
+    local build_services=($(get_build_services))
     
-    # Docker Compose v2 使用 build.args 而不是 --build-arg 参数
-    ENVIRONMENT=$ENVIRONMENT $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" build
+    if [[ ${#build_services[@]} -eq 0 ]]; then
+        log_dev "跳过所有服务构建"
+        log_dev "跳过的服务: ${DEV_SKIP_SERVICES[*]}"
+        log_dev "原因: 开发环境默认跳过api和web构建以加快部署速度"
+        return 0
+    fi
+    
+    log_build "开始构建镜像..."
+    log_build "构建服务: ${build_services[*]}"
+    
+    # 显示跳过的服务
+    local all_services=("web" "api")
+    local skipped_services=()
+    for service in "${all_services[@]}"; do redis:7-alpine
+        if should_skip_service_build "$service"; then
+            skipped_services+=("$service")
+        fi
+    done
+    
+    if [[ ${#skipped_services[@]} -gt 0 ]]; then
+        log_dev "跳过构建的服务: ${skipped_services[*]}"
+        if [[ "$ENVIRONMENT" == "dev" ]]; then
+            log_dev "提示: 使用 --force 可强制构建所有服务"
+        fi
+    fi
+    
+    # 构建指定的服务
+    local build_args=""
+    if [[ -n "$NO_CACHE_FLAG" ]]; then
+        build_args="$build_args $NO_CACHE_FLAG"
+    fi
+    if [[ -n "$PULL_FLAG" ]]; then
+        build_args="$build_args $PULL_FLAG"
+    fi
+    
+    for service in "${build_services[@]}"; do
+        log_build "构建服务: $service"
+        ENVIRONMENT=$ENVIRONMENT $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" build $build_args "$service"
+    done
     
     log_success "镜像构建完成"
 }
@@ -280,6 +417,12 @@ init_database() {
     local environment=$1
     local max_retries=30
     local retry_count=0
+    
+    # 检查是否跳过了API服务
+    if should_skip_service_build "api" && [[ -z "$FORCE_FLAG" ]]; then
+        log_dev "跳过数据库初始化 (API服务未构建)"
+        return 0
+    fi
     
     log_info "开始数据库初始化流程..."
     
@@ -466,12 +609,20 @@ deploy_services() {
     fi
     
     local up_args="-d"
+    local deploy_services=($(get_deploy_services))
     
     if [[ -n "$FORCE_FLAG" ]]; then
         up_args="$up_args $FORCE_FLAG"
     fi
     
-    $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" up $up_args
+    # 显示部署信息
+    if [[ ${#deploy_services[@]} -gt 0 ]]; then
+        log_info "部署指定服务: ${deploy_services[*]}"
+        $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" up $up_args "${deploy_services[@]}"
+    else
+        log_info "部署所有服务"
+        $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" up $up_args
+    fi
     
     log_success "服务部署完成"
     
@@ -482,14 +633,18 @@ deploy_services() {
     # 检查服务状态
     check_services_health
     
-    # 执行数据库初始化
-    log_info "开始数据库初始化检查..."
-    if init_database "$ENVIRONMENT"; then
-        log_success "数据库初始化完成"
+    # 执行数据库初始化（仅当MySQL服务启动时）
+    if [[ ${#deploy_services[@]} -eq 0 ]] || [[ " ${deploy_services[*]} " =~ " mysql " ]]; then
+        log_info "开始数据库初始化检查..."
+        if init_database "$ENVIRONMENT"; then
+            log_success "数据库初始化完成"
+        else
+            log_error "数据库初始化失败，但服务已启动"
+            log_info "可以稍后手动执行数据库初始化"
+            return 1
+        fi
     else
-        log_error "数据库初始化失败，但服务已启动"
-        log_info "可以稍后手动执行数据库初始化"
-        return 1
+        log_dev "跳过数据库初始化 (MySQL服务未启动)"
     fi
 }
 
@@ -497,10 +652,16 @@ deploy_services() {
 check_services_health() {
     log_info "检查服务健康状态..."
     
-    local services=("web" "api" "mysql" "redis")
+    local services=("web" "api" "mysql" "redis" "minio" "nginx")
     local failed_services=()
+    local deploy_services=($(get_deploy_services))
     
     for service in "${services[@]}"; do
+        # 如果指定了服务列表，只检查指定的服务
+        if [[ ${#deploy_services[@]} -gt 0 ]] && [[ ! " ${deploy_services[*]} " =~ " ${service} " ]]; then
+            continue
+        fi
+        
         local container_name="${DB_HOST}-${service}-${ENVIRONMENT}"
         
         if docker ps --format "table {{.Names}}\t{{.Status}}" | grep -q "$container_name.*healthy\|Up"; then
@@ -519,15 +680,31 @@ check_services_health() {
 
 # 停止服务
 stop_services() {
-    log_info "停止服务..."
-    $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" down
+    local services=($(get_deploy_services))
+    
+    if [[ ${#services[@]} -gt 0 ]]; then
+        log_info "停止指定服务: ${services[*]}"
+        $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" stop "${services[@]}"
+    else
+        log_info "停止所有服务..."
+        $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" down
+    fi
+    
     log_success "服务已停止"
 }
 
 # 重启服务
 restart_services() {
-    log_info "重启服务..."
-    $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" restart
+    local services=($(get_deploy_services))
+    
+    if [[ ${#services[@]} -gt 0 ]]; then
+        log_info "重启指定服务: ${services[*]}"
+        $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" restart "${services[@]}"
+    else
+        log_info "重启所有服务..."
+        $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" restart
+    fi
+    
     log_success "服务已重启"
     
     # 检查服务状态
@@ -543,8 +720,14 @@ show_logs() {
         log_info "查看 $service 服务日志..."
         $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" logs -f --tail=100 "$service"
     else
-        log_info "查看所有服务日志..."
-        $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" logs -f --tail=50
+        local services=($(get_deploy_services))
+        if [[ ${#services[@]} -gt 0 ]]; then
+            log_info "查看指定服务日志: ${services[*]}"
+            $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" logs -f --tail=50 "${services[@]}"
+        else
+            log_info "查看所有服务日志..."
+            $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" logs -f --tail=50
+        fi
     fi
 }
 
@@ -582,11 +765,43 @@ clean_resources() {
     fi
 }
 
+# 显示环境摘要
+show_environment_summary() {
+    echo
+    log_info "=== 部署环境摘要 ==="
+    log_info "环境: $ENVIRONMENT"
+    log_info "操作: $ACTION"
+    
+    if [[ "$ENVIRONMENT" == "dev" ]]; then
+        log_dev "开发环境特殊配置:"
+        if [[ -n "$SKIP_BUILD_FLAG" || (-z "$FORCE_FLAG" && -z "$BUILD_ONLY_FLAG") ]]; then
+            log_dev "  - 跳过构建: ${DEV_SKIP_SERVICES[*]}"
+        fi
+        
+        local deploy_services=($(get_deploy_services))
+        if [[ ${#deploy_services[@]} -gt 0 ]]; then
+            log_dev "  - 启动服务: ${deploy_services[*]}"
+        else
+            log_dev "  - 启动服务: 所有服务"
+        fi
+    fi
+    
+    if [[ -n "$FORCE_FLAG" ]]; then
+        log_warning "强制模式: 将重新构建所有服务"
+    fi
+    
+    if [[ -n "$SKIP_BUILD_FLAG" ]]; then
+        log_dev "跳过构建模式: 不构建任何服务"
+    fi
+    
+    echo
+}
+
 # =============================================================================
 # 主函数
 # =============================================================================
 main() {
-    log_info "Wedding Club 部署脚本启动"
+    log_info "Wedding Club 部署脚本启动 - 优化版"
     log_info "时间: $(date '+%Y-%m-%d %H:%M:%S')"
     
     # 解析参数
@@ -606,6 +821,9 @@ main() {
     
     # 创建必要目录
     create_directories
+    
+    # 显示环境摘要
+    show_environment_summary
     
     # 执行操作
     case $ACTION in

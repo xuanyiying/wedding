@@ -21,7 +21,7 @@ const StyledContent = styled(Content)`
 
 const ClientLayout: React.FC = () => {
   const { themeMode, toggleThemeMode, initTheme, applyThemeSettings } = useTheme();
-  const [activeSection, setActiveSection] = useState('hero');
+  const [activeSection, setActiveSection] = useState('team');
   const { settings, loading } = useAppSettings();
   const location = useLocation();
 

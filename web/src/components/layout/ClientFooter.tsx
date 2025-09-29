@@ -102,7 +102,7 @@ const ClientFooter: React.FC = () => {
               <FooterSection>
                 <h3>快速链接</h3>
                 <p><Link to="/team" ref={teamRef}>团队介绍</Link></p>
-                <p><Link to="/works" ref={worksRef}>作品展示</Link></p>
+                <p><Link to="/works" ref={worksRef}>精选案例</Link></p>
                 <p><Link to="/schedule" ref={scheduleRef}>档期查询</Link></p>
                 <p><Link to="/contact" ref={contactRef}>联系我们</Link></p>
               </FooterSection>

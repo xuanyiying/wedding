@@ -270,11 +270,10 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
 
   // 默认菜单项
   const defaultMenuItems = [
-    { key: '/', label: '首页', path: '/', sectionId: 'hero', visible: true, order: 1 },
-    { key: '/team', label: '团队', path: '/team', sectionId: 'team', visible: true, order: 2 },
-    { key: '/works', label: '作品', path: '/works', sectionId: 'portfolio', visible: true, order: 3 },
-    { key: '/schedule', label: '档期', path: '/schedule', sectionId: 'schedule', visible: true, order: 4 },
-    { key: '/contact', label: '联系', path: '/contact', sectionId: 'contact', visible: true, order: 5 },
+    { key: '/', label: '首页', path: '/', sectionId: 'team', visible: true, order: 1 }, // 点击首页显示团队
+    { key: '/works', label: '案例', path: '/works', sectionId: 'portfolio', visible: true, order: 2 },
+    { key: '/schedule', label: '档期', path: '/schedule', sectionId: 'schedule', visible: true, order: 3 },
+    { key: '/contact', label: '联系', path: '/contact', sectionId: 'contact', visible: true, order: 4 },
   ];
 
   // 根据设置过滤菜单项
@@ -282,9 +281,7 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
     .filter(item => {
       if (settings?.homepage) {
         switch (item.sectionId) {
-          case 'hero':
-            return settings.homepage.hero?.visible !== false;
-          case 'team':
+          case 'team': // 首页显示团队
             return settings?.homepage?.team?.visible !== false;
           case 'portfolio':
             return settings?.homepage?.portfolio?.visible !== false;
@@ -306,8 +303,7 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
     }));
 
   const sectionToPath: Record<string, string> = {
-    hero: '/',
-    team: '/team',
+    team: '/', // 首页显示团队
     portfolio: '/works',
     schedule: '/schedule',
     contact: '/contact',
@@ -362,7 +358,7 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ activeSection, siteName, lo
                   e.stopPropagation();
                   handleMenuClick(item.key, item.sectionId);
                 }}
-                style={{ 
+                style={{
                   cursor: 'pointer',
                   display: 'block',
                   width: '100%'

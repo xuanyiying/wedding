@@ -2,7 +2,7 @@
 -- 注意：此脚本仅用于手动创建表结构，生产环境建议使用Sequelize自动同步
 -- 创建时间: 2025-06-27
 -- 设置字符集和排序规则
-SET NAMES utf8mb4;
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ----------------------------
