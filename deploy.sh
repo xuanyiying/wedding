@@ -314,7 +314,8 @@ get_build_services() {
         fi
     done
     
-    echo "${build_services[@]}"
+    # 确保总是返回数组，即使为空
+    echo "${build_services[@]:-}"
 }
 
 # 获取需要启动的服务列表
@@ -333,7 +334,8 @@ get_deploy_services() {
 
 # 构建镜像
 build_images() {
-    local build_services=($(get_build_services))
+    local build_services
+    build_services=($(get_build_services))
     
     if [[ ${#build_services[@]} -eq 0 ]]; then
         log_dev "跳过所有服务构建"
@@ -348,7 +350,7 @@ build_images() {
     # 显示跳过的服务
     local all_services=("web" "api")
     local skipped_services=()
-    for service in "${all_services[@]}"; do redis:7-alpine
+    for service in "${all_services[@]}"; do
         if should_skip_service_build "$service"; then
             skipped_services+=("$service")
         fi
