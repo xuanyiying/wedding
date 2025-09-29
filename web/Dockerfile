@@ -20,8 +20,31 @@ RUN npm config set registry https://registry.npmmirror.com && \
 # 复制package文件
 COPY package*.json ./
 
-# 安装依赖（使用npm install替代npm ci，因为可能没有package-lock.json）
-RUN npm install --legacy-peer-deps --no-audit --no-fund --progress=false --registry=https://registry.npmmirror.com && \
+# 安装依赖 - 使用多镜像源策略确保可靠性
+RUN npm install \
+    --legacy-peer-deps \
+    --no-audit \
+    --no-fund \
+    --progress=false \
+    --registry=https://registry.npmmirror.com || \
+    npm install \
+    --legacy-peer-deps \
+    --no-audit \
+    --no-fund \
+    --progress=false \
+    --registry=https://registry.npm.taobao.org || \
+    npm install \
+    --legacy-peer-deps \
+    --no-audit \
+    --no-fund \
+    --progress=false \
+    --registry=https://mirrors.cloud.tencent.com/npm/ || \
+    npm install \
+    --legacy-peer-deps \
+    --no-audit \
+    --no-fund \
+    --progress=false \
+    --registry=https://registry.npmjs.org/ && \
     rm -rf /tmp/.npm /root/.npm
 
 # 复制所有源代码和配置文件

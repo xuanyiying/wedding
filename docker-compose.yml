@@ -17,7 +17,7 @@ services:
     image: wedding-service-web:${ENVIRONMENT:-prod}-latest
     container_name: wedding-service-web-${ENVIRONMENT:-prod}
     restart: unless-stopped
-    pull_policy: never
+    pull_policy: if_not_present
     ports:
       - "${WEB_INTERNAL_PORT:-8081}:80"
     # 直接指定环境变量文件
@@ -78,7 +78,7 @@ services:
   # =============================================================================
   mysql:
     image: mysql:8.0
-    pull_policy: never
+    pull_policy: if_not_present
     container_name: wedding-service-mysql-${ENVIRONMENT:-prod}
     restart: unless-stopped
     ports:
@@ -111,7 +111,7 @@ services:
   # =============================================================================
   redis:
     image: redis:7-alpine
-    pull_policy: never
+    pull_policy: if_not_present
     container_name: wedding-service-redis-${ENVIRONMENT:-prod}
     restart: unless-stopped
     ports:
@@ -139,7 +139,7 @@ services:
   # =============================================================================
   minio:
     image: minio/minio:latest
-    pull_policy: never
+    pull_policy: if_not_present
     container_name: wedding-service-minio-${ENVIRONMENT:-prod}
     restart: unless-stopped
     ports:
@@ -168,7 +168,7 @@ services:
   # =============================================================================
   nginx:
     image: nginx:alpine
-    pull_policy: never
+    pull_policy: if_not_present
     container_name: wedding-service-nginx-${ENVIRONMENT:-prod}
     restart: unless-stopped
     

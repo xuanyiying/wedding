@@ -42,9 +42,10 @@ WORKDIR /app
 # 复制依赖文件，利用Docker缓存层
 COPY package*.json tsconfig.json ./
 
-# 使用mount缓存和并行安装优化依赖安装速度
+# 使用mount缓存和多镜像源策略优化依赖安装
 RUN --mount=type=cache,target=/tmp/.npm \
     --mount=type=cache,target=/root/.npm \
+    # 尝试国内镜像源
     npm install \
     --legacy-peer-deps \
     --no-audit \
@@ -53,17 +54,27 @@ RUN --mount=type=cache,target=/tmp/.npm \
     --prefer-offline \
     --maxsockets 10 \
     --registry=https://registry.npmmirror.com || \
+    # 备选淘宝镜像
     npm install \
     --legacy-peer-deps \
     --no-audit \
     --no-fund \
     --progress=false \
     --registry=https://registry.npm.taobao.org || \
+    # 备选腾讯云镜像
     npm install \
     --legacy-peer-deps \
     --no-audit \
     --no-fund \
-    --progress=false
+    --progress=false \
+    --registry=https://mirrors.cloud.tencent.com/npm/ || \
+    # 最后使用官方源
+    npm install \
+    --legacy-peer-deps \
+    --no-audit \
+    --no-fund \
+    --progress=false \
+    --registry=https://registry.npmjs.org/
 
 # ============================================================================
 # 构建阶段 - 优化构建过程
