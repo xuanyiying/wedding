@@ -98,9 +98,29 @@ export class MediaUploaderCore {
     error: any,
     file: File,
     retryCount: number,
-    maxRetries: number
-  ): Promise<{ shouldRetry: boolean; delay: number }> {
-    console.error('Upload error:', error);
+    maxRetries: number,
+    uploadId?: string
+  ): Promise<{ shouldRetry: boolean; delay: number; canRecover?: boolean }> {
+    console.error(`上传失败 (重试 ${retryCount}/${maxRetries}):`, error);
+
+    // 如果有 uploadId，尝试检查状态并恢复
+    if (uploadId && retryCount < maxRetries) {
+      try {
+        console.log(`🔍 检查上传状态以确定是否可以恢复: ${uploadId}`);
+        const status = await this.chunkManager.checkChunkUploadStatus(uploadId);
+        
+        if (status.canResume && !status.sessionExpired) {
+          console.log(`✅ 检测到可恢复的上传会话，尝试自动恢复`);
+          return { shouldRetry: true, delay: 1000, canRecover: true };
+        } else if (status.sessionExpired) {
+          console.log(`⚠️ 上传会话已过期，需要重新开始`);
+          return { shouldRetry: false, delay: 0, canRecover: false };
+        }
+      } catch (statusError) {
+        console.warn(`❌ 状态检查失败:`, statusError);
+        // 继续执行原有的错误处理逻辑
+      }
+    }
 
     // 检查是否是取消操作
     if (error?.message === '上传已取消') {
@@ -170,6 +190,10 @@ export class MediaUploaderCore {
   ): Promise<DirectUploadResult> {
     const maxRetries = 5;
     let retryCount = 0;
+    let currentUploadId: string | undefined;
+
+    // 根据文件大小和配置选择上传方式
+    const shouldUseChunkedUpload = file.size > 10 * 1024 * 1024; // 10MB以上使用分块上传
 
     const attemptUpload = async (): Promise<DirectUploadResult> => {
       try {
@@ -180,9 +204,6 @@ export class MediaUploaderCore {
 
         const fileType = this.validator.getFileType(file);
         let result: DirectUploadResult;
-
-        // 根据文件大小和配置选择上传方式
-        const shouldUseChunkedUpload = file.size > 10 * 1024 * 1024; // 10MB以上使用分块上传
 
         if (shouldUseChunkedUpload) {
           // 使用分块上传
@@ -218,6 +239,9 @@ export class MediaUploaderCore {
               console.log(`📦 分片 ${chunkIndex + 1} 进度: ${chunkProgress}%`);
             }
           );
+
+          // 保存 uploadId 用于错误恢复
+          currentUploadId = chunkResult.id;
 
           result = {
             id: chunkResult.id,
@@ -308,10 +332,80 @@ export class MediaUploaderCore {
           throw new Error('Upload cancelled');
         }
 
-        const { shouldRetry, delay } = await this.handleUploadError(error, file, retryCount, maxRetries);
+        const { shouldRetry, delay, canRecover } = await this.handleUploadError(
+          error, 
+          file, 
+          retryCount, 
+          maxRetries, 
+          currentUploadId
+        );
 
         if (shouldRetry) {
           retryCount++;
+          
+          // 如果可以恢复且是分块上传，尝试自动恢复
+          if (canRecover && currentUploadId && shouldUseChunkedUpload) {
+            try {
+              console.log(`🔄 尝试自动恢复分块上传: ${currentUploadId}`);
+              
+              const recoveredResult = await this.chunkManager.autoRecoverUpload(
+                currentUploadId,
+                file,
+                this.config.category!,
+                (progress) => {
+                  // 恢复过程中的进度更新
+                  const validProgress = Math.min(Math.max(progress, 0), 100);
+                  const loadedBytes = Math.round(file.size * validProgress / 100);
+                  
+                  const progressInfo = this.progressTracker.updateFileProgress(
+                    fileItem.id,
+                    loadedBytes,
+                    file.size
+                  );
+                  
+                  this.fileProgresses.set(fileItem.id, progressInfo);
+                  this.options.onFileProgress?.(fileItem.id, progressInfo);
+                  
+                  this.progressManager.throttleFileProgress(fileItem.id, () => {
+                    this.updateOverallProgress();
+                  });
+                  
+                  console.log(`🔄 恢复进度: ${validProgress}%`);
+                },
+                (chunkIndex, chunkProgress) => {
+                  console.log(`🔄 恢复分片 ${chunkIndex + 1} 进度: ${chunkProgress}%`);
+                }
+              );
+              
+              // 恢复成功，返回结果
+              const fileType = this.validator.getFileType(file);
+              const result: DirectUploadResult = {
+                id: recoveredResult.id,
+                url: recoveredResult.url,
+                fileType,
+                category: this.config.category!,
+                filename: recoveredResult.filename,
+                originalName: file.name,
+                uploadedAt: new Date().toISOString(),
+                fileSize: file.size,
+              };
+              
+              // 如果是视频文件且有封面信息，上传封面
+              if (videoCoverInfo) {
+                await this.handleVideoCoverUpload(result.id, file, videoCoverInfo);
+              }
+              
+              message.success(`${file.name} 恢复上传成功`);
+              return result;
+              
+            } catch (recoverError: any) {
+              console.error(`❌ 自动恢复失败:`, recoverError);
+              message.warning(`${file.name} 自动恢复失败，将重新开始上传`);
+              // 清除 uploadId，重新开始上传
+              currentUploadId = undefined;
+            }
+          }
+          
           await new Promise(resolve => setTimeout(resolve, delay));
           return attemptUpload();
         }
@@ -488,6 +582,7 @@ export class MediaUploaderCore {
     this.cancelUpload();
     this.progressTracker.cleanup();
     this.progressManager.cleanup();
+    this.chunkManager.cleanup(); // 这会清理所有上传和状态轮询
     this.fileUploadStates.clear();
     this.fileProgresses.clear();
   }

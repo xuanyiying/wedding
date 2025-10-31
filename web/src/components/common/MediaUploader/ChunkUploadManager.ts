@@ -5,6 +5,7 @@
 
 import { fileService } from '../../../services';
 import { http } from '../../../utils/request';
+import { delay, nextFrame, TimerManager } from '../../../utils/delay';
 
 // 分块上传配置
 export const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB per chunk
@@ -30,11 +31,38 @@ export interface FileUploadState {
   isCancelled: boolean;
 }
 
+// 分块上传状态检查结果
+export interface ChunkUploadStatusResult {
+  uploadId: string;
+  totalChunks: number;
+  uploadedChunks: number;
+  missingChunks: number[];
+  isCompleted: boolean;
+  canResume: boolean;
+  sessionExpired: boolean;
+  suggestions?: string[];
+}
+
+// 状态检查配置
+export interface StatusCheckConfig {
+  maxRetries: number;
+  retryDelay: number;
+  pollInterval: number;
+  enableAutoRecovery: boolean;
+}
+
 /**
  * 分块上传管理器
  */
 export class ChunkUploadManager {
   private chunkUploadControllers = new Map<string, AbortController>();
+  private timerManager = new TimerManager();
+  private statusCheckConfig: StatusCheckConfig = {
+    maxRetries: 3,
+    retryDelay: 2000,
+    pollInterval: 5000,
+    enableAutoRecovery: true
+  };
 
   /**
    * 创建文件分块
@@ -240,10 +268,10 @@ export class ChunkUploadManager {
             const totalProgress = Math.round((fileState.uploadedBytes / fileState.totalBytes) * 100);
             const finalProgress = Math.min(totalProgress, 100);
             
-            // 使用 setTimeout 确保进度更新在下一个事件循环中执行，避免UI阻塞
-            setTimeout(() => {
+            // 使用 nextFrame 确保进度更新在下一个渲染帧中执行，避免UI阻塞
+            nextFrame().then(() => {
               onProgress(finalProgress);
-            }, 0);
+            });
             
             console.log(`📊 分片 ${i + 1}/${chunks.length} 完成，总进度: ${finalProgress}% (已上传: ${fileState.uploadedBytes}/${fileState.totalBytes} 字节)`);
           }
@@ -310,6 +338,239 @@ export class ChunkUploadManager {
    */
   public hasActiveUploads(): boolean {
     return this.chunkUploadControllers.size > 0;
+  }
+
+  /**
+   * 检查分块上传状态
+   */
+  public async checkChunkUploadStatus(uploadId: string): Promise<ChunkUploadStatusResult> {
+    try {
+      console.log(`🔍 检查分块上传状态: ${uploadId}`);
+      
+      const response = await fileService.checkChunkUploadStatus(uploadId);
+      
+      if (!response.success || !response.data) {
+        throw new Error(`状态检查失败: ${response.message || '未知错误'}`);
+      }
+
+      const statusResult = response.data;
+      
+      console.log(`📊 分块上传状态:`, {
+        uploadId: statusResult.uploadId,
+        totalChunks: statusResult.totalChunks,
+        uploadedChunks: statusResult.uploadedChunks,
+        missingChunks: statusResult.missingChunks,
+        isCompleted: statusResult.isCompleted,
+        canResume: statusResult.canResume,
+        sessionExpired: statusResult.sessionExpired
+      });
+
+      return statusResult;
+      
+    } catch (error: any) {
+      console.error(`❌ 检查分块上传状态失败:`, error);
+      throw new Error(`状态检查失败: ${error.message || '网络错误'}`);
+    }
+  }
+
+  /**
+   * 带重试机制的状态检查
+   */
+  public async checkChunkUploadStatusWithRetry(
+    uploadId: string,
+    maxRetries: number = this.statusCheckConfig.maxRetries
+  ): Promise<ChunkUploadStatusResult> {
+    let lastError: Error | null = null;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await this.checkChunkUploadStatus(uploadId);
+      } catch (error: any) {
+        lastError = error;
+        
+        if (attempt < maxRetries) {
+          const retryDelay = this.statusCheckConfig.retryDelay * attempt;
+          console.log(`⏳ 状态检查失败，${retryDelay}ms 后重试 (${attempt}/${maxRetries})`);
+          await delay(retryDelay);
+        }
+      }
+    }
+    
+    throw lastError || new Error('状态检查重试失败');
+  }
+
+  /**
+   * 启动状态轮询
+   */
+  public startStatusPolling(
+    uploadId: string,
+    onStatusUpdate: (status: ChunkUploadStatusResult) => void,
+    onError?: (error: Error) => void
+  ): void {
+    // 清除现有的轮询
+    this.stopStatusPolling(uploadId);
+    
+    const poll = async () => {
+      try {
+        const status = await this.checkChunkUploadStatus(uploadId);
+        onStatusUpdate(status);
+        
+        // 如果上传完成或会话过期，停止轮询
+        if (status.isCompleted || status.sessionExpired) {
+          this.stopStatusPolling(uploadId);
+          return;
+        }
+        
+        // 继续轮询
+        this.timerManager.setTimeout(`poll-${uploadId}`, poll, this.statusCheckConfig.pollInterval);
+        
+      } catch (error: any) {
+        console.error(`❌ 状态轮询失败:`, error);
+        onError?.(error);
+        
+        // 发生错误时停止轮询
+        this.stopStatusPolling(uploadId);
+      }
+    };
+    
+    // 立即执行第一次检查
+    poll();
+  }
+
+  /**
+   * 停止状态轮询
+   */
+  public stopStatusPolling(uploadId: string): void {
+    const timerId = `poll-${uploadId}`;
+    if (this.timerManager.hasTimer(timerId)) {
+      this.timerManager.clearTimeout(timerId);
+      console.log(`⏹️ 停止状态轮询: ${uploadId}`);
+    }
+  }
+
+  /**
+   * 停止所有状态轮询
+   */
+  public stopAllStatusPolling(): void {
+    this.timerManager.clearAll();
+    console.log(`⏹️ 停止所有状态轮询`);
+  }
+
+  /**
+   * 自动恢复上传
+   */
+  public async autoRecoverUpload(
+    uploadId: string,
+    file: File,
+    category: string,
+    onProgress?: (progress: number) => void,
+    onChunkProgress?: (chunkIndex: number, progress: number) => void
+  ): Promise<any> {
+    if (!this.statusCheckConfig.enableAutoRecovery) {
+      throw new Error('自动恢复功能已禁用');
+    }
+
+    try {
+      console.log(`🔄 开始自动恢复上传: ${uploadId}`);
+      
+      // 检查当前状态
+      const status = await this.checkChunkUploadStatusWithRetry(uploadId);
+      
+      if (status.sessionExpired) {
+        throw new Error('上传会话已过期，无法恢复');
+      }
+      
+      if (status.isCompleted) {
+        console.log(`✅ 上传已完成，无需恢复`);
+        return { uploadId, completed: true };
+      }
+      
+      if (!status.canResume) {
+        throw new Error('上传无法恢复，请重新开始');
+      }
+      
+      if (status.missingChunks.length === 0) {
+        // 所有分块都已上传，尝试完成上传
+        console.log(`🎯 所有分块已上传，尝试完成上传`);
+        return await fileService.completeChunkUpload({
+          uploadId,
+          fileId: uploadId
+        });
+      }
+      
+      // 恢复上传缺失的分块
+      console.log(`🔄 恢复上传 ${status.missingChunks.length} 个缺失分块`);
+      
+      const chunks = this.createFileChunks(file);
+      let uploadedBytes = (status.uploadedChunks * CHUNK_SIZE);
+      
+      for (const chunkIndex of status.missingChunks) {
+        if (chunkIndex >= chunks.length) {
+          console.warn(`⚠️ 无效的分块索引: ${chunkIndex}`);
+          continue;
+        }
+        
+        const chunk = chunks[chunkIndex];
+        
+        try {
+          await this.uploadChunk(
+            chunk,
+            chunkIndex,
+            uploadId,
+            '',
+            (progress) => {
+              if (onChunkProgress) {
+                onChunkProgress(chunkIndex, progress);
+              }
+              
+              if (onProgress) {
+                const currentChunkBytes = Math.round(chunk.size * progress / 100);
+                const totalUploadedBytes = uploadedBytes + currentChunkBytes;
+                const totalProgress = Math.round((totalUploadedBytes / file.size) * 100);
+                onProgress(Math.min(totalProgress, 100));
+              }
+            }
+          );
+          
+          uploadedBytes += chunk.size;
+          console.log(`✅ 恢复分块 ${chunkIndex + 1} 成功`);
+          
+        } catch (error: any) {
+          console.error(`❌ 恢复分块 ${chunkIndex + 1} 失败:`, error);
+          throw new Error(`恢复分块 ${chunkIndex + 1} 失败: ${error.message}`);
+        }
+      }
+      
+      // 完成上传
+      const completeResponse = await fileService.completeChunkUpload({
+        uploadId,
+        fileId: uploadId
+      });
+      
+      console.log(`✅ 自动恢复上传完成: ${uploadId}`);
+      return completeResponse.data;
+      
+    } catch (error: any) {
+      console.error(`❌ 自动恢复上传失败:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * 更新状态检查配置
+   */
+  public updateStatusCheckConfig(config: Partial<StatusCheckConfig>): void {
+    this.statusCheckConfig = { ...this.statusCheckConfig, ...config };
+    console.log(`⚙️ 更新状态检查配置:`, this.statusCheckConfig);
+  }
+
+  /**
+   * 清理资源
+   */
+  public cleanup(): void {
+    this.cancelAllUploads();
+    this.stopAllStatusPolling();
+    this.timerManager.clearAll();
   }
 }
 

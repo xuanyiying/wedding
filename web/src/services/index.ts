@@ -679,6 +679,20 @@ export const fileService = {
   }>> => {
     return http.post('/files/chunk/complete', data);
   },
+
+  // 检查分块上传状态
+  checkChunkUploadStatus: (uploadId: string): Promise<ApiResponse<{
+    uploadId: string;
+    totalChunks: number;
+    uploadedChunks: number;
+    missingChunks: number[];
+    isCompleted: boolean;
+    canResume: boolean;
+    sessionExpired: boolean;
+    suggestions?: string[];
+  }>> => {
+    return http.get(`/files/chunk/status/${uploadId}`);
+  },
 };
 export const profileService = {
   // 用户资料相关（包含用户信息和媒体文件）

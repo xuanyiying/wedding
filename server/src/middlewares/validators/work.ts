@@ -17,11 +17,11 @@ export const getWorksSchema = Joi.object({
             'number.min': '页码必须大于0'
         }),
     
-    pageSize: Joi.number()
+    // 支持前端传递的 limit 参数（与 pageSize 等效）
+    limit: Joi.number()
         .integer()
         .min(1)
         .max(100)
-        .default(20)
         .label('每页数量')
         .messages({
             'number.base': '每页数量必须是数字',
@@ -34,6 +34,24 @@ export const getWorksSchema = Joi.object({
         .label('用户ID')
         .messages({
             'string.base': '用户ID必须是字符串'
+        }),
+    
+    // 支持前端传递的 teamId 参数
+    teamId: Joi.string()
+        .label('团队ID')
+        .messages({
+            'string.base': '团队ID必须是字符串'
+        }),
+    
+    // 支持前端传递的 search 参数
+    search: Joi.string()
+        .trim()
+        .max(100)
+        .allow('')
+        .label('搜索关键词')
+        .messages({
+            'string.base': '搜索关键词必须是字符串',
+            'string.max': '搜索关键词不能超过100个字符'
         }),
     
     type: Joi.string()
@@ -55,6 +73,13 @@ export const getWorksSchema = Joi.object({
         .label('作品状态')
         .messages({
             'any.only': `作品状态必须是以下值之一：${Object.values(WorkStatus).join('、')}`
+        }),
+    
+    // 支持前端传递的 featured 参数
+    featured: Joi.boolean()
+        .label('精选状态')
+        .messages({
+            'boolean.base': '精选状态必须是布尔值'
         }),
     
     isFeatured: Joi.boolean()
@@ -82,6 +107,25 @@ export const getWorksSchema = Joi.object({
             'string.max': '每个标签不能超过50个字符'
         }),
     
+    // 支持前端传递的日期范围参数
+    dateFrom: Joi.date()
+        .iso()
+        .label('开始日期')
+        .messages({
+            'date.base': '开始日期必须是有效的日期格式',
+            'date.format': '开始日期必须是ISO格式'
+        }),
+    
+    dateTo: Joi.date()
+        .iso()
+        .min(Joi.ref('dateFrom'))
+        .label('结束日期')
+        .messages({
+            'date.base': '结束日期必须是有效的日期格式',
+            'date.format': '结束日期必须是ISO格式',
+            'date.min': '结束日期不能早于开始日期'
+        }),
+    
     sortBy: Joi.string()
         .valid('createdAt', 'viewCount', 'likeCount', 'shareCount')
         .default('createdAt')
@@ -96,6 +140,15 @@ export const getWorksSchema = Joi.object({
         .label('排序方向')
         .messages({
             'any.only': '排序方向必须是ASC或DESC'
+        }),
+    
+    // 支持防缓存时间戳参数
+    _t: Joi.number()
+        .integer()
+        .label('时间戳')
+        .messages({
+            'number.base': '时间戳必须是数字',
+            'number.integer': '时间戳必须是整数'
         })
 });
 
