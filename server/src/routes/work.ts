@@ -1,8 +1,7 @@
 import { Router } from 'express';
 import * as WorkController from '../controllers/work.controller';
 import { authMiddleware } from '../middlewares/auth';
-import { validateRequest } from '../middlewares/validation';
-import { workValidators } from '../validators/work';
+import { workValidators } from '../middlewares/validators/work';
 
 const router = Router();
 
@@ -134,7 +133,7 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/', validateRequest(workValidators.getWorks), WorkController.getWorks);
+router.get('/', workValidators.getWorks, WorkController.getWorks);
 
 // 获取作品详情
 
@@ -165,7 +164,7 @@ router.get('/', validateRequest(workValidators.getWorks), WorkController.getWork
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/:id', validateRequest(workValidators.getWorkById), WorkController.getWorkById);
+router.get('/:id', workValidators.getWork, WorkController.getWorkById);
 
 // 创建作品
 
@@ -203,7 +202,7 @@ router.get('/:id', validateRequest(workValidators.getWorkById), WorkController.g
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', authMiddleware, validateRequest(workValidators.createWork), WorkController.createWork);
+router.post('/', authMiddleware, workValidators.createWork, WorkController.createWork);
 
 // 更新作品
 
@@ -254,7 +253,7 @@ router.post('/', authMiddleware, validateRequest(workValidators.createWork), Wor
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:id', authMiddleware, validateRequest(workValidators.updateWork), WorkController.updateWork);
+router.put('/:id', authMiddleware, workValidators.updateWork, WorkController.updateWork);
 
 // 删除作品
 
@@ -297,36 +296,36 @@ router.put('/:id', authMiddleware, validateRequest(workValidators.updateWork), W
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/:id', authMiddleware, validateRequest(workValidators.deleteWork), WorkController.deleteWork);
+router.delete('/:id', authMiddleware, workValidators.deleteWork, WorkController.deleteWork);
 
 // 发布作品
-router.post('/:id/publish', authMiddleware, validateRequest(workValidators.publishWork), WorkController.publishWork);
+router.post('/:id/publish', authMiddleware, workValidators.publishWork, WorkController.publishWork);
 
 // 取消发布作品
 router.post(
   '/:id/unpublish',
   authMiddleware,
-  validateRequest(workValidators.unpublishWork),
+  workValidators.unpublishWork,
   WorkController.unpublishWork,
 );
 
 // 点赞作品
-router.post('/:id/like', authMiddleware, validateRequest(workValidators.likeWork), WorkController.likeWork);
+router.post('/:id/like', authMiddleware, workValidators.likeWork, WorkController.likeWork);
 
 // 取消点赞作品
-router.delete('/:id/like', authMiddleware, validateRequest(workValidators.unlikeWork), WorkController.unlikeWork);
+router.delete('/:id/like', authMiddleware, workValidators.unlikeWork, WorkController.unlikeWork);
 
 // 增加作品浏览量
-router.post('/:id/view', validateRequest(workValidators.incrementViewCount), WorkController.incrementViewCount);
+router.post('/:id/view', workValidators.incrementViewCount, WorkController.incrementViewCount);
 
 // 获取精选作品
-router.get('/featured/list', validateRequest(workValidators.getFeaturedWorks), WorkController.getFeaturedWorks);
+router.get('/featured/list', workValidators.getFeaturedWorks, WorkController.getFeaturedWorks);
 
 // 设置作品为精选
 router.post(
   '/:id/featured',
   authMiddleware,
-  validateRequest(workValidators.setWorkFeatured),
+  workValidators.setWorkFeatured,
   WorkController.setWorkFeatured,
 );
 
@@ -334,12 +333,12 @@ router.post(
 router.get('/stats/user', WorkController.getUserWorkStats);
 
 // 获取公开作品列表
-router.get('/public/list', validateRequest(workValidators.getPublicWorks), WorkController.getPublicWorks);
+router.get('/public/list', workValidators.getPublicWorks, WorkController.getPublicWorks);
 
 // 获取热门作品
-router.get('/popular/list', validateRequest(workValidators.getPopularWorks), WorkController.getPopularWorks);
+router.get('/popular/list', workValidators.getPopularWorks, WorkController.getPopularWorks);
 
 // 获取相关作品
-router.get('/:id/related', validateRequest(workValidators.getRelatedWorks), WorkController.getRelatedWorks);
+router.get('/:id/related', workValidators.getRelatedWorks, WorkController.getRelatedWorks);
 
 export default router;

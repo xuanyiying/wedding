@@ -788,12 +788,13 @@ export class FileService {
         totalChunks: session.totalChunks
       };
     }
-
-    // 存储分块数据到临时文件系统（避免在Redis中存储大文件数据）
+// 存储分块数据到Redis，使用更长的过期时间确保数据不会在上传过程中丢失
     const chunkKey = `${CHUNK_UPLOAD_PREFIX}${uploadId}:chunk:${chunkIndex}`;
+    const extendedExpireTime = CHUNK_SESSION_EXPIRE_TIME * 2; // 48小时，比会话时间更长
+
     await redisClient.setex(
       chunkKey,
-      CHUNK_SESSION_EXPIRE_TIME,
+      extendedExpireTime,
       chunkData.toString('base64') // 将Buffer转换为base64字符串存储
     );
 
@@ -819,6 +820,82 @@ export class FileService {
       success: true,
       uploadedChunks: session.uploadedChunks.length,
       totalChunks: session.totalChunks
+    };
+  }
+
+
+  /**
+   * 检查分块上传状态
+   */
+  static async checkChunkUploadStatus(params: {
+    uploadId: string;
+    userId: string;
+  }) {
+    const { uploadId, userId } = params;
+
+    // 从Redis获取上传会话
+    const sessionKey = `${CHUNK_UPLOAD_PREFIX}${uploadId}`;
+    const sessionStr = await redisClient.get(sessionKey);
+
+    if (!sessionStr) {
+      throw new Error('上传会话不存在或已过期');
+    }
+
+    const session: ChunkUploadSession = JSON.parse(sessionStr);
+
+    // 验证用户权限
+    if (session.userId !== userId) {
+      throw new Error('无权限访问此上传会话');
+    }
+
+    // 检查每个分块的状态
+    const chunkStatus: { [key: number]: boolean } = {};
+    const missingChunks: number[] = [];
+    const availableChunks: number[] = [];
+
+    for (let i = 0; i < session.totalChunks; i++) {
+      const chunkKey = `${CHUNK_UPLOAD_PREFIX}${uploadId}:chunk:${i}`;
+
+      try {
+        const exists = await redisClient.exists(chunkKey);
+        chunkStatus[i] = exists === 1;
+
+        if (exists === 1) {
+          availableChunks.push(i);
+        } else {
+          missingChunks.push(i);
+        }
+      } catch (error) {
+        chunkStatus[i] = false;
+        missingChunks.push(i);
+      }
+    }
+
+    const sessionAge = Date.now() - session.createdAt;
+    const isComplete = missingChunks.length === 0 && session.uploadedChunks.length === session.totalChunks;
+
+    logger.info('分块上传状态检查:', {
+      uploadId,
+      totalChunks: session.totalChunks,
+      uploadedChunks: session.uploadedChunks.length,
+      availableChunks: availableChunks.length,
+      missingChunks: missingChunks.length,
+      sessionAge,
+      isComplete
+    });
+
+    return {
+      uploadId,
+      filename: session.filename,
+      fileSize: session.fileSize,
+      totalChunks: session.totalChunks,
+      uploadedChunks: session.uploadedChunks,
+      availableChunks,
+      missingChunks,
+      chunkStatus,
+      isComplete,
+      sessionAge,
+      canComplete: missingChunks.length === 0
     };
   }
 
@@ -854,22 +931,70 @@ export class FileService {
     }
 
     try {
-      // 按顺序获取所有分块数据
-      const chunkPromises = [];
+      // 按顺序获取所有分块数据，增加详细的错误处理
+      const chunks: Buffer[] = [];
+      const missingChunks: number[] = [];
+
       for (let i = 0; i < session.totalChunks; i++) {
         const chunkKey = `${CHUNK_UPLOAD_PREFIX}${uploadId}:chunk:${i}`;
-        chunkPromises.push(redisClient.get(chunkKey));
+
+        try {
+          const chunkData = await redisClient.get(chunkKey);
+
+          if (!chunkData) {
+            missingChunks.push(i);
+            logger.error('分块数据丢失:', {
+              uploadId,
+              chunkIndex: i,
+              chunkKey,
+              sessionAge: Date.now() - session.createdAt,
+              totalChunks: session.totalChunks
+            });
+            continue;
+          }
+
+          // 验证 base64 数据格式
+          if (typeof chunkData !== 'string') {
+            missingChunks.push(i);
+            logger.error('分块数据格式错误:', {
+              uploadId,
+              chunkIndex: i,
+              dataType: typeof chunkData
+            });
+            continue;
+          }
+
+          // 转换 base64 到 Buffer
+          const chunkBuffer = Buffer.from(chunkData, 'base64');
+          chunks[i] = chunkBuffer;
+
+        } catch (error) {
+          missingChunks.push(i);
+          logger.error('获取分块数据失败:', {
+            uploadId,
+            chunkIndex: i,
+            error: error instanceof Error ? error.message : String(error)
+          });
+        }
       }
 
-      const chunkResults = await Promise.all(chunkPromises);
+      // 如果有丢失的分块，提供详细的错误信息
+      if (missingChunks.length > 0) {
+        const errorMessage = `分块数据丢失，丢失的分块索引: [${missingChunks.join(', ')}]，总共丢失 ${missingChunks.length}/${session.totalChunks} 个分块`;
 
-      // 将base64字符串转换回Buffer
-      const chunks = chunkResults.map(result => {
-        if (!result) {
-          throw new Error(`分块数据丢失: ${result}`);
-        }
-        return Buffer.from(result, 'base64');
-      });
+        logger.error('分块上传完成失败:', {
+          uploadId,
+          userId,
+          filename: session.filename,
+          missingChunks,
+          missingCount: missingChunks.length,
+          totalChunks: session.totalChunks,
+          sessionAge: Date.now() - session.createdAt,
+          sessionExpireTime: CHUNK_SESSION_EXPIRE_TIME
+        });
+
+        throw new Error(errorMessage);
+      }
 
       // 合并所有分块
       const completeBuffer = Buffer.concat(chunks);

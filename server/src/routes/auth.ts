@@ -12,13 +12,7 @@ import {
   checkEmail,
 } from '../controllers/auth.controller';
 import { authMiddleware } from '../middlewares/auth';
-import {
-  validateLogin,
-  validateRegister,
-  validateRefreshToken,
-  validateChangePassword,
-  validateUpdateProfile,
-} from '../validators/auth';
+import { authValidators } from '../middlewares/validators/auth';
 
 const router = Router();
 
@@ -147,7 +141,7 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/login', validateLogin, login);
+router.post('/login', authValidators.login, login);
 
 /**
  * @swagger
@@ -176,7 +170,7 @@ router.post('/login', validateLogin, login);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/register', validateRegister, register);
+router.post('/register', authValidators.register, register);
 
 /**
  * @swagger
@@ -209,7 +203,7 @@ router.post('/register', validateRegister, register);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/refresh-token', validateRefreshToken, refreshToken);
+router.post('/refresh-token', authValidators.refreshToken, refreshToken);
 
 // 用户名和邮箱可用性检查
 
@@ -388,7 +382,7 @@ router.get('/me', getCurrentUser);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/profile', authMiddleware, validateUpdateProfile, updateProfile);
+router.put('/profile', authMiddleware, authValidators.updateProfile, updateProfile);
 
 /**
  * @swagger
@@ -428,6 +422,6 @@ router.put('/profile', authMiddleware, validateUpdateProfile, updateProfile);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/change-password', authMiddleware, validateChangePassword, changePassword);
+router.post('/change-password', authMiddleware, authValidators.changePassword, changePassword);
 
 export default router;

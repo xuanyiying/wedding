@@ -338,8 +338,8 @@ const SchedulesPage: React.FC = () => {
                   await scheduleService.deleteSchedule(id);
                   message.success('删除成功');
                   loadSchedules();
-                } catch (error) {
-                  message.error('删除失败');
+                } catch (error: any) {
+                  message.error('删除失败: ' + error.message);
                 }
               }}
               loading={loading}

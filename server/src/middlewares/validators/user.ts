@@ -1,9 +1,8 @@
 import Joi from 'joi';
-import { Request, Response, NextFunction } from 'express';
-import { Resp } from '../utils/response';
-import { UserRole, UserStatus, Gender } from '../types';
+import { UserRole, UserStatus, Gender } from '@/types';
+import { validateRequest } from '@/middlewares';
 
-// 创建用户验证
+// 创建用户验证../../types
 export const createUserSchema = Joi.object({
   username: Joi.string().alphanum().min(2).max(20).required().messages({
     'string.alphanum': '用户名只能包含字母和数字',
@@ -11,10 +10,7 @@ export const createUserSchema = Joi.object({
     'string.max': '用户名长度不能超过20位',
     'any.required': '用户名不能为空',
   }),
-  email: Joi.string().email().required().messages({
-    'string.email': '请输入有效的邮箱地址',
-    'any.required': '邮箱不能为空',
-  }),
+ 
   password: Joi.string().min(6).max(128).required().messages({
     'string.min': '密码长度至少为6位',
     'string.max': '密码长度不能超过128位',
@@ -155,40 +151,11 @@ export const batchDeleteUsersSchema = Joi.object({
   }),
 });
 
-// 验证中间件工厂函数
-export const validateRequest = (schema: Joi.ObjectSchema) => {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    const { error } = schema.validate(req.body, { abortEarly: false });
-
-    if (error) {
-      const errorMessages = error.details.map(detail => detail.message);
-      Resp.badRequest(res, errorMessages.join('; '));
-      return;
-    }
-
-    next();
-  };
-};
-
-// 验证查询参数中间件工厂函数
-export const validateQuery = (schema: Joi.ObjectSchema) => {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    const { error } = schema.validate(req.query, { abortEarly: false });
-
-    if (error) {
-      const errorMessages = error.details.map(detail => detail.message);
-      Resp.badRequest(res, errorMessages.join('; '));
-      return;
-    }
-
-    next();
-  };
-};
-
-// 导出验证中间件
-export const validateCreateUser = validateRequest(createUserSchema);
-export const validateUpdateUser = validateRequest(updateUserSchema);
-export const validateGetUsers = validateQuery(getUsersQuerySchema);
-export const validateResetPassword = validateRequest(resetPasswordSchema);
-export const validateUpdateUserStatus = validateRequest(updateUserStatusSchema);
-export const validateBatchDeleteUsers = validateRequest(batchDeleteUsersSchema);
+export const userValidators = {
+  validateCreateUser : validateRequest(createUserSchema),
+  validateUpdateUser : validateRequest(updateUserSchema),
+  validateGetUsers: validateRequest(getUsersQuerySchema),
+  validateResetPassword: validateRequest(resetPasswordSchema),
+  validateUpdateUserStatus : validateRequest(updateUserStatusSchema),
+  validateBatchDeleteUsers: validateRequest(batchDeleteUsersSchema)
+}

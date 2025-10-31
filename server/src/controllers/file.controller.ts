@@ -427,6 +427,43 @@ export const uploadChunk = async (req: AuthenticatedRequest, res: Response, next
 };
 
 /**
+ * 检查分块上传状态
+ */
+export const checkChunkUploadStatus = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { uploadId } = req.params;
+    const userId = req.user!.id;
+
+    if (!uploadId || !userId) {
+      Resp.badRequest(res, '缺少必要参数：uploadId 或 userId');
+      return;
+    } 
+    console.log('🔍 检查分块上传状态:', {
+      userId,
+      uploadId
+    });
+
+    const result = await FileService.checkChunkUploadStatus({
+      uploadId,
+      userId
+    });
+
+    console.log('✅ 分块状态检查完成:', {
+      uploadId,
+      totalChunks: result.totalChunks,
+      availableChunks: result.availableChunks.length,
+      missingChunks: result.missingChunks.length,
+      canComplete: result.canComplete
+    });
+
+    Resp.success(res, result, '分块状态检查完成');
+  } catch (error) {
+    logger.error('检查分块状态失败:', error);
+    next(error);
+  }
+};
+
+/**
  * 完成分块上传
  */
 export const completeChunkUpload = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {

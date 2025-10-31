@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import {
   Modal,
   Form,
@@ -20,6 +20,7 @@ import {
 } from '@ant-design/icons';
 import { ScheduleStatus, type Schedule, type TeamMember, type User } from '../../../types';
 import type { Dayjs } from 'dayjs';
+import { ValidationDisplayHelper, type ValidationError } from '../../../utils/validation';
 
 
 const { Option } = Select;
@@ -37,6 +38,7 @@ interface ScheduleEditModalProps {
   searchLoading: boolean;
   searchModalVisible: boolean;
   conflictSchedules?: Schedule[];
+  validationErrors?: ValidationError[]; // 服务端验证错误
   onCancel: () => void;
   onSave: (values: any) => void;
   onDelete: (scheduleId: string) => void;
@@ -57,6 +59,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
   selectedWeddingTime,
   availableHosts,
   conflictSchedules = [],
+  validationErrors = [], // 服务端验证错误
   onCancel,
   onSave,
   onDelete,
@@ -68,6 +71,22 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
     { label: '午宴', value: 'lunch' },
     { label: '晚宴', value: 'dinner' },
   ];
+
+  // 获取字段验证状态
+  const getFieldValidateStatus = (fieldName: string) => {
+    return ValidationDisplayHelper.hasFieldError(validationErrors, fieldName) ? 'error' : '';
+  };
+
+  // 获取字段错误信息
+  const getFieldHelp = (fieldName: string) => {
+    return ValidationDisplayHelper.getFieldError(validationErrors, fieldName) || '';
+  };
+
+  // 简化的保存函数 - 直接调用父组件的保存方法
+  const handleSave = useCallback((values: any) => {
+    // 调用父组件的保存方法，由父组件处理服务端验证
+    onSave(values);
+  }, [onSave]);
 
   // 当非管理员用户添加新档期时，自动设置hostId为当前用户ID
   useEffect(() => {
@@ -123,45 +142,33 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
         <Form
           form={form}
           layout="vertical"
-          onFinish={onSave}
+          onFinish={handleSave}
         >
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="customerName"
-                label="客户姓名"
-                rules={[{ required: false, message: '请输入客户姓名' }]}
-              >
-                <Input placeholder="请输入客户姓名" prefix={<UserOutlined />} />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="customerPhone"
-                label="客户电话"
-                rules={[
-                  { required: false, message: '请输入客户电话' },
-                  { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码' }
-                ]}
-              >
-                <Input placeholder="请输入客户电话" prefix={<PhoneOutlined />} />
-              </Form.Item>
-            </Col>
-          </Row>
 
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
                 name="weddingDate"
                 label="婚礼日期"
+                validateStatus={
+                  (!isAdmin && conflictSchedules.length > 0) ? 'error' : 
+                  getFieldValidateStatus('weddingDate')
+                }
+                help={
+                  (!isAdmin && conflictSchedules.length > 0) ? '该日期时间段已有档期安排，存在冲突' : 
+                  getFieldHelp('weddingDate')
+                }
                 rules={[{ required: true, message: '请选择婚礼日期' }]}
-                validateStatus={!isAdmin && conflictSchedules.length > 0 ? 'error' : ''}
-                help={!isAdmin && conflictSchedules.length > 0 ? '该日期时间段已有档期安排，存在冲突' : ''}
               >
                 <DatePicker
                   style={{ width: '100%' }}
                   placeholder="请选择婚礼日期"
-                  onChange={onWeddingDateChange}
+                  onChange={(date) => {
+                    onWeddingDateChange(date);
+                    if (!isAdmin && onCheckScheduleConflict) {
+                      onCheckScheduleConflict(date, selectedWeddingTime);
+                    }
+                  }}
                 />
               </Form.Item>
             </Col>
@@ -170,12 +177,23 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                 name="weddingTime"
                 label="婚礼时间"
                 rules={[{ required: true, message: '请选择婚礼时间' }]}
-                validateStatus={!isAdmin && conflictSchedules.length > 0 ? 'error' : ''}
-                help={!isAdmin && conflictSchedules.length > 0 ? `冲突档期：${conflictSchedules.map(s => s.title).join('、')}` : ''}
+                validateStatus={
+                  (!isAdmin && conflictSchedules.length > 0) ? 'error' : 
+                  getFieldValidateStatus('weddingTime')
+                }
+                help={
+                  (!isAdmin && conflictSchedules.length > 0) ? `冲突档期：${conflictSchedules.map(s => s.title).join('、')}` : 
+                  getFieldHelp('weddingTime')
+                }
               >
                 <Radio.Group
                   options={options}
-                  onChange={onWeddingTimeChange}
+                  onChange={(e) => {
+                    onWeddingTimeChange(e);
+                    if (!isAdmin && onCheckScheduleConflict) {
+                      onCheckScheduleConflict(weddingDate, e.target.value);
+                    }
+                  }}
                   value={selectedWeddingTime}
                   defaultValue={'lunch'}
                   optionType="button"
@@ -192,6 +210,8 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                 <Form.Item
                   name="hostId"
                   label="主持人"
+                  validateStatus={getFieldValidateStatus('hostId')}
+                  help={getFieldHelp('hostId')}
                   rules={[{ required: true, message: '请选择主持人' }]}
                 >
                   <Select
@@ -215,9 +235,13 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                 <Form.Item
                   name="status"
                   label="档期状态"
+                  validateStatus={getFieldValidateStatus('status')}
+                  help={getFieldHelp('status')}
                   rules={[{ required: true, message: '请选择档期状态' }]}
                 >
-                  <Select placeholder="请选择档期状态">
+                  <Select 
+                    placeholder="请选择档期状态"
+                  >
                     <Option value={ScheduleStatus.RESERVE}>预留</Option>
                     <Option value={ScheduleStatus.BOOKED}>已预订</Option>
                     <Option value={ScheduleStatus.CANCELLED}>已取消</Option>
@@ -240,9 +264,13 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                 <Form.Item
                   name="status"
                   label="档期状态"
+                  validateStatus={getFieldValidateStatus('status')}
+                  help={getFieldHelp('status')}
                   rules={[{ required: true, message: '请选择档期状态' }]}
                 >
-                  <Select placeholder="请选择档期状态">
+                  <Select 
+                    placeholder="请选择档期状态"
+                  >
                     <Option value={ScheduleStatus.RESERVE}>预留</Option>
                     <Option value={ScheduleStatus.BOOKED}>已预订</Option>
                     <Option value={ScheduleStatus.CANCELLED}>已取消</Option>
@@ -254,8 +282,13 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
           <Form.Item
             name="location"
             label="婚礼酒店"
+            validateStatus={getFieldValidateStatus('location')}
+            help={getFieldHelp('location')}
           >
-            <Input placeholder="请输入婚礼酒店" prefix={<EnvironmentOutlined />} />
+            <Input 
+              placeholder="请输入婚礼酒店" 
+              prefix={<EnvironmentOutlined />}
+            />
           </Form.Item>
 
 
@@ -264,27 +297,39 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
               <Form.Item
                 name="customerName"
                 label="客户姓名"
+                validateStatus={getFieldValidateStatus('customerName')}
+                help={getFieldHelp('customerName')}
                 rules={[{ required: false, message: '请输入客户姓名' }]}
               >
-                <Input placeholder="请输入客户姓名" prefix={<UserOutlined />} />
+                <Input 
+                  placeholder="请输入客户姓名" 
+                  prefix={<UserOutlined />}
+                />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
                 name="customerPhone"
                 label="客户电话"
+                validateStatus={getFieldValidateStatus('customerPhone')}
+                help={getFieldHelp('customerPhone')}
                 rules={[
                   { required: false, message: '请输入客户电话' },
                   { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码' }
                 ]}
               >
-                <Input placeholder="请输入客户电话" prefix={<PhoneOutlined />} />
+                <Input 
+                  placeholder="请输入客户电话" 
+                  prefix={<PhoneOutlined />}
+                />
               </Form.Item>
             </Col>
           </Row>
           <Form.Item
             name="notes"
             label="备注"
+            validateStatus={getFieldValidateStatus('notes')}
+            help={getFieldHelp('notes')}
           >
             <TextArea
               rows={3}
@@ -299,6 +344,8 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
               <Form.Item
                 name="price"
                 label="服务费用"
+                validateStatus={getFieldValidateStatus('price')}
+                help={getFieldHelp('price')}
               >
                 <InputNumber
                   style={{ width: '100%' }}
@@ -313,6 +360,8 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
               <Form.Item
                 name="deposit"
                 label="定金"
+                validateStatus={getFieldValidateStatus('deposit')}
+                help={getFieldHelp('deposit')}
               >
                 <InputNumber
                   style={{ width: '100%' }}
@@ -328,6 +377,8 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                 name="isPaid"
                 label="是否已结清"
                 valuePropName="checked"
+                validateStatus={getFieldValidateStatus('isPaid')}
+                help={getFieldHelp('isPaid')}
               >
                 <Switch />
               </Form.Item>

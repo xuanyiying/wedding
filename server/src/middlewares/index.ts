@@ -7,12 +7,10 @@ export * from './validation';
 // 默认导出
 export { default as authMiddleware } from './auth';
 export { default as securityMiddlewares } from './security';
-export { default as validationMiddlewares } from './validation';
 
 // 中间件组合
 import { authMiddleware, requireAdmin, requireSuperAdmin } from './auth';
 import { securityMiddlewares } from './security';
-import { validationMiddlewares } from './validation';
 import { errorHandler, notFoundHandler, asyncHandler } from './error';
 
 // 常用中间件组合
@@ -30,9 +28,6 @@ export const commonMiddlewares = {
 
   // 速率限制
   rateLimit: securityMiddlewares.rateLimiting,
-
-  // 验证
-  validation: validationMiddlewares,
 
   // 错误处理
   errorHandling: [notFoundHandler, errorHandler],

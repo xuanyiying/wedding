@@ -407,6 +407,23 @@ export const errorHandler = (error: unknown, req: Request, res: Response, _: Nex
     // 构建并返回错误响应
     const errorResponse = buildErrorResponse(appError);
 
+    // 特殊处理验证错误，返回统一格式
+    if (appError instanceof ValidationError && appError.details && Array.isArray(appError.details)) {
+      // 如果是多个验证错误，返回第一个错误的详细信息
+      const firstError = appError.details[0];
+      if (firstError && typeof firstError === 'object' && 'field' in firstError) {
+        return res.status(appError.statusCode).json({
+          error: {
+            field: firstError.field,
+            value: firstError.value,
+            rule: firstError.rule,
+            message: firstError.message,
+            type: firstError.type,
+          }
+        });
+      }
+    }
+
     // 构建响应数据
     const responseData = {
       ...(errorResponse.details && typeof errorResponse.details === 'object' ? (errorResponse.details as object) : {}),

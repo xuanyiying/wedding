@@ -394,42 +394,7 @@ export class DateUtils {
   }
 }
 
-// 验证工具
-export class ValidationUtils {
-  // 验证邮箱
-  static isValidEmail(email: string): boolean {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  }
 
-  // 验证手机号
-  static isValidPhone(phone: string): boolean {
-    const phoneRegex = /^1[3-9]\d{9}$/;
-    return phoneRegex.test(phone);
-  }
-
-  // 验证身份证号
-  static isValidIdCard(idCard: string): boolean {
-    const idCardRegex = /^[1-9]\d{5}(18|19|20)\d{2}((0[1-9])|(1[0-2]))(([0-2][1-9])|10|20|30|31)\d{3}[0-9Xx]$/;
-    return idCardRegex.test(idCard);
-  }
-
-  // 验证URL
-  static isValidUrl(url: string): boolean {
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  // 验证IP地址
-  static isValidIP(ip: string): boolean {
-    const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-    return ipRegex.test(ip);
-  }
-}
 
 // 文件工具
 export class FileUtils {

@@ -1,9 +1,10 @@
 {
     "registry-mirrors": [
-        "https://docker.m.daocloud.io",
         "https://dockerproxy.com",
+        "https://docker.m.daocloud.io",
+        "https://docker.nju.edu.cn",
+        "https://docker.mirrors.sjtug.sjtu.edu.cn",
         "https://mirror.ccs.tencentyun.com",
-        "https://registry.docker-cn.com",
         "https://docker.mirrors.ustc.edu.cn",
         "https://hub-mirror.c.163.com",
         "https://mirror.baidubce.com"
@@ -28,8 +29,11 @@
     "storage-opts": [
         "overlay2.override_kernel_check=true"
     ],
-    "max-concurrent-downloads": 10,
-    "max-concurrent-uploads": 5,
-    "max-download-attempts": 5,
-    "default-shm-size": "128M"
+    "max-concurrent-downloads": 6,
+    "max-concurrent-uploads": 3,
+    "max-download-attempts": 8,
+    "default-shm-size": "128M",
+    "dns": ["8.8.8.8", "114.114.114.114", "223.5.5.5"],
+    "registry-timeout": "300s",
+    "shutdown-timeout": "15s"
 }

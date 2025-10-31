@@ -1,7 +1,5 @@
 import Joi from 'joi';
-import { Request, Response, NextFunction } from 'express';
-import { Resp } from '../utils/response';
-
+import { validateRequest } from '@/middlewares';
 // 登录验证规则
 export const loginSchema = Joi.object({
   identifier: Joi.string().min(3).max(100).required().messages({
@@ -140,7 +138,7 @@ export const updateProfileSchema = Joi.object({
       .pattern(/^1[3-9]\d{9}$/)
       .optional(),
   }).optional(),
-  avatarUrl: Joi.string().uri().optional(),
+  avatarUrl: Joi.string().optional(),
   socialLinks: Joi.object({
     weibo: Joi.object({
       value: Joi.string().max(100).optional(),
@@ -161,24 +159,18 @@ export const updateProfileSchema = Joi.object({
   }).optional(),
 });
 
-// 验证中间件工厂函数
-export const validateRequest = (schema: Joi.ObjectSchema) => {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    const { error } = schema.validate(req.body, { abortEarly: false });
-
-    if (error) {
-      const errorMessages = error.details.map(detail => detail.message);
-      Resp.unprocessableEntity(res, errorMessages.join('; '));
-      return;
-    }
-
-    next();
-  };
-};
-
 // 导出验证中间件
-export const validateLogin = validateRequest(loginSchema);
-export const validateRegister = validateRequest(registerSchema);
-export const validateRefreshToken = validateRequest(refreshTokenSchema);
-export const validateChangePassword = validateRequest(changePasswordSchema);
-export const validateUpdateProfile = validateRequest(updateProfileSchema);
+export const validateLogin = validateRequest({ body: loginSchema });
+export const validateRegister = validateRequest({ body: registerSchema });
+export const validateRefreshToken = validateRequest({ body: refreshTokenSchema });
+export const validateChangePassword = validateRequest({ body: changePasswordSchema });
+export const validateUpdateProfile = validateRequest({ body: updateProfileSchema });
+
+// 导出验证器对象
+export const authValidators = {
+  login: validateLogin,
+  register: validateRegister,
+  refreshToken: validateRefreshToken,
+  changePassword: validateChangePassword,
+  updateProfile: validateUpdateProfile,
+};

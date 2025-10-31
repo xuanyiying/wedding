@@ -15,12 +15,13 @@ import {
   uploadVideoCover,
   initChunkUpload,
   uploadChunk,
-  completeChunkUpload
+  completeChunkUpload,
+  checkChunkUploadStatus
 } from '../controllers/file.controller';
 import { authMiddleware } from '../middlewares/auth';
 import { uploadMiddleware, uploadWithTimeout, handleUploadError } from '../middlewares/upload';
 import { validateRequest } from '../middlewares/validation';
-import { fileValidators } from '../validators/file';
+import { fileValidators } from '../middlewares/validators/file';
 
 const router = Router();
 
@@ -31,7 +32,7 @@ router.post(
   authMiddleware, // 认证检查提前
   uploadMiddleware.single('file'),
   handleUploadError, // 错误处理
-  validateRequest(fileValidators.uploadFile),
+  fileValidators.uploadFile,
   uploadFile,
 );
 
@@ -55,38 +56,39 @@ router.post(
 );
 
 // 获取文件列表
-router.get('/', validateRequest(fileValidators.getFiles), getFiles);
+router.get('/', fileValidators.getFiles, getFiles);
 
 // 获取文件详情
-router.get('/:id', validateRequest(fileValidators.getFileById), getFileById);
+router.get('/:id', fileValidators.getFileById, getFileById);
 
 // 删除文件
-router.delete('/:id', authMiddleware, validateRequest(fileValidators.deleteFile), deleteFile);
+router.delete('/:id', authMiddleware, fileValidators.deleteFile, deleteFile);
 
 // 批量删除文件
-router.delete('/batch', authMiddleware, validateRequest(fileValidators.deleteFiles), batchDeleteFiles);
+router.delete('/batch', authMiddleware, fileValidators.deleteFiles, batchDeleteFiles);
 
 // 获取上传令牌
-router.post('/upload-token', authMiddleware, validateRequest(fileValidators.getUploadToken), getUploadToken);
+router.post('/upload-token', authMiddleware, fileValidators.getUploadToken, getUploadToken);
 
 // 更新文件信息
-router.put('/:id', authMiddleware, validateRequest(fileValidators.updateFile), updateFile);
+router.put('/:id', authMiddleware, fileValidators.updateFile, updateFile);
 
 // 获取文件统计
 router.get('/stats/overview', getFileStats);
 
 // 下载文件
-router.get('/:id/download', validateRequest(fileValidators.downloadFile), downloadFile);
+router.get('/:id/download', fileValidators.downloadFile, downloadFile);
 
 // 生成缩略图
-router.post('/:id/thumbnail', authMiddleware, validateRequest(fileValidators.generateThumbnail), generateThumbnail);
+router.post('/:id/thumbnail', authMiddleware, fileValidators.generateThumbnail, generateThumbnail);
 
 // 获取用户媒体文件
 router.get('/user/:userId/:type', getUserMedia);
 
 // 分块上传相关路由
-router.post('/chunk/init', authMiddleware, validateRequest(fileValidators.initChunkUpload), initChunkUpload);
-router.post('/chunk/upload', authMiddleware, uploadMiddleware.single('chunk'), validateRequest(fileValidators.uploadChunk), uploadChunk);
-router.post('/chunk/complete', authMiddleware, validateRequest(fileValidators.completeChunkUpload), completeChunkUpload);
+router.post('/chunk/init', authMiddleware, fileValidators.initChunkUpload, initChunkUpload);
+router.post('/chunk/upload', authMiddleware, uploadMiddleware.single('chunk'), fileValidators.uploadChunk, uploadChunk);
+router.get('/chunk/status/:uploadId', authMiddleware, checkChunkUploadStatus);
+router.post('/chunk/complete', authMiddleware, fileValidators.completeChunkUpload, completeChunkUpload);
 
 export default router;
