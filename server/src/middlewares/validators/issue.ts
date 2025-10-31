@@ -8,7 +8,8 @@ export const createIssueSchema = Joi.object({
         .trim()
         .min(5)
         .max(100)
-        .required()
+        .optional()
+        .allow( null)
         .messages({
             'string.empty': '标题不能为空',
             'string.min': '标题长度必须在5-100个字符之间',
@@ -18,7 +19,8 @@ export const createIssueSchema = Joi.object({
     description: Joi.string()
         .trim()
         .min(10)
-        .required()
+        .optional()
+        .allow( null)
         .messages({
             'string.empty': '描述不能为空',
             'string.min': '描述至少需要10个字符',
@@ -40,6 +42,7 @@ export const createIssueSchema = Joi.object({
         .trim()
         .max(1000)
         .optional()
+        .allow('')
         .messages({
             'string.max': '重现步骤不能超过1000个字符',
         }),
@@ -47,6 +50,7 @@ export const createIssueSchema = Joi.object({
         .trim()
         .max(500)
         .optional()
+        .allow('')
         .messages({
             'string.max': '预期行为不能超过500个字符',
         }),
@@ -54,6 +58,7 @@ export const createIssueSchema = Joi.object({
         .trim()
         .max(500)
         .optional()
+        .allow('')
         .messages({
             'string.max': '实际行为不能超过500个字符',
         }),
@@ -61,6 +66,7 @@ export const createIssueSchema = Joi.object({
         .trim()
         .max(100)
         .optional()
+        .allow('')
         .messages({
             'string.max': '环境信息不能超过100个字符',
         }),
@@ -68,12 +74,14 @@ export const createIssueSchema = Joi.object({
         .trim()
         .max(50)
         .optional()
+        .allow('')
         .messages({
             'string.max': '版本号不能超过50个字符',
         }),
     labels: Joi.array()
         .items(Joi.string().trim())
         .optional()
+        .allow('')
         .messages({
             'array.base': '标签必须是数组',
         }),

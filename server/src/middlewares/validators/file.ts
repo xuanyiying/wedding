@@ -21,6 +21,7 @@ export const uploadFileSchema = Joi.object({
         .trim()
         .max(500)
         .optional()
+        .allow('')
         .messages({
             'string.max': '文件描述不能超过500个字符',
         }),
@@ -45,6 +46,7 @@ export const uploadFilesSchema = Joi.object({
         .trim()
         .max(500)
         .optional()
+        .allow('')
         .messages({
             'string.max': '文件描述不能超过500个字符',
         }),
@@ -84,6 +86,7 @@ export const getFilesSchema = Joi.object({
     category: Joi.string()
         .valid(...Object.values(FileCategory))
         .optional()
+        .allow('')
         .messages({
             'any.only': `文件分类必须是以下值之一：${Object.values(FileCategory).join('、')}`,
         }),
@@ -91,6 +94,7 @@ export const getFilesSchema = Joi.object({
         .trim()
         .max(100)
         .optional()
+        .allow('')
         .messages({
             'string.max': '搜索关键词不能超过100个字符',
         }),
@@ -159,6 +163,7 @@ export const updateFileSchema = Joi.object({
         .trim()
         .max(500)
         .optional()
+        .allow('')
         .messages({
             'string.max': '文件描述不能超过500个字符',
         }),
@@ -206,7 +211,8 @@ export const initChunkUploadSchema = Joi.object({
         .trim()
         .min(1)
         .max(255)
-        .required()
+        .optional()
+        .allow('')
         .messages({
             'string.empty': '文件名不能为空',
             'string.min': '文件名至少需要1个字符',

@@ -71,7 +71,8 @@ export const createScheduleSchema = Joi.object({
         .min(0)
         .max(999999.99)
         .precision(2)
-        .required()
+        .optional()
+        .allow( null)
         .label('价格')
         .messages({
             'number.base': '价格必须是数字',
@@ -86,7 +87,8 @@ export const createScheduleSchema = Joi.object({
         .max(999999.99)
         .precision(2)
         .custom(validateDeposit)
-        .required()
+        .optional()
+        .allow( null)
         .label('定金')
         .messages({
             'number.base': '定金必须是数字',
@@ -101,7 +103,8 @@ export const createScheduleSchema = Joi.object({
         .min(2)
         .max(50)
         .pattern(/^[\u4e00-\u9fa5a-zA-Z\s]+$/)
-        .required()
+        .optional()
+        .allow( null)
         .label('客户姓名')
         .messages({
             'string.empty': '客户姓名不能为空',
@@ -113,7 +116,8 @@ export const createScheduleSchema = Joi.object({
     
     customerPhone: Joi.string()
         .pattern(/^1[3-9]\d{9}$/)
-        .required()
+        .optional()
+        .allow( null)
         .label('客户手机号')
         .messages({
             'string.pattern.base': '客户手机号必须为11位有效手机号（以1开头，第二位为3-9）',
@@ -178,6 +182,8 @@ export const updateScheduleSchema = Joi.object({
     location: Joi.string()
         .min(1)
         .max(200)
+        .optional()
+        .allow( null)
         .label('婚礼地点')
         .messages({
             'string.empty': '婚礼地点不能为空',
@@ -189,6 +195,8 @@ export const updateScheduleSchema = Joi.object({
         .min(0)
         .max(999999.99)
         .precision(2)
+        .optional()
+        .allow( null)
         .label('价格')
         .messages({
             'number.base': '价格必须是数字',
@@ -202,6 +210,8 @@ export const updateScheduleSchema = Joi.object({
         .max(999999.99)
         .precision(2)
         .custom(validateDeposit)
+        .optional()
+        .allow( null)
         .label('定金')
         .messages({
             'number.base': '定金必须是数字',
@@ -215,6 +225,8 @@ export const updateScheduleSchema = Joi.object({
         .min(2)
         .max(50)
         .pattern(/^[\u4e00-\u9fa5a-zA-Z\s]+$/)
+        .optional()
+        .allow( null)
         .label('客户姓名')
         .messages({
             'string.empty': '客户姓名不能为空',
@@ -225,6 +237,8 @@ export const updateScheduleSchema = Joi.object({
     
     customerPhone: Joi.string()
         .pattern(/^1[3-9]\d{9}$/)
+        .optional()
+        .allow( null)
         .label('客户手机号')
         .messages({
             'string.pattern.base': '客户手机号必须为11位有效手机号（以1开头，第二位为3-9）'
@@ -290,8 +304,18 @@ export const getSchedulesSchema = Joi.object({
             'number.max': '每页数量不能超过100'
         }),
     
+    isPaid: Joi.boolean()
+        .optional()
+        .allow( null)
+        .label('支付状态')
+        .messages({
+            'boolean.base': '支付状态必须是布尔值'
+        }),
+
     status: Joi.string()
         .valid(...Object.values(ScheduleStatus))
+        .optional()
+        .allow( null)
         .label('状态')
         .messages({
             'any.only': `状态必须是以下值之一：${Object.values(ScheduleStatus).join('、')}`
@@ -300,6 +324,8 @@ export const getSchedulesSchema = Joi.object({
     hostId: Joi.number()
         .integer()
         .positive()
+        .optional()
+        .allow( null)
         .label('主持人ID')
         .messages({
             'number.base': '主持人ID必须是数字',
@@ -309,6 +335,8 @@ export const getSchedulesSchema = Joi.object({
     
     startDate: Joi.date()
         .label('开始日期')
+        .optional()
+        .allow( null)
         .messages({
             'date.base': '开始日期必须是有效的日期格式'
         }),
@@ -316,6 +344,8 @@ export const getSchedulesSchema = Joi.object({
     endDate: Joi.date()
         .min(Joi.ref('startDate'))
         .label('结束日期')
+        .optional()
+        .allow( null)
         .messages({
             'date.base': '结束日期必须是有效的日期格式',
             'date.min': '结束日期不能早于开始日期'

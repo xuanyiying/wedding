@@ -16,12 +16,12 @@ export const createUserSchema = Joi.object({
     'string.max': '密码长度不能超过128位',
     'any.required': '密码不能为空',
   }),
-  realName: Joi.string().max(50).optional().messages({
+  realName: Joi.string().max(50).optional().allow('').messages({
     'string.max': '真实姓名长度不能超过50位',
   }),
   phone: Joi.string()
     .pattern(/^1[3-9]\d{9}$/)
-    .required()
+    .allow('')
     .messages({
       'string.pattern.base': '请输入有效的手机号码',
       'any.required': '手机号不能为空',
@@ -29,19 +29,24 @@ export const createUserSchema = Joi.object({
   gender: Joi.string()
     .valid(...Object.values(Gender))
     .optional()
+    .allow('')
     .messages({
       'any.only': '性别值无效',
     }),
   role: Joi.string()
     .valid(...Object.values(UserRole))
     .optional()
+    .allow('')
     .messages({
       'any.only': '用户角色无效',
     }),
-  bio: Joi.string().max(500).optional().allow(''),
+  bio: Joi.string().max(500).optional().allow('').messages({
+    'string.max': '个人简介长度不能超过500字',
+  }),
   status: Joi.string()
     .valid(...Object.values(UserStatus))
     .optional()
+    .allow('')
     .messages({
       'any.only': '用户状态无效',
     }),
@@ -54,10 +59,10 @@ export const updateUserSchema = Joi.object({
     'string.min': '用户名长度至少为3位',
     'string.max': '用户名长度不能超过30位',
   }),
-  email: Joi.string().email().optional().messages({
+  email: Joi.string().email().optional().allow('').messages({
     'string.email': '请输入有效的邮箱地址',
   }),
-  realName: Joi.string().max(50).optional().messages({
+  realName: Joi.string().max(50).optional().allow( '').messages({
     'string.max': '真实姓名长度不能超过50位',
   }),
   phone: Joi.string()
@@ -76,6 +81,7 @@ export const updateUserSchema = Joi.object({
   gender: Joi.string()
     .valid(...Object.values(Gender))
     .optional()
+    .allow('')
     .messages({
       'any.only': '性别值无效',
     }),
@@ -88,6 +94,7 @@ export const updateUserSchema = Joi.object({
   status: Joi.string()
     .valid(...Object.values(UserStatus))
     .optional()
+    .allow('')
     .messages({
       'any.only': '用户状态无效',
     }),
@@ -104,18 +111,20 @@ export const getUsersQuerySchema = Joi.object({
     'number.min': '每页数量必须大于0',
     'number.max': '每页数量不能超过100',
   }),
-  search: Joi.string().max(100).optional().messages({
+  search: Joi.string().max(100).optional().allow('').messages({
     'string.max': '搜索关键词长度不能超过100字符',
   }),
   role: Joi.string()
     .valid(...Object.values(UserRole))
     .optional()
+    .allow('')
     .messages({
       'any.only': '用户角色无效',
     }),
   status: Joi.string()
     .valid(...Object.values(UserStatus))
     .optional()
+    .allow('')
     .messages({
       'any.only': '用户状态无效',
     }),

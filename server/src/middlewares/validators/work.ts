@@ -31,13 +31,16 @@ export const getWorksSchema = Joi.object({
         }),
     
     userId: Joi.string()
+        .allow('')
         .label('用户ID')
         .messages({
             'string.base': '用户ID必须是字符串'
         }),
     
-    // 支持前端传递的 teamId 参数
+    // 支持前端传递的 teamId 参数 可以为空
     teamId: Joi.string()
+        .allow('')
+        .optional()
         .label('团队ID')
         .messages({
             'string.base': '团队ID必须是字符串'
@@ -62,6 +65,7 @@ export const getWorksSchema = Joi.object({
         }),
     
     category: Joi.string()
+        .allow('')
         .valid(...Object.values(WorkCategory))
         .label('作品分类')
         .messages({
@@ -69,6 +73,7 @@ export const getWorksSchema = Joi.object({
         }),
     
     status: Joi.string()
+        .allow('')
         .valid(...Object.values(WorkStatus))
         .label('作品状态')
         .messages({
@@ -77,12 +82,14 @@ export const getWorksSchema = Joi.object({
     
     // 支持前端传递的 featured 参数
     featured: Joi.boolean()
+        .allow(null)
         .label('精选状态')
         .messages({
             'boolean.base': '精选状态必须是布尔值'
         }),
     
     isFeatured: Joi.boolean()
+        .allow(null)
         .label('精选状态')
         .messages({
             'boolean.base': '精选状态必须是布尔值'
@@ -98,6 +105,7 @@ export const getWorksSchema = Joi.object({
         }),
     
     tags: Joi.array()
+        .max(10).allow( null)
         .items(Joi.string().trim().max(50))
         .max(10)
         .label('标签')
@@ -110,6 +118,7 @@ export const getWorksSchema = Joi.object({
     // 支持前端传递的日期范围参数
     dateFrom: Joi.date()
         .iso()
+        .allow(null)
         .label('开始日期')
         .messages({
             'date.base': '开始日期必须是有效的日期格式',
@@ -118,6 +127,7 @@ export const getWorksSchema = Joi.object({
     
     dateTo: Joi.date()
         .iso()
+        .allow(null)
         .min(Joi.ref('dateFrom'))
         .label('结束日期')
         .messages({
