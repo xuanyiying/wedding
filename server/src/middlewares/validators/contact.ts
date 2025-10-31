@@ -37,7 +37,8 @@ const submitContactSchema = Joi.object({
       'string.empty': '婚礼时间不能为空',
     }),
   location: Joi.string()
-    .required()
+    .optional()
+    .allow('')
     .messages({
       'any.required': '婚礼地点不能为空',
       'string.empty': '婚礼地点不能为空',
@@ -45,7 +46,8 @@ const submitContactSchema = Joi.object({
   guestCount: Joi.number()
     .integer()
     .min(1)
-    .required()
+    .optional()
+    .allow(null)
     .messages({
       'any.required': '宾客人数不能为空',
       'number.min': '宾客人数必须大于0',
@@ -53,14 +55,18 @@ const submitContactSchema = Joi.object({
     }),
   serviceType: Joi.string()
     .valid('wedding', 'engagement', 'anniversary', 'other')
-    .required()
+    .optional()
+    .default('wedding')
+    .allow('')
     .messages({
       'any.required': '服务类型不能为空',
       'any.only': '请选择正确的服务类型',
     }),
   budget: Joi.string()
     .valid('5000-10000', '10000-20000', '20000-50000', '50000+')
-    .required()
+    .optional()
+    .default('5000-10000')
+    .allow('')
     .messages({
       'any.required': '预算范围不能为空',
       'any.only': '请选择正确的预算范围',
@@ -96,18 +102,22 @@ const getContactsSchema = Joi.object({
   status: Joi.string()
     .valid('pending', 'contacted', 'completed', 'cancelled')
     .optional()
+    .default('pending')
+    .allow('')
     .messages({
       'any.only': '状态值不正确',
     }),
   startDate: Joi.date()
     .iso()
     .optional()
+    .allow(null)
     .messages({
       'date.format': '开始日期格式不正确',
     }),
   endDate: Joi.date()
     .iso()
     .optional()
+    .allow(null)
     .messages({
       'date.format': '结束日期格式不正确',
     }),
