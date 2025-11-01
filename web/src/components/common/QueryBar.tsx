@@ -114,7 +114,7 @@ export interface QueryFilters {
   search?: string;
   teamId?: string;
   userId?: string;
-  date?: Dayjs | null;
+  weddingDate?: Dayjs | null;
   weddingTime?: 'lunch' | 'dinner'; // 仅用于档期页面
 }
 
@@ -213,7 +213,7 @@ const QueryBar: React.FC<QueryBarProps> = ({
   }, [filters.teamId]);
 
   // 处理筛选条件变化
-  const handleFilterChange = (key: keyof QueryFilters, value: any) => {
+  const handleFilterChange = (key: keyof QueryFilters, value: QueryFilters[keyof QueryFilters]) => {
     setFilters(prev => ({
       ...prev,
       [key]: value
@@ -292,8 +292,8 @@ const QueryBar: React.FC<QueryBarProps> = ({
         <div className="query-item-date">
           <DatePicker
             placeholder="选择日期"
-            value={filters.date}
-            onChange={(date) => setFilters({ ...filters, date })}
+            value={filters.weddingDate}
+            onChange={(date) => handleFilterChange('weddingDate', date)}
             format="YYYY-MM-DD"
           />
         </div>

@@ -55,7 +55,7 @@ const SchedulesPage: React.FC = () => {
     search: '',
     teamId: '',
     userId: '',
-    date: null,
+    weddingDate: null,
     weddingTime: 'lunch',
   });
   // 初始化admin主题和用户认证
@@ -72,7 +72,7 @@ const SchedulesPage: React.FC = () => {
     userId?: string;
     date?: string;
     status?: string;
-    mealType?: 'lunch' | 'dinner';
+    weddingTime?: 'lunch' | 'dinner';
   }) => {
     setLoading(true);
     try {
@@ -92,8 +92,8 @@ const SchedulesPage: React.FC = () => {
       }
 
       // 处理餐次类型查询
-      if (queryFilters?.mealType) {
-        params.mealType = queryFilters.mealType;
+      if (queryFilters?.weddingTime) {
+        params.weddingTime = queryFilters.weddingTime;
       }
       if (queryFilters?.teamId) {
         params.teamId = queryFilters.teamId;

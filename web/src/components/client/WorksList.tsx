@@ -88,10 +88,11 @@ const WorksList: React.FC<WorksListProps> = ({ showFilters = true, showPaginatio
         const params = {
           page: currentPage,
           limit: limit,
-          title: debouncedSearchText,
+          search: debouncedSearchText,
           category: selectedCategory === 'all' ? undefined : selectedCategory,
           type: selectedType === 'all' ? undefined : selectedType,
           status: 'published',
+          featured: true,
           ...memoizedInitialParams,
         };
         const response = await workService.getWorks(params);

@@ -81,7 +81,6 @@ export enum EventType {
 export enum WeddingTime {
   LUNCH = 'lunch', // 午宴
   DINNER = 'dinner', // 晚宴
-  FULL_DAY = 'full_day', // 全天
 }
 
 // 团队状态枚举

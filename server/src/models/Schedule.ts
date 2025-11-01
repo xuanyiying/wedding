@@ -8,7 +8,7 @@ export interface ScheduleAttributes {
   userId: string;
   customerId: string | null;
   customerName: string | null;
-  title: string;
+  title?: string;
   description: string | null;
   weddingDate: Date; // 婚礼日期
   weddingTime: WeddingTime; // 婚礼时间
@@ -36,7 +36,7 @@ class Schedule extends Model<ScheduleAttributes, ScheduleCreationAttributes> imp
   public id!: string;
   public userId!: string;
   public customerId!: string | null;
-  public title!: string;
+  public title?: string;
   public description!: string | null;
   public weddingDate!: Date; // 婚礼日期
   public weddingTime!: WeddingTime; // 婚礼时间
@@ -112,7 +112,7 @@ export const initSchedule = (sequelize: Sequelize): void => {
       },
       title: {
         type: new DataTypes.STRING(255),
-        allowNull: false,
+        allowNull: true,
         comment: '日程标题',
       },
       description: {

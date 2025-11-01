@@ -14,8 +14,8 @@ import dayjs from "dayjs";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { dashboardService } from "../../services";
-import { PageViewService } from "../../services/pageViewService";
-import { useAppSelector } from "../../store/hooks";
+import { PageViewService } from "../../services/page-view.ts";
+import { useAppSelector } from "../../store";
 import { useTheme } from "../../hooks/useTheme";
 import {
   PageHeader,
@@ -42,10 +42,6 @@ const QuickActions = styled.div`
   gap: 12px;
   flex-wrap: wrap;
 
-  .ant-btn {
-    flex: 1;
-    min-width: 120px;
-  }
 `;
 
 interface StatData {
@@ -228,13 +224,6 @@ const DashboardPage: React.FC = () => {
           }
         } catch (error) {
           console.error('获取今日档期统计失败:', error);
-          // 使用模拟数据作为后备
-          const mockTodayStats: TodayScheduleStats = {
-            totalSchedules: Math.floor(Math.random() * 20) + 5,
-            teamSchedules: Math.floor(Math.random() * 10) + 2,
-            personalSchedules: Math.floor(Math.random() * 15) + 3,
-          };
-          setTodayScheduleStats(mockTodayStats);
         }
 
         // 只有管理员才显示热门页面和访问趋势

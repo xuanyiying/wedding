@@ -91,7 +91,7 @@ export class ChunkUploadManager {
     onProgress?: (progress: number) => void
   ): Promise<void> {
     const controllerId = `${fileId}-${chunkIndex}`;
-    
+
     try {
       // 创建取消控制器
       const controller = new AbortController();
@@ -163,7 +163,7 @@ export class ChunkUploadManager {
       // 取消文件的所有分块
       const controllersToCancel = Array.from(this.chunkUploadControllers.entries())
         .filter(([id]) => id.startsWith(fileId));
-      
+
       controllersToCancel.forEach(([id, controller]) => {
         controller.abort();
         this.chunkUploadControllers.delete(id);
@@ -219,18 +219,18 @@ export class ChunkUploadManager {
         category: category,
         totalChunks: fileState.chunks.length
       });
-      
+
       if (!initResponse.data) {
         throw new Error('Failed to initialize chunk upload: no response data');
       }
-      
+
       fileState.uploadId = initResponse.data.uploadId;
-      
+
       // 串行上传分块，避免并发冲突
       for (let i = 0; i < chunks.length; i++) {
         const chunk = chunks[i];
         const chunkState = fileState.chunks[i];
-        
+
         try {
           await this.uploadChunk(
             chunk,
@@ -241,17 +241,17 @@ export class ChunkUploadManager {
               if (onChunkProgress) {
                 onChunkProgress(i, progress);
               }
-              
+
               // 实时更新总进度（基于当前分片的进度）
               if (onProgress) {
                 const currentChunkBytes = Math.round(chunk.size * progress / 100);
                 const totalUploadedBytes = fileState.uploadedBytes + currentChunkBytes;
                 const totalProgress = Math.round((totalUploadedBytes / fileState.totalBytes) * 100);
-                
+
                 // 确保进度值在合理范围内，避免跳跃
                 const clampedProgress = Math.min(Math.max(totalProgress, 0), 100);
                 onProgress(clampedProgress);
-                
+
                 // 添加调试日志
                 if (progress === 100) {
                   console.log(`📊 分片 ${i + 1} 完成，当前总进度: ${clampedProgress}%`);
@@ -259,68 +259,68 @@ export class ChunkUploadManager {
               }
             }
           );
-          
+
           chunkState.uploaded = true;
           fileState.uploadedBytes += chunk.size;
-          
+
           // 立即更新总进度 - 确保分片完成后进度准确
           if (onProgress) {
             const totalProgress = Math.round((fileState.uploadedBytes / fileState.totalBytes) * 100);
             const finalProgress = Math.min(totalProgress, 100);
-            
+
             // 使用 nextFrame 确保进度更新在下一个渲染帧中执行，避免UI阻塞
             nextFrame().then(() => {
               onProgress(finalProgress);
             });
-            
+
             console.log(`📊 分片 ${i + 1}/${chunks.length} 完成，总进度: ${finalProgress}% (已上传: ${fileState.uploadedBytes}/${fileState.totalBytes} 字节)`);
           }
-          
+
           console.log(`✅ 分块 ${i + 1}/${chunks.length} 上传完成`);
-          
+
         } catch (error: any) {
           console.error(`❌ 分块 ${i + 1} 上传失败:`, error);
-          
+
           // 如果是取消错误，直接抛出
           if (error.message?.includes('cancelled') || error.name === 'AbortError') {
             throw error;
           }
-          
+
           // 其他错误也抛出，不再重试
           throw new Error(`分块 ${i + 1} 上传失败: ${error.message}`);
         }
       }
-      
 
-      
+
+
       // 完成分块上传
       const completeResponse = await fileService.completeChunkUpload({
         uploadId: fileState.uploadId!,
         fileId: fileState.uploadId!
       });
-      
+
       if (!completeResponse.success) {
         throw new Error(`Failed to complete chunk upload: ${completeResponse.message}`);
       }
-      
+
       fileState.isCompleted = true;
-      
+
       console.log('✅ 分块上传完成:', {
         filename: file.name,
         uploadId: fileState.uploadId,
         totalChunks: chunks.length
       });
-      
+
       return completeResponse.data;
-      
+
     } catch (error: any) {
       console.error('❌ 分块上传失败:', error);
-      
+
       // 取消所有相关的分块上传
       if (fileState.uploadId) {
         this.cancelChunkUpload(fileState.uploadId);
       }
-      
+
       fileState.isCancelled = true;
       throw error;
     }
@@ -346,15 +346,15 @@ export class ChunkUploadManager {
   public async checkChunkUploadStatus(uploadId: string): Promise<ChunkUploadStatusResult> {
     try {
       console.log(`🔍 检查分块上传状态: ${uploadId}`);
-      
+
       const response = await fileService.checkChunkUploadStatus(uploadId);
-      
+
       if (!response.success || !response.data) {
         throw new Error(`状态检查失败: ${response.message || '未知错误'}`);
       }
 
       const statusResult = response.data;
-      
+
       console.log(`📊 分块上传状态:`, {
         uploadId: statusResult.uploadId,
         totalChunks: statusResult.totalChunks,
@@ -366,7 +366,7 @@ export class ChunkUploadManager {
       });
 
       return statusResult;
-      
+
     } catch (error: any) {
       console.error(`❌ 检查分块上传状态失败:`, error);
       throw new Error(`状态检查失败: ${error.message || '网络错误'}`);
@@ -381,13 +381,13 @@ export class ChunkUploadManager {
     maxRetries: number = this.statusCheckConfig.maxRetries
   ): Promise<ChunkUploadStatusResult> {
     let lastError: Error | null = null;
-    
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         return await this.checkChunkUploadStatus(uploadId);
       } catch (error: any) {
         lastError = error;
-        
+
         if (attempt < maxRetries) {
           const retryDelay = this.statusCheckConfig.retryDelay * attempt;
           console.log(`⏳ 状态检查失败，${retryDelay}ms 后重试 (${attempt}/${maxRetries})`);
@@ -395,7 +395,7 @@ export class ChunkUploadManager {
         }
       }
     }
-    
+
     throw lastError || new Error('状态检查重试失败');
   }
 
@@ -409,30 +409,30 @@ export class ChunkUploadManager {
   ): void {
     // 清除现有的轮询
     this.stopStatusPolling(uploadId);
-    
+
     const poll = async () => {
       try {
         const status = await this.checkChunkUploadStatus(uploadId);
         onStatusUpdate(status);
-        
+
         // 如果上传完成或会话过期，停止轮询
         if (status.isCompleted || status.sessionExpired) {
           this.stopStatusPolling(uploadId);
           return;
         }
-        
+
         // 继续轮询
         this.timerManager.setTimeout(`poll-${uploadId}`, poll, this.statusCheckConfig.pollInterval);
-        
+
       } catch (error: any) {
         console.error(`❌ 状态轮询失败:`, error);
         onError?.(error);
-        
+
         // 发生错误时停止轮询
         this.stopStatusPolling(uploadId);
       }
     };
-    
+
     // 立即执行第一次检查
     poll();
   }
@@ -462,7 +462,6 @@ export class ChunkUploadManager {
   public async autoRecoverUpload(
     uploadId: string,
     file: File,
-    category: string,
     onProgress?: (progress: number) => void,
     onChunkProgress?: (chunkIndex: number, progress: number) => void
   ): Promise<any> {
@@ -472,23 +471,23 @@ export class ChunkUploadManager {
 
     try {
       console.log(`🔄 开始自动恢复上传: ${uploadId}`);
-      
+
       // 检查当前状态
       const status = await this.checkChunkUploadStatusWithRetry(uploadId);
-      
+
       if (status.sessionExpired) {
         throw new Error('上传会话已过期，无法恢复');
       }
-      
+
       if (status.isCompleted) {
         console.log(`✅ 上传已完成，无需恢复`);
         return { uploadId, completed: true };
       }
-      
+
       if (!status.canResume) {
         throw new Error('上传无法恢复，请重新开始');
       }
-      
+
       if (status.missingChunks.length === 0) {
         // 所有分块都已上传，尝试完成上传
         console.log(`🎯 所有分块已上传，尝试完成上传`);
@@ -497,21 +496,21 @@ export class ChunkUploadManager {
           fileId: uploadId
         });
       }
-      
+
       // 恢复上传缺失的分块
       console.log(`🔄 恢复上传 ${status.missingChunks.length} 个缺失分块`);
-      
+
       const chunks = this.createFileChunks(file);
       let uploadedBytes = (status.uploadedChunks * CHUNK_SIZE);
-      
+
       for (const chunkIndex of status.missingChunks) {
         if (chunkIndex >= chunks.length) {
           console.warn(`⚠️ 无效的分块索引: ${chunkIndex}`);
           continue;
         }
-        
+
         const chunk = chunks[chunkIndex];
-        
+
         try {
           await this.uploadChunk(
             chunk,
@@ -522,7 +521,7 @@ export class ChunkUploadManager {
               if (onChunkProgress) {
                 onChunkProgress(chunkIndex, progress);
               }
-              
+
               if (onProgress) {
                 const currentChunkBytes = Math.round(chunk.size * progress / 100);
                 const totalUploadedBytes = uploadedBytes + currentChunkBytes;
@@ -531,25 +530,25 @@ export class ChunkUploadManager {
               }
             }
           );
-          
+
           uploadedBytes += chunk.size;
           console.log(`✅ 恢复分块 ${chunkIndex + 1} 成功`);
-          
+
         } catch (error: any) {
           console.error(`❌ 恢复分块 ${chunkIndex + 1} 失败:`, error);
           throw new Error(`恢复分块 ${chunkIndex + 1} 失败: ${error.message}`);
         }
       }
-      
+
       // 完成上传
       const completeResponse = await fileService.completeChunkUpload({
         uploadId,
         fileId: uploadId
       });
-      
+
       console.log(`✅ 自动恢复上传完成: ${uploadId}`);
       return completeResponse.data;
-      
+
     } catch (error: any) {
       console.error(`❌ 自动恢复上传失败:`, error);
       throw error;

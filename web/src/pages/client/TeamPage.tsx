@@ -8,7 +8,7 @@ import TeamMemberList from '../../components/client/TeamMemberList';
 import TeamMemberDetailModal from '../../components/client/TeamMemberDetailModal';
 import { useAppSettings } from '../../hooks';
 import { usePageView } from '../../hooks/usePageView';
-import { PageViewService } from '../../services/pageViewService';
+import { PageViewService } from '../../services/page-view.ts';
 import { teamService } from '../../services';
 
 const PageContainer = styled.div`

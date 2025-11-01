@@ -84,6 +84,10 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
 
   // 简化的保存函数 - 直接调用父组件的保存方法
   const handleSave = useCallback((values: any) => {
+    // 确保weddingTime有默认值
+    if (!values.weddingTime) {
+      values.weddingTime = 'lunch';
+    }
     // 调用父组件的保存方法，由父组件处理服务端验证
     onSave(values);
   }, [onSave]);
@@ -133,7 +137,16 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
           <Button
             key="submit"
             type="primary"
-            onClick={() => form.submit()}
+            onClick={() => {
+              form
+                .validateFields()
+                .then((values: any) => {
+                  handleSave(values);
+                })
+                .catch((info: any) => {
+                  console.log("验证失败:", info);
+                });
+            }}
           >
             {editingSchedule ? '更新' : '添加'}
           </Button>,
@@ -176,7 +189,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
               <Form.Item
                 name="weddingTime"
                 label="婚礼时间"
-                rules={[{ required: true, message: '请选择婚礼时间' }]}
+                rules={[{ required: false, message: '请选择婚礼时间' }]}
                 validateStatus={
                   (!isAdmin && conflictSchedules.length > 0) ? 'error' : 
                   getFieldValidateStatus('weddingTime')
@@ -375,7 +388,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
             <Col span={8}>
               <Form.Item
                 name="isPaid"
-                label="是否已结清"
+                label="已结清"
                 valuePropName="checked"
                 validateStatus={getFieldValidateStatus('isPaid')}
                 help={getFieldHelp('isPaid')}

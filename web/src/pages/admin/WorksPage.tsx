@@ -398,7 +398,7 @@ const WorksPage: React.FC = () => {
           const newFilters = {
             teamId: queryFilters.teamId || '',
             userId: queryFilters.userId || '',
-            date: queryFilters.date || null,
+            weddingDate: queryFilters.weddingDate || null,
             search: queryFilters.search || '',
           };
           setFilters(newFilters);

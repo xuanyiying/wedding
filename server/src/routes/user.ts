@@ -14,9 +14,6 @@ import {
   toggleCurrentUserProfilePublish,
 } from '../controllers/user.controller';
 import { authMiddleware, requireAdmin } from '../middlewares/auth';
-import {
-  userValidators,
-} from '../middlewares/validators/user';
 import { getTeamsByUserId } from '../controllers/team.controller';
 
 const router = Router();
@@ -31,15 +28,15 @@ router.put('/me/profile', authMiddleware, updateCurrentUserProfile);
 router.patch('/me/profile/publish', authMiddleware, toggleCurrentUserProfilePublish);
 
 // 管理员权限路由
-router.get('/', userValidators.validateGetUsers, getUsers);
+router.get('/',  getUsers);
 router.get('/stats', getUserStats);
 router.get('/:id', getUserById);
-router.post('/', authMiddleware, requireAdmin, userValidators.validateCreateUser, createUser);
-router.put('/:id', authMiddleware, requireAdmin, userValidators.validateUpdateUser, updateUser);
+router.post('/', authMiddleware, requireAdmin, createUser);
+router.put('/:id', authMiddleware, requireAdmin, updateUser);
 router.delete('/:id', authMiddleware, requireAdmin, deleteUser);
-router.post('/batch-delete', authMiddleware, requireAdmin, userValidators.validateBatchDeleteUsers, batchDeleteUsers);
-router.post('/:id/reset-password', authMiddleware, requireAdmin, userValidators.validateResetPassword, resetPassword);
-router.patch('/:id/status', authMiddleware, requireAdmin, userValidators.validateUpdateUserStatus, updateUserStatus);
+router.post('/batch-delete', authMiddleware, requireAdmin, batchDeleteUsers);
+router.post('/:id/reset-password', authMiddleware, requireAdmin, resetPassword);
+router.patch('/:id/status', authMiddleware, requireAdmin, updateUserStatus);
 // 获取用户的团队列表
 router.get('/:userId/teams', getTeamsByUserId);
 export default router;

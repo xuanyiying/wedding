@@ -10,7 +10,7 @@ import { Resp } from '../utils/response';
  */
 export const getSchedules = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { page = 1, pageSize = 10, userId, status, startDate, endDate, isPublic } = req.query;
+    const { page = 1, pageSize = 10, userId, status, date, startDate, endDate, isPublic } = req.query;
 
     const getSchedulesParams: any = {
       page: Number(page),
@@ -19,6 +19,7 @@ export const getSchedules = async (req: Request, res: Response, next: NextFuncti
       startDate: startDate as string,
       endDate: endDate as string,
       isPublic: isPublic === 'true',
+      date: date,
     };
 
     if (userId) {

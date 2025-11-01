@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { PageViewService } from '../services/pageViewService';
-import type { PageViewStats, PlayStats } from '../services/pageViewService';
+import { PageViewService } from '../services/page-view.ts';
+import type { PageViewStats, PlayStats } from '../services/page-view.ts';
 
 /**
  * 页面访问统计Hook

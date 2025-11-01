@@ -11,7 +11,7 @@ import type {
 } from '../types/issue';
 import request from '../utils/request';
 
-export const issueService = {
+export const issue = {
   /**
    * 获取问题列表
    */
@@ -74,4 +74,4 @@ export const issueService = {
   }
 };
 
-export default issueService;
+export default issue;

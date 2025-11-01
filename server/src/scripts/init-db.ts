@@ -26,9 +26,6 @@ export class DatabaseInitializer {
   private userIdMap: { [key: string]: string } = {};
   private teamIdMap: { [key: string]: string } = {};
 
-  constructor(_sequelize: Sequelize) {
-    // sequelize实例通过模型直接使用，不需要存储
-  }
 
   /**
    * 初始化用户数据
@@ -894,9 +891,6 @@ export class DatabaseInitializer {
     try {
       logger.info('开始数据库初始化...');
 
-      // 先删除有外键依赖的表数据
-      await Schedule.destroy({ where: {}, force: true });
-      await Work.destroy({ where: {}, force: true });
       logger.info('已清除现有数据');
 
       await this.initializeUsers();
@@ -1056,8 +1050,8 @@ export class DatabaseInitializer {
 /**
  * 导出初始化函数
  */
-export async function initializeDatabase(sequelize: Sequelize): Promise<void> {
-  const initializer = new DatabaseInitializer(sequelize);
+export async function initializeDatabase(): Promise<void> {
+  const initializer = new DatabaseInitializer();
   await initializer.initialize();
 }
 /**
@@ -1104,7 +1098,7 @@ async function main() {
     logger.info('数据库表结构同步完成');
 
     // 初始化数据库数据
-    await initializeDatabase(sequelize);
+    await initializeDatabase();
     logger.info('数据库数据初始化完成');
 
     process.exit(0);

@@ -20,8 +20,6 @@ import {
 } from '../controllers/file.controller';
 import { authMiddleware } from '../middlewares/auth';
 import { uploadMiddleware, uploadWithTimeout, handleUploadError } from '../middlewares/upload';
-import { validateRequest } from '../middlewares/validation';
-import { fileValidators } from '../middlewares/validators/file';
 
 const router = Router();
 
@@ -32,7 +30,6 @@ router.post(
   authMiddleware, // 认证检查提前
   uploadMiddleware.single('file'),
   handleUploadError, // 错误处理
-  fileValidators.uploadFile,
   uploadFile,
 );
 
@@ -43,7 +40,6 @@ router.post(
   authMiddleware, // 认证检查提前
   uploadMiddleware.array('files', 10), // 最多10个文件
   handleUploadError, // 错误处理
-  validateRequest(fileValidators.uploadFiles),
   batchUploadFiles,
 );
 
@@ -56,39 +52,39 @@ router.post(
 );
 
 // 获取文件列表
-router.get('/', fileValidators.getFiles, getFiles);
+router.get('/', getFiles);
 
 // 获取文件详情
-router.get('/:id', fileValidators.getFileById, getFileById);
+router.get('/:id', getFileById);
 
 // 删除文件
-router.delete('/:id', authMiddleware, fileValidators.deleteFile, deleteFile);
+router.delete('/:id', authMiddleware, deleteFile);
 
 // 批量删除文件
-router.delete('/batch', authMiddleware, fileValidators.deleteFiles, batchDeleteFiles);
+router.delete('/batch', authMiddleware, batchDeleteFiles);
 
 // 获取上传令牌
-router.post('/upload-token', authMiddleware, fileValidators.getUploadToken, getUploadToken);
+router.post('/upload-token', authMiddleware, getUploadToken);
 
 // 更新文件信息
-router.put('/:id', authMiddleware, fileValidators.updateFile, updateFile);
+router.put('/:id', authMiddleware, updateFile);
 
 // 获取文件统计
 router.get('/stats/overview', getFileStats);
 
 // 下载文件
-router.get('/:id/download', fileValidators.downloadFile, downloadFile);
+router.get('/:id/download', downloadFile);
 
 // 生成缩略图
-router.post('/:id/thumbnail', authMiddleware, fileValidators.generateThumbnail, generateThumbnail);
+router.post('/:id/thumbnail', authMiddleware, generateThumbnail);
 
 // 获取用户媒体文件
 router.get('/user/:userId/:type', getUserMedia);
 
 // 分块上传相关路由
-router.post('/chunk/init', authMiddleware, fileValidators.initChunkUpload, initChunkUpload);
-router.post('/chunk/upload', authMiddleware, uploadMiddleware.single('chunk'), fileValidators.uploadChunk, uploadChunk);
+router.post('/chunk/init', authMiddleware, initChunkUpload);
+router.post('/chunk/upload', authMiddleware, uploadMiddleware.single('chunk'), uploadChunk);
 router.get('/chunk/status/:uploadId', authMiddleware, checkChunkUploadStatus);
-router.post('/chunk/complete', authMiddleware, fileValidators.completeChunkUpload, completeChunkUpload);
+router.post('/chunk/complete', authMiddleware, completeChunkUpload);
 
 export default router;

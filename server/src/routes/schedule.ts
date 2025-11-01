@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import * as ScheduleController from '../controllers/schedule.controller';
 import { authMiddleware } from '../middlewares/auth';
-import { scheduleValidators } from '../middlewares/validators/schedule';
 
 const router = Router();
 
@@ -129,7 +128,7 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/', scheduleValidators.getSchedules, ScheduleController.getSchedules);
+router.get('/',  ScheduleController.getSchedules);
 
 // 获取客户端档期可用性
 
@@ -240,7 +239,6 @@ router.get('/client/availability', ScheduleController.getClientScheduleAvailabil
  */
 router.get(
   '/available-hosts',
-  scheduleValidators.getAvailableHosts,
   ScheduleController.getAvailableHosts,
 );
 
@@ -273,7 +271,7 @@ router.get(
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/:id', scheduleValidators.getScheduleById, ScheduleController.getScheduleById);
+router.get('/:id', ScheduleController.getScheduleById);
 
 // 创建档期
 
@@ -311,7 +309,7 @@ router.get('/:id', scheduleValidators.getScheduleById, ScheduleController.getSch
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', authMiddleware, scheduleValidators.createSchedule, ScheduleController.createSchedule);
+router.post('/', authMiddleware, ScheduleController.createSchedule);
 
 // 更新档期
 
@@ -365,7 +363,6 @@ router.post('/', authMiddleware, scheduleValidators.createSchedule, ScheduleCont
 router.put(
   '/:id',
   authMiddleware,
-  scheduleValidators.updateSchedule,
   ScheduleController.updateSchedule,
 );
 
@@ -413,7 +410,6 @@ router.put(
 router.delete(
   '/:id',
   authMiddleware,
-  scheduleValidators.deleteSchedule,
   ScheduleController.deleteSchedule,
 );
 
@@ -422,21 +418,18 @@ router.delete(
 router.post(
   '/check-conflict',
   authMiddleware,
-  scheduleValidators.checkConflict,
   ScheduleController.checkScheduleConflict,
 );
 
 // 获取用户档期日历
 router.get(
   '/calendar/:userId/:year/:month',
-  scheduleValidators.getCalendar,
   ScheduleController.getUserScheduleCalendar,
 );
 
 // 获取公开档期
 router.get(
   '/public/list',
-  scheduleValidators.getPublicSchedules,
   ScheduleController.getPublicSchedules,
 );
 

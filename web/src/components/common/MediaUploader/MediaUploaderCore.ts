@@ -78,7 +78,7 @@ export class MediaUploaderCore {
    * 创建媒体文件项
    */
   private createMediaFileItem(file: File): MediaFileItem {
-    const fileId = Math.random().toString(36).substr(2, 9);
+    const fileId = Math.random().toString(36).slice(2, 9);
     const fileType = this.validator.getFileType(file);
 
     return {
@@ -87,7 +87,7 @@ export class MediaUploaderCore {
       type: fileType,
       status: UploadStatus.PENDING,
       progress: 0,
-      preview: URL.createObjectURL(file)
+      preview: URL.createObjectURL(file),
     };
   }
 
@@ -99,7 +99,7 @@ export class MediaUploaderCore {
     file: File,
     retryCount: number,
     maxRetries: number,
-    uploadId?: string
+    uploadId?: string,
   ): Promise<{ shouldRetry: boolean; delay: number; canRecover?: boolean }> {
     console.error(`上传失败 (重试 ${retryCount}/${maxRetries}):`, error);
 
@@ -108,7 +108,7 @@ export class MediaUploaderCore {
       try {
         console.log(`🔍 检查上传状态以确定是否可以恢复: ${uploadId}`);
         const status = await this.chunkManager.checkChunkUploadStatus(uploadId);
-        
+
         if (status.canResume && !status.sessionExpired) {
           console.log(`✅ 检测到可恢复的上传会话，尝试自动恢复`);
           return { shouldRetry: true, delay: 1000, canRecover: true };
@@ -123,12 +123,12 @@ export class MediaUploaderCore {
     }
 
     // 检查是否是取消操作
-    if (error?.message === '上传已取消') {
+    if (error?.message === "上传已取消") {
       return { shouldRetry: false, delay: 0 };
     }
 
     // 检查网络错误
-    if (error?.code === 'NETWORK_ERROR' || error?.name === 'NetworkError') {
+    if (error?.code === "NETWORK_ERROR" || error?.name === "NetworkError") {
       if (retryCount < maxRetries) {
         const delay = Math.min(1000 * Math.pow(2, retryCount), 10000);
         message.warning(`网络错误，${delay / 1000}秒后重试...`);
@@ -144,7 +144,7 @@ export class MediaUploaderCore {
     }
 
     // 其他错误不重试
-    const errorMessage = error?.message || error?.toString() || '上传失败';
+    const errorMessage = error?.message || error?.toString() || "上传失败";
     message.error(`${file.name} 上传失败: ${errorMessage}`);
     this.options.onUploadError?.(error, file.name);
 
@@ -157,26 +157,33 @@ export class MediaUploaderCore {
   private async handleVideoCoverUpload(
     fileId: string,
     videoFile: File,
-    videoCoverInfo: { videoFile: File; coverSelection: VideoCoverSelection }
+    videoCoverInfo: { videoFile: File; coverSelection: VideoCoverSelection },
   ): Promise<void> {
     try {
       const { coverSelection } = videoCoverInfo;
 
-      if (coverSelection.coverType === 'upload' && coverSelection.coverFile) {
+      if (coverSelection.coverType === "upload" && coverSelection.coverFile) {
         await fileService.uploadVedioCover(coverSelection.coverFile, fileId);
-        message.success('视频封面上传成功');
-      } else if (coverSelection.coverType === 'frame' && coverSelection.selectedFrame) {
+        message.success("视频封面上传成功");
+      } else if (
+        coverSelection.coverType === "frame" &&
+        coverSelection.selectedFrame
+      ) {
         // 处理视频帧封面
         const frame = coverSelection.selectedFrame;
         if (frame.blob) {
-          const coverFile = new File([frame.blob], `${videoFile.name}_cover.jpg`, { type: 'image/jpeg' });
+          const coverFile = new File(
+            [frame.blob],
+            `${videoFile.name}_cover.jpg`,
+            { type: "image/jpeg" },
+          );
           await fileService.uploadVedioCover(coverFile, fileId);
-          message.success('视频封面上传成功');
+          message.success("视频封面上传成功");
         }
       }
     } catch (error) {
-      console.error('Cover upload error:', error);
-      message.warning('封面上传失败，但视频上传成功');
+      console.error("Cover upload error:", error);
+      message.warning("封面上传失败，但视频上传成功");
     }
   }
 
@@ -186,7 +193,7 @@ export class MediaUploaderCore {
   private async uploadSingleFile(
     file: File,
     fileItem: MediaFileItem,
-    videoCoverInfo?: { videoFile: File; coverSelection: VideoCoverSelection }
+    videoCoverInfo?: { videoFile: File; coverSelection: VideoCoverSelection },
   ): Promise<DirectUploadResult> {
     const maxRetries = 5;
     let retryCount = 0;
@@ -199,7 +206,7 @@ export class MediaUploaderCore {
       try {
         // 检查是否已取消
         if (this.uploadAbortController?.signal.aborted) {
-          throw new Error('上传已取消');
+          throw new Error("上传已取消");
         }
 
         const fileType = this.validator.getFileType(file);
@@ -213,31 +220,33 @@ export class MediaUploaderCore {
             (progress) => {
               // 确保进度值有效
               const validProgress = Math.min(Math.max(progress, 0), 100);
-              const loadedBytes = Math.round(file.size * validProgress / 100);
-              
+              const loadedBytes = Math.round((file.size * validProgress) / 100);
+
               // 更新文件进度
               const progressInfo = this.progressTracker.updateFileProgress(
                 fileItem.id,
                 loadedBytes,
-                file.size
+                file.size,
               );
-              
+
               // 存储进度信息
               this.fileProgresses.set(fileItem.id, progressInfo);
-              
+
               // 触发文件级进度回调
               this.options.onFileProgress?.(fileItem.id, progressInfo);
-              
+
               // 使用节流更新总体进度
               this.progressManager.throttleFileProgress(fileItem.id, () => {
                 this.updateOverallProgress();
               });
-              
-              console.log(`📊 分片上传进度: ${validProgress}% (${loadedBytes}/${file.size} 字节)`);
+
+              console.log(
+                `📊 分片上传进度: ${validProgress}% (${loadedBytes}/${file.size} 字节)`,
+              );
             },
             (chunkIndex, chunkProgress) => {
               console.log(`📦 分片 ${chunkIndex + 1} 进度: ${chunkProgress}%`);
-            }
+            },
           );
 
           // 保存 uploadId 用于错误恢复
@@ -253,12 +262,11 @@ export class MediaUploaderCore {
             uploadedAt: new Date().toISOString(),
             fileSize: file.size,
           };
-
         } else if (this.options.directUploadOss) {
           // OSS直传
           const onProgress = (progress: DirectUploadProgress) => {
             if (this.uploadAbortController?.signal.aborted) {
-              throw new Error('上传已取消');
+              throw new Error("上传已取消");
             }
             this.fileProgresses.set(fileItem.id, progress);
             this.options.onFileProgress?.(fileItem.id, progress);
@@ -267,11 +275,10 @@ export class MediaUploaderCore {
           const uploader = new DirectUploader(file, {
             fileType,
             category: this.config.category!,
-            onProgress
+            onProgress,
           });
 
           result = await uploader.upload();
-
         } else {
           // 服务端上传
           this.progressTracker.initFileProgress(fileItem.id, (progress) => {
@@ -285,11 +292,11 @@ export class MediaUploaderCore {
           });
 
           if (this.uploadAbortController?.signal.aborted) {
-            throw new Error('上传已取消');
+            throw new Error("上传已取消");
           }
 
           if (!resp.data || !resp.data.fileUrl || !resp.data.id) {
-            throw new Error('上传失败');
+            throw new Error("上传失败");
           }
 
           result = {
@@ -304,17 +311,22 @@ export class MediaUploaderCore {
           };
 
           // 更新最终进度
-          this.progressTracker.updateFileProgress(fileItem.id, file.size, file.size, {
-            status: DirectUploadStatus.COMPLETED
-          });
+          this.progressTracker.updateFileProgress(
+            fileItem.id,
+            file.size,
+            file.size,
+            {
+              status: DirectUploadStatus.COMPLETED,
+            },
+          );
         }
 
         if (this.uploadAbortController?.signal.aborted) {
-          throw new Error('上传已取消');
+          throw new Error("上传已取消");
         }
 
         if (!result || !result.id) {
-          throw new Error('上传失败');
+          throw new Error("上传失败");
         }
 
         // 如果是视频文件且有封面信息，上传封面
@@ -324,59 +336,64 @@ export class MediaUploaderCore {
 
         message.success(`${file.name} 上传成功`);
         return result;
-
       } catch (error: any) {
         // 检查是否是取消操作
-        if (error?.message === '上传已取消' || error?.message === 'Upload cancelled') {
+        if (
+          error?.message === "上传已取消" ||
+          error?.message === "Upload cancelled"
+        ) {
           console.log(`File ${file.name} upload cancelled`);
-          throw new Error('Upload cancelled');
+          throw new Error("Upload cancelled");
         }
 
         const { shouldRetry, delay, canRecover } = await this.handleUploadError(
-          error, 
-          file, 
-          retryCount, 
-          maxRetries, 
-          currentUploadId
+          error,
+          file,
+          retryCount,
+          maxRetries,
+          currentUploadId,
         );
 
         if (shouldRetry) {
           retryCount++;
-          
+
           // 如果可以恢复且是分块上传，尝试自动恢复
           if (canRecover && currentUploadId && shouldUseChunkedUpload) {
             try {
               console.log(`🔄 尝试自动恢复分块上传: ${currentUploadId}`);
-              
+
               const recoveredResult = await this.chunkManager.autoRecoverUpload(
                 currentUploadId,
                 file,
-                this.config.category!,
                 (progress) => {
                   // 恢复过程中的进度更新
                   const validProgress = Math.min(Math.max(progress, 0), 100);
-                  const loadedBytes = Math.round(file.size * validProgress / 100);
-                  
+                  const loadedBytes = Math.round(
+                    (file.size * validProgress) / 100,
+                  );
+
                   const progressInfo = this.progressTracker.updateFileProgress(
                     fileItem.id,
                     loadedBytes,
-                    file.size
+                    file.size,
                   );
-                  
+
                   this.fileProgresses.set(fileItem.id, progressInfo);
                   this.options.onFileProgress?.(fileItem.id, progressInfo);
-                  
+
                   this.progressManager.throttleFileProgress(fileItem.id, () => {
                     this.updateOverallProgress();
                   });
-                  
+
                   console.log(`🔄 恢复进度: ${validProgress}%`);
                 },
                 (chunkIndex, chunkProgress) => {
-                  console.log(`🔄 恢复分片 ${chunkIndex + 1} 进度: ${chunkProgress}%`);
-                }
+                  console.log(
+                    `🔄 恢复分片 ${chunkIndex + 1} 进度: ${chunkProgress}%`,
+                  );
+                },
               );
-              
+
               // 恢复成功，返回结果
               const fileType = this.validator.getFileType(file);
               const result: DirectUploadResult = {
@@ -389,15 +406,18 @@ export class MediaUploaderCore {
                 uploadedAt: new Date().toISOString(),
                 fileSize: file.size,
               };
-              
+
               // 如果是视频文件且有封面信息，上传封面
               if (videoCoverInfo) {
-                await this.handleVideoCoverUpload(result.id, file, videoCoverInfo);
+                await this.handleVideoCoverUpload(
+                  result.id,
+                  file,
+                  videoCoverInfo,
+                );
               }
-              
+
               message.success(`${file.name} 恢复上传成功`);
               return result;
-              
             } catch (recoverError: any) {
               console.error(`❌ 自动恢复失败:`, recoverError);
               message.warning(`${file.name} 自动恢复失败，将重新开始上传`);
@@ -405,8 +425,8 @@ export class MediaUploaderCore {
               currentUploadId = undefined;
             }
           }
-          
-          await new Promise(resolve => setTimeout(resolve, delay));
+
+          await new Promise((resolve) => setTimeout(resolve, delay));
           return attemptUpload();
         }
 
@@ -422,7 +442,7 @@ export class MediaUploaderCore {
    */
   async uploadFiles(
     files: File[],
-    videoCoverInfo?: { videoFile: File; coverSelection: VideoCoverSelection }
+    videoCoverInfo?: { videoFile: File; coverSelection: VideoCoverSelection },
   ): Promise<DirectUploadResult[]> {
     // 验证文件
     const { validFiles, invalidFiles } = this.validator.validateFiles(files);
@@ -434,24 +454,25 @@ export class MediaUploaderCore {
     }
 
     if (validFiles.length === 0) {
-      throw new Error('没有有效的文件可以上传');
+      throw new Error("没有有效的文件可以上传");
     }
 
     // 创建文件项
-    const fileItems = validFiles.map(file => this.createMediaFileItem(file));
+    const fileItems = validFiles.map((file) => this.createMediaFileItem(file));
 
     // 初始化上传状态
     this.isUploading = true;
     this.uploadAbortController = new AbortController();
 
     // 初始化进度跟踪
-    fileItems.forEach(item => {
+    fileItems.forEach((item) => {
       this.progressTracker.initFileProgress(item.id);
     });
 
     // 触发上传开始回调
     this.options.onUploadStart?.(fileItems);
 
+    // @ts-ignore
     try {
       // 并发上传
       const concurrency = this.config.concurrent || 2;
@@ -469,12 +490,12 @@ export class MediaUploaderCore {
         const batchResults = await Promise.allSettled(batchPromises);
 
         batchResults.forEach((result, index) => {
-          if (result.status === 'fulfilled') {
+          if (result.status === "fulfilled") {
             results.push(result.value);
           } else {
             const error = result.reason;
             // 如果是取消操作，不记录为错误
-            if (error?.message !== 'Upload cancelled') {
+            if (error?.message !== "Upload cancelled") {
               console.error(`File ${batch[index].name} upload failed:`, error);
             } else {
               console.log(`File ${batch[index].name} upload cancelled`);
@@ -483,7 +504,9 @@ export class MediaUploaderCore {
         });
 
         // 更新总体进度
-        const overallProgress = this.progressTracker.calculateOverallProgress(this.fileProgresses);
+        const overallProgress = this.progressTracker.calculateOverallProgress(
+          this.fileProgresses,
+        );
         this.options.onUploadProgress?.(overallProgress);
       }
 
@@ -491,10 +514,9 @@ export class MediaUploaderCore {
       this.options.onUploadSuccess?.(results);
 
       return results;
-
     } catch (error: any) {
       // 如果是取消操作，不触发错误回调
-      if (error?.message !== 'Upload cancelled') {
+      if (error?.message !== "Upload cancelled") {
         this.options.onUploadError?.(error);
       }
       throw error;
@@ -507,13 +529,13 @@ export class MediaUploaderCore {
   /**
    * 取消上传
    */
-  cancelUpload(): void {
+  async cancelUpload(): Promise<void> {
     if (this.uploadAbortController) {
       this.uploadAbortController.abort();
     }
     this.chunkManager.cancelAllUploads();
     this.isUploading = false;
-    message.info('已取消上传');
+    await message.info("已取消上传");
   }
 
   /**
@@ -556,7 +578,9 @@ export class MediaUploaderCore {
     return {
       isUploading: this.isUploading,
       fileCount: this.fileProgresses.size,
-      overallProgress: this.progressTracker.calculateOverallProgress(this.fileProgresses)
+      overallProgress: this.progressTracker.calculateOverallProgress(
+        this.fileProgresses,
+      ),
     };
   }
 
@@ -571,7 +595,9 @@ export class MediaUploaderCore {
    * 更新总体进度
    */
   private updateOverallProgress(): void {
-    const overallProgress = this.progressTracker.calculateOverallProgress(this.fileProgresses);
+    const overallProgress = this.progressTracker.calculateOverallProgress(
+      this.fileProgresses,
+    );
     this.options.onUploadProgress?.(overallProgress);
   }
 

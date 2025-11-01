@@ -36,7 +36,7 @@ const createAppointment = async (appointment: Omit<Appointment, 'id'>): Promise<
   return await request.post('/appointments', appointment);
 };
 
-export const scheduleService = {
+export const schedule = {
   getAvailability,
   getAppointments,
   createAppointment,

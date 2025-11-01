@@ -17,7 +17,7 @@ import {
 } from '@ant-design/icons';
 import type { RcFile, UploadFile } from 'antd/es/upload/interface';
 import { IssueType, IssuePriority } from '../../../types/issue';
-import issueService from '../../../services/issueService';
+import issue from '../../../services/issue.ts';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -53,7 +53,7 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = ({
   const handleSubmit = async (values: CreateIssueForm) => {
     setLoading(true);
     try {
-      await issueService.createIssue({
+      await issue.createIssue({
         ...values,
         stepsToReproduce: values.stepsToReproduce.join('\n')
       });

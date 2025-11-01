@@ -102,8 +102,8 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, t
   // 稳定initialFilters对象，避免每次渲染时创建新对象
   const initialFilters = useMemo(() => ({
     teamId: 'all',
-    date: today,
-    mealType: 'lunch' as const
+    weddingDate: today,
+    weddingTime: 'lunch' as const
   }), [today]);
 
   // 处理查询
@@ -121,8 +121,8 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, t
 
       const queryParams = {
         teamId: team?.id || 'all',
-        weddingDate: filters.date?.format('YYYY-MM-DD') || today.format('YYYY-MM-DD'),
-        weddingTime: (filters as any).mealType as string || 'lunch',
+        weddingDate: filters?.weddingDate?.format('YYYY-MM-DD') || today.format('YYYY-MM-DD'),
+        weddingTime: filters?.weddingTime || 'lunch',
       };
 
       const result = await scheduleService.getAvailableHosts(queryParams);
@@ -156,7 +156,7 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, t
     
     const initQuery = async () => {
       if (!isMounted) return;
-      await handleQuery({ date: today, mealType: 'lunch' } as any);
+      await handleQuery({ weddingDate: today, weddingTime: 'lunch', teamId: team?.id || '' });
     };
     
     const timer = setTimeout(initQuery, 100);

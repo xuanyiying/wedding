@@ -77,7 +77,7 @@ const SchedulePage: React.FC = () => {
   });
   // 页面加载时自动查询当天档期
   useEffect(() => {
-    handleQuery({ date: today });
+    handleQuery({ weddingDate: today });
   }, []); // 移除了teamMembers依赖，避免无限循环
 
   // 查询没有档期的团队成员
@@ -88,7 +88,7 @@ const SchedulePage: React.FC = () => {
       const response = await scheduleService.getAvailableHosts(
         {
           teamId: filters.teamId || 'all',
-          weddingDate: filters.date?.format('YYYY-MM-DD') || today.format('YYYY-MM-DD'),
+          weddingDate: filters.weddingDate?.format('YYYY-MM-DD') || today.format('YYYY-MM-DD'),
           weddingTime: filters.weddingTime || 'lunch'
         }
       );

@@ -20,6 +20,9 @@ export interface UserAttributes {
   experienceYears?: number; // 工作经验年数
   location?: string; // 工作地点
   contactInfo?: any; // 联系信息
+  priceRange?: string; // 价格范围
+  minPrice?: number; // 最低价格
+  maxPrice?: number; // 最高价格
   socialLinks?: {
     weibo?: { value: string; hidden?: boolean };
     wechat?: { value: string; hidden?: boolean };
@@ -63,6 +66,9 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public lastLoginIp?: string;
   public emailVerifiedAt?: Date;
   public phoneVerifiedAt?: Date;
+  public priceRange?: string;
+  public maxPrice?: number;
+  public minPrice?: number;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -169,6 +175,21 @@ export const initUser = (sequelize: Sequelize): void => {
         type: DataTypes.JSON,
         field: 'contact_info',
         comment: '联系方式',
+      },
+      priceRange: {
+        type: new DataTypes.STRING(50),
+        field: 'price_range',
+        comment: '价格范围',
+      },
+      minPrice: {
+        type: DataTypes.DECIMAL(10, 2),
+        field: 'min_price',
+        comment: '最低价格',
+      },
+      maxPrice: {
+        type: DataTypes.DECIMAL(10, 2),
+        field: 'max_price',
+        comment: '最高价格',
       },
       socialLinks: {
         type: DataTypes.JSON,

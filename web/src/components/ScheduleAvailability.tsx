@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, DatePicker, Button, List, Tag, Typography, Space, Spin, message } from 'antd';
 import { CalendarOutlined, UserOutlined, CheckCircleOutlined, ExclamationCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
-import { scheduleService, type DayAvailability } from '../services/scheduleService';
+import { schedule, type DayAvailability } from '../services/schedule.ts';
 
 const { RangePicker } = DatePicker;
 const { Text } = Typography;
@@ -24,7 +24,7 @@ const ScheduleAvailability: React.FC<ScheduleAvailabilityProps> = ({ onSelectDat
 
     setLoading(true);
     try {
-      const data = await scheduleService.getAvailability(dateRange[0].format('YYYY-MM-DD'));
+      const data = await schedule.getAvailability(dateRange[0].format('YYYY-MM-DD'));
       setAvailability(data);
     } catch (error) {
       console.error('获取日程可用性失败:', error);

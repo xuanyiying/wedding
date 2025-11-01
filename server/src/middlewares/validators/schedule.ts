@@ -56,9 +56,9 @@ export const createScheduleSchema = Joi.object({
         }),
     
     location: Joi.string()
-        .min(1)
         .max(200)
-        .required()
+        .optional()
+        .allow( null)
         .label('婚礼地点')
         .messages({
             'string.empty': '婚礼地点不能为空',
@@ -132,9 +132,7 @@ export const createScheduleSchema = Joi.object({
             'string.max': '备注不能超过500个字符'
         }),
     
-    hostId: Joi.number()
-        .integer()
-        .positive()
+    hostId: Joi.string()
         .required()
         .label('主持人ID')
         .messages({
@@ -252,14 +250,12 @@ export const updateScheduleSchema = Joi.object({
             'string.max': '备注不能超过500个字符'
         }),
     
-    hostId: Joi.number()
-        .integer()
-        .positive()
+    hostId: Joi.string()
+        .required()
         .label('主持人ID')
         .messages({
-            'number.base': '主持人ID必须是数字',
-            'number.integer': '主持人ID必须是整数',
-            'number.positive': '主持人ID必须是正数'
+            'string.base': '主持人ID必须是字符串',
+            'any.required': '主持人ID是必填项'
         }),
     
     status: Joi.string()
@@ -270,6 +266,7 @@ export const updateScheduleSchema = Joi.object({
         }),
     
     isPaid: Joi.boolean()
+        .default(false)
         .label('支付状态')
         .messages({
             'boolean.base': '支付状态必须是布尔值'
@@ -321,9 +318,7 @@ export const getSchedulesSchema = Joi.object({
             'any.only': `状态必须是以下值之一：${Object.values(ScheduleStatus).join('、')}`
         }),
     
-    hostId: Joi.number()
-        .integer()
-        .positive()
+    hostId: Joi.string()
         .optional()
         .allow( null)
         .label('主持人ID')
@@ -332,7 +327,14 @@ export const getSchedulesSchema = Joi.object({
             'number.integer': '主持人ID必须是整数',
             'number.positive': '主持人ID必须是正数'
         }),
-    
+    date: Joi.date()
+        .label('日期')
+        .optional()
+        .allow( null)
+        .messages({
+            'date.base': '日期必须是一个日期',
+            'any.required': '日期是必填的'
+        }),
     startDate: Joi.date()
         .label('开始日期')
         .optional()
@@ -349,6 +351,12 @@ export const getSchedulesSchema = Joi.object({
         .messages({
             'date.base': '结束日期必须是有效的日期格式',
             'date.min': '结束日期不能早于开始日期'
+        }),
+    _t: Joi.string()
+        .optional()
+        .label('时间戳')
+        .messages({
+            'any.required': '时间戳是必填项'
         })
 });
 
@@ -407,20 +415,34 @@ export const validateDeleteSchedule = validateRequest({
 
 // 获取可用主持人验证规则
 export const getAvailableHostsSchema = Joi.object({
-    date: Joi.date()
+    weddingDate: Joi.date()
         .required()
-        .label('日期')
+        .label('婚礼日期')
         .messages({
             'date.base': '日期必须是有效的日期格式',
             'any.required': '日期是必填项'
         }),
-    time: Joi.string()
+    weddingTime: Joi.string()
         .valid(...Object.values(WeddingTime))
-        .required()
-        .label('时间')
+        .optional()
+        .default(WeddingTime.LUNCH)
+        .label('婚礼时间')
         .messages({
             'any.only': `时间必须是以下值之一：${Object.values(WeddingTime).join('、')}`,
             'any.required': '时间是必填项'
+        }),
+  teamId: Joi.string()
+        .optional()
+        .allow( null)
+        .label('团队ID')
+        .messages({
+            'any.required': '团队ID是必填项'
+        }),
+  _t: Joi.string()
+        .optional()
+        .label('时间戳')
+        .messages({
+            'any.required': '时间戳是必填项'
         })
 });
 

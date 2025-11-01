@@ -6,7 +6,7 @@ import { authService } from './index';
 // 刷新令牌的API端点
 
 // 刷新令牌服务类
-class RefreshTokenService {
+class RefreshToken {
     private isRefreshing = false;
     private failedQueue: Array<{
         resolve: (value: string | PromiseLike<string | null> | null) => void;
@@ -132,6 +132,6 @@ class RefreshTokenService {
 }
 
 // 导出单例实例
-export const refreshTokenService = new RefreshTokenService();
+export const refreshTokenService = new RefreshToken();
 
 // 导出便捷函数

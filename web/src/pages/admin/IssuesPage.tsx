@@ -23,7 +23,7 @@ import type { ColumnsType } from 'antd/es/table';
 
 import type { Issue, IssueStats } from '../../types/issue';
 import { IssueType, IssuePriority, IssueStatus } from '../../types/issue';
-import issueService from '../../services/issueService';
+import issue from '../../services/issue.ts';
 import { CreateIssueModal } from '../../components/admin/issues/CreateIssueModal';
 import { IssueDetailModal } from '../../components/admin/issues/IssueDetailModal';
 
@@ -55,7 +55,7 @@ const IssuesPage: React.FC = () => {
   const loadIssues = async (page = 1, pageSize = 20) => {
     setLoading(true);
     try {
-      const response = await issueService.getIssues({
+      const response = await issue.getIssues({
         page,
         pageSize,
         search: filters.search,
@@ -99,7 +99,7 @@ const IssuesPage: React.FC = () => {
 
   const loadStats = async () => {
     try {
-      const response = await issueService.getIssueStats();
+      const response = await issue.getIssueStats();
       setStats(response);
     } catch (error) {
       console.error('加载统计信息失败:', error);

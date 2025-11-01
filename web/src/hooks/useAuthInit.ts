@@ -6,7 +6,7 @@ import { useEffect, useCallback } from 'react';
 import { useAppDispatch } from '../store/hooks';
 import { restoreAuth, logout } from '../store/slices/authSlice';
 import { AuthStorage } from '../utils/auth';
-import { refreshTokenService } from '../services/refreshTokenService';
+import { refreshTokenService } from '../services/refresh-token.ts';
 
 /**
  * 认证初始化Hook

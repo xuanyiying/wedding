@@ -526,8 +526,19 @@ const ProfilePage: React.FC = () => {
                   ...currentUser,
                   socialLinks: currentUser?.socialLinks ? Object.keys(currentUser.socialLinks).reduce((acc, key) => {
                     const link = (currentUser.socialLinks as any)[key];
-                    acc[key] = { value: link, hidden: false };
-
+                    // 修复socialLinks数据格式，确保正确显示
+                    if (typeof link === 'string') {
+                      acc[key] = { value: link, hidden: false };
+                    } else if (typeof link === 'object' && link !== null) {
+                      // 如果是对象，提取value属性或者使用空字符串
+                      acc[key] = { 
+                        value: link.value || '', 
+                        hidden: link.hidden || false 
+                      };
+                    } else {
+                      // 其他情况初始化为空对象
+                      acc[key] = { value: '', hidden: false };
+                    }
                     return acc;
                   }, {} as any) : {},
                   hideSocialLinks: (currentUser as any)?.hideSocialLinks,

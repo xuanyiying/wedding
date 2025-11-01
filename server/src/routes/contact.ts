@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { ContactController } from '../controllers/contact.controller';
 import { authMiddleware, requireAdmin } from '../middlewares/auth';
-import { contactValidators } from '../middlewares/validators/contact';
 
 const router = Router();
 const contactController = new ContactController();
@@ -9,7 +8,6 @@ const contactController = new ContactController();
 // 提交联系表单（公开接口）
 router.post(
   '/',
-  contactValidators.submitContact,
   contactController.submitContact,
 );
 
@@ -18,7 +16,6 @@ router.get(
   '/',
   authMiddleware,
   requireAdmin,
-  contactValidators.getContacts,
   contactController.getContacts,
 );
 
@@ -27,7 +24,6 @@ router.get(
   '/:id',
   authMiddleware,
   requireAdmin,
-  contactValidators.getContactById,
   contactController.getContact
 );
 
@@ -36,7 +32,6 @@ router.put(
   '/:id/status',
   authMiddleware,
   requireAdmin,
-  contactValidators.updateContactStatus,
   contactController.updateContactStatus,
 );
 
@@ -45,7 +40,6 @@ router.delete(
   '/:id',
   authMiddleware,
   requireAdmin,
-  contactValidators.deleteContact,
   contactController.deleteContact
 );
 
@@ -54,7 +48,6 @@ router.delete(
   '/batch',
   authMiddleware,
   requireAdmin,
-  contactValidators.batchDeleteContacts,
   contactController.batchDeleteContacts,
 );
 
@@ -63,7 +56,6 @@ router.get(
   '/stats',
   authMiddleware,
   requireAdmin,
-  contactValidators.getContactStats,
   contactController.getContactStats,
 );
 

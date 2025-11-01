@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middlewares/auth';
-import { issueValidators } from '../middlewares/validators/issue';
 import { IssueController } from '@/controllers/issue.controller';
 
 const router = Router();
@@ -62,7 +61,7 @@ const router = Router();
  * @desc 获取问题列表
  * @access Private
  */
-router.get('/', authMiddleware, issueValidators.getIssues, IssueController.getIssues);
+router.get('/', authMiddleware, IssueController.getIssues);
 
 /**
  * @route GET /api/issues/stats
@@ -76,34 +75,34 @@ router.get('/stats', authMiddleware, IssueController.getIssueStats);
  * @desc 获取单个问题详情
  * @access Private
  */
-router.get('/:id', authMiddleware, issueValidators.getIssueById, IssueController.getIssue);
+router.get('/:id', authMiddleware, IssueController.getIssue);
 
 /**
  * @route POST /api/issues
  * @desc 创建新问题
  * @access Private
  */
-router.post('/', authMiddleware, issueValidators.createIssue, IssueController.createIssue);
+router.post('/', authMiddleware, IssueController.createIssue);
 
 /**
  * @route PUT /api/issues/:id
  * @desc 更新问题
  * @access Private
  */
-router.put('/:id', authMiddleware, issueValidators.updateIssue, IssueController.updateIssue);
+router.put('/:id', authMiddleware, IssueController.updateIssue);
 
 /**
  * @route DELETE /api/issues/:id
  * @desc 删除问题
  * @access Private (仅创建者或管理员)
  */
-router.delete('/:id', authMiddleware, issueValidators.deleteIssue, IssueController.deleteIssue);
+router.delete('/:id', authMiddleware, IssueController.deleteIssue);
 
 /**
  * @route POST /api/issues/:id/vote
  * @desc 投票问题
  * @access Private
  */
-router.post('/:id/vote', authMiddleware, issueValidators.voteIssue, IssueController.voteIssue);
+router.post('/:id/vote', authMiddleware, IssueController.voteIssue);
 
 export default router;

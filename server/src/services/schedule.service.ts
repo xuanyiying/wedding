@@ -7,6 +7,8 @@ interface GetSchedulesParams {
   pageSize: number;
   userId?: string;
   status?: ScheduleStatus;
+  teamId?: string;
+  date?: string;
   startDate?: string;
   endDate?: string;
 }
@@ -22,8 +24,8 @@ export class ScheduleService {
   /**
    * 获取档期列表
    */
-  static async getSchedules(params: GetSchedulesParams) {
-    const { page, pageSize, userId, status, startDate, endDate } = params;
+  static async getSchedules(params: GetSchedulesParams & { date?: string }) {
+    const { page, pageSize, userId, status, startDate, endDate, date ,teamId} = params;
     const offset = (page - 1) * pageSize;
 
     const where: WhereOptions = {};
@@ -35,7 +37,12 @@ export class ScheduleService {
     if (status) {
       where.status = status;
     }
-
+    if (date) {
+      where.weddingDate = new Date(date);
+    }
+    if (teamId) {
+      where.teamId = teamId;
+    }
     if (startDate && endDate) {
       where.weddingDate = {
         [Op.between]: [new Date(startDate), new Date(endDate)],
@@ -462,7 +469,7 @@ export class ScheduleService {
 
     // 获取冲突的主持人ID列表
     const conflictingUserIds = await this.getConflictingUserIds(weddingDate, weddingTime);
-
+    logger.info('conflictingUserIds:', conflictingUserIds)
     // 处理团队过滤
     let teamIds: string[] = [];
     if (teamId) {
@@ -473,9 +480,10 @@ export class ScheduleService {
         teamIds = [teamId];
       }
     }
+    logger.info('teamIds:', teamIds)
     const availableHosts = await TeamMember.findAll({
       where: {
-        id: {
+        userId: {
           [Op.notIn]: conflictingUserIds,
         },
         teamId: {
@@ -491,7 +499,7 @@ export class ScheduleService {
         },
       ],
     });
-
+    logger.info('availableHosts:', availableHosts)
     return {
       hosts: availableHosts,
       total: availableHosts.length,
