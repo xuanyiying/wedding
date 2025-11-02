@@ -163,7 +163,7 @@ export class MediaUploaderCore {
       const { coverSelection } = videoCoverInfo;
 
       if (coverSelection.coverType === "upload" && coverSelection.coverFile) {
-        await fileService.uploadVedioCover(coverSelection.coverFile, fileId);
+        await fileService.uploadVideoCover(coverSelection.coverFile, fileId);
         message.success("视频封面上传成功");
       } else if (
         coverSelection.coverType === "frame" &&
@@ -177,7 +177,7 @@ export class MediaUploaderCore {
             `${videoFile.name}_cover.jpg`,
             { type: "image/jpeg" },
           );
-          await fileService.uploadVedioCover(coverFile, fileId);
+          await fileService.uploadVideoCover(coverFile, fileId);
           message.success("视频封面上传成功");
         }
       }

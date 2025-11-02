@@ -1,6 +1,6 @@
 /**
- * 重构后的媒体上传组件
- * 使用拆分后的核心逻辑组件，专注于UI渲染
+ * 简化的媒体上传组件
+ * 整合所有功能，提供简洁的API
  */
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
@@ -8,8 +8,8 @@ import { Upload, Button, Progress, message, Alert } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
 
-import { MediaUploaderCore } from './MediaUploaderCore';
-import type { MediaUploaderCoreOptions } from './MediaUploaderCore';
+import { UploadManager } from './UploadManager';
+import type { UploadManagerOptions } from './UploadManager';
 import VideoCoverModal from './VideoCoverModal';
 import type {
   UploadProgressInfo,
@@ -32,10 +32,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
   onUploadProgress,
   onFileProgress,
   onUploadSuccess,
-  onUploadError,
-  onUploadPause,
-  onUploadResume,
-  onUploadCancel
+  onUploadError
 }) => {
   // 从Redux获取认证状态
   const token = useAppSelector(state => state.auth.token);
@@ -54,12 +51,12 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [globalError, setGlobalError] = useState<string | null>(null);
 
-  // 核心上传逻辑实例
-  const uploaderCoreRef = useRef<MediaUploaderCore | null>(null);
+  // 上传管理器实例
+  const uploadManagerRef = useRef<UploadManager | null>(null);
 
-  // 初始化核心上传逻辑
-  const initUploaderCore = useCallback(() => {
-    const options: MediaUploaderCoreOptions = {
+  // 初始化上传管理器
+  const initUploadManager = useCallback(() => {
+    const options: UploadManagerOptions = {
       config,
       userToken: token || '',
       directUploadOss: import.meta.env.DIRECT_UPLOAD_OSS === 'true',
@@ -82,33 +79,32 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
         setUploading(false);
         setGlobalError(error.message);
         onUploadError?.(error, fileId);
-      },
-      onUploadPause,
-      onUploadResume,
-      onUploadCancel
+      }
+      // 注意：UploadManager 不支持 onUploadPause, onUploadResume, onUploadCancel
+      // 这些回调需要在其他地方处理
     };
 
-    uploaderCoreRef.current = new MediaUploaderCore(options);
-  }, [config, token, onUploadStart, onUploadProgress, onFileProgress, onUploadSuccess, onUploadError, onUploadPause, onUploadResume, onUploadCancel]);
+    uploadManagerRef.current = new UploadManager(options);
+  }, [config, token, onUploadStart, onUploadProgress, onFileProgress, onUploadSuccess, onUploadError]);
 
   // 初始化
   useEffect(() => {
-    initUploaderCore();
+    initUploadManager();
     return () => {
-      uploaderCoreRef.current?.cleanup();
+      uploadManagerRef.current?.cleanup();
     };
-  }, [initUploaderCore]);
+  }, [initUploadManager]);
 
   // 更新配置
   useEffect(() => {
-    if (uploaderCoreRef.current) {
-      uploaderCoreRef.current.updateConfig(config);
+    if (uploadManagerRef.current) {
+      uploadManagerRef.current.updateConfig(config);
     }
   }, [config]);
 
   // 处理文件选择
   const handleFileSelect = useCallback((files: File[]) => {
-    if (!uploaderCoreRef.current) {
+    if (!uploadManagerRef.current) {
       message.error('上传组件未初始化');
       return;
     }
@@ -117,7 +113,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
     const videoFiles = files.filter(file => file.type.startsWith('video/'));
 
     // 获取合并后的配置，确保使用默认值
-    const mergedConfig = uploaderCoreRef.current.getConfig();
+    const mergedConfig = uploadManagerRef.current.getConfig();
 
     if (videoFiles.length > 0 && mergedConfig.requireCover) {
       // 如果有视频文件且需要封面，显示封面选择弹窗
@@ -132,13 +128,13 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
 
   // 开始上传
   const startUpload = useCallback(async (files: File[], videoCoverInfo?: { videoFile: File; coverSelection: VideoCoverSelection }) => {
-    if (!uploaderCoreRef.current) {
+    if (!uploadManagerRef.current) {
       message.error('上传组件未初始化');
       return;
     }
 
     try {
-      await uploaderCoreRef.current.uploadFiles(files, videoCoverInfo);
+      await uploadManagerRef.current.uploadFiles(files, videoCoverInfo);
     } catch (error: any) {
       console.error('Upload failed:', error);
       message.error(error.message || '上传失败');
@@ -171,7 +167,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
 
   // 取消上传
   const handleCancelUpload = useCallback(() => {
-    uploaderCoreRef.current?.cancelUpload();
+    uploadManagerRef.current?.cancelUpload();
     setUploading(false);
   }, []);
 

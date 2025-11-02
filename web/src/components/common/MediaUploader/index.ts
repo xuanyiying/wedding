@@ -1,14 +1,10 @@
-// 导出重构后的组件（默认导出新版本）
+// 导出主要组件
 export { default as MediaUploader } from './MediaUploader';
-export { default as MediaUploaderLegacy } from './MediaUploader';
 export { default as MediaList } from './MediaList';
 export { default as VideoCoverModal } from './VideoCoverModal';
 
-// 导出核心逻辑类
-export { MediaUploaderCore } from './MediaUploaderCore';
-export { ChunkUploadManager } from './ChunkUploadManager';
-export { FileValidator } from './FileValidator';
-export { UploadProgressTracker } from './UploadProgressTracker';
+// 导出核心管理器
+export { UploadManager } from './UploadManager';
 
 // 导出类型定义
 export type {
@@ -27,16 +23,11 @@ export type {
   UploadError
 } from './types';
 
-// 导出常量
-export { 
-  SUPPORTED_IMAGE_TYPES, 
-  SUPPORTED_VIDEO_TYPES 
-} from './FileValidator';
+// 向后兼容 - 保留旧的导出以防其他地方使用
+export { default as MediaUploaderLegacy } from './MediaUploader';
 
-export {
-  CHUNK_SIZE,
-  MAX_CONCURRENT_CHUNKS,
-  UPLOAD_TIMEOUT,
-  MAX_RETRY_ATTEMPTS,
-  RETRY_DELAY_BASE
-} from './ChunkUploadManager';
+// 如果需要使用旧的组件，可以单独导入
+export { MediaUploaderCore } from './MediaUploaderCore';
+export { ChunkUploadManager } from './ChunkUploadManager';
+export { FileValidator } from './FileValidator';
+export { UploadProgressTracker } from './UploadProgressTracker';

@@ -7,7 +7,8 @@ export const DirectUploadStatus = {
   UPLOADING: 'uploading',
   COMPLETED: 'completed',
   FAILED: 'failed',
-  CANCELLED: 'cancelled'
+  CANCELLED: 'cancelled',
+  ERROR: 'error'
 } as const;
 
 export type DirectUploadStatusType = typeof DirectUploadStatus[keyof typeof DirectUploadStatus];
