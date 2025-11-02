@@ -133,5 +133,3 @@ class RefreshToken {
 
 // 导出单例实例
 export const refreshTokenService = new RefreshToken();
-
-// 导出便捷函数

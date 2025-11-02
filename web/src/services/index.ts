@@ -1,4 +1,4 @@
-import { http } from '../utils/request';
+import { http } from "../utils/request";
 import type {
   User,
   Schedule,
@@ -16,55 +16,55 @@ import type {
   Team,
   MediaFile,
   FileType,
-  FileInfo,
-} from '../types';
+  FileInfo
+} from "../types";
 
 // 认证相关API
 export const authService = {
   // 用户登录
   login: (data: LoginForm): Promise<ApiResponse<{ user: User; accessToken: string; refreshToken: string }>> => {
-    return http.post('/auth/login', data);
+    return http.post("/auth/login", data);
   },
 
   // 用户注册
   register: (data: RegisterForm): Promise<ApiResponse<{ user: User; accessToken: string; refreshToken: string }>> => {
-    return http.post('/auth/register', data);
+    return http.post("/auth/register", data);
   },
 
   // 用户登出
   logout: (): Promise<ApiResponse<null>> => {
-    return http.post('/auth/logout');
+    return http.post("/auth/logout");
   },
 
   // 刷新访问令牌
   refreshToken: (refreshToken: string): Promise<ApiResponse<{ accessToken: string; refreshToken: string }>> => {
-    return http.post('/auth/refresh-token', { refreshToken });
+    return http.post("/auth/refresh-token", { refreshToken });
   },
 
   // 获取当前用户信息
   getCurrentUser: (): Promise<ApiResponse<User>> => {
-    return http.get('/auth/me');
+    return http.get("/auth/me");
   },
 
   // 更新用户资料
   updateProfile: (data: Partial<User>): Promise<ApiResponse<User>> => {
-    return http.put('/auth/profile', data);
+    return http.put("/auth/profile", data);
   },
 
   // 修改密码
   changePassword: (data: { oldPassword: string; newPassword: string }): Promise<ApiResponse<null>> => {
-    return http.put('/auth/password', data);
+    return http.put("/auth/password", data);
   },
 
   // 忘记密码
   forgotPassword: (email: string): Promise<ApiResponse<null>> => {
-    return http.post('/auth/forgot-password', { email });
+    return http.post("/auth/forgot-password", { email });
   },
 
   // 重置密码
   resetPassword: (data: { token: string; password: string }): Promise<ApiResponse<null>> => {
-    return http.post('/auth/reset-password', data);
-  },
+    return http.post("/auth/reset-password", data);
+  }
 };
 
 // 日程相关API
@@ -76,7 +76,7 @@ export const scheduleService = {
     status?: string;
     userId?: string;
   }): Promise<ApiResponse<{ schedules: Schedule[]; total: number }>> => {
-    return http.get('/schedules', { params });
+    return http.get("/schedules", { params });
   },
 
   // 获取单个日程
@@ -85,8 +85,8 @@ export const scheduleService = {
   },
 
   // 创建日程
-  createSchedule: (data: Omit<Schedule, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<Schedule>> => {
-    return http.post('/schedules', data);
+  createSchedule: (data: Omit<Schedule, "id" | "createdAt" | "updatedAt">): Promise<ApiResponse<Schedule>> => {
+    return http.post("/schedules", data);
   },
 
   // 更新日程
@@ -101,12 +101,12 @@ export const scheduleService = {
 
   // 批量更新日程状态
   batchUpdateStatus: (ids: string[], status: string): Promise<ApiResponse<null>> => {
-    return http.put('/schedules/batch-status', { ids, status });
+    return http.put("/schedules/batch-status", { ids, status });
   },
 
   // 获取可用时间段
   getAvailableSlots: (date: string, hostId?: string): Promise<ApiResponse<string[]>> => {
-    return http.get('/schedules/available-slots', { params: { date, hostId } });
+    return http.get("/schedules/available-slots", { params: { date, hostId } });
   },
 
   // 获取用户档期日历
@@ -130,7 +130,7 @@ export const scheduleService = {
     weddingDate: string;
     weddingTime: string;
   }): Promise<ApiResponse<{ hosts: TeamMember[], total: number }>> => {
-    return http.get('/schedules/available-hosts', { params });
+    return http.get("/schedules/available-hosts", { params });
   },
 
   // 检查档期冲突
@@ -142,7 +142,7 @@ export const scheduleService = {
   }): Promise<ApiResponse<{
     conflicts: Schedule[];
   }>> => {
-    return http.get('/schedules/check-conflict', { params });
+    return http.get("/schedules/check-conflict", { params });
   },
 
   // 获取档期统计
@@ -160,8 +160,8 @@ export const scheduleService = {
       completed: number;
     }>;
   }>> => {
-    return http.get('/dashboard/schedule-stats');
-  },
+    return http.get("/dashboard/schedule-stats");
+  }
 };
 
 // 作品相关API
@@ -177,7 +177,7 @@ export const workService = {
     dateFrom?: string;
     dateTo?: string;
   }): Promise<ApiResponse<{ works: Work[]; total: number }>> => {
-    return http.get('/works', { params });
+    return http.get("/works", { params });
   },
 
   // 获取单个作品
@@ -186,8 +186,8 @@ export const workService = {
   },
 
   // 创建作品
-  createWork: (data: Omit<Work, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<Work>> => {
-    return http.post('/works', data);
+  createWork: (data: Omit<Work, "id" | "createdAt" | "updatedAt">): Promise<ApiResponse<Work>> => {
+    return http.post("/works", data);
   },
 
   // 更新作品
@@ -202,20 +202,20 @@ export const workService = {
 
   // 批量删除作品
   batchDeleteWorks: (ids: string[]): Promise<ApiResponse<null>> => {
-    return http.delete('/works/batch', { data: { ids } });
+    return http.delete("/works/batch", { data: { ids } });
   },
 
   // 获取作品分类
   getCategories: (): Promise<ApiResponse<string[]>> => {
-    return http.get('/works/categories');
+    return http.get("/works/categories");
   },
 
   // 上传作品图片
   uploadImages: (files: File[]): Promise<ApiResponse<string[]>> => {
     const formData = new FormData();
-    files.forEach(file => formData.append('images', file));
-    return http.upload('/works/upload-images', formData);
-  },
+    files.forEach(file => formData.append("images", file));
+    return http.upload("/works/upload-images", formData);
+  }
 };
 
 // 用户相关API
@@ -226,7 +226,7 @@ export const userService = {
     status?: string;
     search?: string;
   }): Promise<ApiResponse<{ users: User[]; total: number }>> => {
-    return http.get('/users', { params });
+    return http.get("/users", { params });
   },
 
   // 获取单个用户
@@ -234,8 +234,8 @@ export const userService = {
     return http.get(`/users/${id}`);
   },
   // 创建用户
-  createUser: (data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<User>> => {
-    return http.post('/users', data);
+  createUser: (data: Omit<User, "id" | "createdAt" | "updatedAt">): Promise<ApiResponse<User>> => {
+    return http.post("/users", data);
   },
   // 更新用户（管理员）
   updateUser: (id: string, data: Partial<User>): Promise<ApiResponse<User>> => {
@@ -253,17 +253,17 @@ export const userService = {
     date?: string;
     category?: string;
   }): Promise<ApiResponse<User[]>> => {
-    return http.get('/users/hosts', { params });
+    return http.get("/users/hosts", { params });
   },
 
   // 获取当前用户信息
   getCurrentUser: (): Promise<ApiResponse<User>> => {
-    return http.get('/users/me');
+    return http.get("/users/me");
   },
 
   // 更新当前用户资料
   updateCurrentUserProfile: (data: Partial<User>): Promise<ApiResponse<User>> => {
-    return http.put('/users/me/profile', data);
+    return http.put("/users/me/profile", data);
   },
 
   // 根据userId获取团队列表
@@ -273,15 +273,15 @@ export const userService = {
 
   // 发布/取消发布当前用户资料
   toggleCurrentUserProfilePublish: (isPublished: boolean): Promise<ApiResponse<User>> => {
-    return http.patch('/users/me/profile/publish', { isPublished });
-  },
+    return http.patch("/users/me/profile/publish", { isPublished });
+  }
 };
 
 // 联系表单相关API
 export const contactService = {
   // 提交联系表单
-  submitContact: (data: ContactForm): Promise<ApiResponse<Boolean>> => {
-    return http.post('/contact', data);
+  submitContact: (data: ContactForm): Promise<ApiResponse<boolean>> => {
+    return http.post("/contact", data);
   },
 
   // 获取联系表单列表（管理员）
@@ -290,13 +290,13 @@ export const contactService = {
     startDate?: string;
     endDate?: string;
   }): Promise<ApiResponse<{ contacts: ContactForm[]; total: number }>> => {
-    return http.get('/contact', { params });
+    return http.get("/contact", { params });
   },
 
   // 更新联系表单状态（管理员）
-  updateContactStatus: (id: string, status: string): Promise<ApiResponse<Boolean>> => {
+  updateContactStatus: (id: string, status: string): Promise<ApiResponse<boolean>> => {
     return http.put(`/contact/${id}/status`, { status });
-  },
+  }
 };
 
 // 仪表板相关API
@@ -306,7 +306,7 @@ export const dashboardService = {
     startDate?: string;
     endDate?: string;
   }): Promise<ApiResponse<DashboardStats>> => {
-    return http.get('/dashboard/stats', { params });
+    return http.get("/dashboard/stats", { params });
   },
 
   // 获取最近活动
@@ -318,20 +318,20 @@ export const dashboardService = {
     createdAt: string;
     user?: User;
   }>>> => {
-    return http.get('/dashboard/activities', { params: { limit } });
+    return http.get("/dashboard/activities", { params: { limit } });
   },
 
   // 获取收入统计
   getRevenueStats: (params?: {
     startDate?: string;
     endDate?: string;
-    period?: 'day' | 'week' | 'month' | 'year';
+    period?: "day" | "week" | "month" | "year";
   }): Promise<ApiResponse<Array<{
     date: string;
     amount: number;
     count: number;
   }>>> => {
-    return http.get('/dashboard/revenue', { params });
+    return http.get("/dashboard/revenue", { params });
   },
 
   // 获取今日档期统计
@@ -369,26 +369,8 @@ export const dashboardService = {
     }>;
     date: string;
   }>> => {
-    return http.get('/dashboard/today-schedule-stats');
-  },
-};
-
-// 作品展示相关API
-export const worksService = {
-  // 获取作品列表
-  getWorks: (params?: PaginationParams & {
-    category?: string;
-    type?: string;
-    featured?: boolean;
-    search?: string;
-  }): Promise<ApiResponse<{ data: Work[]; total: number }>> => {
-    return http.get('/works', { params });
-  },
-
-  // 获取单个作品
-  getWork: (id: string): Promise<ApiResponse<Work>> => {
-    return http.get(`/works/${id}`);
-  },
+    return http.get("/dashboard/today-schedule-stats");
+  }
 };
 
 // 团队管理相关API
@@ -399,7 +381,7 @@ export const teamService = {
     search?: string;
     status?: string;
   }): Promise<ApiResponse<{ teams: Team[]; total: number }>> => {
-    return http.get('/team', { params });
+    return http.get("/team", { params });
   },
 
   // 根据团队id获取团队
@@ -408,8 +390,8 @@ export const teamService = {
   },
 
   // 创建团队
-  createTeam: (data: Omit<Team, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<Team>> => {
-    return http.post('/team', data);
+  createTeam: (data: Omit<Team, "id" | "createdAt" | "updatedAt">): Promise<ApiResponse<Team>> => {
+    return http.post("/team", data);
   },
 
   // 更新团队
@@ -456,12 +438,12 @@ export const teamService = {
     role: TeamMemberRole;
     teamId: string;
   }): Promise<ApiResponse<TeamMember[]>> => {
-    return http.post('/team/members', data);
+    return http.post("/team/members", data);
   },
 
   // 创建团队成员
-  createTeamMember: (data: Omit<TeamMember, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<TeamMember>> => {
-    return http.post('/team/members', data);
+  createTeamMember: (data: Omit<TeamMember, "id" | "createdAt" | "updatedAt">): Promise<ApiResponse<TeamMember>> => {
+    return http.post("/team/members", data);
   },
 
   // 更新团队成员
@@ -476,7 +458,7 @@ export const teamService = {
 
   // 批量删除团队成员
   batchDeleteMembers: (ids: string[]): Promise<ApiResponse<null>> => {
-    return http.delete('/team/members/batch', { data: { ids } });
+    return http.delete("/team/members/batch", { data: { ids } });
   },
 
   // 更新成员状态
@@ -486,7 +468,7 @@ export const teamService = {
 
   // 获取团队统计
   getTeamStats: (): Promise<ApiResponse<TeamStats>> => {
-    return http.get('/team/stats');
+    return http.get("/team/stats");
   },
 
   // 获取下属成员
@@ -496,17 +478,17 @@ export const teamService = {
 
   // 根据技能搜索成员
   searchBySkills: (skills: string[]): Promise<ApiResponse<TeamMember[]>> => {
-    return http.get('/team/search/skills', { params: { skills: skills.join(',') } });
+    return http.get("/team/search/skills", { params: { skills: skills.join(",") } });
   },
 
   // 转移下属关系
   transferSubordinates: (fromManagerId: string, toManagerId: string, memberIds: string[]): Promise<ApiResponse<null>> => {
-    return http.put('/team/transfer-subordinates', {
+    return http.put("/team/transfer-subordinates", {
       fromManagerId,
       toManagerId,
       memberIds
     });
-  },
+  }
 };
 
 // 系统设置相关API - 重构为分离的数据模块
@@ -514,99 +496,83 @@ export const settingsService = {
   // ========== 网站设置模块 ==========
   // 获取网站设置
   getSiteSettings: (): Promise<ApiResponse<any>> => {
-    return http.get('/settings/site');
+    return http.get("/settings/site");
   },
 
   // ========== 首页设置模块 ==========
   // 获取首页设置
   getHomepageSettings: (): Promise<ApiResponse<any>> => {
-    return http.get('/settings/homepage');
+    return http.get("/settings/homepage");
   },
 
   // ========== 主题设置模块 ==========
   // 获取主题设置
   getThemeSettings: (): Promise<ApiResponse<any>> => {
-    return http.get('/settings/theme');
+    return http.get("/settings/theme");
   },
 
   // ========== 邮件设置模块 ==========
   // 获取邮件设置
   getEmailSettings: (): Promise<ApiResponse<any>> => {
-    return http.get('/settings/email');
+    return http.get("/settings/email");
   },
   // ========== 通用功能 ==========
   // 测试邮件
   testEmail: (data: { to: string; subject: string; content: string }): Promise<ApiResponse<null>> => {
-    return http.post('/settings/test-email', data);
+    return http.post("/settings/test-email", data);
   },
 
   // 清除缓存
   clearCache: (): Promise<ApiResponse<null>> => {
-    return http.post('/settings/clear-cache');
+    return http.post("/settings/clear-cache");
   },
 
   // 备份数据库
   backupDatabase: (): Promise<ApiResponse<null>> => {
-    return http.post('/settings/backup-database');
+    return http.post("/settings/backup-database");
   },
 
   // ========== 兼容性接口（保留旧版本支持） ==========
   // 获取系统设置（兼容）
   getSettings: (): Promise<ApiResponse<any>> => {
-    return http.get('/settings');
+    return http.get("/settings");
   },
 
   // 更新网站设置（兼容）
   updateSiteSettings: (data: any): Promise<ApiResponse<null>> => {
-    return http.post('/settings/site', data);
+    return http.post("/settings/site", data);
   },
 
   // 更新首页设置（兼容）
   updateHomepageSettings: (data: any): Promise<ApiResponse<null>> => {
-    return http.post('/settings/homepage', data);
+    return http.post("/settings/homepage", data);
   },
 
   // 更新主题设置（兼容）
   updateThemeSettings: (data: any): Promise<ApiResponse<null>> => {
-    return http.post('/settings/theme', data);
+    return http.post("/settings/theme", data);
   },
 
   // 更新邮件设置（兼容）
   updateEmailSettings: (data: any): Promise<ApiResponse<null>> => {
-    return http.post('/settings/email', data);
-  },
+    return http.post("/settings/email", data);
+  }
 };
 
 export const fileService = {
-  // 获取用户媒体文件
-  getUserMedia: (userId: string, type: FileType): Promise<ApiResponse<{ mediaFiles: MediaFile[] }>> => {
-    return http.get(`/files/user/${userId}/${type}`);
-  },
-
-  // 上传用户媒体文件
-  uploadUserMedia: (userId: string, type: FileType, file: File): Promise<ApiResponse<MediaFile>> => {
-    const formData = new FormData();
-    formData.append('file', file);
-    return http.post(`/files/user/${userId}/${type}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-  },
-
   // 上传单个文件
   uploadFile: (file: File, data: { fileType: FileType; category?: string }): Promise<ApiResponse<MediaFile>> => {
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('fileType', data.fileType);
+    formData.append("file", file);
+    formData.append("fileType", data.fileType);
     if (data.category) {
-      formData.append('category', data.category);
+      formData.append("category", data.category);
     }
-    return http.upload('/files/upload', formData);
+    return http.upload("/files/upload", formData);
   },
 
   // 上传多个文件
-  uploadFiles: (files: File[], fileType: 'image' | 'video' = 'image', category?: string): Promise<ApiResponse<{
+  uploadFiles: (files: File[], fileType: "image" | "video" = "image", category?: string): Promise<ApiResponse<{
     urls: string[];
     files: Array<{
       url: string;
@@ -617,28 +583,28 @@ export const fileService = {
     }>;
   }>> => {
     const formData = new FormData();
-    files.forEach(file => formData.append('files', file));
-    formData.append('fileType', fileType);
+    files.forEach(file => formData.append("files", file));
+    formData.append("fileType", fileType);
     if (category) {
-      formData.append('category', category);
+      formData.append("category", category);
     }
-    return http.upload('/files/upload/batch', formData);
+    return http.upload("/files/upload/batch", formData);
   },
 
   // 删除文件
-  deleteFile: (id: string): Promise<ApiResponse<Boolean>> => {
+  deleteFile: (id: string): Promise<ApiResponse<boolean>> => {
     return http.delete(`/files/${id}`);
   },
   getFile: (id: string): Promise<ApiResponse<FileInfo>> => {
     return http.get(`/files/${id}`);
   },
 
-  uploadVedioCover: (file: File, vedioFileId: string): Promise<ApiResponse<string>> => {
+  uploadVideoCover: (file: File, videoFileId: string): Promise<ApiResponse<string>> => {
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('fileType', 'image');
-    formData.append('category', 'cover');
-    return http.upload(`/files/${vedioFileId}/cover`, formData);
+    formData.append("file", file);
+    formData.append("fileType", "image");
+    formData.append("category", "cover");
+    return http.upload(`/files/${videoFileId}/cover`, formData);
   },
 
   // 分块上传相关方法
@@ -652,7 +618,7 @@ export const fileService = {
     uploadId: string;
     uploadUrl: string;
   }>> => {
-    return http.post('/files/chunk/init', data);
+    return http.post("/files/chunk/init", data);
   },
 
   uploadChunk: (data: {
@@ -663,10 +629,10 @@ export const fileService = {
     success: boolean;
   }>> => {
     const formData = new FormData();
-    formData.append('uploadId', data.uploadId);
-    formData.append('chunkIndex', data.chunkIndex.toString());
-    formData.append('chunk', data.chunk);
-    return http.upload('/files/chunk/upload', formData);
+    formData.append("uploadId", data.uploadId);
+    formData.append("chunkIndex", data.chunkIndex.toString());
+    formData.append("chunk", data.chunk);
+    return http.upload("/files/chunk/upload", formData);
   },
 
   completeChunkUpload: (data: {
@@ -677,7 +643,7 @@ export const fileService = {
     filename: string;
     url: string;
   }>> => {
-    return http.post('/files/chunk/complete', data);
+    return http.post("/files/chunk/complete", data);
   },
 
   // 检查分块上传状态
@@ -693,17 +659,36 @@ export const fileService = {
   }>> => {
     return http.get(`/files/chunk/status/${uploadId}`);
   },
-};
+
+  checkDuplicate: (param: { hash: string; fileName: string; category: string }): Promise<ApiResponse<{
+    exists: boolean;
+    fileId?: string;
+    url?: string;
+  }>> => {
+    return http.post("/files/check-duplicate", param);
+  },
+
+  checkResumableUpload(param: { fileName: string; fileSize: number; category: string }) : Promise<ApiResponse<{
+    uploadId: string;
+    completedChunks: number[];
+    nextChunkIndex: number;
+    totalChunks: number;
+    chunkSize: number;
+    canResume: boolean;
+  }>> {
+    return http.post("/files/check-resumable", param);
+  }
+}
 export const profileService = {
   // 用户资料相关（包含用户信息和媒体文件）
   getUserProfile: (userId: string): Promise<ApiResponse<any>> => {
     return http.get(`/profile/user/${userId}`);
   },
   getPublicUserProfiles: (params?: any): Promise<ApiResponse<any>> => {
-    return http.get('/profile/public', { params });
+    return http.get("/profile/public", { params });
   },
   getUserAvailableFiles: (userId: string): Promise<ApiResponse<MediaFile[]>> => {
-    return http.get('/profile/available-files', { params: { userId } });
+    return http.get("/profile/available-files", { params: { userId } });
   },
 
   // 媒体资料CRUD操作 - 修复接口路径，与后端保持一致
@@ -711,7 +696,7 @@ export const profileService = {
     return http.get(`/profile/media-profiles/${userId}`);
   },
   createMediaProfile: (data: any): Promise<ApiResponse<any>> => {
-    return http.post('/profile/media-profiles', data);
+    return http.post("/profile/media-profiles", data);
   },
   batchCreateMediaProfiles: (userId: string, data: { mediaProfiles: MediaFile[] }): Promise<ApiResponse<any>> => {
     return http.post(`/profile/media-profiles/batch/${userId}`, data);
@@ -720,7 +705,7 @@ export const profileService = {
     return http.put(`/profile/media-profiles/${fileId}`, data);
   },
   updateMediaProfilesOrder: (data: { orderData: { id: string; mediaOrder: number }[] }): Promise<ApiResponse<any>> => {
-    return http.put('/profile/media-profiles/order', data);
+    return http.put("/profile/media-profiles/order", data);
   },
   deleteMediaProfile: (fileId: string): Promise<ApiResponse<any>> => {
     return http.delete(`/profile/media-profiles/${fileId}`);
@@ -730,20 +715,7 @@ export const profileService = {
   },
   getMediaProfileById: (fileId: string): Promise<ApiResponse<any>> => {
     return http.get(`/profile/media-profiles/${fileId}`);
-  },
-}
-// 导出所有服务
-export default {
-  auth: authService,
-  schedule: scheduleService,
-  work: workService,
-  works: worksService,
-  team: teamService,
-  user: userService,
-  contact: contactService,
-  dashboard: dashboardService,
-  settings: settingsService,
-  profile: profileService,
+  }
 };
-
-export { directUploadService } from './direct-upload';
+// 导出所有服务
+export { directUploadService } from "./direct-upload";
