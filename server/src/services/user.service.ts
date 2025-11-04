@@ -163,6 +163,9 @@ export class UserService {
       location?: string;
       contactInfo?: any;
       hideSocialLinks?: boolean;
+      priceRange?: string;
+      minPrice?: number;
+      maxPrice?: number;
       socialLinks?: {
         weibo?: { value: string; hidden?: boolean };
         wechat?: { value: string; hidden?: boolean };
@@ -175,6 +178,13 @@ export class UserService {
       const user = await User.findByPk(id);
       if (!user) {
         throw new Error('用户不存在');
+      }
+
+      // Validate price range
+      if (updateData.minPrice !== undefined && updateData.maxPrice !== undefined) {
+        if (updateData.minPrice > updateData.maxPrice) {
+          throw new Error('最低价格不能高于最高价格');
+        }
       }
 
       // 检查用户名和邮箱唯一性（如果要更新的话）

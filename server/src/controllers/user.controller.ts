@@ -242,6 +242,9 @@ export const updateCurrentUserProfile = async (
       'contactInfo',
       'socialLinks',
       'avatarUrl',
+      'priceRange',
+      'minPrice',
+      'maxPrice',
     ];
     const filteredData = Object.keys(updateData)
       .filter(key => allowedFields.includes(key))
@@ -251,6 +254,7 @@ export const updateCurrentUserProfile = async (
       }, {});
 
     const user = await UserService.updateUser(userId, filteredData);
+    logger.info(`用户 ${userId} 更新了个人资料，更新内容: ${JSON.stringify(filteredData)}`);
     Resp.success(res, user, '更新个人资料成功');
   } catch (error) {
     logger.error('更新个人资料失败:', error);

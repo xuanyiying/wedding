@@ -246,6 +246,7 @@ export interface User {
   deletedAt?: Date;
   isPublic?: boolean;
   mediaFiles?: MediaFile[];
+  priceRange?: string;
 }
 
 // 媒体文件类型

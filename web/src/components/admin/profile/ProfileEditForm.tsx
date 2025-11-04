@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Form, Input, Button, Space, Row, Col, InputNumber, Select } from 'antd';
+import { Form, Input, Button, Space, Row, Col, InputNumber } from 'antd';
 import AvatarUploader from '../../AvatarUploader';
 import styled from 'styled-components';
 import type { ProfileData } from './ProfileSection';
-import { PRICE_RANGE_OPTIONS } from '../../../constants';
 import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
 
 const { TextArea } = Input;
@@ -254,22 +253,32 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         </Row>
 
         {/* 价格区间*/}
-        <Form.Item
-          name="priceRange"
-          label="价格区间"
-          rules={[
-            { required: false, message: '请选择价格区间' },
-          ]}
-        >
-          <Select
-            mode="multiple"
-            placeholder="请选择价格区间"
-            options={PRICE_RANGE_OPTIONS}
-            onChange={(values) => {
-              form.setFieldsValue({ priceRange: values });
-            }}
-          />
-        </Form.Item>
+        <Row gutter={16}>
+          <Col xs={24} sm={12}>
+            <Form.Item
+              name="minPrice"
+              label="最低价格"
+            >
+              <InputNumber
+                placeholder="请输入最低价格"
+                min={0}
+                style={{ width: '100%' }}
+              />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12}>
+            <Form.Item
+              name="maxPrice"
+              label="最高价格"
+            >
+              <InputNumber
+                placeholder="请输入最高价格"
+                min={0}
+                style={{ width: '100%' }}
+              />
+            </Form.Item>
+          </Col>
+        </Row>
 
         {/* 社交媒体部分 - 始终显示按钮，根据hideSocialLinks状态显示/隐藏内容 */}
         <div className="social-section">

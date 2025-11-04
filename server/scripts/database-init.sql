@@ -448,29 +448,6 @@ CREATE TABLE `works` (
 
 -- 插入默认管理员用户 (密码: password)
 -- 注意：实际部署时应该修改默认密码
-INSERT INTO users (
-  id, 
-  username, 
-  email, 
-  password_hash, 
-  salt, 
-  role, 
-  status, 
-  real_name,
-  created_at, 
-  updated_at
-) VALUES (
-  UUID(), 
-  'admin', 
-  'admin@wedding.com', 
-  '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- password的bcrypt哈希
-  'default_salt', 
-  'super_admin', 
-  'active', 
-  '系统管理员',
-  NOW(), 
-  NOW()
-);
 
 
 -- ================================
