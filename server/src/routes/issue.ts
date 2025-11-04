@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middlewares/auth';
-import { IssueController } from '@/controllers/issue.controller';
+import { IssueController } from '../controllers/issue.controller';
 
 const router = Router();
 
