@@ -247,6 +247,8 @@ export interface User {
   isPublic?: boolean;
   mediaFiles?: MediaFile[];
   priceRange?: string;
+  minPrice?: number;
+  maxPrice?: number;
 }
 
 // 媒体文件类型
