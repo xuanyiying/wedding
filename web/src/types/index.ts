@@ -720,3 +720,13 @@ export interface AppSettings {
   theme: ThemeSettings;
   email: EmailSettings;
 }
+export interface DayAvailability {
+  date: string;
+  status: 'available' | 'partial' | 'unavailable';
+  message?: string;
+  availableHosts?: User[];
+  bookedEvents?: {
+    lunch?: boolean;
+    dinner?: boolean;
+  };
+}

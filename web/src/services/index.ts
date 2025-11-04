@@ -16,7 +16,8 @@ import type {
   Team,
   MediaFile,
   FileType,
-  FileInfo
+  FileInfo,
+  DayAvailability
 } from "../types";
 
 // 认证相关API
@@ -105,7 +106,7 @@ export const scheduleService = {
   },
 
   // 获取可用时间段
-  getAvailableSlots: (date: string, hostId?: string): Promise<ApiResponse<string[]>> => {
+  getAvailableSlots: (date: string, hostId?: string): Promise<ApiResponse<DayAvailability[]>> => {
     return http.get("/schedules/available-slots", { params: { date, hostId } });
   },
 
