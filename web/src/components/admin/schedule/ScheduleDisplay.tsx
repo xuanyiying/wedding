@@ -13,6 +13,23 @@ import { ContentCard } from '../common';
 import { ScheduleStatus, type Schedule } from '../../../types';
 import type { Dayjs } from 'dayjs';
 import ScheduleCalendar from '../../ScheduleCalendar';
+import styled from 'styled-components';
+
+// 添加响应式样式
+const DisplayContainer = styled.div`
+  .calendar-col {
+    @media (max-width: 992px) {
+      order: 2;
+    }
+  }
+  
+  .schedule-list-col {
+    @media (max-width: 992px) {
+      order: 1;
+      margin-bottom: 24px;
+    }
+  }
+`;
 
 const { Title } = Typography;
 
@@ -31,6 +48,7 @@ interface ScheduleDisplayProps {
   onEditSchedule: (schedule: Schedule) => void;
   onDeleteSchedule: (scheduleId: string) => void;
 }
+
 const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
   filteredEvents,
   selectedDate,
@@ -78,113 +96,117 @@ const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
   };
 
   return (
-    <Row gutter={[32, 16]}>
-      {/* 日历展示 xs lg 24 18 - 8:2比例显示 */}
-      <Col xs={24} lg={18}>
-        <ContentCard>
-          {/* 使用ScheduleCalendar组件 */}
-          <ScheduleCalendar
-            schedules={filteredEvents}
-            selectedDate={selectedDate}
-            onDateSelect={onDateSelect}
-            onEventClick={onEventClick}
-            loading={loading}
-            theme="admin"
-          />
-        </ContentCard>
-      </Col>
+    <DisplayContainer>
+      <Row gutter={[32, 16]}>
+        {/* 日历展示 xs lg 24 18 - 8:2比例显示 */}
+        <Col xs={24} lg={18} className="calendar-col">
+          <ContentCard>
+            {/* 使用ScheduleCalendar组件 */}
+            <ScheduleCalendar
+              schedules={filteredEvents}
+              selectedDate={selectedDate}
+              onDateSelect={onDateSelect}
+              onEventClick={onEventClick}
+              loading={loading}
+              theme="admin"
+            />
+          </ContentCard>
+        </Col>
 
-      {/* 选中日期的档期列表 - 8:2比例显示 */}
-      <Col xs={24} lg={6}>
-        <ContentCard>
-          <Title level={4}>
-            {selectedDate.format('YYYY年MM月DD日')} 档期
-          </Title>
-
-          {selectedDateSchedules.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--admin-text-tertiary)' }}>
-              <CalendarOutlined style={{ fontSize: '48px', marginBottom: '16px' }} />
-              <div>该日期暂无档期安排</div>
+        {/* 选中日期的档期列表 - 8:2比例显示 */}
+        <Col xs={24} lg={6} className="schedule-list-col">
+          <ContentCard>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <Title level={4} style={{ margin: 0 }}>
+                {selectedDate.format('YYYY年MM月DD日')} 档期
+              </Title>
             </div>
-          ) : (
-            <List
-              dataSource={selectedDateSchedules}
-              renderItem={schedule => (
-                <List.Item
-                  actions={[
-                    <Tooltip title="编辑">
-                      <Button
-                        type="text"
-                        icon={<EditOutlined />}
-                        onClick={() => onEditSchedule(schedule)}
-                      />
-                    </Tooltip>,
-                    <Popconfirm
-                      title="确定删除这个档期吗？"
-                      onConfirm={() => onDeleteSchedule(schedule.id)}
-                      okText="确定"
-                      cancelText="取消"
-                    >
-                      <Tooltip title="删除">
+
+            {selectedDateSchedules.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--admin-text-tertiary)' }}>
+                <CalendarOutlined style={{ fontSize: '48px', marginBottom: '16px' }} />
+                <div>该日期暂无档期安排</div>
+              </div>
+            ) : (
+              <List
+                dataSource={selectedDateSchedules}
+                renderItem={schedule => (
+                  <List.Item
+                    actions={[
+                      <Tooltip title="编辑">
                         <Button
                           type="text"
-                          danger
-                          icon={<DeleteOutlined />}
+                          icon={<EditOutlined />}
+                          onClick={() => onEditSchedule(schedule)}
                         />
-                      </Tooltip>
-                    </Popconfirm>
-                  ]}
-                >
-                  <List.Item.Meta
-                    avatar={
-                      <Avatar
-                        style={{ backgroundColor: getStatusColor(schedule.status) }}
-                        icon={<UserOutlined />}
-                      />
-                    }
-                    title={
-                      <Space>
-                        <span>{schedule.title || schedule.customerName}</span>
-                        {getStatusTag(schedule.status)}
-                      </Space>
-                    }
-                    description={
-                      <div>
-                        {schedule.customerName && (
-                          <div>
-                            <UserOutlined /> {schedule.customerName}
-                          </div>
-                        )}
-                        {schedule.customerPhone && (
-                          <div>
-                            <PhoneOutlined /> {schedule.customerPhone}
-                          </div>
-                        )}
-                        {schedule.weddingTime && (
-                          <div>
-                            <ClockCircleOutlined /> {schedule.weddingTime === 'lunch' ? '午宴' : '晚宴'}
-                          </div>
-                        )}
-                        {schedule.location && (
-                          <div>
-                            <EnvironmentOutlined /> {schedule.location}
-                          </div>
-                        )}
-                        {schedule.price && (
-                          <div style={{ color: '#f5222d', fontWeight: 'bold' }}>
-                            ¥{schedule.price}
-                          </div>
-                        )}
-                      </div>
-                    }
-                  />
-                </List.Item>
-              )}
-            />
-          )}
-        </ContentCard>
-      </Col>
-    </Row>
+                      </Tooltip>,
+                      <Popconfirm
+                        title="确定删除这个档期吗？"
+                        onConfirm={() => onDeleteSchedule(schedule.id)}
+                        okText="确定"
+                        cancelText="取消"
+                      >
+                        <Tooltip title="删除">
+                          <Button
+                            type="text"
+                            danger
+                            icon={<DeleteOutlined />}
+                          />
+                        </Tooltip>
+                      </Popconfirm>
+                    ]}
+                  >
+                    <List.Item.Meta
+                      avatar={
+                        <Avatar
+                          style={{ backgroundColor: getStatusColor(schedule.status) }}
+                          icon={<UserOutlined />}
+                        />
+                      }
+                      title={
+                        <Space>
+                          <span>{schedule.title || schedule.customerName}</span>
+                          {getStatusTag(schedule.status)}
+                        </Space>
+                      }
+                      description={
+                        <div>
+                          {schedule.customerName && (
+                            <div>
+                              <UserOutlined /> {schedule.customerName}
+                            </div>
+                          )}
+                          {schedule.customerPhone && (
+                            <div>
+                              <PhoneOutlined /> {schedule.customerPhone}
+                            </div>
+                          )}
+                          {schedule.weddingTime && (
+                            <div>
+                              <ClockCircleOutlined /> {schedule.weddingTime === 'lunch' ? '午宴' : '晚宴'}
+                            </div>
+                          )}
+                          {schedule.location && (
+                            <div>
+                              <EnvironmentOutlined /> {schedule.location}
+                            </div>
+                          )}
+                          {schedule.price && (
+                            <div style={{ color: '#f5222d', fontWeight: 'bold' }}>
+                              ¥{schedule.price}
+                            </div>
+                          )}
+                        </div>
+                      }
+                    />
+                  </List.Item>
+                )}
+              />
+            )}
+          </ContentCard>
+        </Col>
+      </Row>
+    </DisplayContainer>
   );
 };
 

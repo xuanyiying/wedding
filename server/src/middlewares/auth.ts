@@ -75,7 +75,7 @@ export async function blacklistToken(token: string, expiresIn = 3600): Promise<v
 }
 
 // 基础认证中间件
-export const authMiddleware = async (req: Request, _: Response, next: NextFunction): Promise<void> => {
+export const authMiddleware = async (req: AuthenticatedRequest, _: Response, next: NextFunction): Promise<void> => {
   try {
     console.log('🔐 认证中间件开始:', {
       method: req.method,

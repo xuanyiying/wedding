@@ -6,7 +6,6 @@ export * from './validation';
 
 // 默认导出
 export { default as authMiddleware } from './auth';
-export { default as securityMiddlewares } from './security';
 
 // 中间件组合
 import { authMiddleware, requireAdmin, requireSuperAdmin } from './auth';

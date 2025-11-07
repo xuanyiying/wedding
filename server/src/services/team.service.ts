@@ -146,13 +146,13 @@ export class TeamService {
       // 序列化团队数据，转换JSON字段为数组
       const serializedTeams = rows.map((team: Team) => ({
         ...team.toJSON(),
-        serviceAreas: team.getServiceAreas(),
-        specialties: team.getSpecialties(),
-        achievements: team.getAchievements(),
-        certifications: team.getCertifications(),
-        equipmentList: team.getEquipmentList(),
-        servicePackages: team.getServicePackages(),
-        workingHours: team.getWorkingHours(),
+        serviceAreas: team.serviceAreas ? JSON.parse(team.serviceAreas) : [],
+        specialties: team.specialties ? JSON.parse(team.specialties) : [],
+        achievements: team.achievements ? JSON.parse(team.achievements) : [],
+        certifications: team.certifications ? JSON.parse(team.certifications) : [],
+        equipmentList: team.equipmentList ? JSON.parse(team.equipmentList) : [],
+        servicePackages: team.servicePackages ? JSON.parse(team.servicePackages) : [],
+        workingHours: team.workingHours ? JSON.parse(team.workingHours) : [],
       }));
 
       return {
@@ -205,13 +205,13 @@ export class TeamService {
       // 序列化团队数据，转换JSON字段为数组
       const serializedTeam = {
         ...team.toJSON(),
-        serviceAreas: team.getServiceAreas(),
-        specialties: team.getSpecialties(),
-        achievements: team.getAchievements(),
-        certifications: team.getCertifications(),
-        equipmentList: team.getEquipmentList(),
-        servicePackages: team.getServicePackages(),
-        workingHours: team.getWorkingHours(),
+        serviceAreas: team.serviceAreas ? JSON.parse(team.serviceAreas) : [],
+        specialties: team.specialties ? JSON.parse(team.specialties) : [],
+        achievements: team.achievements ? JSON.parse(team.achievements) : [],
+        certifications: team.certifications ? JSON.parse(team.certifications) : [],
+        equipmentList: team.equipmentList ? JSON.parse(team.equipmentList) : [],
+        servicePackages: team.servicePackages ? JSON.parse(team.servicePackages) : [],
+        workingHours: team.workingHours ? JSON.parse(team.workingHours) : [],
       };
 
       logger.info('获取团队详情成功:', serializedTeam);
@@ -297,6 +297,31 @@ export class TeamService {
       return member;
     } catch (error) {
       logger.error('更新团队成员失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 获取团队所有成员列表
+   */
+  static async getTeamMembersByTeamId(teamId: string) {
+    try {
+      const members = await TeamMember.findAll({
+        where: {
+          teamId,
+          status: TeamMemberStatus.ACTIVE,
+        },
+        include: [
+          {
+            model: User,
+            as: 'user',
+            attributes: ['id', 'realName', 'nickname', 'email', 'avatarUrl', 'phone'],
+          },
+        ],
+      });
+      return members;
+    } catch (error) {
+      logger.error('获取团队所有成员列表失败:', error);
       throw error;
     }
   }

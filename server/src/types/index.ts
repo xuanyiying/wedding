@@ -63,10 +63,11 @@ export enum ResourceType {
 
 // Enums defined according to database-design.md
 export enum ScheduleStatus {
-  AVAILABLE = 'available',
-  BOOKED = 'booked',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
+  AVAILABLE = 'available', // 可预订
+  BOOKED = 'booked', // 已预订
+  COMPLETED = 'completed', // 已完成
+  CANCELLED = 'cancelled', // 已取消
+  DELETED = 'deleted', // 已删除
   RESERVE = 'reserve', // 预留
 }
 
@@ -148,6 +149,24 @@ export enum FileCategory {
   LOGO = 'logo',
 }
 
+// 业务异常
+export class AppError extends Error {
+  constructor(message: string, public statusCode: number = 500) {
+    super(message);
+  }
+}
+// 时间冲突错误
+export class ConflictError extends AppError {
+  constructor(message: string) {
+    super(message, 409);
+  }
+}
+// 400 Bad Request错误
+export class BadRequestError extends AppError {
+  constructor(message: string) {
+    super(message, 400);
+  }
+}
 // Redis键前缀
 export const CHUNK_UPLOAD_PREFIX = 'chunk_upload_session:';
 // 会话过期时间（秒）

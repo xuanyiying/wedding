@@ -2,6 +2,8 @@ import { Op, WhereOptions } from 'sequelize';
 import { Schedule, ScheduleAttributes, ScheduleCreationAttributes, Team, TeamMember, User } from '../models';
 import { logger } from '../utils/logger';
 import { ScheduleStatus, WeddingTime, UserRole, UserStatus, TeamMemberStatus, TeamStatus } from '../types';
+import { TeamService } from '@/services/team.service';
+import { DashboardScheduleStats, PersonalScheduleStats, TeamScheduleStats } from '@/interfaces';
 interface GetSchedulesParams {
   page: number;
   pageSize: number;
@@ -20,12 +22,13 @@ interface GetPublicSchedulesParams {
   endDate?: string;
 }
 
+
 export class ScheduleService {
   /**
    * 获取档期列表
    */
   static async getSchedules(params: GetSchedulesParams & { date?: string }) {
-    const { page, pageSize, userId, status, startDate, endDate, date ,teamId} = params;
+    const { page, pageSize, userId, status, startDate, endDate, date, teamId } = params;
     const offset = (page - 1) * pageSize;
 
     const where: WhereOptions = {};
@@ -121,6 +124,7 @@ export class ScheduleService {
    */
   static async createSchedule(data: ScheduleCreationAttributes) {
     // 检查时间冲突
+    logger.info(`检查时间冲突: ${JSON.stringify(data)}`);
     const hasConflict = await Schedule.hasConflict(data.userId, new Date(data.weddingDate), data.weddingTime);
 
     if (hasConflict) {
@@ -257,7 +261,7 @@ export class ScheduleService {
     const where: WhereOptions = {
       isPublic: true,
       status: {
-        [Op.in]: [ScheduleStatus.AVAILABLE, ScheduleStatus.BOOKED],
+        [Op.in]: [ScheduleStatus.RESERVE, ScheduleStatus.BOOKED],
       },
     };
 
@@ -307,9 +311,8 @@ export class ScheduleService {
       where.userId = userId;
     }
 
-    const [total, available, booked, reserved, completed] = await Promise.all([
+    const [total, booked, reserved, completed] = await Promise.all([
       Schedule.count({ where }),
-      Schedule.count({ where: { ...where, status: ScheduleStatus.AVAILABLE } }),
       Schedule.count({ where: { ...where, status: ScheduleStatus.BOOKED } }),
       Schedule.count({ where: { ...where, status: ScheduleStatus.RESERVE } }),
       Schedule.count({ where: { ...where, status: ScheduleStatus.COMPLETED } }),
@@ -317,7 +320,6 @@ export class ScheduleService {
 
     return {
       total,
-      available,
       booked,
       reserved,
       completed,
@@ -368,7 +370,7 @@ export class ScheduleService {
           [Op.between]: [new Date(startDate), new Date(endDate)],
         },
         status: {
-          [Op.in]: [ScheduleStatus.AVAILABLE, ScheduleStatus.BOOKED],
+          [Op.in]: [ScheduleStatus.RESERVE, ScheduleStatus.BOOKED],
         },
       },
       include: [
@@ -460,7 +462,6 @@ export class ScheduleService {
     return conflictingSchedules.map(schedule => schedule.userId);
   }
 
-
   /**
    * 查询可用主持人
    */
@@ -469,7 +470,7 @@ export class ScheduleService {
 
     // 获取冲突的主持人ID列表
     const conflictingUserIds = await this.getConflictingUserIds(weddingDate, weddingTime);
-    logger.info('conflictingUserIds:', conflictingUserIds)
+    logger.info('conflictingUserIds:', conflictingUserIds);
     // 处理团队过滤
     let teamIds: string[] = [];
     if (teamId) {
@@ -480,7 +481,7 @@ export class ScheduleService {
         teamIds = [teamId];
       }
     }
-    logger.info('teamIds:', teamIds)
+    logger.info('teamIds:', teamIds);
     const availableHosts = await TeamMember.findAll({
       where: {
         userId: {
@@ -499,23 +500,131 @@ export class ScheduleService {
         },
       ],
     });
-    logger.info('availableHosts:', availableHosts)
+    logger.info('availableHosts:', availableHosts);
     return {
       hosts: availableHosts,
       total: availableHosts.length,
     };
   }
+
+
+  /**
+   * 获取单个团队的档期统计数据
+   */
+  private static async getSingleTeamStats(
+    teamId: string,
+    startDate: string,
+    endDate: string,
+  ): Promise<TeamScheduleStats> {
+    // 获取团队成员
+    const teamMembers = await TeamService.getTeamMembersByTeamId(teamId);
+
+    // 统计每个成员的档期数量和收入
+    const memberStats = (await Promise.all(
+      teamMembers.map(async teamMember => {
+        // 修复：正确访问关联的用户对象
+        const user = teamMember.get('user') as User | undefined;
+        if (!user) {
+          return null;
+        }
+        return this.getPersonalSchedulesStats(user.id, startDate, endDate);
+      }),
+    ).then(results => results.filter(stat => stat !== null))) as any[];
+
+    // 团队总计
+    const totalSchedules = memberStats.reduce((sum, stat) => sum + stat.scheduleCount, 0);
+    const totalRevenue = memberStats.reduce((sum, stat) => sum + stat.revenue, 0);
+
+    // 获取团队名称
+    const team = await Team.findOne({
+      where: {
+        id: teamId,
+        status: TeamStatus.ACTIVE,
+      },
+      attributes: ['name'],
+    });
+    const teamName = team?.name || '未命名团队';
+
+    return {
+      teamId,
+      teamName,
+      totalCount: totalSchedules,
+      totalRevenue,
+      completedCount: memberStats.reduce((sum, stat) => sum + stat.completedCount, 0),
+      memberStats,
+      memberCount: teamMembers.length,
+    };
+  }
+  /**
+   * 获取团队档期统计数据
+   * 如果teamId为空或undefined，统计所有团队数据，否则统计指定团队数据
+   */
+  static async getTeamScheduleStats(teamId: string, startDate: string, endDate: string): Promise<any> {
+    // 获取指定团队的档期统计数据
+    return this.getSingleTeamStats(teamId, startDate, endDate);
+  }
+
+  static async getAllTeamsScheduleStats(startDate: string, endDate: string) : Promise<DashboardScheduleStats> {
+    // 获取所有活跃团队
+    const teams = await Team.findAll({
+      where: {
+        status: TeamStatus.ACTIVE,
+      },
+    });
+    const results = await Promise.all(
+      teams.map(async team => {
+        return this.getSingleTeamStats(team.id, startDate, endDate);
+      }),
+    );
+    const totalReserveCount = 0; // 在当前实现中没有直接计算预定数量
+    
+    return {
+      teamStats: results,
+      totalCount: results.reduce((sum, stat) => sum + stat.totalCount, 0),
+      completedCount: results.reduce((sum, stat) => sum + stat.completedCount, 0),
+      reserveCount: totalReserveCount,
+      totalRevenue: results.reduce((sum, stat) => sum + stat.totalRevenue, 0),
+      teamCount: results.length
+    };
+  }
+// 获取个人档期统计数据
+  static async getPersonalSchedulesStats(userId: string, startDate: string, endDate: string): Promise<PersonalScheduleStats> {
+    // 获取用户的所有已完成档期
+    const schedules = await Schedule.findAll({
+      where: {
+        userId,
+        weddingDate: {
+          [Op.between]: [startDate, endDate],
+        },
+      },
+    });
+    const completedSchedules = schedules.filter(schedule => schedule.status === ScheduleStatus.COMPLETED);
+
+    const reserveSchedules = schedules.filter(schedule => schedule.status === ScheduleStatus.RESERVE);
+
+    const scheduleCount = schedules.length;
+    const totalRevenue = completedSchedules.reduce((sum, schedule) => sum + (schedule.price || 0), 0);
+    // 获取用户信息
+    const user = await User.findOne({
+      where: {
+        id: userId,
+      },
+      attributes: ['id', 'realName', 'username', 'avatarUrl'],
+    });
+    if (!user) {
+      throw new Error('用户不存在');
+    }
+    return {
+      userId: userId,
+      realName: user.realName || user.username,
+      avatarUrl: user.avatarUrl || '',
+      scheduleCount: scheduleCount,
+      revenue: totalRevenue,
+      completedCount: completedSchedules.length,
+      reserveCount: reserveSchedules.length,
+    };
+  }
 }
-
-
-
-
-
-
-
-
-
-
 
 
 

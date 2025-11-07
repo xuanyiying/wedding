@@ -53,26 +53,15 @@ const LoginCard = styled(Card)`
   background: var(--admin-bg-container);
   position: relative;
   z-index: 1;
-  
-  .ant-card-body {
-    padding: 48px;
-    background: transparent;
-  }
-  
+
   @media (max-width: 768px) {
     max-width: 100%;
     min-height: auto;
     border-radius: var(--admin-border-radius-lg);
-    
-    .ant-card-body {
-      padding: 32px 24px;
-    }
+
   }
-  
+
   @media (max-width: 480px) {
-    .ant-card-body {
-      padding: 24px 20px;
-    }
   }
 `;
 
@@ -125,36 +114,19 @@ const RememberForgot = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 32px;
-  
+
   a {
     color: var(--admin-primary-color);
     text-decoration: none;
     font-weight: 500;
     transition: all 0.2s ease;
-    
+
     &:hover {
       color: var(--admin-primary-hover);
       text-decoration: underline;
     }
   }
-  
-  .ant-checkbox-wrapper {
-    font-weight: 400;
-    color: var(--admin-text-primary);
-    
-    .ant-checkbox-inner {
-      border-color: var(--admin-border-color);
-      
-      &:hover {
-        border-color: var(--admin-primary-color);
-      }
-    }
-    
-    .ant-checkbox-checked .ant-checkbox-inner {
-      background-color: var(--admin-primary-color);
-      border-color: var(--admin-primary-color);
-    }
-  }
+
 `;
 
 

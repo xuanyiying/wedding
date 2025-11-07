@@ -236,3 +236,88 @@ export const getAvailableHosts = async (req: Request, res: Response, next: NextF
     next(error);
   }
 };
+
+export const getPersonalSchedulesStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    let { startDate, endDate } = req.query;
+    if (!startDate || !endDate) {
+      // 统计本月档期统计数据
+      const monthRange = getCurrentMonthRange();
+      startDate = monthRange.start;
+      endDate = monthRange.end;
+    }
+    const userId = req.user!.id;
+    if (!userId) {
+      Resp.badRequest(res, '请提供用户ID');
+      return;
+    }
+    const stats = await ScheduleService.getPersonalSchedulesStats(userId, startDate as string, endDate as string);
+
+    Resp.success(res, stats, '获取个人档期统计数据成功');
+  } catch (error) {
+    logger.error('获取个人档期统计数据失败:', error);
+    next(error);
+  }
+};
+
+// 获取本月范围 YYYY-MM-DD 00:00:00 到 YYYY-MM-DD 23:59:59
+function getCurrentMonthRange(): { start: string; end: string } {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0).toISOString().split('T')[0] + ' 00:00:00';
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString().split('T')[0] + ' 23:59:59';
+  return { start, end };
+}
+
+/**
+ * 获取团队档期统计数据
+ */
+export const getTeamScheduleStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    let { teamId, startDate, endDate } = req.query;
+    if (!teamId) {
+      Resp.badRequest(res, '请选择团队');
+      return;
+    }
+    teamId = teamId as string;
+    if (!startDate || !endDate) {
+      // 统计本月档期统计数据
+      const monthRange = getCurrentMonthRange();
+      startDate = monthRange.start;
+      endDate = monthRange.end;
+    }
+    const stats = await ScheduleService.getTeamScheduleStats(
+      teamId,
+      startDate as string,
+      endDate as string,
+    );
+
+    Resp.success(res, stats, '获取团队档期统计数据成功');
+  } catch (error) {
+    logger.error('获取团队档期统计数据失败:', error);
+    next(error);
+  }
+};
+
+// 获取所有团队的档期统计数据
+export const getAllTeamsScheduleStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    let { startDate, endDate } = req.query;
+    if (!startDate || !endDate) {
+      // 统计本月档期统计数据
+      const monthRange = getCurrentMonthRange();
+      startDate = monthRange.start;
+      endDate = monthRange.end;
+    }
+    const stats = await ScheduleService.getAllTeamsScheduleStats(
+      startDate as string,
+      endDate as string,
+    );
+
+    Resp.success(res, stats, '获取所有团队的档期统计数据成功');
+  } catch (error) {
+    logger.error('获取所有团队的档期统计数据失败:', error);
+    next(error);
+  }
+
+
+};

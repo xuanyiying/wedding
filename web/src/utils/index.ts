@@ -300,6 +300,30 @@ export const getDeviceType = (): DeviceType => {
 };
 
 /**
+ * 根据时间范围类型获取日期范围
+ */
+export const getDateRange =(rangeType: 'month' | 'quarter' | 'year')=> {
+  const now = new Date();
+
+  if (rangeType === 'month') {
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    return { startDate: startOfMonth, endDate: endOfMonth };
+  }
+  if (rangeType === 'quarter'){
+    const quarter = Math.floor(now.getMonth() / 3);
+    const startOfQuarter = new Date(now.getFullYear(), quarter * 3, 1);
+    const endOfQuarter = new Date(now.getFullYear(), (quarter + 1) * 3, 0, 23, 59, 59);
+    return { startDate: startOfQuarter, endDate: endOfQuarter };
+  }
+  if (rangeType === 'year'){
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const endOfYear = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+    return { startDate: startOfYear, endDate: endOfYear };
+  }
+  return { startDate: null, endDate: null };
+}
+/**
  * 格式化价格
  * @param price 价格
  * @param currency 货币符号

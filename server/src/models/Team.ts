@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional, Association, Sequelize } from 'sequelize';
 import User from './User';
-import { TeamMemberRole, TeamMemberStatus, TeamStatus } from '../types';
+import { TeamMemberRole, TeamMemberStatus, TeamStatus } from '@/types';
 
 // 团队属性接口
 export interface TeamAttributes {
@@ -107,14 +107,10 @@ export class Team extends Model<TeamAttributes, TeamCreationAttributes> implemen
   public createdAt!: Date;
   public updatedAt!: Date;
   public deletedAt?: Date;
+// 关联属性
+  public owner?: User;
+  public members?: TeamMember[];
 
-  // 关联关系
-  public static associations: {
-    owner: Association<Team, User>;
-    members: Association<Team, any>;
-    schedules: Association<Team, any>;
-    works: Association<Team, any>;
-  };
 
   // 实例方法：检查团队状态
   public isActive(): boolean {
@@ -191,7 +187,6 @@ export class Team extends Model<TeamAttributes, TeamCreationAttributes> implemen
     this.memberCount = count;
     await this.save();
   }
-
   // 静态方法：搜索团队
   public static async searchTeams(params: {
     keyword?: string;
@@ -289,7 +284,7 @@ export class Team extends Model<TeamAttributes, TeamCreationAttributes> implemen
 }
 
 // 团队成员模型类
-class TeamMember extends Model<TeamMemberAttributes, TeamMemberCreationAttributes> implements TeamMemberAttributes {
+export class TeamMember extends Model<TeamMemberAttributes, TeamMemberCreationAttributes> implements TeamMemberAttributes {
   public id!: string;
   public teamId!: string;
   public userId!: string;
@@ -300,11 +295,15 @@ class TeamMember extends Model<TeamMemberAttributes, TeamMemberCreationAttribute
   public updatedAt!: Date;
   public deletedAt?: Date;
   public inviterId!: string;
-
+// 关联属性
+  public user?: User;
+  public team?: Team;
+  public inviter?: User;
   // 关联关系
   public static associations: {
     team: Association<TeamMember, Team>;
     user: Association<TeamMember, User>;
+    inviter: Association<TeamMember, User>;
   };
 
   // 实例方法：检查是否为所有者
@@ -392,9 +391,6 @@ class TeamMember extends Model<TeamMemberAttributes, TeamMemberCreationAttribute
     return member ? member.role : null;
   }
 }
-
-// 导出TeamMember类
-export { TeamMember };
 
 // 初始化函数
 export const initTeam = (sequelizeInstance: Sequelize): void => {
@@ -752,11 +748,28 @@ export const initTeam = (sequelizeInstance: Sequelize): void => {
   );
 
   // 设置模型关联
+  Team.hasMany(TeamMember, {
+    foreignKey: 'team_id',
+    as: 'members'
+  });
+  
+  TeamMember.belongsTo(Team, {
+    foreignKey: 'team_id',
+    as: 'team'
+  });
+  
+  Team.belongsTo(User, {
+    foreignKey: 'owner_id',
+    as: 'owner'
+  });
+  
+  User.hasMany(TeamMember, {
+    foreignKey: 'inviter_id',
+    as: 'invitedMembers'
+  });
+
   TeamMember.belongsTo(User, {
     foreignKey: 'user_id',
     as: 'user',
   });
-
-  // 与User模型的关联需要在User模型初始化后设置
-  // 这些关联将在models/index.ts中的initModels函数中设置
 };

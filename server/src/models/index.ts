@@ -47,36 +47,8 @@ export const initModels = (sequelizeInstance: Sequelize): void => {
   initViewStat(sequelizeInstance);
   initMediaProfile(sequelizeInstance);
   initIssue(sequelizeInstance);
-  
-  // Initialize associations
-  MediaProfile.associate(models);
 
-  // Issue associations
-  User.hasMany(Issue, { foreignKey: 'reporter_id', as: 'reportedIssues' });
-  User.hasMany(Issue, { foreignKey: 'assignee_id', as: 'assignedIssues' });
-  Issue.belongsTo(User, { foreignKey: 'reporter_id', as: 'reporter' });
-  Issue.belongsTo(User, { foreignKey: 'assignee_id', as: 'assignee' });
-
-  // User and Team associations (Team owner)
-  User.hasMany(Team, { foreignKey: 'owner_id', as: 'ownedTeams' });
-  Team.belongsTo(User, { foreignKey: 'owner_id', as: 'owner' });
-
-  // User and TeamMember associations
-  User.hasMany(TeamMember, { foreignKey: 'user_id', as: 'teamMemberships' });
-
-  // TeamMember inviter association
-  User.hasMany(TeamMember, { foreignKey: 'inviter_id', as: 'invitedMembers' });
-  TeamMember.belongsTo(User, { foreignKey: 'inviter_id', as: 'inviter' });
-
-  // Team and TeamMember associations
-  Team.hasMany(TeamMember, { foreignKey: 'team_id', as: 'members' });
-  TeamMember.belongsTo(Team, { foreignKey: 'team_id', as: 'team' });
-
-  // Note: TeamMember.belongsTo(User, { foreignKey: 'user_id', as: 'user' }) is already defined in Team.ts
 };
-
-// Note: initModels should be called explicitly when needed
-// initModels(sequelize);
 
 // 具名导出所有模型
 export {

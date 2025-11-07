@@ -603,61 +603,6 @@ const TeamManagePage: React.FC = () => {
           </Form.Item>
 
           <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item
-                name="contactPhone"
-                label="联系电话"
-              >
-                <Input placeholder="请输入联系电话" />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                name="contactEmail"
-                label="联系邮箱"
-              >
-                <Input placeholder="请输入联系邮箱" />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                name="contactWechat"
-                label="微信号"
-              >
-                <Input placeholder="请输入微信号" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Form.Item
-            name="address"
-            label="团队地址"
-          >
-            <Input placeholder="请输入团队地址" />
-          </Form.Item>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="serviceAreas"
-                label="服务区域"
-                help="多个区域用逗号分隔"
-              >
-                <Input placeholder="如：北京,上海,深圳" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="specialties"
-                label="专业特长"
-                help="多个特长用逗号分隔"
-              >
-                <Input placeholder="如：婚礼摄影,婚礼策划,化妆造型" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
             <Col span={12}>
               <Form.Item
                 name="priceRange"

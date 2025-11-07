@@ -433,4 +433,17 @@ router.get(
   ScheduleController.getPublicSchedules,
 );
 
+// 获取个人档期统计数据
+router.get(
+  '/stats/personal',
+  authMiddleware,
+  ScheduleController.getPersonalSchedulesStats,
+);
+
+// 获取团队档期统计数据
+router.get('/stats/team', ScheduleController.getTeamScheduleStats);
+
+// 获取所有团队档期统计数据
+router.get('/stats/all-teams', ScheduleController.getAllTeamsScheduleStats);
+
 export default router;

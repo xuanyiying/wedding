@@ -718,18 +718,6 @@ const UsersPage: React.FC = () => {
             </Form.Item>
           )}
 
-          <Form.Item
-            name="description"
-            label="描述"
-          >
-            <Input.TextArea
-              placeholder="请输入用户描述"
-              rows={3}
-              maxLength={200}
-              showCount
-            />
-          </Form.Item>
-
           <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
             <Space>
               <Button onClick={() => {

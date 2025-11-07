@@ -1,221 +1,195 @@
-import React from 'react';
-import { Row, Col, Card, Segmented, DatePicker, Select, List, Avatar, Space, Tag } from 'antd';
-import { BarChartOutlined, TrophyOutlined, TeamOutlined, CalendarOutlined, UserOutlined, MoneyCollectOutlined } from '@ant-design/icons';
-import { StatCard } from '../common';
-import { ScheduleStatus, type Schedule, type TeamMember } from '../../../types';
-import type { Dayjs } from 'dayjs';
-import dayjs from 'dayjs';
+import React, { useEffect, useState } from "react";
+import {
+  Row,
+  Col,
+  DatePicker,
+  Space,
+  Radio,
+  Flex,
+} from "antd";
+import {
+  BarChartOutlined,
+  TrophyOutlined,
+  MoneyCollectOutlined,
+} from "@ant-design/icons";
+import { StatCard } from "../common";
+import { useAppSelector } from "../../../store";
+import { scheduleService } from "../../../services";
+import styled from "styled-components";
+import type { RangePickerProps } from "antd/es/date-picker";
 const { RangePicker } = DatePicker;
-const { Option } = Select;
 
-interface ScheduleStatsProps {
-  schedules: Schedule[];
-  teamMembers: TeamMember[];
-  selectedTeam?: any;
-  statsTimeRange: 'month' | 'quarter' | 'year' | 'custom';
-  statusFilter: string;
-  customDateRange: [Dayjs | null, Dayjs | null];
-  showDetailedStats: boolean;
-  onStatsTimeRangeChange: (value: 'month' | 'quarter' | 'year' | 'custom') => void;
-  onStatusFilterChange: (value: string) => void;
-  onCustomDateRangeChange: (dates: [Dayjs | null, Dayjs | null]) => void;
-  onShowDetailedStatsChange: (show: boolean) => void;
+// 添加响应式样式
+const StatsContainer = styled.div`
+  .ant-row {
+    margin-bottom: 16px;
+
+    @media (max-width: 768px) {
+      .ant-col {
+        margin-bottom: 12px;
+      }
+    }
+  }
+
+  // 统计卡片在移动端一行展示
+
+  .stats-card-row {
+    @media (max-width: 768px) {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      margin-bottom: 16px;
+
+      .ant-col {
+        flex: 0 0 auto;
+        width: auto;
+        min-width: 120px;
+        margin-right: 8px;
+      }
+    }
+  }
+
+  // 日期选择器在移动端适配
+
+  .custom-date-range {
+    @media (max-width: 768px) {
+      .ant-picker {
+        width: 100%;
+        max-width: 280px;
+      }
+    }
+  }
+`;
+
+// 个人档期统计数据接口
+interface PersonalScheduleStats {
+  userId: string;
+  realName: string;
+  avatarUrl?: string;
+  scheduleCount: number;
+  completedCount: number;
+  revenue: number;
 }
 
-const ScheduleStats: React.FC<ScheduleStatsProps> = ({
-  schedules,
-  teamMembers,
-  selectedTeam,
-  statsTimeRange,
-  statusFilter,
-  customDateRange,
-  showDetailedStats,
-  onStatsTimeRangeChange,
-  onStatusFilterChange,
-  onCustomDateRangeChange,
-  onShowDetailedStatsChange
-}) => {
-  // 根据时间范围过滤档期数据
-  const getFilteredSchedulesByTimeRange = (timeRange: 'month' | 'quarter' | 'year' | 'custom') => {
-    const now = dayjs();
-    return schedules.filter(s => {
-      const scheduleDate = dayjs(s.weddingDate);
-      switch (timeRange) {
-        case 'month':
-          return scheduleDate.isSame(now, 'month');
-        case 'quarter':
-          { const currentQuarter = Math.floor(now.month() / 3);
-          const scheduleQuarter = Math.floor(scheduleDate.month() / 3);
-          return scheduleDate.year() === now.year() && scheduleQuarter === currentQuarter; }
-        case 'year':
-          return scheduleDate.isSame(now, 'year');
-        case 'custom':
-          if (!customDateRange[0] || !customDateRange[1]) {
-            return true;
-          }
-          return scheduleDate.isSame(customDateRange[0], 'day') ||
-            scheduleDate.isAfter(customDateRange[0], 'day') &&
-            (scheduleDate.isSame(customDateRange[1], 'day') ||
-              scheduleDate.isBefore(customDateRange[1], 'day'));
-        default:
-          return false;
+const ScheduleStats: React.FC = () => {
+  const [loading, setLoading] = useState(false);
+  const [personalStats, setPersonalStats] = useState<PersonalScheduleStats | null>(null);
+  const [statsTimeRange, setStatsTimeRange] = useState<
+    "month" | "quarter" | "year" | "custom"
+  >("month");
+  const [customDateRange, setCustomDateRange] = useState<[string, string]>([
+    "",
+    "",
+  ]);
+  
+  // 获取当前用户信息
+  const currentUser = useAppSelector((state) => state.auth.user);
+
+  // 获取服务端统计数据
+  const fetchServerStats = async () => {
+    setLoading(true);
+    try {
+      // 构造参数
+      let params: { startDate?: string; endDate?: string } = {};
+      if (
+        statsTimeRange === "custom" &&
+        customDateRange[0] &&
+        customDateRange[1]
+      ) {
+        params = {
+          startDate: customDateRange[0],
+          endDate: customDateRange[1],
+        };
       }
-    });
+
+      // 获取个人统计数据
+      if (currentUser?.id) {
+        const personalStatsResponse = await scheduleService.getPersonalScheduleStats({
+          userId: currentUser.id,
+          ...params
+        });
+        
+        if (personalStatsResponse.success) {
+          setPersonalStats(personalStatsResponse.data);
+        }
+      }
+    } catch (error) {
+      console.error("获取统计数据失败:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // 统计数据计算
-  const filteredSchedules = getFilteredSchedulesByTimeRange(statsTimeRange);
-  const statusFilteredSchedules = statusFilter === 'all'
-    ? filteredSchedules
-    : filteredSchedules.filter(s => s.status === statusFilter);
+  useEffect(() => {
+    fetchServerStats();
+  }, [statsTimeRange, customDateRange, currentUser?.id]);
 
-  const stats = {
-    total: schedules.length,
-    current: filteredSchedules.length,
-    available: filteredSchedules.filter(s => s.status === ScheduleStatus.AVAILABLE).length,
-    confirmed: filteredSchedules.filter(s => s.status === ScheduleStatus.BOOKED).length,
-    completed: filteredSchedules.filter(s => s.status === ScheduleStatus.RESERVE).length,
-    revenue: Number(filteredSchedules.filter(s => s.status === ScheduleStatus.COMPLETED)
-      .reduce((sum, s) => sum + (s.price || 0), 0)).toFixed(2),
-    filtered: statusFilteredSchedules.length,
-    filteredRevenue: Number(statusFilteredSchedules.filter(s => s.status === ScheduleStatus.COMPLETED)
-      .reduce((sum, s) => sum + (s.price || 0), 0)).toFixed(2)
+
+  const onRangeChange: RangePickerProps['onChange'] = (dates, dateStrings) => {
+    if (dates && dates.length === 2) {
+      setCustomDateRange([dateStrings[0] || "", dateStrings[1] || ""]);
+    } else {
+      console.log('Clear');
+    }
   };
-
-  // 团队统计
-  const getTeamStats = () => {
-    if (!selectedTeam || teamMembers.length === 0) return [];
-
-    return teamMembers.map(member => {
-      const memberSchedules = statusFilteredSchedules.filter(s => s.userId === member.id);
-      return {
-        id: member.id,
-        name: member.user.realName || member.user.nickname || '未知',
-        avatar: member.user.avatarUrl,
-        total: memberSchedules.length,
-        completed: memberSchedules.filter(s => s.status === ScheduleStatus.COMPLETED).length,
-        revenue: Number(memberSchedules.filter(s => s.status === ScheduleStatus.COMPLETED)
-          .reduce((sum, s) => sum + (s.price || 0), 0)).toFixed(2)
-      };
-    }).sort((a, b) => b.completed - a.completed);
-  };
-
-  const teamStats = getTeamStats();
 
   return (
-    <>
+    <StatsContainer>
       {/* 统计时间范围选择器 */}
       <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
         <Col>
           <Space wrap>
-            <Segmented
-              value={statsTimeRange}
-              onChange={onStatsTimeRangeChange}
-              options={[
-                { label: '本月', value: 'month' },
-                { label: '本季度', value: 'quarter' },
-                { label: '本年', value: 'year' },
-                { label: '自定义', value: 'custom' }
-              ]}
-            />
-            {statsTimeRange === 'custom' && (
-              <RangePicker
-                value={customDateRange}
-                onChange={(dates) => onCustomDateRangeChange(dates as [Dayjs | null, Dayjs | null])}
-                placeholder={['开始日期', '结束日期']}
-              />
-            )}
-          </Space>
-        </Col>
-        <Col>
-          <Space>
-            <Select
-              value={statusFilter}
-              onChange={onStatusFilterChange}
-              style={{ width: 120 }}
-            >
-              <Option value="all">全部状态</Option>
-              <Option value={ScheduleStatus.AVAILABLE}>可预约</Option>
-              <Option value={ScheduleStatus.BOOKED}>已预订</Option>
-              <Option value={ScheduleStatus.COMPLETED}>已完成</Option>
-              <Option value={ScheduleStatus.CANCELLED}>已取消</Option>
-              <Option value={ScheduleStatus.RESERVE}>预留</Option>
-            </Select>
+            <Flex vertical gap="middle">
+              <Radio.Group
+                defaultValue="month"
+                buttonStyle="solid"
+                name="statsTimeRange"
+                onChange={(e) => {
+                  setStatsTimeRange(e.target.value);
+                }}
+                value={statsTimeRange}
+              >
+                <Radio.Button value="month">本月</Radio.Button>
+                <Radio.Button value="quarter">本季度</Radio.Button>
+                <Radio.Button value="year">本年</Radio.Button>
+                <Radio.Button value="custom">自定义</Radio.Button>
+              </Radio.Group>
+              {statsTimeRange === "custom" && (
+                <div className="custom-date-range">
+                  <RangePicker onChange={onRangeChange} />
+                </div>
+              )}
+            </Flex>
           </Space>
         </Col>
       </Row>
 
-      {/* 统计卡片 */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+      {/* 个人统计卡片 */}
+      {personalStats && !loading && (
+        <Row gutter={[16, 16]} className="stats-card-row" style={{ marginBottom: 24 }}>
         <Col xs={12} sm={6}>
           <StatCard
-            title="总档期"
-            value={stats.total}
-            prefix={<BarChartOutlined style={{ color: '#1890ff' }} />}
-          />
-        </Col>
-        <Col xs={12} sm={6}>
-          <StatCard
-            title={`${statsTimeRange === 'month' ? '本月' : statsTimeRange === 'quarter' ? '本季度' : statsTimeRange === 'year' ? '本年' : '筛选'}档期`}
-            value={statusFilter === 'all' ? stats.current : stats.filtered}
-            prefix={<CalendarOutlined style={{ color: '#52c41a' }} />}
+            title="我的档期数"
+            value={personalStats?.scheduleCount || 0}
+            prefix={<BarChartOutlined style={{ color: "#1890ff" }} />}
           />
         </Col>
         <Col xs={12} sm={6}>
           <StatCard
             title="已完成"
-            value={stats.completed}
-            prefix={<TrophyOutlined style={{ color: '#faad14' }} />}
+            value={personalStats?.completedCount || 0}
+            prefix={<TrophyOutlined style={{ color: "#52c41a" }} />}
           />
         </Col>
         <Col xs={12} sm={6}>
           <StatCard
-            title="总收入"
-            value={`¥${statusFilter === 'all' ? stats.revenue : stats.filteredRevenue}`}
-            prefix={<MoneyCollectOutlined style={{ color: '#f5222d' }} />}
+            title="我的收入"
+            value={`¥${personalStats?.revenue?.toFixed(2) || "0.00"}`}
+            prefix={<MoneyCollectOutlined style={{ color: "#f5222d" }} />}
           />
         </Col>
       </Row>
-
-      {/* 团队统计 */}
-      {selectedTeam && teamStats.length > 0 && (
-        <Card
-          title={(
-            <Space>
-              <TeamOutlined />
-              <span>{selectedTeam.name} 团队统计</span>
-            </Space>
-          )}
-          style={{ marginBottom: 24 }}
-          extra={
-            <a onClick={() => onShowDetailedStatsChange(!showDetailedStats)}>
-              {showDetailedStats ? '收起' : '展开'}
-            </a>
-          }
-        >
-          {showDetailedStats && (
-            <List
-              dataSource={teamStats}
-              renderItem={member => (
-                <List.Item>
-                  <List.Item.Meta
-                    avatar={<Avatar src={member.avatar} icon={<UserOutlined />} />}
-                    title={member.name}
-                    description={
-                      <Space>
-                        <Tag color="blue">总档期: {member.total}</Tag>
-                        <Tag color="green">已完成: {member.completed}</Tag>
-                        <Tag color="orange">收入: ¥{member.revenue}</Tag>
-                      </Space>
-                    }
-                  />
-                </List.Item>
-              )}
-            />
-          )}
-        </Card>
-      )}
-    </>
+        )};
+    </StatsContainer>
   );
 };
 

@@ -1,74 +1,41 @@
 import {
   UserRole,
-  NotificationType,
   UserStatus,
   Gender,
   ContactStatus,
   FileCategory,
-  ConfigCategory,
   FileType,
   OssType,
 } from '../types';
+
+export interface DashboardScheduleStats {
+    totalCount: number;
+    completedCount: number;
+    reserveCount: number;
+    totalRevenue: number;
+    teamStats: TeamScheduleStats[];
+    teamCount: number;
+}
+
 // 统计数据类型
-export interface Statistics {
-  totalUsers: number;
-  totalHosts: number;
-  totalBookings: number;
+export interface TeamScheduleStats {
+  teamId: string;
+  teamName: string;
   totalRevenue: number;
-  monthlyBookings: MonthlyData[];
-  monthlyRevenue: MonthlyData[];
-  popularServices: ServiceStats[];
-  topHosts: HostStats[];
+  completedCount: number;
+  totalCount: number;
+  memberCount: number;
+  memberStats: PersonalScheduleStats[];
 }
 
-export interface MonthlyData {
-  month: string;
-  value: number;
-}
-
-export interface ServiceStats {
-  serviceId: string;
-  serviceName: string;
-  bookingCount: number;
+export interface PersonalScheduleStats {
+  userId: string;
+  realName: string;
+  avatarUrl?: string;
+  scheduleCount: number;
+  completedCount: number;
+  reserveCount: number;
   revenue: number;
-}
-
-export interface HostStats {
-  hostId: string;
-  hostName: string;
-  bookingCount: number;
-  rating: number;
-  revenue: number;
-}
-
-// 分页类型
-export interface PaginationQuery {
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortOrder?: 'ASC' | 'DESC';
-}
-
-export interface PaginationResult<T> {
-  data: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
-
-// 搜索类型
-export interface SearchQuery {
-  keyword?: string;
-  category?: string;
-  location?: string;
-  priceMin?: number;
-  priceMax?: number;
-  rating?: number;
-  dateFrom?: Date;
-  dateTo?: Date;
 }
 
 import { Request } from 'express';
@@ -91,12 +58,6 @@ export interface JWTPayload {
   iat?: number;
   exp?: number;
 }
-export interface Aut<T = any> {
-  success: boolean;
-  message?: string;
-  data?: T;
-}
-
 // API 响应类型
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -109,33 +70,6 @@ export interface ApiResponse<T = any> {
   }>;
 }
 
-// API 错误类型
-export interface ApiError {
-  code: string;
-  message: string;
-  details?: unknown;
-  statusCode: number;
-}
-
-// 邮件模板类型
-export interface EmailTemplate {
-  to: string;
-  subject: string;
-  template: string;
-  data: Record<string, unknown>;
-}
-
-// 通知类型
-export interface Notification {
-  id: string;
-  userId: string;
-  type: NotificationType;
-  title: string;
-  content: string;
-  data?: Record<string, unknown>;
-  isRead: boolean;
-  createdAt: Date;
-}
 
 // 用户相关类型
 export interface User {
@@ -180,18 +114,6 @@ export interface Contact {
   followUpDate?: Date;
   createdAt: Date;
   updatedAt: Date;
-}
-
-// 系统配置类型
-export interface SystemConfig {
-  id: string;
-  key: string;
-  value: string;
-  description?: string;
-  category: ConfigCategory;
-  is: boolean;
-  updatedAt: Date;
-  updatedBy: string;
 }
 
 export interface UserMediaProfile {

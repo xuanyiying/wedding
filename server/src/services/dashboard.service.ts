@@ -52,7 +52,7 @@ export class DashboardService {
         status: { [Op.in]: [ScheduleStatus.BOOKED, ScheduleStatus.RESERVE, ScheduleStatus.COMPLETED] },
       };
 
-      const [totalBookings, confirmedBookings, pendingBookings, completedBookings] = await Promise.all([
+      const [total, booked, reserve, completed] = await Promise.all([
         Schedule.count({ where: bookingWhere }),
         Schedule.count({ where: { ...bookingWhere, status: ScheduleStatus.BOOKED } }),
         Schedule.count({ where: { ...bookingWhere, status: ScheduleStatus.RESERVE } }),
@@ -63,9 +63,9 @@ export class DashboardService {
       const revenueStats = await Schedule.findAll({
         where: { ...bookingWhere, status: ScheduleStatus.COMPLETED },
         attributes: [
-          [Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'totalRevenue'],
-          [Schedule.sequelize!.fn('AVG', Schedule.sequelize!.col('price')), 'avgBookingValue'],
-          [Schedule.sequelize!.fn('COUNT', Schedule.sequelize!.col('id')), 'bookingCount'],
+          [Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'total'],
+          [Schedule.sequelize!.fn('AVG', Schedule.sequelize!.col('price')), 'avg'],
+          [Schedule.sequelize!.fn('COUNT', Schedule.sequelize!.col('id')), 'booked'],
         ],
         raw: true,
       });
@@ -158,7 +158,7 @@ export class DashboardService {
       ]);
 
       // 计算趋势百分比
-      const bookingTrend = lastMonthBookings > 0 ? ((totalBookings - lastMonthBookings) / lastMonthBookings) * 100 : 0;
+      const bookingTrend = lastMonthBookings > 0 ? ((total - lastMonthBookings) / lastMonthBookings) * 100 : 0;
       const userTrend = lastMonthUsers > 0 ? (((userStats?.total || 0) - lastMonthUsers) / lastMonthUsers) * 100 : 0;
       const workTrend = lastMonthWorks > 0 ? ((totalWorks - lastMonthWorks) / lastMonthWorks) * 100 : 0;
 
@@ -167,39 +167,30 @@ export class DashboardService {
         // 基础统计
         totalUsers: userStats?.total || 0,
         activeUsers: userStats?.active || 0,
-        monthlyBookings: totalBookings,
-        totalSchedules: totalBookings,
+        monthlyBookings: todayBookings,
+        totalSchedules: total,
         totalWorks: totalWorks,
         publishedWorks: publishedWorks,
 
         // 预订统计
-        totalBookings: totalBookings,
-        confirmedBookings: confirmedBookings,
-        pendingBookings: pendingBookings,
-        completedBookings: completedBookings,
+        total: total,
+        booked: booked,
+        reserve: reserve,
+        completed: completed,
         todayBookings: todayBookings,
 
         // 收入统计
-        totalRevenue: parseFloat(revenue.totalRevenue || '0'),
-        averageBookingValue: parseFloat(revenue.avgBookingValue || '0'),
+        totalRevenue: parseFloat(revenue.total || '0'),
+        averageBookingValue: parseFloat(revenue.avg || '0'),
         todayRevenue: todayRevenue || 0,
 
         // 趋势数据
         bookingTrend: Math.round(bookingTrend * 100) / 100,
         userTrend: Math.round(userTrend * 100) / 100,
         workTrend: Math.round(workTrend * 100) / 100,
-
-        // 兼容旧结构
-        bookings: {
-          total: totalBookings,
-          confirmed: confirmedBookings,
-          pending: pendingBookings,
-          completed: completedBookings,
-          today: todayBookings,
-        },
         revenue: {
-          total: parseFloat(revenue.totalRevenue || '0'),
-          average: parseFloat(revenue.avgBookingValue || '0'),
+          total: parseFloat(revenue.total || '0'),
+          average: parseFloat(revenue.avg || '0'),
           today: todayRevenue || 0,
         },
         users: userStats,
@@ -658,80 +649,189 @@ export class DashboardService {
   static async getScheduleStats(params: DashboardStatsParams = {}) {
     try {
       const { startDate, endDate, userId } = params;
-
-      const where: WhereOptions = {};
-
-      if (userId) {
-        where.userId = userId;
-      }
-
+      
+      // 创建日期范围条件
+      const dateWhere: WhereOptions = {};
       if (startDate || endDate) {
-        where.createdAt = {};
+        dateWhere.weddingDate = {};
         if (startDate) {
-          (where.createdAt as any)[Op.gte] = new Date(startDate);
+          (dateWhere.weddingDate as any)[Op.gte] = new Date(startDate);
         }
         if (endDate) {
-          (where.createdAt as any)[Op.lte] = new Date(endDate);
+          (dateWhere.weddingDate as any)[Op.lte] = new Date(endDate);
         }
       }
+      
+      // 如果指定了用户，则只查询该用户的档期
+      const scheduleWhere: WhereOptions = {
+        ...dateWhere,
+        ...(userId ? { userId } : {})
+      };
 
-      // 档期状态统计
-      const [
-        totalSchedules,
-        availableSchedules,
-        bookedSchedules,
-        reserveSchedules,
-        completedSchedules,
-        cancelledSchedules,
-      ] = await Promise.all([
-        Schedule.count({ where }),
-        Schedule.count({ where: { ...where, status: ScheduleStatus.AVAILABLE } }),
-        Schedule.count({ where: { ...where, status: ScheduleStatus.BOOKED } }),
-        Schedule.count({ where: { ...where, status: ScheduleStatus.RESERVE } }),
-        Schedule.count({ where: { ...where, status: ScheduleStatus.COMPLETED } }),
-        Schedule.count({ where: { ...where, status: ScheduleStatus.CANCELLED } }),
-      ]);
-
-      // 按月统计（最近12个月）
-      const monthlyStats = [];
-      for (let i = 11; i >= 0; i--) {
-        const date = new Date();
-        date.setMonth(date.getMonth() - i);
-        const year = date.getFullYear();
-        const month = date.getMonth() + 1;
-
-        const monthStart = new Date(year, month - 1, 1);
-        const monthEnd = new Date(year, month, 0, 23, 59, 59);
-
-        const monthWhere = {
-          ...where,
-          createdAt: {
-            [Op.gte]: monthStart,
-            [Op.lte]: monthEnd,
-          },
+      // 获取总档期数
+      const totalCount = await Schedule.count({ where: scheduleWhere });
+      
+      // 获取已完成的档期数
+      const completedCount = await Schedule.count({ 
+        where: { 
+          ...scheduleWhere, 
+          status: ScheduleStatus.COMPLETED 
+        } 
+      });
+      
+      // 获取预定中的档期数
+      const reserveCount = await Schedule.count({ 
+        where: { 
+          ...scheduleWhere, 
+          status: ScheduleStatus.RESERVE 
+        } 
+      });
+      
+      // 计算总收入
+      const totalRevenueResult = await Schedule.findOne({
+        where: { 
+          ...scheduleWhere, 
+          status: ScheduleStatus.COMPLETED 
+        },
+        attributes: [
+          [Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'totalRevenue']
+        ],
+        raw: true
+      });
+      
+      const totalRevenue = totalRevenueResult ? parseFloat((totalRevenueResult as any).totalRevenue || '0') : 0;
+      
+      // 如果指定了用户，只返回个人统计数据
+      if (userId) {
+        return {
+          totalCount,
+          completedCount,
+          reserveCount,
+          totalRevenue
         };
-
-        const [monthTotal, monthCompleted] = await Promise.all([
-          Schedule.count({ where: monthWhere }),
-          Schedule.count({ where: { ...monthWhere, status: ScheduleStatus.COMPLETED } }),
-        ]);
-
-        monthlyStats.push({
-          month: `${year}-${month.toString().padStart(2, '0')}`,
-          total: monthTotal,
-          completed: monthCompleted,
-        });
       }
+      
+      // 获取所有团队统计数据
+      const teams: Team[] = await Team.findAll({
+        where: {
+          status: TeamStatus.ACTIVE
+        },
+        include: [
+          {
+            model: TeamMember,
+            as: 'members',
+            where: {
+              status: TeamMemberStatus.ACTIVE
+            },
+            include: [
+              {
+                model: User,
+                as: 'user'
+              }
+            ]
+          }
+        ]
+      });
+      
+      // 计算每个团队的统计数据
+      const teamStats = await Promise.all(teams.map(async (team: any) => {
+        // 获取团队成员ID列表
+        const memberIds = team.members?.map((member: any) => member.userId) || [];
+        
+        // 团队档期条件
+        const teamScheduleWhere: WhereOptions = {
+          ...dateWhere,
+          userId: {
+            [Op.in]: memberIds
+          }
+        };
+        
+        // 团队总档期数
+        const teamTotalCount = await Schedule.count({ where: teamScheduleWhere });
+        
+        // 团队已完成档期数
+        const teamCompletedCount = await Schedule.count({ 
+          where: { 
+            ...teamScheduleWhere, 
+            status: ScheduleStatus.COMPLETED 
+          } 
+        });
+        
+        // 团队总收入
+        const teamRevenueResult = await Schedule.findOne({
+          where: { 
+            ...teamScheduleWhere, 
+            status: ScheduleStatus.COMPLETED 
+          },
+          attributes: [
+            [Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'totalRevenue']
+          ],
+          raw: true
+        });
+        
+        const teamTotalRevenue = teamRevenueResult ? parseFloat((teamRevenueResult as any).totalRevenue || '0') : 0;
+        
+        // 计算团队成员统计数据
+        const memberStats = await Promise.all((team.members || []).map(async (member: any) => {
+          // 成员档期条件
+          const memberScheduleWhere: WhereOptions = {
+            ...dateWhere,
+            userId: member.userId
+          };
 
+          // 成员档期数
+          const scheduleCount = await Schedule.count({ where: memberScheduleWhere });
+
+          // 成员已完成档期数
+          const memberCompletedCount = await Schedule.count({
+            where: {
+              ...memberScheduleWhere,
+              status: ScheduleStatus.COMPLETED
+            }
+          });
+
+          // 成员收入
+          const memberRevenueResult = await Schedule.findOne({
+            where: {
+              ...memberScheduleWhere,
+              status: ScheduleStatus.COMPLETED
+            },
+            attributes: [
+              [Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'revenue']
+            ],
+            raw: true
+          });
+
+          const revenue = memberRevenueResult ? parseFloat((memberRevenueResult as any).revenue || '0') : 0;
+
+          return {
+            userId: member.userId,
+            realName: member.memberUser?.realName || member.memberUser?.username || '未知用户',
+            avatarUrl: member.memberUser?.avatarUrl,
+            scheduleCount,
+            completedCount: memberCompletedCount,
+            revenue
+          };
+        }));
+        
+        return {
+          teamId: team.id,
+          teamName: team.name,
+          totalRevenue: teamTotalRevenue,
+          completedCount: teamCompletedCount,
+          totalCount: teamTotalCount,
+          memberCount: memberStats.length,
+          memberStats
+        };
+      }));
+      
       return {
-        totalSchedules,
-        availableSchedules,
-        bookedSchedules,
-        reserveSchedules,
-        completedSchedules,
-        cancelledSchedules,
-        pendingSchedules: reserveSchedules, // 待确认的档期
-        monthlyStats,
+        totalCount,
+        completedCount,
+        reserveCount,
+        totalRevenue,
+        teamStats,
+        teamCount: teams.length
       };
     } catch (error) {
       logger.error('获取档期统计失败:', error);
@@ -776,7 +876,7 @@ export class DashboardService {
             include: [
               {
                 model: TeamMember,
-                as: 'teamMemberships',
+                as: 'invitedMembers',
                 required: true, // 必须有团队成员关联
                 where: {
                   status: TeamMemberStatus.ACTIVE,

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Form, Input, Select, DatePicker, Switch, Button, Space, Tag, message, Row,
+  Form, Input, Select, Switch, Button, Space, Tag, message, Row,
   Col, Image, Alert
 } from 'antd';
 import { VideoCameraOutlined, DeleteOutlined } from '@ant-design/icons';
@@ -10,7 +10,7 @@ import { MediaUploader } from '../../common/MediaUploader';
 import type { DirectUploadResult } from '../../../utils/direct-upload';
 import { fileService } from '../../../services';
 import { FileType, type FileInfo, WorkCategory } from '../../../types';
-import { useAppSelector } from '../../../store/hooks';
+import { useAppSelector } from "../../../store";
 import type { RootState } from '../../../store';
 import './WorkForm.scss';
 
@@ -196,7 +196,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
   };
 
   const handleMediaUploadError = (error: Error) => {
-    message.error(`上传失败: ${error.message}`);
+    message.error(`上传失败: ${error.message}，请检查文件格式是否正确`);
   };
 
   const handleMediaRemove = async (fileId: string) => {
@@ -362,29 +362,6 @@ const WorkForm: React.FC<WorkFormProps> = ({
                 <Option value="photo">图片</Option>
                 <Option value="video">视频</Option>
               </Select>
-            </Form.Item>
-          </Col>
-          <Col xs={12} sm={12}>
-            <Form.Item
-              name="weddingDate"
-              label="婚礼日期"
-            >
-              <DatePicker
-                placeholder="请选择婚礼日期"
-                style={{ width: '100%' }}
-                disabledDate={(current) => current && current > dayjs().endOf('day')}
-              />
-            </Form.Item>
-          </Col>
-          <Col xs={12} sm={12}>
-            <Form.Item
-              name="customer"
-              label="客户姓名"
-            >
-              <Input
-                placeholder="请输入客户姓名"
-                maxLength={50}
-              />
             </Form.Item>
           </Col>
         </Row>

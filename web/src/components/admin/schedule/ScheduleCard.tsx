@@ -10,24 +10,12 @@ const StyledCard = styled(Card)`
   margin-bottom: 16px;
   border-radius: 8px;
   transition: all 0.3s ease;
-  
+
   &:hover {
     box-shadow: var(--admin-shadow-lg);
     transform: translateY(-2px);
   }
-  
-  .ant-card-head {
-    border-bottom: 1px solid var(--admin-border-color);
-    
-    .ant-card-head-title {
-      font-weight: 600;
-      color: var(--admin-text-primary);
-    }
-  }
-  
-  .ant-card-body {
-    padding: 16px;
-  }
+
 `;
 
 const InfoRow = styled.div`

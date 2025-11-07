@@ -2,14 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { Form, Input, Button, Space, Row, Col, InputNumber } from 'antd';
 import AvatarUploader from '../../AvatarUploader';
 import styled from 'styled-components';
-import type { ProfileData } from './ProfileSection';
-import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
+import type { User } from "../../../types";
 
 const { TextArea } = Input;
 
 interface ProfileEditFormProps {
-  initialValues?: Partial<ProfileData>;
-  onSubmit: (values: Partial<ProfileData>) => void;
+  initialValues?: Partial<User>;
+  onSubmit: (values: Partial<User>) => void;
   onCancel: () => void;
   loading?: boolean;
   onUpload?: (file: File) => Promise<string>;
@@ -18,73 +17,21 @@ interface ProfileEditFormProps {
 }
 
 const FormContainer = styled.div`
-  .ant-form-item-label > label {
-    font-size: 16px;
-  }
-
-  .ant-input, .ant-select-selector {
-    font-size: 16px;
-  }
-
-  .avatar-upload {
-    text-align: center;
-    margin-bottom: 24px;
-
-    .ant-upload {
-      display: inline-block;
-    }
-
-    .ant-upload-wrapper.ant-upload-picture-circle-wrapper {
-      .ant-upload.ant-upload-select {
-        border-radius: 50% !important;
-      }
-    }
-
-    .upload-button {
-      border: 2px dashed var(--admin-border-color);
-      border-radius: 50%;
-      background: var(--admin-bg-secondary);
-      width: 120px;
-      height: 120px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-
-      &:hover {
-        border-color: var(--admin-primary-color);
-      }
-    }
-  }
-
-  .specialty-input {
-    margin-bottom: 12px;
-  }
-
-  .specialty-tags {
-    margin-bottom: 16px;
-
-    .specialty-tag {
-      margin-bottom: 8px;
-    }
-  }
-
-  .social-section {
-    .section-title {
+    .ant-form-item-label > label {
       font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 16px;
-      color: var(--admin-text-primary);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
     }
 
-    .toggle-button {
-      margin-left: 16px;
+    .avatar-upload {
+      text-align: center;
+      margin-bottom: 24px;
+
+      .ant-upload {
+        display: inline-block;
+      }
+
     }
-  }
-`;
+  `
+;
 
 const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
   initialValues,
@@ -96,8 +43,6 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
 }) => {
   const [form] = Form.useForm();
   const [uploading] = useState(false);
-  const [specialties, setSpecialties] = useState<string[]>([]);
-  const [hideSocialLinks, setHideSocialLinks] = useState(false);
 
   useEffect(() => {
     if (initialValues) {
@@ -107,14 +52,6 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         onAvatarChange(initialValues.avatarUrl);
       }
 
-      if (initialValues.specialties) {
-        setSpecialties(initialValues.specialties);
-      }
-
-      // 设置初始的隐藏状态
-      if (initialValues.hideSocialLinks !== undefined) {
-        setHideSocialLinks(initialValues.hideSocialLinks as boolean);
-      }
     }
   }, [initialValues, form]);
 
@@ -126,21 +63,11 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
       const submitData = {
         ...values,
         avatarUrl,
-        specialties,
-        hideSocialLinks, // 确保hideSocialLinks被正确提交
       };
-      console.log('提交数据:', { hideSocialLinks, submitData }); // 调试日志
       onSubmit(submitData);
     } catch (error) {
       console.error('表单验证失败:', error);
     }
-  };
-
-  const toggleSocialLinksVisibility = () => {
-    const newHideState = !hideSocialLinks;
-    setHideSocialLinks(newHideState);
-    form.setFieldsValue({ hideSocialLinks: newHideState });
-    console.log('切换社交媒体显示状态 - 新状态:', newHideState);
   };
 
   return (
@@ -223,18 +150,6 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           />
         </Form.Item>
 
-        <Form.Item
-          name="specialties"
-          label="个人特长"
-        >
-          <Input.TextArea
-            placeholder="请输入个人特长"
-            rows={3}
-            maxLength={300}
-            showCount
-          />
-        </Form.Item>
-
         <Row gutter={16}>
 
           <Col xs={24} sm={12}>
@@ -279,76 +194,6 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
             </Form.Item>
           </Col>
         </Row>
-
-        {/* 社交媒体部分 - 始终显示按钮，根据hideSocialLinks状态显示/隐藏内容 */}
-        <div className="social-section">
-          <div className="section-title">
-            社交媒体
-            <Button
-              type="text"
-              size="small"
-              icon={hideSocialLinks ? <EyeInvisibleOutlined /> : <EyeOutlined />}
-              onClick={toggleSocialLinksVisibility}
-              className="toggle-button"
-              title={hideSocialLinks ? '显示社交媒体' : '隐藏社交媒体'}
-            />
-          </div>
-
-          {/* 隐藏的表单字段，用于存储hideSocialLinks状态 */}
-          <Form.Item name="hideSocialLinks" style={{ display: 'none' }}>
-            <Input type="hidden" />
-          </Form.Item>
-
-          {!hideSocialLinks && (
-              <Row gutter={16}>
-                <Col xs={24} sm={6}>
-                  <Form.Item
-                    name={['socialLinks', 'wechat', 'value']}
-                    label="微信号"
-                  >
-                    <Input
-                      placeholder="请输入微信号"
-                      maxLength={50}
-                    />
-                  </Form.Item>
-                </Col>
-
-                <Col xs={24} sm={6}>
-                  <Form.Item
-                    name={['socialLinks', 'weibo', 'value']}
-                    label="微博"
-                  >
-                    <Input
-                      placeholder="请输入微博账号"
-                      maxLength={50}
-                    />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} sm={6}>
-                  <Form.Item
-                    name={['socialLinks', 'xiaohongshu', 'value']}
-                    label="小红书"
-                  >
-                    <Input
-                      placeholder="请输入小红书账号"
-                      maxLength={50}
-                    />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} sm={6}>
-                  <Form.Item
-                    name={['socialLinks', 'douyin', 'value']}
-                    label="抖音"
-                  >
-                    <Input
-                      placeholder="请输入抖音账号"
-                      maxLength={50}
-                    />
-                  </Form.Item>
-                </Col>
-              </Row>
-            )}
-        </div>
 
         <Form.Item style={{ marginBottom: 0, marginTop: 32 }}>
           <Space style={{ width: '100%', justifyContent: 'flex-end' }}>

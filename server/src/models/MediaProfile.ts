@@ -31,11 +31,6 @@ class MediaProfile extends Model<MediaProfileAttributes, MediaProfileCreationAtt
   public readonly user?: User;
   public readonly file?: File;
 
-  // 定义关联方法
-  public static associate(models: any): void {
-    MediaProfile.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
-    MediaProfile.belongsTo(models.File, { foreignKey: 'fileId', as: 'file' });
-  }
 }
 
 export const initMediaProfile = (sequelize: Sequelize): void => {
@@ -93,6 +88,12 @@ export const initMediaProfile = (sequelize: Sequelize): void => {
       ],
     },
   );
+  
+  // 建立关联关系
+  MediaProfile.belongsTo(File, { 
+    foreignKey: 'fileId',
+    as: 'file'
+  });
 };
 
 export default MediaProfile;

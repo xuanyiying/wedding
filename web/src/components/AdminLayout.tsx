@@ -5,14 +5,12 @@ import {
   TeamOutlined,
   CalendarOutlined,
   PictureOutlined,
-  SettingOutlined,
   UserOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   BellOutlined,
   LockOutlined,
-  ContactsOutlined,
   BugOutlined
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
@@ -243,18 +241,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
         icon: <PictureOutlined />,
         label: '作品管理',
         roles: ['super_admin', 'admin', 'user'], // 所有用户可见
-      },
-      {
-        key: '/admin/contacts',
-        icon: <ContactsOutlined />,
-        label: '客户管理',
-        roles: ['super_admin', 'admin'], // 仅管理员可见
-      },
-      {
-        key: '/admin/settings',
-        icon: <SettingOutlined />,
-        label: '系统设置',
-        roles: ['super_admin', 'admin'], // 仅管理员可见
       },
       {
         key: '/admin/issues',

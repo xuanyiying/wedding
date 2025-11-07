@@ -15,9 +15,8 @@ import {
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { userService, profileService } from '../../services';
-import { useAppSelector } from '../../store/hooks';
+import { useAppSelector } from "../../store";
 import { FileType, type MediaFile, type User } from '../../types';
-import { formatDate } from '../../utils';
 import ProfileEditForm from '../../components/admin/profile/ProfileEditForm';
 import AvatarUploader from '../../components/AvatarUploader';
 import { MediaUploader } from '../../components/common/MediaUploader';
@@ -285,29 +284,29 @@ const ProfilePage: React.FC = () => {
   const [isPublicProfilePublished, setIsPublicProfilePublished] = useState(false);
 
   // 处理媒体文件数据，将嵌套的file对象属性合并到mediaFile中
-  const processMediaFiles = (mediaFiles: any[]): MediaFile[] => {
-    return mediaFiles.map((mediaFile: any) => {
-      if (mediaFile.file) {
+  const processMediaFiles = (mediaFiles: MediaFile[]): MediaFile[] => {
+    return mediaFiles.map((mediaFile: MediaFile) => {
+      if (mediaFile.fileUrl) {
         // 合并file对象的属性到mediaFile中
         return {
           ...mediaFile,
-          fileUrl: mediaFile.file.fileUrl,
-          thumbnailUrl: mediaFile.file.thumbnailUrl,
-          originalName: mediaFile.file.originalName,
-          filename: mediaFile.file.filename,
-          filePath: mediaFile.file.filePath,
-          fileSize: mediaFile.file.fileSize,
-          mimeType: mediaFile.file.mimeType,
-          width: mediaFile.file.width,
-          height: mediaFile.file.height,
-          duration: mediaFile.file.duration,
-          hashMd5: mediaFile.file.hashMd5,
-          ossType: mediaFile.file.ossType,
-          bucketName: mediaFile.file.bucketName,
-          isPublic: mediaFile.file.isPublic,
-          downloadCount: mediaFile.file.downloadCount,
-          metadata: mediaFile.file.metadata,
-          category: mediaFile.file.category,
+          fileUrl: mediaFile.fileUrl,
+          thumbnailUrl: mediaFile.thumbnailUrl,
+          originalName: mediaFile.originalName,
+          filename: mediaFile.filename,
+          filePath: mediaFile.filePath,
+          fileSize: mediaFile.fileSize,
+          mimeType: mediaFile.mimeType,
+          width: mediaFile.width,
+          height: mediaFile.height,
+          duration: mediaFile.duration,
+          hashMd5: mediaFile.hashMd5,
+          ossType: mediaFile.ossType,
+          bucketName: mediaFile.bucketName,
+          isPublic: mediaFile.isPublic,
+          downloadCount: mediaFile.downloadCount,
+          metadata: mediaFile.metadata,
+          category: mediaFile.category,
         };
       }
       return mediaFile;
@@ -367,7 +366,7 @@ const ProfilePage: React.FC = () => {
   }, []);
 
   // 处理基本信息保存
-  const handleBasicInfoSave = async (values: any) => {
+  const handleBasicInfoSave = async (values: Partial<any>) => {
     try {
       setLoading(true);
 
@@ -382,7 +381,10 @@ const ProfilePage: React.FC = () => {
         return;
       }
 
-      await userService.updateCurrentUserProfile(values);
+      // 移除格式化后的日期字段，避免类型冲突
+      const {...submitValues } = values;
+      
+      await userService.updateCurrentUserProfile(submitValues);
       message.success('基本信息保存成功');
       await loadCurrentUser();
     } catch (error: any) {
@@ -541,9 +543,6 @@ const ProfilePage: React.FC = () => {
                     }
                     return acc;
                   }, {} as any) : {},
-                  hideSocialLinks: (currentUser as any)?.hideSocialLinks,
-                  createdAt: formatDate(currentUser?.createdAt || new Date()),
-                  updatedAt: formatDate(currentUser?.updatedAt || new Date()),
                 }}
                 onSubmit={handleBasicInfoSave}
                 onCancel={() => { }}
@@ -680,5 +679,4 @@ const ProfilePage: React.FC = () => {
     </ProfileContainer>
   );
 };
-
 export default ProfilePage;

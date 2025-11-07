@@ -146,22 +146,21 @@ export const scheduleService = {
     return http.get("/schedules/check-conflict", { params });
   },
 
-  // 获取档期统计
-  getScheduleStats: (): Promise<ApiResponse<{
-    totalSchedules: number;
-    availableSchedules: number;
-    bookedSchedules: number;
-    confirmedSchedules: number;
-    completedSchedules: number;
-    cancelledSchedules: number;
-    pendingSchedules: number;
-    monthlyStats: Array<{
-      month: string;
-      total: number;
-      completed: number;
-    }>;
-  }>> => {
-    return http.get("/dashboard/schedule-stats");
+  // 获取团队档期统计数据
+  getPersonalScheduleStats: (params: {
+    userId: string;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<ApiResponse<any>> => {
+    return http.get("/schedules/stats/personal", { params });
+  },
+
+  // 获取所有团队档期统计数据
+  getAllTeamsScheduleStats: (params: {
+    startDate?: string;
+    endDate?: string;
+  }): Promise<ApiResponse<any>> => {
+    return http.get("/schedules/stats/all-teams", { params });
   }
 };
 
@@ -306,8 +305,16 @@ export const dashboardService = {
   getStats: (params?: {
     startDate?: string;
     endDate?: string;
-  }): Promise<ApiResponse<DashboardStats>> => {
+  }): Promise<ApiResponse<DashboardScheduleStats>> => {
     return http.get("/dashboard/stats", { params });
+  },
+
+  // 获取仪表板档期统计数据
+  getScheduleStats: (params?: {
+    startDate?: string;
+    endDate?: string;
+  }): Promise<ApiResponse<DashboardScheduleStats>> => {
+    return http.get("/dashboard/schedule-stats", { params });
   },
 
   // 获取最近活动

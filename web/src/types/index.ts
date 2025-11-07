@@ -476,6 +476,38 @@ export interface CalendarEvent {
   };
   color?: string;
 }
+
+// 仪表板档期统计类型
+export interface DashboardScheduleStats {
+  totalCount: number;
+  completedCount: number;
+  reserveCount: number;
+  totalRevenue: number;
+  teamStats: TeamScheduleStats[];
+  teamCount: number;
+}
+
+// 团队档期统计类型
+export interface TeamScheduleStats {
+  teamId: string;
+  teamName: string;
+  totalRevenue: number;
+  completedCount: number;
+  totalCount: number;
+  memberCount: number;
+  memberStats: PersonalScheduleStats[];
+}
+
+// 个人档期统计类型
+export interface PersonalScheduleStats {
+  userId: string;
+  realName: string;
+  avatarUrl?: string;
+  scheduleCount: number;
+  completedCount: number;
+  revenue: number;
+}
+
 // 错误类型
 export interface AppError {
   code: string;

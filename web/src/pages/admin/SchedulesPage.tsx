@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Button,
   message,
-  Space,
   Row,
   Col,
   Form
@@ -31,6 +30,21 @@ const SchedulesContainer = styled.div`
   }
 `;
 
+// 添加响应式样式
+const HeaderContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+`;
+
 const SchedulesPage: React.FC = () => {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(false);
@@ -47,7 +61,6 @@ const SchedulesPage: React.FC = () => {
   const [searchModalVisible, setSearchModalVisible] = useState(false);
   const [conflictSchedules, setConflictSchedules] = useState<Schedule[]>([]);
 
-  const [teamMembers] = useState<TeamMember[]>([]);
   const [selectedTeam] = useState<Team>();
 
   // 筛选条件状态
@@ -180,9 +193,11 @@ const SchedulesPage: React.FC = () => {
 
       setModalVisible(false);
       await loadSchedules();
-    } catch (error) {
+    } catch (error: any) {
       console.error('保存档期失败:', error);
-      message.error('操作失败，请重试');
+      // 显示具体的错误信息
+      const errorMessage = error?.response?.data?.message || error?.message || '操作失败，请重试';
+      message.error(`操作失败: ${errorMessage}`);
     }
   };
 
@@ -279,24 +294,10 @@ const SchedulesPage: React.FC = () => {
     // 重新加载所有数据
     loadSchedules();
   };
-
-
-
   return (
     <SchedulesContainer>
       {/* 统计组件 */}
       <ScheduleStats
-        schedules={schedules}
-        selectedTeam={selectedTeam}
-        teamMembers={teamMembers}
-        statsTimeRange="month"
-        statusFilter="all"
-        customDateRange={[null, null]}
-        showDetailedStats={false}
-        onStatsTimeRangeChange={() => { }}
-        onStatusFilterChange={() => { }}
-        onCustomDateRangeChange={() => { }}
-        onShowDetailedStatsChange={() => { }}
       />
 
       {/* 条件查询栏 */}
@@ -312,17 +313,16 @@ const SchedulesPage: React.FC = () => {
         <Col xs={24} lg={24}>
           <ContentCard>
             {/* 操作按钮区域 */}
-            <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Space>
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => openModal()}
-                >
-                  添加档期
-                </Button>
-              </Space>
-            </div>
+            <HeaderContainer>
+              <div></div> {/* 占位符，保持布局平衡 */}
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => openModal()}
+              >
+                添加档期
+              </Button>
+            </HeaderContainer>
 
             {/* 档期显示组件 */}
             <ScheduleDisplay
