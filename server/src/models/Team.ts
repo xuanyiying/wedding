@@ -20,9 +20,9 @@ export interface TeamAttributes {
   ownerId: string;
   memberCount: number;
   status: TeamStatus; // 0:禁用 1:正常 2:待审核
-  viewCount: number;
-  rating: number;
-  ratingCount: number;
+  viewCount: number; // 团队访问量
+  rating: number; // 团队评分
+  ratingCount: number; // 团队评分人数
   establishedAt?: Date; // 成立时间
   // 团队扩展信息
   scale?: string; // 团队规模
@@ -107,15 +107,31 @@ export class Team extends Model<TeamAttributes, TeamCreationAttributes> implemen
   public createdAt!: Date;
   public updatedAt!: Date;
   public deletedAt?: Date;
-// 关联属性
-  public owner?: User;
+  // 关联属性
+  public owner?: User | null;
   public members?: TeamMember[];
 
+  public async getMembers(): Promise<TeamMember[] | [TeamMember]> {
+    if (!this.id) {
+      return [];
+    }
+    const members = await TeamMember.findAll({
+      where: { teamId: this.id },
+    });
+    for (const member of members) {
+      member.user = await member.getUser();
+    }
+    return members;
+  }
 
+  public async getOwner(): Promise<User | null> {
+    return await User.findByPk(this.ownerId);
+  }
   // 实例方法：检查团队状态
   public isActive(): boolean {
     return this.status === TeamStatus.ACTIVE;
   }
+
 
   // 实例方法：增加访问量
   public async incrementViewCount(): Promise<void> {
@@ -226,13 +242,6 @@ export class Team extends Model<TeamAttributes, TeamCreationAttributes> implemen
 
     const { count, rows } = await Team.findAndCountAll({
       where,
-      include: [
-        {
-          model: User,
-          as: 'owner',
-          attributes: ['id', 'realName', 'nickname', 'avatarUrl'],
-        },
-      ],
       order: [
         ['rating', 'DESC'],
         ['viewCount', 'DESC'],
@@ -240,29 +249,28 @@ export class Team extends Model<TeamAttributes, TeamCreationAttributes> implemen
       limit,
       offset,
     });
-
+    for (const team of rows) {
+      team.owner = await team.getOwner();
+    }
     return { teams: rows, total: count };
   }
 
   // 静态方法：获取热门团队
   public static async getPopularTeams(limit: number = 10): Promise<Team[]> {
-    return await Team.findAll({
+    const rows = await Team.findAll({
       where: {
         status: TeamStatus.ACTIVE,
       },
-      include: [
-        {
-          model: User,
-          as: 'owner',
-          attributes: ['id', 'nickname', 'avatarUrl'],
-        },
-      ],
       order: [
         ['rating', 'DESC'],
         ['viewCount', 'DESC'],
       ],
       limit,
     });
+    for (const team of rows) {
+      team.owner = await team.getOwner();
+    }
+    return rows;
   }
 
   // 静态方法：获取团队统计信息
@@ -284,7 +292,10 @@ export class Team extends Model<TeamAttributes, TeamCreationAttributes> implemen
 }
 
 // 团队成员模型类
-export class TeamMember extends Model<TeamMemberAttributes, TeamMemberCreationAttributes> implements TeamMemberAttributes {
+export class TeamMember
+  extends Model<TeamMemberAttributes, TeamMemberCreationAttributes>
+  implements TeamMemberAttributes
+{
   public id!: string;
   public teamId!: string;
   public userId!: string;
@@ -295,8 +306,8 @@ export class TeamMember extends Model<TeamMemberAttributes, TeamMemberCreationAt
   public updatedAt!: Date;
   public deletedAt?: Date;
   public inviterId!: string;
-// 关联属性
-  public user?: User;
+  // 关联属性
+  public user?: User | null;
   public team?: Team;
   public inviter?: User;
   // 关联关系
@@ -316,6 +327,9 @@ export class TeamMember extends Model<TeamMemberAttributes, TeamMemberCreationAt
     return this.role === TeamMemberRole.ADMIN;
   }
 
+  public async getUser(): Promise<User | null> {
+    return await User.findByPk(this.userId);
+  }
   // 静态方法：获取团队成员列表
   public static async getTeamMembers(
     teamId: number,
@@ -340,13 +354,6 @@ export class TeamMember extends Model<TeamMemberAttributes, TeamMemberCreationAt
 
     const { count, rows } = await TeamMember.findAndCountAll({
       where,
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'username', 'nickname', 'avatarUrl', 'profession'],
-        },
-      ],
       order: [
         ['role', 'DESC'],
         ['joinedAt', 'ASC'],
@@ -354,7 +361,9 @@ export class TeamMember extends Model<TeamMemberAttributes, TeamMemberCreationAt
       limit,
       offset,
     });
-
+    for (const member of rows) {
+      member.user = await member.getUser();
+    }
     return { members: rows, total: count };
   }
   // 静态方法：检查用户是否为团队成员
@@ -366,17 +375,6 @@ export class TeamMember extends Model<TeamMemberAttributes, TeamMemberCreationAt
       },
     });
     return member !== null;
-  }
-  // 静态方法：检查用户是否为团队成员
-  public static async isMember(teamId: number, userId: number): Promise<boolean> {
-    const member = await TeamMember.findOne({
-      where: {
-        teamId,
-        userId,
-        status: TeamMemberStatus.ACTIVE,
-      },
-    });
-    return !!member;
   }
 
   // 静态方法：获取用户在团队中的角色
@@ -746,30 +744,4 @@ export const initTeam = (sequelizeInstance: Sequelize): void => {
       ],
     },
   );
-
-  // 设置模型关联
-  Team.hasMany(TeamMember, {
-    foreignKey: 'team_id',
-    as: 'members'
-  });
-  
-  TeamMember.belongsTo(Team, {
-    foreignKey: 'team_id',
-    as: 'team'
-  });
-  
-  Team.belongsTo(User, {
-    foreignKey: 'owner_id',
-    as: 'owner'
-  });
-  
-  User.hasMany(TeamMember, {
-    foreignKey: 'inviter_id',
-    as: 'invitedMembers'
-  });
-
-  TeamMember.belongsTo(User, {
-    foreignKey: 'user_id',
-    as: 'user',
-  });
 };

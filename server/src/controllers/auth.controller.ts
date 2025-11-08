@@ -193,13 +193,6 @@ export const getCurrentUser = async (req: AuthenticatedRequest, res: Response, n
       attributes: {
         exclude: ['passwordHash', 'salt'],
       },
-      // 这里可以添加关联查询，比如用户的作品、档期等
-      // include: [{
-      //   model: Work,
-      //   as: 'works',
-      //   limit: 5,
-      //   order: [['createdAt', 'DESC']]
-      // }]
     });
 
     if (!user) {

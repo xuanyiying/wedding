@@ -80,7 +80,7 @@ class File extends Model<FileAttributes, FileCreationAttributes> implements File
   public readonly deletedAt!: Date;
 
   // Associations
-  public readonly user?: User;
+  public user?: User | null;
 
   // Method to get full URL
   public getUrl(): string {
@@ -91,6 +91,10 @@ class File extends Model<FileAttributes, FileCreationAttributes> implements File
   public async incrementDownloadCount(): Promise<void> {
     this.downloadCount += 1;
     await this.save();
+  }
+
+  public async getUser(): Promise<User | null> {
+    return await User.findByPk(this.userId);
   }
 }
 
@@ -242,7 +246,6 @@ export const initFile = (sequelize: Sequelize): void => {
     },
   );
 
-  File.belongsTo(User, { as: 'user', foreignKey: 'userId' });
 };
 
 export default File;

@@ -62,24 +62,13 @@ export class ScheduleService {
 
     const { count, rows } = await Schedule.findAndCountAll({
       where,
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'username', 'realName', 'avatarUrl'],
-        },
-        {
-          model: User,
-          as: 'customer',
-          attributes: ['id', 'username', 'realName'],
-          required: false,
-        },
-      ],
       order: [['weddingDate', 'ASC']],
       limit: pageSize,
       offset,
     });
-
+    for (const schedule of rows) {
+      schedule.user = await User.findByPk(schedule.userId);
+    }
     return {
       schedules: rows,
       pagination: {
@@ -97,24 +86,12 @@ export class ScheduleService {
   static async getScheduleById(id: string) {
     const schedule = await Schedule.findOne({
       where: { id },
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'username', 'realName', 'avatarUrl', 'phone', 'email'],
-        },
-        {
-          model: User,
-          as: 'customer',
-          attributes: ['id', 'username', 'realName', 'phone', 'email'],
-          required: false,
-        },
-      ],
     });
 
     if (!schedule) {
       throw new Error('档期不存在');
     }
+    schedule.user = await User.findByPk(schedule.userId);
 
     return schedule;
   }
@@ -277,19 +254,13 @@ export class ScheduleService {
 
     const { count, rows } = await Schedule.findAndCountAll({
       where,
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'username', 'realName', 'avatarUrl'],
-          where: { status: 'active' },
-        },
-      ],
       order: [['startTime', 'ASC']],
       limit: pageSize,
       offset,
     });
-
+    for (const schedule of rows) {
+      schedule.user = await User.findByPk(schedule.userId);
+    }
     return {
       schedules: rows,
       pagination: {
@@ -373,15 +344,11 @@ export class ScheduleService {
           [Op.in]: [ScheduleStatus.RESERVE, ScheduleStatus.BOOKED],
         },
       },
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'username', 'realName'],
-        },
-      ],
       order: [['weddingDate', 'ASC']],
     });
+    for (const schedule of schedules) {
+      schedule.user = await User.findByPk(schedule.userId);
+    }
 
     // 获取所有可用的主持人
     const allHosts = await User.findAll({
@@ -492,14 +459,10 @@ export class ScheduleService {
         },
         status: TeamMemberStatus.ACTIVE,
       },
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'realName', 'nickname', 'avatarUrl', 'phone', 'bio'],
-        },
-      ],
     });
+    for (const host of availableHosts) {
+     host.user = await host.getUser();
+    }
     logger.info('availableHosts:', availableHosts);
     return {
       hosts: availableHosts,

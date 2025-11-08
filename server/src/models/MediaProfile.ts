@@ -10,14 +10,17 @@ export interface MediaProfileAttributes {
   userId: string;
   fileType: FileType;
   fileId: string;
-  mediaOrder: number; // 媒体排序序号
+  mediaOrder: number;
 }
 
 // MediaProfile creation attributes interface
 export interface MediaProfileCreationAttributes extends Optional<MediaProfileAttributes, 'id'> {}
 
 // MediaProfile model class
-class MediaProfile extends Model<MediaProfileAttributes, MediaProfileCreationAttributes> implements MediaProfileAttributes {
+class MediaProfile
+  extends Model<MediaProfileAttributes, MediaProfileCreationAttributes>
+  implements MediaProfileAttributes
+{
   public id!: string;
   public userId!: string;
   public fileId!: string;
@@ -28,9 +31,15 @@ class MediaProfile extends Model<MediaProfileAttributes, MediaProfileCreationAtt
   public readonly deletedAt!: Date;
 
   // Associations
-  public readonly user?: User;
-  public readonly file?: File;
+  public file!: File | null ;
 
+  public async getUser(): Promise<User | null> {
+    return User.findByPk(this.userId);
+  }
+
+  public async getFile(): Promise<File | null> {
+    return File.findOne({ where: { id: this.fileId, category: 'profile' } });
+  }
 }
 
 export const initMediaProfile = (sequelize: Sequelize): void => {
@@ -89,11 +98,6 @@ export const initMediaProfile = (sequelize: Sequelize): void => {
     },
   );
   
-  // 建立关联关系
-  MediaProfile.belongsTo(File, { 
-    foreignKey: 'fileId',
-    as: 'file'
-  });
 };
 
 export default MediaProfile;

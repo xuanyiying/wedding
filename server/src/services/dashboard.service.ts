@@ -1,7 +1,7 @@
 import { Op, WhereOptions } from 'sequelize';
-import { Schedule, User, Work, Team, TeamMember } from '../models';
-import { logger } from '../utils/logger';
-import { ScheduleStatus, TeamStatus, TeamMemberStatus } from '../types';
+import { Schedule, User, Work, Team, TeamMember } from '@/models/index';
+import { logger } from '@/utils/logger';
+import { ScheduleStatus, TeamStatus, TeamMemberStatus } from '@/types';
 
 interface DashboardStatsParams {
   startDate?: string;
@@ -437,21 +437,38 @@ export class DashboardService {
 
       const activities = await Schedule.findAll({
         where,
-        include: [
-          {
-            model: User,
-            as: 'user',
-            attributes: ['id', 'username', 'realName'],
-          },
-          {
-            model: User,
-            as: 'customer',
-            attributes: ['id', 'username', 'realName'],
-            required: false,
-          },
-        ],
         order: [['updatedAt', 'DESC']],
       });
+
+      // 手动获取用户信息
+      const userIds = [
+        ...new Set(
+          activities
+            .map(activity => [activity.userId, activity.customerId])
+            .flat()
+            .filter((id): id is string => id !== null && id !== undefined),
+        ),
+      ];
+
+      const users =
+        userIds.length > 0
+          ? await User.findAll({
+              where: {
+                id: {
+                  [Op.in]: userIds,
+                },
+              },
+              raw: true,
+            })
+          : [];
+
+      const userMap = users.reduce(
+        (map, user) => {
+          map[user.id] = user;
+          return map;
+        },
+        {} as Record<string, any>,
+      );
 
       return activities.map((activity: any) => {
         let actionType = '创建';
@@ -482,8 +499,12 @@ export class DashboardService {
           id: activity.id,
           type: actionType,
           description,
-          user: activity.user?.realName || activity.user?.username || '未知用户',
-          customer: activity.customer?.realName || activity.customer?.username || activity.customerName || '未知客户',
+          user: userMap[activity.userId]?.realName || userMap[activity.userId]?.username || '未知用户',
+          customer:
+            userMap[activity.customerId]?.realName ||
+            userMap[activity.customerId]?.username ||
+            activity.customerName ||
+            '未知客户',
           timestamp: activity.updatedAt,
           status: activity.status,
           eventType: activity.eventType,
@@ -513,10 +534,10 @@ export class DashboardService {
       if (startDate || endDate) {
         where.startTime = {};
         if (startDate) {
-          (where.startTime as any)[Op.gte] = new Date(startDate);
+          (where.startTime as any)[Op.gte] = new Date(startDate as string);
         }
         if (endDate) {
-          (where.startTime as any)[Op.lte] = new Date(endDate);
+          (where.startTime as any)[Op.lte] = new Date(endDate as string);
         }
       }
 
@@ -582,10 +603,10 @@ export class DashboardService {
       if (startDate || endDate) {
         where.createdAt = {};
         if (startDate) {
-          (where.createdAt as any)[Op.gte] = new Date(startDate);
+          (where.createdAt as any)[Op.gte] = new Date(startDate as string);
         }
         if (endDate) {
-          (where.createdAt as any)[Op.lte] = new Date(endDate);
+          (where.createdAt as any)[Op.lte] = new Date(endDate as string);
         }
       }
 
@@ -649,189 +670,175 @@ export class DashboardService {
   static async getScheduleStats(params: DashboardStatsParams = {}) {
     try {
       const { startDate, endDate, userId } = params;
-      
+
       // 创建日期范围条件
       const dateWhere: WhereOptions = {};
       if (startDate || endDate) {
         dateWhere.weddingDate = {};
         if (startDate) {
-          (dateWhere.weddingDate as any)[Op.gte] = new Date(startDate);
+          (dateWhere.weddingDate as any)[Op.gte] = new Date(startDate as string);
         }
         if (endDate) {
-          (dateWhere.weddingDate as any)[Op.lte] = new Date(endDate);
+          (dateWhere.weddingDate as any)[Op.lte] = new Date(endDate as string);
         }
       }
-      
+
       // 如果指定了用户，则只查询该用户的档期
       const scheduleWhere: WhereOptions = {
         ...dateWhere,
-        ...(userId ? { userId } : {})
+        ...(userId ? { userId } : {}),
       };
 
       // 获取总档期数
       const totalCount = await Schedule.count({ where: scheduleWhere });
-      
+
       // 获取已完成的档期数
-      const completedCount = await Schedule.count({ 
-        where: { 
-          ...scheduleWhere, 
-          status: ScheduleStatus.COMPLETED 
-        } 
+      const completedCount = await Schedule.count({
+        where: {
+          ...scheduleWhere,
+          status: ScheduleStatus.COMPLETED,
+        },
       });
-      
+
       // 获取预定中的档期数
-      const reserveCount = await Schedule.count({ 
-        where: { 
-          ...scheduleWhere, 
-          status: ScheduleStatus.RESERVE 
-        } 
+      const reserveCount = await Schedule.count({
+        where: {
+          ...scheduleWhere,
+          status: ScheduleStatus.RESERVE,
+        },
       });
-      
+
       // 计算总收入
       const totalRevenueResult = await Schedule.findOne({
-        where: { 
-          ...scheduleWhere, 
-          status: ScheduleStatus.COMPLETED 
+        where: {
+          ...scheduleWhere,
+          status: ScheduleStatus.COMPLETED,
         },
-        attributes: [
-          [Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'totalRevenue']
-        ],
-        raw: true
+        attributes: [[Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'totalRevenue']],
+        raw: true,
       });
-      
+
       const totalRevenue = totalRevenueResult ? parseFloat((totalRevenueResult as any).totalRevenue || '0') : 0;
-      
+
       // 如果指定了用户，只返回个人统计数据
       if (userId) {
         return {
           totalCount,
           completedCount,
           reserveCount,
-          totalRevenue
+          totalRevenue,
         };
       }
-      
+
       // 获取所有团队统计数据
+      // 移除 Sequelize 关联，改为手动关联查询
       const teams: Team[] = await Team.findAll({
         where: {
-          status: TeamStatus.ACTIVE
+          status: TeamStatus.ACTIVE,
         },
-        include: [
-          {
-            model: TeamMember,
-            as: 'members',
-            where: {
-              status: TeamMemberStatus.ACTIVE
-            },
-            include: [
-              {
-                model: User,
-                as: 'user'
-              }
-            ]
-          }
-        ]
       });
-      
+      for (const team of teams) {
+        team.members = await team.getMembers();
+      }
       // 计算每个团队的统计数据
-      const teamStats = await Promise.all(teams.map(async (team: any) => {
-        // 获取团队成员ID列表
-        const memberIds = team.members?.map((member: any) => member.userId) || [];
-        
-        // 团队档期条件
-        const teamScheduleWhere: WhereOptions = {
-          ...dateWhere,
-          userId: {
-            [Op.in]: memberIds
-          }
-        };
-        
-        // 团队总档期数
-        const teamTotalCount = await Schedule.count({ where: teamScheduleWhere });
-        
-        // 团队已完成档期数
-        const teamCompletedCount = await Schedule.count({ 
-          where: { 
-            ...teamScheduleWhere, 
-            status: ScheduleStatus.COMPLETED 
-          } 
-        });
-        
-        // 团队总收入
-        const teamRevenueResult = await Schedule.findOne({
-          where: { 
-            ...teamScheduleWhere, 
-            status: ScheduleStatus.COMPLETED 
-          },
-          attributes: [
-            [Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'totalRevenue']
-          ],
-          raw: true
-        });
-        
-        const teamTotalRevenue = teamRevenueResult ? parseFloat((teamRevenueResult as any).totalRevenue || '0') : 0;
-        
-        // 计算团队成员统计数据
-        const memberStats = await Promise.all((team.members || []).map(async (member: any) => {
-          // 成员档期条件
-          const memberScheduleWhere: WhereOptions = {
+      const teamStats = await Promise.all(
+        teams.map(async team => {
+          // 获取团队成员ID列表
+          const userIds = team.members?.map((member: TeamMember) => member.userId) || [];
+
+          // 团队档期条件
+          const teamMembersWhere: WhereOptions = {
             ...dateWhere,
-            userId: member.userId
+            userId: {
+              [Op.in]: userIds,
+            },
           };
 
-          // 成员档期数
-          const scheduleCount = await Schedule.count({ where: memberScheduleWhere });
+          // 团队总档期数
+          const teamTotalCount = await Schedule.count({ where: teamMembersWhere });
 
-          // 成员已完成档期数
-          const memberCompletedCount = await Schedule.count({
+          // 团队已完成档期数
+          const teamCompletedCount = await Schedule.count({
             where: {
-              ...memberScheduleWhere,
-              status: ScheduleStatus.COMPLETED
-            }
-          });
-
-          // 成员收入
-          const memberRevenueResult = await Schedule.findOne({
-            where: {
-              ...memberScheduleWhere,
-              status: ScheduleStatus.COMPLETED
+              ...teamMembersWhere,
+              status: ScheduleStatus.COMPLETED,
             },
-            attributes: [
-              [Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'revenue']
-            ],
-            raw: true
           });
 
-          const revenue = memberRevenueResult ? parseFloat((memberRevenueResult as any).revenue || '0') : 0;
+          // 团队总收入
+          const teamRevenueResult = await Schedule.findOne({
+            where: {
+              ...teamMembersWhere,
+              status: ScheduleStatus.COMPLETED,
+            },
+            attributes: [[Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'totalRevenue']],
+            raw: true,
+          });
+
+          const teamTotalRevenue = teamRevenueResult ? parseFloat((teamRevenueResult as any).totalRevenue || '0') : 0;
+
+          // 计算团队成员统计数据
+          const memberStats = await Promise.all(
+            (team.members || []).map(async (member: any) => {
+              // 成员档期条件
+              const memberScheduleWhere: WhereOptions = {
+                ...dateWhere,
+                userId: member.userId,
+              };
+
+              // 成员档期数
+              const scheduleCount = await Schedule.count({ where: memberScheduleWhere });
+
+              // 成员已完成档期数
+              const memberCompletedCount = await Schedule.count({
+                where: {
+                  ...memberScheduleWhere,
+                  status: ScheduleStatus.COMPLETED,
+                },
+              });
+
+              // 成员收入
+              const memberRevenueResult = await Schedule.findOne({
+                where: {
+                  ...memberScheduleWhere,
+                  status: ScheduleStatus.COMPLETED,
+                },
+                attributes: [[Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'revenue']],
+                raw: true,
+              });
+
+              const revenue = memberRevenueResult ? parseFloat((memberRevenueResult as any).revenue || '0') : 0;
+
+              return {
+                userId: member.userId,
+                realName: member.memberUser?.realName || member.memberUser?.username || '未知用户',
+                avatarUrl: member.memberUser?.avatarUrl,
+                scheduleCount,
+                completedCount: memberCompletedCount,
+                revenue,
+              };
+            }),
+          );
 
           return {
-            userId: member.userId,
-            realName: member.memberUser?.realName || member.memberUser?.username || '未知用户',
-            avatarUrl: member.memberUser?.avatarUrl,
-            scheduleCount,
-            completedCount: memberCompletedCount,
-            revenue
+            teamId: team.id,
+            teamName: team.name,
+            totalRevenue: teamTotalRevenue,
+            completedCount: teamCompletedCount,
+            totalCount: teamTotalCount,
+            memberCount: memberStats.length,
+            memberStats,
           };
-        }));
-        
-        return {
-          teamId: team.id,
-          teamName: team.name,
-          totalRevenue: teamTotalRevenue,
-          completedCount: teamCompletedCount,
-          totalCount: teamTotalCount,
-          memberCount: memberStats.length,
-          memberStats
-        };
-      }));
-      
+        }),
+      );
+
       return {
         totalCount,
         completedCount,
         reserveCount,
         totalRevenue,
         teamStats,
-        teamCount: teams.length
+        teamCount: teams.length,
       };
     } catch (error) {
       logger.error('获取档期统计失败:', error);
@@ -867,33 +874,27 @@ export class DashboardService {
       const totalSchedules = await Schedule.count({ where });
 
       // 获取今日团队档期数量（通过关联团队表查询）
+      // 完全移除 Sequelize 关联，改为手动关联查询
+      // 首先获取所有活跃的团队成员
+      const activeTeamMembers = await TeamMember.findAll({
+        where: {
+          status: TeamMemberStatus.ACTIVE,
+        },
+        attributes: ['userId'],
+        raw: true,
+      });
+
+      // 提取用户ID列表
+      const teamMemberUserIds = [...new Set(activeTeamMembers.map((member: any) => member.userId).filter((id): id is string => id !== null && id !== undefined))];
+
+      // 查询这些用户的团队档期数量
       const teamSchedules = await Schedule.count({
-        where,
-        include: [
-          {
-            model: User,
-            as: 'user',
-            include: [
-              {
-                model: TeamMember,
-                as: 'invitedMembers',
-                required: true, // 必须有团队成员关联
-                where: {
-                  status: TeamMemberStatus.ACTIVE,
-                },
-                include: [
-                  {
-                    model: Team,
-                    as: 'team',
-                    where: {
-                      status: TeamStatus.ACTIVE,
-                    },
-                  },
-                ],
-              },
-            ],
+        where: {
+          ...where,
+          userId: {
+            [Op.in]: teamMemberUserIds,
           },
-        ],
+        },
       });
 
       // 获取今日个人档期数量（总数减去团队档期）
@@ -909,31 +910,41 @@ export class DashboardService {
       ]);
 
       // 获取今日档期详细列表（可选，用于展示详情）
+      // 移除 Sequelize 关联，改为手动关联查询
       const todayScheduleList = await Schedule.findAll({
         where,
-        include: [
-          {
-            model: User,
-            as: 'user',
-            attributes: ['id', 'username', 'realName', 'avatarUrl'],
-          },
-          {
-            model: User,
-            as: 'customer',
-            attributes: ['id', 'username', 'realName'],
-            required: false,
-          },
-        ],
         order: [['weddingTime', 'ASC']],
         limit: 10, // 限制返回数量，避免数据过多
       });
+
+      // 手动获取用户信息
+      const userIds = [...new Set(todayScheduleList.map(schedule => schedule.userId).filter((id): id is string => id !== null && id !== undefined))];
+      const customerIds = [...new Set(todayScheduleList.map(schedule => schedule.customerId).filter((id): id is string => id !== null && id !== undefined))];
+      const allUserIds = [...userIds, ...customerIds].filter((id): id is string => id !== null && id !== undefined);
+
+      const users = await User.findAll({
+        where: {
+          id: {
+            [Op.in]: allUserIds,
+          },
+        },
+        raw: true,
+      });
+
+      const userMap = users.reduce(
+        (map, user) => {
+          map[user.id] = user;
+          return map;
+        },
+        {} as Record<string, any>,
+      );
 
       return {
         // 基础统计
         totalSchedules,
         teamSchedules,
         personalSchedules,
-        
+
         // 状态统计
         statusStats: {
           available: availableCount,
@@ -957,15 +968,19 @@ export class DashboardService {
           location: schedule.location,
           eventType: schedule.eventType,
           weddingTime: schedule.weddingTime,
-          user: {
-            id: schedule.user?.id,
-            name: schedule.user?.realName || schedule.user?.username,
-            avatar: schedule.user?.avatarUrl,
-          },
-          customer: {
-            id: schedule.customer?.id,
-            name: schedule.customer?.realName || schedule.customer?.username || schedule.customerName,
-          },
+          user: userMap[schedule.userId]
+            ? {
+                id: userMap[schedule.userId].id,
+                name: userMap[schedule.userId].realName || userMap[schedule.userId].username,
+                avatar: userMap[schedule.userId].avatarUrl,
+              }
+            : null,
+          customer: userMap[schedule.customerId]
+            ? {
+                id: userMap[schedule.customerId].id,
+                name: userMap[schedule.customerId].realName || userMap[schedule.customerId].username,
+              }
+            : null,
         })),
 
         // 统计日期
@@ -995,10 +1010,10 @@ export class DashboardService {
       if (startDate || endDate) {
         where.createdAt = {};
         if (startDate) {
-          (where.createdAt as any)[Op.gte] = new Date(startDate);
+          (where.createdAt as any)[Op.gte] = new Date(startDate as string);
         }
         if (endDate) {
-          (where.createdAt as any)[Op.lte] = new Date(endDate);
+          (where.createdAt as any)[Op.lte] = new Date(endDate as string);
         }
       }
 

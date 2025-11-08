@@ -1,8 +1,6 @@
-import { Team, TeamMember } from '../models';
+import { Team, TeamMember, User } from '../models';
 import { Op } from 'sequelize';
-import { sequelize } from '../config/database';
 import { logger } from '../utils/logger';
-import { User } from '../models';
 import { TeamMemberRole, TeamMemberStatus, TeamStatus } from '../types';
 
 export class TeamService {
@@ -46,9 +44,9 @@ export class TeamService {
         serviceAreas: serviceAreas ? JSON.stringify(serviceAreas) : '',
         specialties: specialties ? JSON.stringify(specialties) : '',
         status: TeamStatus.ACTIVE,
-        memberCount: 0,
+        memberCount: 1,
         viewCount: 0,
-        rating: 0,
+        rating: 10,
         ratingCount: 0,
         isVerified: false,
       });
@@ -103,46 +101,10 @@ export class TeamService {
         limit,
         offset,
         order: [['createdAt', 'DESC']],
-        include: [
-          {
-            model: User,
-            as: 'owner',
-            attributes: ['id', 'realName', 'nickname', 'email'],
-          },
-        ],
       });
-      // 批量获取团队成员数量，避免N+1查询问题
-      const teamIds = rows.map((team: Team) => team.id);
-      const memberCounts = await TeamMember.findAll({
-        where: {
-          teamId: { [Op.in]: teamIds },
-        },
-        attributes: [
-          'teamId',
-          [sequelize.fn('COUNT', sequelize.col('id')), 'memberCount'],
-          [sequelize.fn('COUNT', sequelize.literal('CASE WHEN status = "ACTIVE" THEN 1 END')), 'activeMemberCount'],
-        ],
-        group: ['teamId'],
-        raw: true,
-      });
-
-      // 创建成员数量映射
-      const memberCountMap = new Map();
-      memberCounts.forEach((item: any) => {
-        memberCountMap.set(item.teamId, {
-          memberCount: parseInt(item.memberCount) || 0,
-          activeMemberCount: parseInt(item.activeMemberCount) || 0,
-        });
-      });
-
-      // 为每个团队设置成员数量
-      rows.forEach((team: Team) => {
-        const counts = memberCountMap.get(team.id) || { memberCount: 0, activeMemberCount: 0 };
-        team.memberCount = counts.memberCount;
-        team.rating = 0; // 暂时设为0，后续可以实现真实的评分逻辑
-        team.ratingCount = counts.activeMemberCount;
-        team.viewCount = 0; // 暂时设为0，后续可以实现浏览量统计
-      });
+      for (const team of rows) {
+        await this.setMembers(team);
+      }
       // 序列化团队数据，转换JSON字段为数组
       const serializedTeams = rows.map((team: Team) => ({
         ...team.toJSON(),
@@ -168,54 +130,27 @@ export class TeamService {
     }
   }
 
+  private static setMembers = async (team: Team) => {
+    team.members = await team.getMembers();
+    team.memberCount = team.members.length;
+    team.rating = 10; // 暂时设为10，后续可以实现真实的评分逻辑
+    team.ratingCount = team.members.filter(member => member.status === TeamMemberStatus.ACTIVE).length;
+    team.viewCount = 0; // 暂时设为0，后续可以实现浏览量统计
+  };
+
   /**
    * 根据ID获取团队详情
    */
-  static async getTeamById(id: string) {
+  static async getTeamById(id: string): Promise<Team> {
     try {
-      const team = await Team.findByPk(id, {
-        include: [
-          {
-            model: User,
-            as: 'owner',
-            attributes: ['id', 'realName', 'nickname', 'email', 'username'],
-          },
-        ],
-      });
-
+      const team = await Team.findByPk(id);
       if (!team) {
         throw new Error('团队不存在');
       }
-      team.memberCount = await TeamMember.count({
-        where: {
-          teamId: id,
-        },
-      });
-      team.rating = await TeamMember.count({
-        where: {
-          teamId: id,
-          status: TeamMemberStatus.ACTIVE,
-        },
-      });
-      team.ratingCount = await TeamMember.count({
-        where: {
-          teamId: id,
-        },
-      });
+      await this.setMembers(team);
       // 序列化团队数据，转换JSON字段为数组
-      const serializedTeam = {
-        ...team.toJSON(),
-        serviceAreas: team.serviceAreas ? JSON.parse(team.serviceAreas) : [],
-        specialties: team.specialties ? JSON.parse(team.specialties) : [],
-        achievements: team.achievements ? JSON.parse(team.achievements) : [],
-        certifications: team.certifications ? JSON.parse(team.certifications) : [],
-        equipmentList: team.equipmentList ? JSON.parse(team.equipmentList) : [],
-        servicePackages: team.servicePackages ? JSON.parse(team.servicePackages) : [],
-        workingHours: team.workingHours ? JSON.parse(team.workingHours) : [],
-      };
-
-      logger.info('获取团队详情成功:', serializedTeam);
-      return serializedTeam;
+      logger.info('获取团队详情成功:', team);
+      return team;
     } catch (error) {
       logger.error('获取团队详情失败:', error);
       throw error;
@@ -273,12 +208,10 @@ export class TeamService {
       if (!team) {
         throw new Error('团队不存在');
       }
-
       // 删除所有团队成员
       await TeamMember.destroy({
         where: { teamId: id },
       });
-
       // 删除团队
       await team.destroy();
       return true;
@@ -304,21 +237,13 @@ export class TeamService {
   /**
    * 获取团队所有成员列表
    */
-  static async getTeamMembersByTeamId(teamId: string) {
+  static async getTeamMembersByTeamId(teamId: string): Promise<TeamMember[]> {
     try {
-      const members = await TeamMember.findAll({
-        where: {
-          teamId,
-          status: TeamMemberStatus.ACTIVE,
-        },
-        include: [
-          {
-            model: User,
-            as: 'user',
-            attributes: ['id', 'realName', 'nickname', 'email', 'avatarUrl', 'phone'],
-          },
-        ],
-      });
+      const team = await Team.findByPk(teamId);
+      if (!team) {
+        throw new Error('团队不存在');
+      }
+      const members = await team.getMembers();
       return members;
     } catch (error) {
       logger.error('获取团队所有成员列表失败:', error);
@@ -374,15 +299,10 @@ export class TeamService {
         limit,
         offset,
         order: [['createdAt', 'DESC']],
-        include: [
-          {
-            model: User,
-            as: 'user',
-            attributes: ['id', 'realName', 'nickname', 'email', 'avatarUrl', 'phone'],
-          },
-        ],
       });
-
+      for (const member of rows) {
+        member.user = await member.getUser();
+      }
       return {
         members: rows,
         total: count,
@@ -402,11 +322,10 @@ export class TeamService {
   static async getTeamMemberById(id: string) {
     try {
       const member = await TeamMember.findByPk(id);
-
       if (!member) {
         throw new Error('团队成员不存在');
       }
-
+      member.user = await member.getUser();
       return member;
     } catch (error) {
       logger.error('获取团队成员详情失败:', error);
@@ -511,9 +430,7 @@ export class TeamService {
       if (existingMembers.length > 0) {
         throw new Error('部分用户已在团队中');
       }
-
-      // 批量创建团队成员
-      const members = await TeamMember.bulkCreate(
+      return await TeamMember.bulkCreate(
         userIds.map(userId => ({
           userId,
           teamId,
@@ -523,8 +440,6 @@ export class TeamService {
           joinedAt: new Date(),
         })),
       );
-
-      return members;
     } catch (error) {
       logger.error('邀请团队成员失败:', error);
       throw error;
@@ -559,7 +474,6 @@ export class TeamService {
           id: { [Op.in]: ids },
         },
       });
-
       return { deletedCount };
     } catch (error) {
       logger.error('批量删除团队成员失败:', error);

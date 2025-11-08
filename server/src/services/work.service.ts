@@ -1,5 +1,5 @@
 import { Op, WhereOptions } from 'sequelize';
-import { Work, WorkAttributes, WorkCreationAttributes, WorkLike, User } from '../models';
+import { Work, WorkAttributes, WorkCreationAttributes, WorkLike, User, Team } from '../models';
 import { logger } from '../utils/logger';
 import { WorkType, WorkCategory, WorkStatus } from '../types';
 import File from '../models/File';
@@ -57,13 +57,6 @@ export class WorkService {
     const offset = (page - 1) * pageSize;
 
     const where: WhereOptions = {};
-    const include: any[] = [
-      {
-        model: User,
-        as: 'user',
-        attributes: ['id', 'nickname', 'realName', 'avatarUrl', 'role', 'phone', 'bio'],
-      },
-    ];
 
     if (userId) {
       where.userId = userId;
@@ -71,23 +64,16 @@ export class WorkService {
 
     // 处理teamId过滤 - 通过关联查询团队成员
     if (teamId) {
-      include.push({
-        model: User,
-        as: 'user',
-        attributes: ['id', 'nickname', 'realName', 'avatarUrl', 'role', 'phone', 'bio'],
-        include: [
-          {
-            model: require('../models').TeamMember,
-            as: 'teamMemberships',
-            where: { teamId },
-            required: true,
-            attributes: [],
-          },
-        ],
-        required: true,
-      });
+      const team = await Team.findByPk(teamId);
+      if (team) {
+        const members = await team.getMembers();
+        if (members && members.length > 0) {
+          where.userId = {
+            [Op.in]: members.map(member => member.userId),
+          };
+        }
+      }
     }
-
     if (type) {
       where.type = type;
     }
@@ -132,25 +118,16 @@ export class WorkService {
 
     const { count, rows } = await Work.findAndCountAll({
       where,
-      include: teamId
-        ? include
-        : [
-          {
-            model: User,
-            as: 'user',
-            attributes: ['id', 'nickname', 'realName', 'avatarUrl', 'role', 'phone', 'bio'],
-          },
-        ],
       order: [[sortBy, sortOrder]],
       limit: pageSize,
       offset,
       distinct: true, // 避免关联查询时的重复计数
     });
+    await this.setUserAndFiles(rows);
     logger.info('获取作品列表成功:', { count, rows });
-    const worksWithFiles = await WorkService.setFiles(rows);
     return {
       count,
-      works: worksWithFiles,
+      works: rows,
       pagination: {
         page,
         pageSize,
@@ -166,32 +143,12 @@ export class WorkService {
   static async getWorkById(id: string, currentUserId?: string) {
     const work = await Work.findOne({
       where: { id },
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'username', 'realName', 'avatarUrl', 'bio'],
-        },
-      ],
     });
 
     if (!work) {
-      throw new Error('作品不存在');
+      throw null;
     }
-
-    // 手动填充files属性
-    const workJson = work.toJSON();
-    if (workJson.fileIds && workJson.fileIds.length > 0) {
-      const files = await File.findAll({
-        where: {
-          id: workJson.fileIds,
-        },
-        attributes: ['id', 'originalName', 'filename', 'fileUrl', 'fileSize', 'mimeType', 'fileType', 'width', 'height', 'duration', 'thumbnailUrl'],
-      });
-      workJson.files = files;
-    } else {
-      workJson.files = [];
-    }
+    await this.setUserAndFile(work);
 
     // 检查是否已点赞（如果用户已登录）
     let isLiked = false;
@@ -206,7 +163,7 @@ export class WorkService {
     }
 
     return {
-      ...workJson,
+      ...work,
       isLiked,
     };
   }
@@ -438,21 +395,12 @@ export class WorkService {
         isFeatured: true,
         category: { [Op.ne]: WorkCategory.WEDDING_HOST },
       },
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'username', 'realName', 'avatarUrl'],
-        },
-      ],
       order: [['createdAt', 'DESC']],
       limit,
     });
     logger.info('featured works:', works);
-
-    const worksWithFiles = await WorkService.setFiles(works);
-    logger.info('Get featured works:', worksWithFiles);
-    return worksWithFiles;
+    await this.setUserAndFiles(works);
+    return works;
   }
 
   /**
@@ -556,23 +504,13 @@ export class WorkService {
 
     const { count, rows } = await Work.findAndCountAll({
       where,
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'nickname', 'realName', 'avatarUrl'],
-          where: { status: 'active' },
-        },
-      ],
       order: [[sortBy, sortOrder]],
       limit: pageSize,
       offset,
     });
-
-    const worksWithFiles = await WorkService.setFiles(rows);
-
+    await this.setUserAndFiles(rows);
     return {
-      works: worksWithFiles,
+      works: rows,
       pagination: {
         page,
         pageSize,
@@ -581,6 +519,25 @@ export class WorkService {
       },
     };
   }
+
+  private static async setUserAndFiles(rows: Work[]) {
+    for (const work of rows) {
+      await this.setUserAndFile(work);
+    }
+  }
+
+  private static setUserAndFile = async (work: Work) => {
+    work.likeCount = await WorkLike.count({ where: { workId: work.id } });
+    work.user = await User.findOne({
+      where: { id: work.userId },
+      attributes: ['id', 'username', 'realName', 'avatarUrl'],
+    });
+    if (work.fileIds && work.fileIds.length > 0) {
+      work.files = await File.findAll({
+        where: { id: { [Op.in]: work.fileIds } },
+      });
+    }
+  };
 
   /**
    * 获取热门作品
@@ -596,13 +553,6 @@ export class WorkService {
           [Op.gte]: startDate,
         },
       },
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'nickname', 'realName', 'avatarUrl'],
-        },
-      ],
       order: [
         ['viewCount', 'DESC'],
         ['likeCount', 'DESC'],
@@ -610,9 +560,8 @@ export class WorkService {
       ],
       limit,
     });
-
-    return await WorkService.setFiles(works);
-
+    await this.setUserAndFiles(works);
+    return works;
   }
 
   /**
@@ -635,45 +584,13 @@ export class WorkService {
         ...where,
         [Op.or]: [{ type: work.type, category: work.category }, { type: work.type }, { category: work.category }],
       },
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'nickname', 'realName', 'avatarUrl', 'role', 'phone', 'bio'],
-        },
-      ],
       order: [
         ['viewCount', 'DESC'],
         ['createdAt', 'DESC'],
       ],
       limit,
     });
-
-    return await WorkService.setFiles(relatedWorks);
+    await this.setUserAndFiles(relatedWorks);
+    return relatedWorks;
   }
-
-  static async setFiles(works: Work[]) {
-    // 手动填充files属性
-    const worksWithFiles = await Promise.all(
-      works.map(async (work) => {
-        const workJson = work.toJSON();
-        if (workJson.fileIds && workJson.fileIds.length > 0) {
-          const files = await File.findAll({
-            where: {
-              id: workJson.fileIds,
-            },
-            attributes: ['id', 'originalName', 'filename', 'fileUrl', 'fileSize', 'mimeType', 'fileType', 'width', 'height', 'duration', 'thumbnailUrl'],
-          });
-          workJson.files = files;
-        } else {
-          workJson.files = [];
-        }
-        return workJson;
-      })
-    );
-    logger.info('Set files for works', worksWithFiles);
-    return worksWithFiles;
-  };
-
 }
-
