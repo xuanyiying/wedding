@@ -96,9 +96,9 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
   const loadMediaProfile = async (userId: string) => {
     try {
       setWorksLoading(true);
-      const response = await profileService.getUserAvailableFiles(userId);
-      if (response.success) {
-        setMediaProfiles(response.data || []);
+      const response = await profileService.getUserProfile(userId);
+      if (response.success && response.data?.files) {
+        setMediaProfiles(response.data.files || []);
       }
     } catch (error) {
       console.error('Failed to load member works:', error);

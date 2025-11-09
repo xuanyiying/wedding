@@ -1,9 +1,15 @@
-import React, { useState, useCallback, useRef, useMemo } from 'react';
-import { Button, Popconfirm } from 'antd';
-import { EyeOutlined, DeleteOutlined, PlayCircleOutlined, UpOutlined, DownOutlined } from '@ant-design/icons';
-import styled from 'styled-components';
-import { type MediaFile, FileType } from '../../../types';
-import { useResponsive, useTouchDevice } from '../../../hooks/useResponsive';
+import React, { useState, useCallback, useRef, useMemo } from "react";
+import { Button, Popconfirm } from "antd";
+import {
+  EyeOutlined,
+  DeleteOutlined,
+  PlayCircleOutlined,
+  UpOutlined,
+  DownOutlined,
+} from "@ant-design/icons";
+import styled from "styled-components";
+import { type MediaFile, FileType } from "../../../types";
+import { useResponsive, useTouchDevice } from "../../../hooks/useResponsive";
 
 interface MediaGalleryProps {
   mediaFiles: MediaFile[];
@@ -13,13 +19,15 @@ interface MediaGalleryProps {
   loading?: boolean;
 }
 
-
 // 响应式媒体容器 - 单列纵向布局，无间距
-const MediaGalleryContainer = styled.div<{ $isMobile: boolean; $isTablet: boolean }>`
+const MediaGalleryContainer = styled.div<{
+  $isMobile: boolean;
+  $isTablet: boolean;
+}>`
   width: 100%;
   padding: 0;
   margin: 0;
-  
+
   .media-list {
     display: flex;
     flex-direction: column;
@@ -30,20 +38,20 @@ const MediaGalleryContainer = styled.div<{ $isMobile: boolean; $isTablet: boolea
     /* 移除所有间距，实现无缝拼接 */
     gap: 0;
   }
-  
+
   .empty-state {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: ${props => props.$isMobile ? '40px 20px' : '60px 20px'};
+    padding: ${(props) => (props.$isMobile ? "40px 20px" : "60px 20px")};
     color: #999;
-    font-size: ${props => props.$isMobile ? '14px' : '16px'};
+    font-size: ${(props) => (props.$isMobile ? "14px" : "16px")};
     min-height: 200px;
-    
+
     .empty-icon {
-      font-size: ${props => props.$isMobile ? '32px' : '48px'};
+      font-size: ${(props) => (props.$isMobile ? "32px" : "48px")};
       margin-bottom: 16px;
       opacity: 0.5;
     }
@@ -51,14 +59,14 @@ const MediaGalleryContainer = styled.div<{ $isMobile: boolean; $isTablet: boolea
 `;
 
 // 媒体项容器 - 单列纵向布局，无圆角，无间距
-const MediaItem = styled.div<{ 
-  $isMobile: boolean; 
+const MediaItem = styled.div<{
+  $isMobile: boolean;
   $isTouchDevice: boolean;
 }>`
   position: relative;
   display: block;
   width: 100%;
-  
+
   /* 移除固定宽高比，让图片决定高度 */
   /* 移除所有边框、圆角、间距 */
   border: none;
@@ -69,9 +77,11 @@ const MediaItem = styled.div<{
   cursor: pointer;
   background: transparent;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  
+
   /* 悬停效果 - 仅在非触摸设备上启用 */
-  ${props => !props.$isTouchDevice && `
+  ${(props) =>
+    !props.$isTouchDevice &&
+    `
     &:hover {
       .media-overlay {
         opacity: 1;
@@ -83,9 +93,11 @@ const MediaItem = styled.div<{
       }
     }
   `}
-  
+
   /* 触摸设备优化 */
-  ${props => props.$isTouchDevice && `
+  ${(props) =>
+    props.$isTouchDevice &&
+    `
     .media-actions {
       opacity: 1;
       transform: translateY(0);
@@ -109,7 +121,7 @@ const MediaContent = styled.div`
   /* 移除所有间距 */
   margin: 0;
   padding: 0;
-  
+
   .media-image {
     width: 100%;
     height: auto;
@@ -124,7 +136,7 @@ const MediaContent = styled.div`
     padding: 0;
     vertical-align: top;
   }
-  
+
   .video-overlay {
     position: absolute;
     top: 50%;
@@ -135,16 +147,16 @@ const MediaContent = styled.div`
     z-index: 2;
     transition: all 0.3s ease;
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    
+
     @media (max-width: 768px) {
       font-size: 24px;
     }
-    
+
     @media (max-width: 480px) {
       font-size: 20px;
     }
   }
-  
+
   .video-background {
     position: absolute;
     top: 0;
@@ -178,19 +190,19 @@ const MediaOverlay = styled.div`
 // 顺序控制按钮容器
 const OrderControls = styled.div<{ $isMobile: boolean }>`
   position: absolute;
-  left: ${props => props.$isMobile ? '8px' : '12px'};
+  left: ${(props) => (props.$isMobile ? "8px" : "12px")};
   top: 50%;
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
-  gap: ${props => props.$isMobile ? '4px' : '6px'};
+  gap: ${(props) => (props.$isMobile ? "4px" : "6px")};
   opacity: 1;
   transition: all 0.3s ease;
   z-index: 4;
-  
+
   .order-button {
-    width: ${props => props.$isMobile ? '28px' : '32px'};
-    height: ${props => props.$isMobile ? '28px' : '32px'};
+    width: ${(props) => (props.$isMobile ? "28px" : "32px")};
+    height: ${(props) => (props.$isMobile ? "28px" : "32px")};
     border-radius: 0;
     background: rgba(255, 255, 255, 0.95);
     border: none;
@@ -200,25 +212,25 @@ const OrderControls = styled.div<{ $isMobile: boolean }>`
     cursor: pointer;
     transition: all 0.2s ease;
     backdrop-filter: blur(10px);
-    font-size: ${props => props.$isMobile ? '12px' : '14px'};
+    font-size: ${(props) => (props.$isMobile ? "12px" : "14px")};
     color: #666;
-    
+
     &:hover {
       background: white;
       transform: scale(1.1);
       color: #1890ff;
     }
-    
+
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
-      
+
       &:hover {
         transform: none;
         color: #666;
       }
     }
-    
+
     /* 触摸设备优化 */
     @media (hover: none) {
       &:active {
@@ -231,18 +243,18 @@ const OrderControls = styled.div<{ $isMobile: boolean }>`
 // 操作按钮容器
 const MediaActions = styled.div<{ $isMobile: boolean }>`
   position: absolute;
-  top: ${props => props.$isMobile ? '8px' : '12px'};
-  right: ${props => props.$isMobile ? '8px' : '12px'};
+  top: ${(props) => (props.$isMobile ? "8px" : "12px")};
+  right: ${(props) => (props.$isMobile ? "8px" : "12px")};
   display: flex;
-  gap: ${props => props.$isMobile ? '6px' : '8px'};
+  gap: ${(props) => (props.$isMobile ? "6px" : "8px")};
   opacity: 0;
   transform: translateY(-10px);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 3;
-  
+
   .action-button {
-    width: ${props => props.$isMobile ? '32px' : '36px'};
-    height: ${props => props.$isMobile ? '32px' : '36px'};
+    width: ${(props) => (props.$isMobile ? "32px" : "36px")};
+    height: ${(props) => (props.$isMobile ? "32px" : "36px")};
     border-radius: 0;
     background: rgba(255, 255, 255, 0.95);
     border: none;
@@ -252,18 +264,18 @@ const MediaActions = styled.div<{ $isMobile: boolean }>`
     cursor: pointer;
     transition: all 0.2s ease;
     backdrop-filter: blur(10px);
-    font-size: ${props => props.$isMobile ? '14px' : '16px'};
-    
+    font-size: ${(props) => (props.$isMobile ? "14px" : "16px")};
+
     &:hover {
       background: white;
       transform: scale(1.1);
     }
-    
+
     &.delete-button:hover {
       background: #ff4d4f;
       color: white;
     }
-    
+
     /* 触摸设备优化 */
     @media (hover: none) {
       &:active {
@@ -281,9 +293,9 @@ const LoadingPlaceholder = styled.div<{ $isMobile: boolean }>`
   background-size: 200% 100%;
   border-radius: 0;
   position: relative;
-  
+
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     top: 50%;
     left: 50%;
@@ -295,10 +307,14 @@ const LoadingPlaceholder = styled.div<{ $isMobile: boolean }>`
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }
-  
+
   @keyframes spin {
-    0% { transform: translate(-50%, -50%) rotate(0deg); }
-    100% { transform: translate(-50%, -50%) rotate(360deg); }
+    0% {
+      transform: translate(-50%, -50%) rotate(0deg);
+    }
+    100% {
+      transform: translate(-50%, -50%) rotate(360deg);
+    }
   }
 `;
 
@@ -313,10 +329,10 @@ const ErrorPlaceholder = styled.div<{ $isMobile: boolean }>`
   align-items: center;
   justify-content: center;
   color: #999;
-  font-size: ${props => props.$isMobile ? '12px' : '14px'};
-  
+  font-size: ${(props) => (props.$isMobile ? "12px" : "14px")};
+
   .error-icon {
-    font-size: ${props => props.$isMobile ? '20px' : '24px'};
+    font-size: ${(props) => (props.$isMobile ? "20px" : "24px")};
     margin-bottom: 8px;
     opacity: 0.5;
   }
@@ -327,11 +343,15 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
   onPreview,
   onDelete,
   onReorder,
-  loading = false
+  loading = false,
 }) => {
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
   const [errorImages, setErrorImages] = useState<Set<string>>(new Set());
-  const [touchStart, setTouchStart] = useState<{ x: number; y: number; time: number } | null>(null);
+  const [touchStart, setTouchStart] = useState<{
+    x: number;
+    y: number;
+    time: number;
+  } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // 响应式信息
@@ -339,12 +359,20 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
   const isTouchDevice = useTouchDevice();
 
   // 计算响应式属性
-  const responsiveProps = useMemo(() => ({
-    isMobile: responsive.isMobile,
-    isTablet: responsive.isTablet,
-    isDesktop: responsive.isDesktop,
-    isTouchDevice,
-  }), [responsive.isMobile, responsive.isTablet, responsive.isDesktop, isTouchDevice]);
+  const responsiveProps = useMemo(
+    () => ({
+      isMobile: responsive.isMobile,
+      isTablet: responsive.isTablet,
+      isDesktop: responsive.isDesktop,
+      isTouchDevice,
+    }),
+    [
+      responsive.isMobile,
+      responsive.isTablet,
+      responsive.isDesktop,
+      isTouchDevice,
+    ],
+  );
 
   // 根据mediaOrder属性排序媒体文件
   const sortedMediaFiles = useMemo(() => {
@@ -357,8 +385,8 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
 
   // 图片加载完成处理
   const handleImageLoad = useCallback((fileId: string) => {
-    setLoadedImages(prev => new Set([...prev, fileId]));
-    setErrorImages(prev => {
+    setLoadedImages((prev) => new Set([...prev, fileId]));
+    setErrorImages((prev) => {
       const newSet = new Set(prev);
       newSet.delete(fileId);
       return newSet;
@@ -367,8 +395,8 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
 
   // 图片加载错误处理
   const handleImageError = useCallback((fileId: string) => {
-    setErrorImages(prev => new Set([...prev, fileId]));
-    setLoadedImages(prev => {
+    setErrorImages((prev) => new Set([...prev, fileId]));
+    setLoadedImages((prev) => {
       const newSet = new Set(prev);
       newSet.delete(fileId);
       return newSet;
@@ -381,287 +409,317 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
     setTouchStart({
       x: touch.clientX,
       y: touch.clientY,
-      time: Date.now()
+      time: Date.now(),
     });
   }, []);
 
   // 触摸结束处理
-  const handleTouchEnd = useCallback((e: React.TouchEvent, file: MediaFile) => {
-    if (!touchStart) return;
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent, file: MediaFile) => {
+      if (!touchStart) return;
 
-    const touch = e.changedTouches[0];
-    const deltaX = Math.abs(touch.clientX - touchStart.x);
-    const deltaY = Math.abs(touch.clientY - touchStart.y);
-    const deltaTime = Date.now() - touchStart.time;
+      const touch = e.changedTouches[0];
+      const deltaX = Math.abs(touch.clientX - touchStart.x);
+      const deltaY = Math.abs(touch.clientY - touchStart.y);
+      const deltaTime = Date.now() - touchStart.time;
 
-    // 如果移动距离很小且时间很短，认为是点击
-    if (deltaX < 10 && deltaY < 10 && deltaTime < 500) {
-      onPreview(file);
-    }
+      // 如果移动距离很小且时间很短，认为是点击
+      if (deltaX < 10 && deltaY < 10 && deltaTime < 500) {
+        onPreview(file);
+      }
 
-    setTouchStart(null);
-  }, [touchStart, onPreview]);
+      setTouchStart(null);
+    },
+    [touchStart, onPreview],
+  );
 
   /**
    * 顺序调整核心逻辑 - 上移操作
    * 处理媒体文件的上移操作，确保mediaOrder值的连续性和唯一性
    */
-  const handleMoveUp = useCallback((file: MediaFile) => {
-    if (!onReorder) {
-      console.log('🔼 onReorder回调不存在');
-      return;
-    }
+  const handleMoveUp = useCallback(
+    (file: MediaFile) => {
+      if (!onReorder) {
+        console.log("🔼 onReorder回调不存在");
+        return;
+      }
 
-    console.log('🔼 开始上移操作:', {
-      fileId: file.id,
-      currentOrder: file.mediaOrder,
-      sortedFiles: sortedMediaFiles.map(f => ({ id: f.id, order: f.mediaOrder }))
-    });
-
-    const currentIndex = sortedMediaFiles.findIndex(f => f.id === file.id);
-    
-    if (currentIndex === -1) {
-      console.error('🔼 找不到当前文件');
-      return;
-    }
-
-    let newFiles: MediaFile[];
-    
-    // 边界情况：如果是第一个文件，移动到末尾
-    if (currentIndex === 0) {
-      console.log('🔼 边界情况：移动到末尾');
-      // 获取最大的mediaOrder值
-      const maxOrder = Math.max(...sortedMediaFiles.map(f => f.mediaOrder ?? 0));
-      newFiles = sortedMediaFiles.map(f => 
-        f.id === file.id 
-          ? { ...f, mediaOrder: maxOrder + 1 }
-          : f
-      );
-    } else {
-      console.log('🔼 正常情况：与上一个文件交换');
-      // 正常情况：与上一个文件交换位置
-      const targetFile = sortedMediaFiles[currentIndex - 1];
-      const currentOrder = file.mediaOrder ?? currentIndex;
-      const targetOrder = targetFile.mediaOrder ?? (currentIndex - 1);
-      
-      newFiles = sortedMediaFiles.map(f => {
-        if (f.id === file.id) {
-          return { ...f, mediaOrder: targetOrder };
-        }
-        if (f.id === targetFile.id) {
-          return { ...f, mediaOrder: currentOrder };
-        }
-        return f;
+      console.log("🔼 开始上移操作:", {
+        id: file.id,
+        currentOrder: file.mediaOrder,
+        sortedFiles: sortedMediaFiles.map((f) => ({
+          id: f.id,
+          order: f.mediaOrder,
+        })),
       });
-    }
 
-    console.log('🔼 新的文件顺序:', newFiles.map(f => ({ id: f.id, order: f.mediaOrder })));
-    
-    // 直接调用onReorder
-    onReorder(newFiles);
-  }, [sortedMediaFiles, onReorder]);
+      const currentIndex = sortedMediaFiles.findIndex((f) => f.id === file.id);
+
+      if (currentIndex === -1) {
+        console.error("🔼 找不到当前文件");
+        return;
+      }
+
+      let newFiles: MediaFile[];
+
+      // 边界情况：如果是第一个文件，移动到末尾
+      if (currentIndex === 0) {
+        console.log("🔼 边界情况：移动到末尾");
+        // 获取最大的mediaOrder值
+        const maxOrder = Math.max(
+          ...sortedMediaFiles.map((f) => f.mediaOrder ?? 0),
+        );
+        newFiles = sortedMediaFiles.map((f) =>
+          f.id === file.id ? { ...f, mediaOrder: maxOrder + 1 } : f,
+        );
+      } else {
+        console.log("🔼 正常情况：与上一个文件交换");
+        // 正常情况：与上一个文件交换位置
+        const targetFile = sortedMediaFiles[currentIndex - 1];
+        const currentOrder = file.mediaOrder ?? currentIndex;
+        const targetOrder = targetFile.mediaOrder ?? currentIndex - 1;
+
+        newFiles = sortedMediaFiles.map((f) => {
+          if (f.id === file.id) {
+            return { ...f, mediaOrder: targetOrder };
+          }
+          if (f.id === targetFile.id) {
+            return { ...f, mediaOrder: currentOrder };
+          }
+          return f;
+        });
+      }
+
+      console.log(
+        "🔼 新的文件顺序:",
+        newFiles.map((f) => ({ id: f.id, order: f.mediaOrder })),
+      );
+
+      // 直接调用onReorder
+      onReorder(newFiles);
+    },
+    [sortedMediaFiles, onReorder],
+  );
 
   /**
    * 顺序调整核心逻辑 - 下移操作
    * 处理媒体文件的下移操作，确保mediaOrder值的连续性和唯一性
    */
-  const handleMoveDown = useCallback((file: MediaFile) => {
-    if (!onReorder) {
-      console.log('🔽 onReorder回调不存在');
-      return;
-    }
+  const handleMoveDown = useCallback(
+    (file: MediaFile) => {
+      if (!onReorder) {
+        console.log("🔽 onReorder回调不存在");
+        return;
+      }
 
-    console.log('🔽 开始下移操作:', {
-      fileId: file.id,
-      currentOrder: file.mediaOrder,
-      sortedFiles: sortedMediaFiles.map(f => ({ id: f.id, order: f.mediaOrder }))
-    });
-
-    const currentIndex = sortedMediaFiles.findIndex(f => f.id === file.id);
-    
-    if (currentIndex === -1) {
-      console.error('🔽 找不到当前文件');
-      return;
-    }
-
-    let newFiles: MediaFile[];
-    
-    // 边界情况：如果是最后一个文件，移动到开头
-    if (currentIndex === sortedMediaFiles.length - 1) {
-      console.log('🔽 边界情况：移动到开头');
-      // 将当前文件设为0，其他文件的mediaOrder+1
-      const minOrder = Math.min(...sortedMediaFiles.map(f => f.mediaOrder ?? 0));
-      newFiles = sortedMediaFiles.map(f => 
-        f.id === file.id 
-          ? { ...f, mediaOrder: minOrder - 1 }
-          : f
-      );
-    } else {
-      console.log('🔽 正常情况：与下一个文件交换');
-      // 正常情况：与下一个文件交换位置
-      const targetFile = sortedMediaFiles[currentIndex + 1];
-      const currentOrder = file.mediaOrder ?? currentIndex;
-      const targetOrder = targetFile.mediaOrder ?? (currentIndex + 1);
-      
-      newFiles = sortedMediaFiles.map(f => {
-        if (f.id === file.id) {
-          return { ...f, mediaOrder: targetOrder };
-        }
-        if (f.id === targetFile.id) {
-          return { ...f, mediaOrder: currentOrder };
-        }
-        return f;
+      console.log("🔽 开始下移操作:", {
+        id: file.id,
+        currentOrder: file.mediaOrder,
+        sortedFiles: sortedMediaFiles.map((f) => ({
+          id: f.id,
+          order: f.mediaOrder,
+        })),
       });
-    }
 
-    console.log('🔽 新的文件顺序:', newFiles.map(f => ({ id: f.id, order: f.mediaOrder })));
-    
-    // 直接调用onReorder
-    onReorder(newFiles);
-  }, [sortedMediaFiles, onReorder]);
+      const currentIndex = sortedMediaFiles.findIndex((f) => f.id === file.id);
+
+      if (currentIndex === -1) {
+        console.error("🔽 找不到当前文件");
+        return;
+      }
+
+      let newFiles: MediaFile[];
+
+      // 边界情况：如果是最后一个文件，移动到开头
+      if (currentIndex === sortedMediaFiles.length - 1) {
+        console.log("🔽 边界情况：移动到开头");
+        // 将当前文件设为0，其他文件的mediaOrder+1
+        const minOrder = Math.min(
+          ...sortedMediaFiles.map((f) => f.mediaOrder ?? 0),
+        );
+        newFiles = sortedMediaFiles.map((f) =>
+          f.id === file.id ? { ...f, mediaOrder: minOrder - 1 } : f,
+        );
+      } else {
+        console.log("🔽 正常情况：与下一个文件交换");
+        // 正常情况：与下一个文件交换位置
+        const targetFile = sortedMediaFiles[currentIndex + 1];
+        const currentOrder = file.mediaOrder ?? currentIndex;
+        const targetOrder = targetFile.mediaOrder ?? currentIndex + 1;
+
+        newFiles = sortedMediaFiles.map((f) => {
+          if (f.id === file.id) {
+            return { ...f, mediaOrder: targetOrder };
+          }
+          if (f.id === targetFile.id) {
+            return { ...f, mediaOrder: currentOrder };
+          }
+          return f;
+        });
+      }
+
+      console.log(
+        "🔽 新的文件顺序:",
+        newFiles.map((f) => ({ id: f.id, order: f.mediaOrder })),
+      );
+
+      // 直接调用onReorder
+      onReorder(newFiles);
+    },
+    [sortedMediaFiles, onReorder],
+  );
 
   // 渲染媒体项
-  const renderMediaItem = useCallback((file: MediaFile, index: number) => {
-    const fileId = file.id || '';
-    const isLoaded = loadedImages.has(fileId);
-    const hasError = errorImages.has(fileId);
-    const isVideo = file.fileType === FileType.VIDEO;
-    const isFirst = index === 0;
-    const isLast = index === sortedMediaFiles.length - 1;
+  const renderMediaItem = useCallback(
+    (file: MediaFile, index: number) => {
+      const id = file.id || "";
+      const isLoaded = loadedImages.has(id);
+      const hasError = errorImages.has(id);
+      const isVideo = file.fileType === FileType.VIDEO;
+      const isFirst = index === 0;
+      const isLast = index === sortedMediaFiles.length - 1;
 
-    return (
-      <MediaItem
-        key={fileId}
-        $isMobile={responsiveProps.isMobile}
-        $isTouchDevice={responsiveProps.isTouchDevice}
-        onClick={() => onPreview(file)}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={(e) => handleTouchEnd(e, file)}
-      >
-        <MediaContent>
-          {!isLoaded && !hasError && (
-            <LoadingPlaceholder $isMobile={responsiveProps.isMobile} />
-          )}
+      return (
+        <MediaItem
+          key={id}
+          $isMobile={responsiveProps.isMobile}
+          $isTouchDevice={responsiveProps.isTouchDevice}
+          onClick={() => onPreview(file)}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={(e) => handleTouchEnd(e, file)}
+        >
+          <MediaContent>
+            {!isLoaded && !hasError && (
+              <LoadingPlaceholder $isMobile={responsiveProps.isMobile} />
+            )}
 
-          {hasError && (
-            <ErrorPlaceholder $isMobile={responsiveProps.isMobile}>
-              <div className="error-icon">📷</div>
-              <div>加载失败</div>
-            </ErrorPlaceholder>
-          )}
+            {hasError && (
+              <ErrorPlaceholder $isMobile={responsiveProps.isMobile}>
+                <div className="error-icon">📷</div>
+                <div>加载失败</div>
+              </ErrorPlaceholder>
+            )}
 
-          {isVideo && file.thumbnailUrl ? (
-            <>
+            {isVideo && file.thumbnailUrl ? (
+              <>
+                <img
+                  className="media-image"
+                  src={file.thumbnailUrl}
+                  alt="视频缩略图"
+                  onLoad={() => handleImageLoad(id)}
+                  onError={() => handleImageError(id)}
+                  style={{ display: isLoaded ? "block" : "none" }}
+                />
+                <div className="video-background" />
+                <div className="video-overlay">
+                  <PlayCircleOutlined />
+                </div>
+              </>
+            ) : (
               <img
                 className="media-image"
-                src={file.thumbnailUrl}
-                alt="视频缩略图"
-                onLoad={() => handleImageLoad(fileId)}
-                onError={() => handleImageError(fileId)}
-                style={{ display: isLoaded ? 'block' : 'none' }}
+                src={file.fileUrl}
+                alt="媒体文件"
+                onLoad={() => handleImageLoad(id)}
+                onError={() => handleImageError(id)}
+                style={{ display: isLoaded ? "block" : "none" }}
               />
-              <div className="video-background" />
-              <div className="video-overlay">
-                <PlayCircleOutlined />
-              </div>
-            </>
-          ) : (
-            <img
-              className="media-image"
-              src={file.fileUrl}
-              alt="媒体文件"
-              onLoad={() => handleImageLoad(fileId)}
-              onError={() => handleImageError(fileId)}
-              style={{ display: isLoaded ? 'block' : 'none' }}
-            />
-          )}
-        </MediaContent>
+            )}
+          </MediaContent>
 
-        <MediaOverlay className="media-overlay" />
+          <MediaOverlay className="media-overlay" />
 
-        {/* 顺序控制按钮 */}
-        <OrderControls 
-          className="order-controls"
-          $isMobile={responsiveProps.isMobile}
-        >
-          <button
-            className="order-button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('🔼 按钮点击事件触发', { fileId: file.id, currentOrder: file.mediaOrder });
-              handleMoveUp(file);
-            }}
-            title={isFirst ? "移至末尾" : "上移"}
-            type="button"
+          {/* 顺序控制按钮 */}
+          <OrderControls
+            className="order-controls"
+            $isMobile={responsiveProps.isMobile}
           >
-            <UpOutlined />
-          </button>
-          <button
-            className="order-button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('🔽 按钮点击事件触发', { fileId: file.id, currentOrder: file.mediaOrder });
-              handleMoveDown(file);
-            }}
-            title={isLast ? "移至开头" : "下移"}
-            type="button"
-          >
-            <DownOutlined />
-          </button>
-        </OrderControls>
+            <button
+              className="order-button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log("🔼 按钮点击事件触发", {
+                  id: file.id,
+                  currentOrder: file.mediaOrder,
+                });
+                handleMoveUp(file);
+              }}
+              title={isFirst ? "移至末尾" : "上移"}
+              type="button"
+            >
+              <UpOutlined />
+            </button>
+            <button
+              className="order-button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log("🔽 按钮点击事件触发", {
+                  id: file.id,
+                  currentOrder: file.mediaOrder,
+                });
+                handleMoveDown(file);
+              }}
+              title={isLast ? "移至开头" : "下移"}
+              type="button"
+            >
+              <DownOutlined />
+            </button>
+          </OrderControls>
 
-        <MediaActions
-          className="media-actions"
-          $isMobile={responsiveProps.isMobile}
-        >
-          <Button
-            className="action-button"
-            icon={<EyeOutlined />}
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              onPreview(file);
-            }}
-          />
-          <Popconfirm
-            title="确定要删除这个文件吗？"
-            onConfirm={(e) => {
-              e?.stopPropagation();
-              onDelete(fileId);
-            }}
-            okText="确定"
-            cancelText="取消"
+          <MediaActions
+            className="media-actions"
+            $isMobile={responsiveProps.isMobile}
           >
             <Button
-              className="action-button delete-button"
-              icon={<DeleteOutlined />}
+              className="action-button"
+              icon={<EyeOutlined />}
               size="small"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                onPreview(file);
+              }}
             />
-          </Popconfirm>
-        </MediaActions>
-      </MediaItem>
-    );
-  }, [
-    loadedImages,
-    errorImages,
-    responsiveProps,
-    sortedMediaFiles,
-    handleImageLoad,
-    handleImageError,
-    handleTouchStart,
-    handleTouchEnd,
-    handleMoveUp,
-    handleMoveDown,
-    onPreview,
-    onDelete
-  ]);
+            <Popconfirm
+              title="确定要删除这个文件吗？"
+              onConfirm={(e) => {
+                e?.stopPropagation();
+                onDelete(id);
+              }}
+              okText="确定"
+              cancelText="取消"
+            >
+              <Button
+                className="action-button delete-button"
+                icon={<DeleteOutlined />}
+                size="small"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </Popconfirm>
+          </MediaActions>
+        </MediaItem>
+      );
+    },
+    [
+      loadedImages,
+      errorImages,
+      responsiveProps,
+      sortedMediaFiles,
+      handleImageLoad,
+      handleImageError,
+      handleTouchStart,
+      handleTouchEnd,
+      handleMoveUp,
+      handleMoveDown,
+      onPreview,
+      onDelete,
+    ],
+  );
 
   // 过滤有效的媒体文件（使用排序后的文件列表）
   const validMediaFiles = useMemo(() => {
-    return sortedMediaFiles.filter(file => file && file.id && file.fileUrl);
+    return sortedMediaFiles.filter((file) => file && file.id && file.fileUrl);
   }, [sortedMediaFiles]);
 
   // 如果正在加载，显示加载占位符

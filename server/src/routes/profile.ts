@@ -13,7 +13,7 @@ router.post('/media-profiles', authMiddleware, profileController.createMediaProf
 router.post('/media-profiles/batch/:userId', authMiddleware, profileController.batchCreateMediaProfiles.bind(profileController));
 
 // 获取用户媒体资料列表
-router.get('/media-profiles/:userId', profileController.getUserMediaProfiles.bind(profileController));
+router.get('/media-profiles/:userId', profileController.getMediaProfiles.bind(profileController));
 
 // 更新媒体资料排序
 router.put('/media-profiles/order', authMiddleware, profileController.updateMediaProfilesOrder.bind(profileController));
@@ -33,9 +33,6 @@ router.get('/media-profiles/:id', profileController.getMediaProfileById.bind(pro
 // 用户资料相关（包含用户信息和媒体文件）
 // 获取用户完整资料（用户信息 + 媒体文件）
 router.get('/user/:userId', profileController.getUserProfile.bind(profileController));
-
-// 获取公开的用户资料
-router.get('/public', profileController.getPublicUserProfiles.bind(profileController));
 
 // 获取用户可用文件
 router.get('/available-files', profileController.getUserAvailableFiles.bind(profileController));

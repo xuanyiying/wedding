@@ -37,7 +37,7 @@ const PublicProfileContainer = styled.div`
     text-align: center;
     color: #333;
     border-radius: 12px 12px 0 0;
-    
+
     .avatar {
       margin: 0 auto 16px auto;
       width: 120px;
@@ -47,54 +47,40 @@ const PublicProfileContainer = styled.div`
       align-items: center;
       justify-content: center;
     }
-    
+
     .name {
       font-size: 24px;
       font-weight: 600;
       margin-bottom: 8px;
     }
-    
+
     .title {
       font-size: 14px;
       opacity: 0.9;
       margin-bottom: 16px;
     }
-    
+
     .stats {
       display: flex;
       justify-content: center;
       gap: 32px;
       margin-top: 24px;
-      
-      .stat-item {
-        text-align: center;
-        
-        .number {
-          font-size: 24px;
-          font-weight: 600;
-          display: block;
-        }
-        
-        .label {
-          font-size: 14px;
-          opacity: 0.8;
-        }
-      }
+
     }
   }
-  
+
   .profile-content {
     background: white;
     border-radius: 0 0 12px 12px;
-    
+
     .section {
       padding: 24px;
       border-bottom: 1px solid #f0f0f0;
-      
+
       &:last-child {
         border-bottom: none;
       }
-      
+
       .section-title {
         font-size: 16px;
         font-weight: 600;
@@ -102,169 +88,16 @@ const PublicProfileContainer = styled.div`
         display: flex;
         align-items: center;
         gap: 8px;
-        
+
         .anticon {
           color: #667eea;
         }
       }
     }
-    
+
     .contact-info {
-      .contact-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 12px;
-        
-        .anticon {
-          color: #666;
-          width: 16px;
-        }
-      }
     }
-    
-    .media-gallery {
-      .media-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 16px;
-        margin-top: 16px;
-        
-        .media-item {
-          position: relative;
-          border-radius: 8px;
-          overflow: hidden;
-          cursor: grab;
-          transition: all 0.3s;
-          
-          img, video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-          }
-          
-          &:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            
-            .media-actions {
-              opacity: 1;
-            }
-          }
-          
-          &.dragging {
-            cursor: grabbing;
-            transform: rotate(5deg);
-            z-index: 1000;
-          }
-          
-          .video-overlay {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 32px;
-            z-index: 2;
-          }
-          
-          .video-bg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.3);
-            z-index: 1;
-          }
-          
-          .media-actions {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            display: flex;
-            gap: 4px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            z-index: 3;
-            
-            .action-btn {
-              width: 28px;
-              height: 28px;
-              background: rgba(0, 0, 0, 0.6);
-              border: none;
-              color: white;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              cursor: pointer;
-              transition: all 0.3s;
-              
-              &:hover {
-                background: rgba(0, 0, 0, 0.8);
-                transform: scale(1.1);
-              }
-              
-              &.delete-btn:hover {
-                background: #ff4d4f;
-              }
-            }
-          }
-          
-          .drag-handle {
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            width: 28px;
-            height: 28px;
-            background: rgba(0, 0, 0, 0.6);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: grab;
-            opacity: 0;
-            transition: opacity 0.3s;
-            z-index: 3;
-            
-            &:active {
-              cursor: grabbing;
-            }
-          }
-        }
-      }
-      
-      .upload-area {
-        border: 2px dashed #d9d9d9;
-        border-radius: 8px;
-        padding: 24px;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        
-        &:hover {
-          border-color: #667eea;
-          background: #f8f9ff;
-        }
-        
-        .upload-icon {
-          font-size: 32px;
-          color: #d9d9d9;
-          margin-bottom: 8px;
-          display: flex;
-          justify-content: center;
-        }
-        
-        .upload-text {
-          color: #666;
-          text-align: center;
-        }
-      }
-    }
+
   }
 `;
 const ProfilePage: React.FC = () => {
@@ -283,36 +116,6 @@ const ProfilePage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [isPublicProfilePublished, setIsPublicProfilePublished] = useState(false);
 
-  // 处理媒体文件数据，将嵌套的file对象属性合并到mediaFile中
-  const processMediaFiles = (mediaFiles: MediaFile[]): MediaFile[] => {
-    return mediaFiles.map((mediaFile: MediaFile) => {
-      if (mediaFile.fileUrl) {
-        // 合并file对象的属性到mediaFile中
-        return {
-          ...mediaFile,
-          fileUrl: mediaFile.fileUrl,
-          thumbnailUrl: mediaFile.thumbnailUrl,
-          originalName: mediaFile.originalName,
-          filename: mediaFile.filename,
-          filePath: mediaFile.filePath,
-          fileSize: mediaFile.fileSize,
-          mimeType: mediaFile.mimeType,
-          width: mediaFile.width,
-          height: mediaFile.height,
-          duration: mediaFile.duration,
-          hashMd5: mediaFile.hashMd5,
-          ossType: mediaFile.ossType,
-          bucketName: mediaFile.bucketName,
-          isPublic: mediaFile.isPublic,
-          downloadCount: mediaFile.downloadCount,
-          metadata: mediaFile.metadata,
-          category: mediaFile.category,
-        };
-      }
-      return mediaFile;
-    });
-  };
-
   // 获取当前用户信息
   const loadCurrentUser = async () => {
     try {
@@ -327,7 +130,7 @@ const ProfilePage: React.FC = () => {
 
       // 加载媒体资料
       if (userData?.id) {
-        loadMediaFiles(userData.id);
+        await loadMediaFiles(userData.id);
       }
     } catch (error: any) {
       message.error('加载用户信息失败');
@@ -343,10 +146,11 @@ const ProfilePage: React.FC = () => {
 
   const loadMediaFiles = async (userId: string) => {
     try {
-      const mediaResponse = await profileService.getUserMediaProfiles(userId);
+      const mediaResponse = await profileService.getUserProfile(userId);
+
       if (mediaResponse.success && mediaResponse.data) {
-        const processedMediaFiles = processMediaFiles(mediaResponse.data);
-        setMediaFiles(processedMediaFiles);
+        console.log('processedMediaFiles:', mediaResponse.data?.files);
+        setMediaFiles(mediaResponse.data?.files || []);
       }
     } catch (error) {
       console.error('加载媒体文件失败:', error);
@@ -355,7 +159,7 @@ const ProfilePage: React.FC = () => {
   // 处理头像变更（仅更新本地状态，上传由AvatarUploader内部处理）
   const handleAvatarChange = useCallback((url: string) => {
     // 只更新本地状态，避免重复API调用
-    setCurrentUser((prev) => {
+    setCurrentUser( (prev) => {
       // 避免不必要的状态更新，防止无限循环
       if (prev?.avatarUrl === url) {
         return prev;
@@ -395,12 +199,12 @@ const ProfilePage: React.FC = () => {
       setLoading(false);
     }
   };
-  const handleOnRemoveMediaFile = async (fileId: string) => {
+  const handleOnRemoveMediaFile = async (id: string) => {
     try {
       // 调用后端API删除文件
-      await profileService.deleteMediaProfile(fileId);
+      await profileService.deleteMediaProfile(id);
       // 更新本地状态
-      setMediaFiles(prev => prev.filter(f => f.id !== fileId));
+      setMediaFiles(prev => prev.filter(f => f.id !== id));
       message.success('删除成功');
     } catch (error) {
       console.error('Delete error:', error);
@@ -475,7 +279,7 @@ const ProfilePage: React.FC = () => {
             }));
 
           await profileService.updateMediaProfilesOrder({ orderData: sortData });
-          loadMediaFiles(currentUser.id);
+          await loadMediaFiles(currentUser.id);
         } catch (error) {
           console.error('保存排序失败:', error);
         }
@@ -503,7 +307,7 @@ const ProfilePage: React.FC = () => {
             }))
           })
         }
-        loadMediaFiles(currentUser.id);
+        await loadMediaFiles(currentUser.id);
       } catch (error) {
         console.error('重新加载媒体文件失败:', error);
       }
@@ -517,139 +321,121 @@ const ProfilePage: React.FC = () => {
   };
   return (
     <ProfileContainer>
-      <Tabs activeKey={activeTab} onChange={setActiveTab} items={[
-        {
-          key: 'basic',
-          label: '基本信息',
-          children: (
-            <Card>
-              <ProfileEditForm
-                initialValues={{
-                  ...currentUser,
-                  socialLinks: currentUser?.socialLinks ? Object.keys(currentUser.socialLinks).reduce((acc, key) => {
-                    const link = (currentUser.socialLinks as any)[key];
-                    // 修复socialLinks数据格式，确保正确显示
-                    if (typeof link === 'string') {
-                      acc[key] = { value: link, hidden: false };
-                    } else if (typeof link === 'object' && link !== null) {
-                      // 如果是对象，提取value属性或者使用空字符串
-                      acc[key] = { 
-                        value: link.value || '', 
-                        hidden: link.hidden || false 
-                      };
-                    } else {
-                      // 其他情况初始化为空对象
-                      acc[key] = { value: '', hidden: false };
-                    }
-                    return acc;
-                  }, {} as any) : {},
-                }}
-                onSubmit={handleBasicInfoSave}
-                onCancel={() => { }}
-                loading={loading}
-                avatarUrl={currentUser?.avatarUrl}
-                onAvatarChange={handleAvatarChange}
-              />
-            </Card>
-          )
-        },
-        {
-          key: 'public',
-          label: '公开资料',
-          children: (
-            <PublicProfileContainer>
-              <div className="profile-header">
-                <div className="avatar">
-                  <AvatarUploader
-                    value={currentUser?.avatarUrl}
-                    onChange={handleAvatarChange}
-                    disabled={uploading || loading}
-                    size={120}
-                    category="avatar"
-                    style={{
-                      borderRadius: '50%',
-                      overflow: 'hidden',
-                      border: '3px solid #f0f0f0',
-                      transition: 'all 0.3s ease'
-                    }}
-                  />
+      <Tabs
+        activeKey={activeTab}
+        onChange={setActiveTab}
+        items={[
+          {
+            key: "basic",
+            label: "基本信息",
+            children: (
+              <Card>
+                <ProfileEditForm
+                  initialValues={{ ...currentUser }}
+                  onSubmit={handleBasicInfoSave}
+                  onCancel={() => {}}
+                  loading={loading}
+                  avatarUrl={currentUser?.avatarUrl}
+                  onAvatarChange={handleAvatarChange}
+                />
+              </Card>
+            ),
+          },
+          {
+            key: "public",
+            label: "公开资料",
+            children: (
+              <PublicProfileContainer>
+                <div className="profile-header">
+                  <div className="avatar">
+                    <AvatarUploader
+                      value={currentUser?.avatarUrl}
+                      onChange={handleAvatarChange}
+                      disabled={uploading || loading}
+                      size={120}
+                      category="avatar"
+                      style={{
+                        borderRadius: "50%",
+                        overflow: "hidden",
+                        border: "3px solid #f0f0f0",
+                        transition: "all 0.3s ease",
+                      }}
+                    />
+                  </div>
+                  <div className="name">{currentUser?.realName}</div>
+                  <div className="title">
+                    {currentUser?.bio || "暂无个人简介"}
+                  </div>
                 </div>
-                <div className="name">
-                  {currentUser?.realName}
-                </div>
-                <div className="title">
-                  {currentUser?.bio || '暂无个人简介'}
-                </div>
-              </div>
 
-              <div className="profile-content">
-                {/* 个人介绍 */}
-                {currentUser?.bio && (
+                <div className="profile-content">
+                  {/* 个人介绍 */}
+                  {currentUser?.bio && (
+                    <div className="section">
+                      <div className="section-title">
+                        <UserOutlined />
+                        个人介绍
+                      </div>
+                      <p style={{ color: "#666", lineHeight: "1.6" }}>
+                        {currentUser.bio}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* 作品展示 */}
                   <div className="section">
                     <div className="section-title">
-                      <UserOutlined />
-                      个人介绍
+                      <PictureOutlined />
+                      媒体资料
+                      <Space style={{ marginLeft: "auto" }}>
+                        <Switch
+                          checkedChildren={<GlobalOutlined />}
+                          unCheckedChildren="私有"
+                          checked={isPublicProfilePublished}
+                          onChange={setIsPublicProfilePublished}
+                        />
+                        <span style={{ fontSize: "14px", color: "#666" }}>
+                          {isPublicProfilePublished ? "公开展示" : "私有状态"}
+                        </span>
+
+                        <Button
+                          type="default"
+                          size="small"
+                          loading={saving}
+                          onClick={handleSavePublicProfile}
+                        >
+                          保存排序
+                        </Button>
+                      </Space>
                     </div>
-                    <p style={{ color: '#666', lineHeight: '1.6' }}>{currentUser.bio}</p>
+                    <MediaUploader
+                      config={{
+                        maxCount: 20,
+                        accept: ["image/*", "video/*"],
+                        category: "profile",
+                        multiple: true,
+                        concurrent: 2,
+                      }}
+                      onUploadSuccess={handleUploadSuccess}
+                      onUploadError={(error: Error) => {
+                        console.error("上传失败:", error);
+                        message.error("文件上传失败，请重试");
+                      }}
+                    />
+                    <MediaGallery
+                      mediaFiles={mediaFiles}
+                      onPreview={handlePreview}
+                      onDelete={handleOnRemoveMediaFile}
+                      onReorder={handleReorder}
+                      loading={loading}
+                    />
                   </div>
-                )}
-
-                {/* 作品展示 */}
-                <div className="section">
-                  <div className="section-title">
-                    <PictureOutlined />
-                    媒体资料
-                    <Space style={{ marginLeft: 'auto' }}>
-                      <Switch
-                        checkedChildren={<GlobalOutlined />}
-                        unCheckedChildren="私有"
-                        checked={isPublicProfilePublished}
-                        onChange={setIsPublicProfilePublished}
-                      />
-                      <span style={{ fontSize: '14px', color: '#666' }}>
-                        {isPublicProfilePublished ? '公开展示' : '私有状态'}
-                      </span>
-
-                      <Button
-                        type="default"
-                        size="small"
-                        loading={saving}
-                        onClick={handleSavePublicProfile}
-                      >
-                        保存排序
-                      </Button>
-                    </Space>
-                  </div>
-                  <MediaUploader
-                    config={{
-                      maxCount: 20,
-                      accept: ['image/*', 'video/*'],
-                      category: 'profile',
-                      multiple: true,
-                      concurrent: 2
-                    }}
-                    onUploadSuccess={handleUploadSuccess}
-                    onUploadError={(error: Error) => {
-                      console.error('上传失败:', error);
-                      message.error('文件上传失败，请重试');
-                    }}
-                  />
-                  <MediaGallery
-                    mediaFiles={mediaFiles}
-                    onPreview={handlePreview}
-                    onDelete={handleOnRemoveMediaFile}
-                    onReorder={handleReorder}
-                    loading={loading}
-                  />
                 </div>
-              </div>
-            </PublicProfileContainer>
-          )
-        }
-      ]}>
-      </Tabs>
-
-
+              </PublicProfileContainer>
+            ),
+          },
+        ]}
+      ></Tabs>
 
       {/* 图片预览模态框 */}
       <Modal
@@ -660,21 +446,18 @@ const ProfilePage: React.FC = () => {
         width={800}
       >
         {previewImage &&
-          (previewImage.includes('.mp4') || previewImage.includes('.mov') || previewImage.includes('.avi') ? (
+          (previewImage.includes(".mp4") ||
+          previewImage.includes(".mov") ||
+          previewImage.includes(".avi") ? (
             <video
               src={previewImage}
               controls
-              style={{ width: '100%', maxHeight: '600px' }}
+              style={{ width: "100%", maxHeight: "600px" }}
               autoPlay
             />
           ) : (
-            <img
-              alt="preview"
-              style={{ width: '100%' }}
-              src={previewImage}
-            />
-          ))
-        }
+            <img alt="preview" style={{ width: "100%" }} src={previewImage} />
+          ))}
       </Modal>
     </ProfileContainer>
   );

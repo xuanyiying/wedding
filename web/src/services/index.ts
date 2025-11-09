@@ -8,7 +8,6 @@ import type {
   LoginForm,
   RegisterForm,
   ContactForm,
-  DashboardStats,
   TeamMember,
   TeamStats,
   TeamMemberStatus,
@@ -17,7 +16,8 @@ import type {
   MediaFile,
   FileType,
   FileInfo,
-  DayAvailability
+  DayAvailability,
+  DashboardScheduleStats,
 } from "../types";
 
 // 认证相关API
@@ -691,12 +691,6 @@ export const profileService = {
   // 用户资料相关（包含用户信息和媒体文件）
   getUserProfile: (userId: string): Promise<ApiResponse<any>> => {
     return http.get(`/profile/user/${userId}`);
-  },
-  getPublicUserProfiles: (params?: any): Promise<ApiResponse<any>> => {
-    return http.get("/profile/public", { params });
-  },
-  getUserAvailableFiles: (userId: string): Promise<ApiResponse<MediaFile[]>> => {
-    return http.get("/profile/available-files", { params: { userId } });
   },
 
   // 媒体资料CRUD操作 - 修复接口路径，与后端保持一致

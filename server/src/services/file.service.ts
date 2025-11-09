@@ -298,10 +298,10 @@ export class FileService {
       throw new Error('无权限操作此文件');
     }
     // 删除记录
-    await file.destroy();
+    await File.destroy({ where: { id }, force: true });
 
     // 异步删除OSS文件
-    this.deleteOssFile(file.fileUrl, file.thumbnailUrl || undefined).catch(error => {
+    await this.deleteOssFile(file.fileUrl, file.thumbnailUrl || undefined).catch(error => {
       logger.error(`删除OSS文件失败: ${file.fileUrl}`, error instanceof Error ? error : new Error(String(error)));
     });
 

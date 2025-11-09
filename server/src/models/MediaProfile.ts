@@ -75,7 +75,7 @@ export const initMediaProfile = (sequelize: Sequelize): void => {
       modelName: 'MediaProfile',
       tableName: 'media_profiles',
       timestamps: true, // 启用时间戳
-      paranoid: false, // 软删除
+      paranoid: false, // 启用软删除
       underscored: true, // 使用下划线
       indexes: [
         {

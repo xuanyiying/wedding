@@ -392,9 +392,6 @@ const WorkForm: React.FC<WorkFormProps> = ({
               >
                 <Option value={WorkCategory.TEAM_BUILDING}>团建</Option>
                 <Option value={WorkCategory.WEDDING_HOST}>婚礼主持</Option>
-                <Option value={WorkCategory.WEDDING_PLANNING}>婚礼策划</Option>
-                <Option value={WorkCategory.WEDDING_PHOTOGRAPHY}>婚礼摄影</Option>
-                <Option value={WorkCategory.WEDDING_VIDEOGRAPHY}>婚礼摄像</Option>
               </Select>
             </Form.Item>
           </Col>

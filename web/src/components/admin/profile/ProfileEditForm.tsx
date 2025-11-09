@@ -172,10 +172,10 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           <Col xs={24} sm={12}>
             <Form.Item
               name="minPrice"
-              label="最低价格"
+              label="市场价格"
             >
               <InputNumber
-                placeholder="请输入最低价格"
+                placeholder="请输入市场价格"
                 min={0}
                 style={{ width: '100%' }}
               />
@@ -184,10 +184,10 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           <Col xs={24} sm={12}>
             <Form.Item
               name="maxPrice"
-              label="最高价格"
+              label="服务价格"
             >
               <InputNumber
-                placeholder="请输入最高价格"
+                placeholder="请输入服务价格"
                 min={0}
                 style={{ width: '100%' }}
               />

@@ -1,7 +1,6 @@
 import MediaProfile, { MediaProfileAttributes, MediaProfileCreationAttributes } from '../models/MediaProfile';
 import File from '../models/File';
-import User from '../models/User';
-import { UserMediaProfile } from '@/interfaces';
+import { MediaFile, UserMediaProfile } from '@/interfaces';
 import { UserService } from './user.service';
 import { generateId } from '@/utils/id.generator';
 import logger from '@/utils/logger';
@@ -31,7 +30,7 @@ export class MediaProfileService {
   /**
    * 根据用户ID获取用户公开资料
    */
-  async getPublicMediaProfiles(userId: string): Promise<MediaProfile[] | null> {
+  async getMediaProfiles(userId: string): Promise<MediaProfile[] | null> {
     const user = await UserService.getUserById(userId);
     if (!user) {
       throw new Error('用户不存在');
@@ -42,8 +41,35 @@ export class MediaProfileService {
         {
           model: File,
           as: 'file',
-          attributes: ['id', 'originalName', 'filename', 'filePath', 'fileUrl', 'fileSize', 'mimeType', 'width', 'height', 'duration', 'thumbnailUrl', 'hashMd5', 'hashSha256', 'ossType', 'bucketName', 'isPublic', 'downloadCount', 'metadata', 'category', 'createdAt', 'updatedAt', 'deletedAt'],
-        }
+          attributes: [
+            'id',
+            'originalName',
+            'filename',
+            'filePath',
+            'fileUrl',
+            'fileSize',
+            'mimeType',
+            'width',
+            'height',
+            'duration',
+            'thumbnailUrl',
+            'hashMd5',
+            'hashSha256',
+            'ossType',
+            'bucketName',
+            'isPublic',
+            'downloadCount',
+            'metadata',
+            'category',
+            'createdAt',
+            'updatedAt',
+            'deletedAt',
+          ],
+          where: {
+            category: FileCategory.PROFILE,
+            deletedAt: null
+          }
+        },
       ],
       order: [['mediaOrder', 'ASC']],
     });
@@ -52,10 +78,8 @@ export class MediaProfileService {
   /**
    * 获取用户的媒体资料
    */
-  async getUserMediaProfile(userId: string): Promise<UserMediaProfile | null> {
-    const user = await User.findByPk(userId, {
-      attributes: ['id', 'username', 'email', 'phone', 'avatarUrl', 'role', 'status', 'createdAt', 'updatedAt'],
-    });
+  async getUserProfile(userId: string): Promise<UserMediaProfile | null> {
+    const user = await UserService.getUserById(userId);
     if (!user) {
       return null;
     }
@@ -71,56 +95,12 @@ export class MediaProfileService {
       ],
       order: [['mediaOrder', 'ASC']],
     });
-    ;
-
-    const userObj = {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      phone: user.phone,
-      avatar: user.avatarUrl,
-      role: user.role,
-      status: user.status,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt
-    } as any; // 临时使用any类型避免严格类型检查
 
     return {
       userId,
-      user: userObj,
-      files: files.map((f) => ({
-        id: f.id,
-        userId: f.userId,
-        fileId: f.fileId,
-        mediaOrder: f.mediaOrder,
-        fileType: f.fileType,
-        originalName: f.file?.originalName || '',
-        filename: f.file?.filename || '',
-        filePath: f.file?.filePath || '',
-        fileUrl: f.file?.fileUrl || '',
-        fileSize: f.file?.fileSize || 0,
-        mimeType: f.file?.mimeType || '',
-        width: f.file?.width || null,
-        height: f.file?.height || null,
-        duration: f.file?.duration || 0,
-        thumbnailUrl: f.file?.thumbnailUrl || '',
-        hashMd5: f.file?.hashMd5 || '',
-        hashSha256: f.file?.hashSha256 || '',
-        ossType: f.file?.ossType || OssType.minio,
-        bucketName: f.file?.bucketName || '',
-        isPublic: f.file?.isPublic || false,
-        downloadCount: f.file?.downloadCount || 0,
-        metadata: f.file?.metadata || {},
-        category: f.file?.category || FileCategory.OTHER,
-      })).filter(f => f.originalName !== ''), // 过滤掉没有关联文件的记录
+      user: user,
+      files: files.map((f) => this.toMediaFile(f)  ), // 过滤掉没有关联文件的记录
     };
-  }
-
-  /**
-   * 获取用户完整资料（用户信息 + 媒体文件）- 用于profile路由
-   */
-  async getUserProfile(userId: string): Promise<UserMediaProfile | null> {
-    return this.getUserMediaProfile(userId);
   }
 
   /**
@@ -196,12 +176,14 @@ export class MediaProfileService {
     if (!profile) {
       return false;
     }
+    
+    // 先删除关联的文件（包括OSS中的文件）
     const fileId = profile.fileId;
-    // 1. 删除关联记录，确保从用户资料中移除
-    await profile.destroy();
-
     await FileService.deleteFile(fileId, userId);
-
+    
+    // 再物理删除媒体资料记录
+    await MediaProfile.destroy({ where: { userId, id }, force: true });
+    
     return true;
   }
 
@@ -227,26 +209,6 @@ export class MediaProfileService {
   }
 
   /**
-   * 添加文件到用户资料
-   */
-  async addFileToProfile(userId: string, fileId: string, options?: {
-    mediaOrder?: number;
-    fileType?: string;
-  }): Promise<MediaProfile> {
-    const existingCount = await MediaProfile.count({ where: { userId } });
-    const mediaOrder = options?.mediaOrder ?? existingCount;
-
-    const profileData: MediaProfileCreationAttributes = {
-      userId,
-      fileId,
-      mediaOrder,
-      fileType: options?.fileType as any || 'image',
-    };
-
-    return await this.createMediaProfile(profileData);
-  }
-
-  /**
    * 更新单个媒体资料
    */
   async updateSingleMediaProfile(userId: string, fileId: string, updateData: Partial<MediaProfileAttributes>): Promise<MediaProfile> {
@@ -260,13 +222,6 @@ export class MediaProfileService {
   }
 
   /**
-   * 从用户资料中移除文件
-   */
-  async removeFileFromProfile(userId: string, fileId: string): Promise<boolean> {
-    return await this.deleteMediaProfile(userId, fileId);
-  }
-
-  /**
    * 获取用户可用的文件列表
    */
   async getUserAvailableFiles(userId: string): Promise<File[]> {
@@ -276,6 +231,32 @@ export class MediaProfileService {
     });
   }
 
+  private toMediaFile(f: MediaProfile): MediaFile {
+    return {
+      id: f.id,
+      userId: f.userId,
+      fileId: f.fileId,
+      mediaOrder: f.mediaOrder,
+      fileType: f.fileType,
+      originalName: f.file?.originalName || '',
+      filename: f.file?.filename || '',
+      filePath: f.file?.filePath || '',
+      fileUrl: f.file?.fileUrl || '',
+      fileSize: f.file?.fileSize || 0,
+      mimeType: f.file?.mimeType || '',
+      width: f.file?.width || null,
+      height: f.file?.height || null,
+      duration: f.file?.duration || 0,
+      thumbnailUrl: f.file?.thumbnailUrl || '',
+      hashMd5: f.file?.hashMd5 || '',
+      ossType: f.file?.ossType || OssType.minio,
+      bucketName: f.file?.bucketName || '',
+      isPublic: f.file?.isPublic || false,
+      downloadCount: f.file?.downloadCount || 0,
+      category: f.file?.category || FileCategory.PROFILE,
+      metadata: f.file?.metadata,
+    };
+  }
 }
 
 export default new MediaProfileService();

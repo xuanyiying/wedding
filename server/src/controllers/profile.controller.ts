@@ -54,16 +54,6 @@ export class ProfileController {
     await ProfileService.updateMediaProfile(userId, mediaProfile);
     Resp.success(res, '更新成功');
   };
-
-  async getUserMediaProfile(req: Request, res: Response): Promise<void> {
-    const userId = req.user?.id;
-    if (!userId) {
-      Resp.badRequest(res, '用户ID不存在');
-      return;
-    }
-    const mediaProfile = await ProfileService.getUserMediaProfile(userId);
-    Resp.success(res, mediaProfile);
-  }
   async deleteMediaProfile(req: Request, res: Response): Promise<void> {
     const userId = req.user?.id;
     if (!userId) {
@@ -117,7 +107,7 @@ export class ProfileController {
       return;
     }
 
-    const profile = await ProfileService.getUserMediaProfile(userId);
+    const profile = await ProfileService.getUserProfile(userId);
 
     if (!profile) {
       Resp.badRequest(res, '用户资料不存在');
@@ -146,59 +136,15 @@ export class ProfileController {
   }
 
   // 获取公开的用户资料
-  async getPublicUserProfiles(req: Request, res: Response): Promise<void> {
+  async getMediaProfiles(req: Request, res: Response): Promise<void> {
     const userId = req.user?.id;
     if (!userId) {
       Resp.badRequest(res, '用户ID不存在');
       return;
     }
 
-    const profiles = await ProfileService.getPublicMediaProfiles(userId);
+    const profiles = await ProfileService.getMediaProfiles(userId);
     Resp.success(res, profiles);
-  }
-
-  // 添加文件到资料
-  async addFileToProfile(req: Request, res: Response): Promise<void> {
-    const { userId } = req.params;
-    const { fileId, mediaOrder, fileType } = req.body;
-
-    if (!userId) {
-      Resp.badRequest(res, '请提供用户ID');
-      return;
-    }
-
-    if (!fileId) {
-      Resp.badRequest(res, '请提供文件ID');
-      return;
-    }
-
-    const profile = await ProfileService.createMediaProfile({
-      userId,
-      fileId,
-      mediaOrder,
-      fileType: fileType as FileType,
-    });
-
-    Resp.success(res, profile);
-  }
-
-  // 从资料中移除文件
-  async removeFileFromProfile(req: Request, res: Response): Promise<void> {
-    const { userId, fileId } = req.params;
-
-    if (!userId) {
-      Resp.badRequest(res, '请提供用户ID');
-      return;
-    }
-
-    if (!fileId) {
-      Resp.badRequest(res, '请提供文件ID');
-      return;
-    }
-
-    await ProfileService.deleteMediaProfile(userId, fileId);
-
-    Resp.success(res, '文件移除成功');
   }
 
   // 获取用户可用文件

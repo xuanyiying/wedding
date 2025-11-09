@@ -232,7 +232,7 @@ export const initFile = (sequelize: Sequelize): void => {
       tableName: 'files',
       sequelize,
       timestamps: true,
-      paranoid: true,
+      paranoid: false, // 禁用软删除
       comment: '文件表',
       indexes: [
         { name: 'idx_files_user_id', fields: ['user_id'] },
