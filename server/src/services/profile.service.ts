@@ -176,14 +176,13 @@ export class MediaProfileService {
     if (!profile) {
       return false;
     }
-    
-    // 先删除关联的文件（包括OSS中的文件）
+      // 先物理删除媒体资料记录
+      await MediaProfile.destroy({ where: { userId, id }, force: true });
+
+      // 再删除关联的文件（包括OSS中的文件）
     const fileId = profile.fileId;
     await FileService.deleteFile(fileId, userId);
-    
-    // 再物理删除媒体资料记录
-    await MediaProfile.destroy({ where: { userId, id }, force: true });
-    
+
     return true;
   }
 

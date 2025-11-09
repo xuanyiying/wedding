@@ -301,9 +301,15 @@ export class FileService {
     await File.destroy({ where: { id }, force: true });
 
     // 异步删除OSS文件
-    await this.deleteOssFile(file.fileUrl, file.thumbnailUrl || undefined).catch(error => {
-      logger.error(`删除OSS文件失败: ${file.fileUrl}`, error instanceof Error ? error : new Error(String(error)));
+    await this.deleteOssFile(file.filePath).catch(error => {
+      logger.error(`删除OSS文件失败: ${file.filePath}`, error instanceof Error ? error : new Error(String(error)));
     });
+    if (file.thumbnailUrl) {
+      // 删除缩略图
+      await this.deleteOssFile(file.thumbnailUrl).catch(error => {
+        logger.error(`删除缩略图失败: ${file.thumbnailUrl}`, error instanceof Error ? error : new Error(String(error)));
+      });
+    }
 
     logger.info(`文件已删除: ${id}, 操作用户: ${currentUserId}`);
   }
