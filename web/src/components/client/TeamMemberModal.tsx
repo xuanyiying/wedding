@@ -99,7 +99,6 @@ const TeamMemberModal: React.FC<TeamMemberModalProps> = ({
   visible,
   member,
   onClose,
-  onContact
 }) => {
   if (!member) return null;
 
@@ -113,12 +112,6 @@ const TeamMemberModal: React.FC<TeamMemberModalProps> = ({
     return status === TeamMemberStatus.ACTIVE ? '档期充足' : '档期紧张';
   };
 
-  const handleContact = () => {
-    if (onContact) {
-      onContact(member);
-    }
-  };
-
   return (
     <DetailModal
       title={member.user.realName}
@@ -127,19 +120,7 @@ const TeamMemberModal: React.FC<TeamMemberModalProps> = ({
       footer={[
         <Button key="close" onClick={onClose}>
           关闭
-        </Button>,
-        <Button 
-          key="contact" 
-          type="primary"
-          onClick={handleContact}
-          style={{ 
-            background: 'var(--client-primary-color)',
-            borderColor: 'var(--client-primary-color)',
-            color: 'var(--client-text-inverse)'
-          }}
-        >
-          立即预约
-        </Button>,
+        </Button>
       ]}
       width={600}
     >

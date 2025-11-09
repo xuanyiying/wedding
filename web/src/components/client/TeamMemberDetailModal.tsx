@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Avatar, Typography, Divider, Button, Spin, Empty, Image, Tabs } from 'antd';
-import { CalendarOutlined, PlayCircleOutlined, UserOutlined } from '@ant-design/icons';
+import { Modal, Avatar, Typography, Divider, Button, Spin, Tabs } from 'antd';
+import { CalendarOutlined, UserOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
-import { type Schedule, type MediaFile, FileType } from '../../types';
+import { type Schedule, type MediaFile } from '../../types';
 import { scheduleService, profileService } from '../../services';
 import type { ClientTeamMember } from '../../hooks/useTeamData';
-import { PlayButton } from './WorkCardStyles';
 import ScheduleCalendar from '../ScheduleCalendar';
+import MediaGallery from './MediaGallery';
 
 const { Title } = Typography;
 
@@ -41,8 +41,6 @@ const TeamAvatar = styled(Avatar)`
   }
 `;
 
-
-
 const DetailSection = styled.div`
   margin-bottom: 24px;
   
@@ -54,46 +52,11 @@ const DetailSection = styled.div`
   }
 `;
 
-
-const WorkItem = styled.div`
-  position: relative;
-  overflow: hidden;
-  aspect-ratio: 1;
-  cursor: pointer;
-  
-  .ant-image {
-    width: 100%;
-    height: 100%;
-    
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-  }
-`;
-
-
 const LoadingContainer = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100px;
-`;
-
-
-const ContactButton = styled(Button)`
-  &&& {
-    background: var(--client-primary-color);
-    border-color: var(--client-primary-color);
-    color: var(--client-text-inverse);
-    
-    &:hover {
-      background: var(--client-primary-hover);
-      border-color: var(--client-primary-hover);
-      color: var(--client-text-inverse);
-    }
-  }
 `;
 
 const StyledTabs = styled(Tabs)`
@@ -122,23 +85,18 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
   visible,
   member,
   onClose,
-  onContact
 }) => {
   const [mediaProfiles, setMediaProfiles] = useState<MediaFile[]>([]);
   const [memberSchedules, setMemberSchedules] = useState<Schedule[]>([]);
   const [worksLoading, setWorksLoading] = useState(false);
   const [schedulesLoading, setSchedulesLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('schedule');
-
+  const [activeTab, setActiveTab] = useState('profile');
 
   // 加载成员作品
   const loadMediaProfile = async (userId: string) => {
     try {
       setWorksLoading(true);
-
-      const response = await profileService.getUserAvailableFiles(
-        userId
-      );
+      const response = await profileService.getUserAvailableFiles(userId);
       if (response.success) {
         setMediaProfiles(response.data || []);
       }
@@ -183,12 +141,6 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
     }
   }, [visible, member?.userId]);
 
-  const handleContact = () => {
-    if (onContact) {
-      onContact();
-    }
-  };
-
   return (
     <DetailModal
       title={member?.name}
@@ -197,10 +149,7 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
       footer={[
         <Button key="close" onClick={onClose}>
           关闭
-        </Button>,
-        <ContactButton key="contact" type="primary" onClick={handleContact}>
-          立即预约
-        </ContactButton>,
+        </Button>
       ]}
       width={600}
     >
@@ -230,36 +179,11 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
               ),
               children: (
                 <div>
-                  <DetailSection>
-                    {worksLoading ? (
-                      <LoadingContainer>
-                        <Spin size="small" />
-                      </LoadingContainer>
-                    ) : mediaProfiles.length > 0 ?
-                      mediaProfiles.map((m) => (
-                        <WorkItem key={m.id}>
-                          {m.fileType === FileType.VIDEO && m.thumbnailUrl && m.fileUrl ?
-                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-                              <img
-                                src={m.thumbnailUrl}
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                              />
-                              <PlayButton>
-                                <PlayCircleOutlined />
-                              </PlayButton>
-                            </div> :
-                            <Image preview={false}
-                              src={m.fileUrl}
-                            />}
-                        </WorkItem>
-                      )) : (
-                        <Empty
-                          image={Empty.PRESENTED_IMAGE_SIMPLE}
-                          description="暂无公开作品"
-                          style={{ margin: '20px 0' }}
-                        />
-                      )}
-                  </DetailSection>
+                  <MediaGallery
+                    mediaProfiles={mediaProfiles}
+                    loading={worksLoading}
+                    emptyDescription="暂无公开案例"
+                  />
                 </div>
               )
             },

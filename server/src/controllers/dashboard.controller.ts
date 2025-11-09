@@ -1,17 +1,25 @@
-import { Response, NextFunction } from 'express';
+import { Request,Response, NextFunction } from 'express';
 import { DashboardService } from '../services/dashboard.service';
 import { Resp } from '../utils/response';
 import { logger } from '../utils/logger';
-import { AuthenticatedRequest } from '../interfaces';
 
 export const getDashboardStats = async (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const { startDate, endDate } = req.query;
+    let { startDate, endDate } = req.query;
     const userId = req.user?.id || undefined; // 默认使用用户ID 1
+    // 如果没有 指定开始时间，则使用今天 00:00:00
+    if (!startDate){
+      logger.info('使用今天 00:00:00');
+      startDate = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
+    }
+    // 如果没有指定结束时间，则使用今天 23:59:59
+    if (!endDate){
+      endDate = new Date(new Date().setHours(23, 59, 59, 999)).toISOString();
+    }
 
     const stats = await DashboardService.getDashboardStats({
       startDate: startDate as string,
@@ -27,7 +35,7 @@ export const getDashboardStats = async (
 };
 
 export const getRecentActivities = async (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
@@ -48,7 +56,7 @@ export const getRecentActivities = async (
   }
 };
 
-export const getRevenueStats = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+export const getRevenueStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { period = 'month', year, month } = req.query;
     const userId = req.user?.id || undefined; // 默认使用用户ID 1
@@ -67,7 +75,7 @@ export const getRevenueStats = async (req: AuthenticatedRequest, res: Response, 
   }
 };
 
-export const getBookingTrends = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+export const getBookingTrends = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { period = 'daily', days = 30 } = req.query;
     const userId = req.user?.id || undefined; // 默认使用用户ID 1
@@ -86,7 +94,7 @@ export const getBookingTrends = async (req: AuthenticatedRequest, res: Response,
 };
 
 export const getEventTypeDistribution = async (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
@@ -108,7 +116,7 @@ export const getEventTypeDistribution = async (
 };
 
 export const getPopularTimeSlots = async (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
@@ -129,7 +137,7 @@ export const getPopularTimeSlots = async (
   }
 };
 
-export const getCustomerStats = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+export const getCustomerStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { startDate, endDate } = req.query;
     const userId = req.user?.id || undefined; // 默认使用用户ID 1
@@ -148,7 +156,7 @@ export const getCustomerStats = async (req: AuthenticatedRequest, res: Response,
 };
 
 export const getScheduleStats = async (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
@@ -170,7 +178,7 @@ export const getScheduleStats = async (
 };
 
 export const getTodayScheduleStats = async (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
@@ -189,7 +197,7 @@ export const getTodayScheduleStats = async (
 };
 
 export const getPerformanceMetrics = async (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
