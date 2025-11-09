@@ -1,4 +1,5 @@
 import { Issue, IssueType, IssuePriority, IssueStatus } from '../models/Issue';
+import { User } from '../models';
 import { Op } from 'sequelize';
 import { logger } from '../utils/logger';
 
@@ -54,11 +55,23 @@ export class IssueService {
 
       const { count, rows: issues } = await Issue.findAndCountAll({
         where,
+        include: [
+          {
+            model: User,
+            as: 'reporter',
+            attributes: ['id', 'username']  // 移除了avatar字段
+          },
+          {
+            model: User,
+            as: 'assignee',
+            attributes: ['id', 'username']  // 移除了avatar字段
+          }
+        ],
         order: [[sortBy, sortOrder]],
         offset,
         limit
       });
-      
+
       return {
         issues,
         pagination: {
@@ -80,7 +93,18 @@ export class IssueService {
   static async getIssueById(id: string) {
     try {
       const issue = await Issue.findByPk(id, {
-
+        include: [
+          {
+            model: User,
+            as: 'reporter',
+            attributes: ['id', 'username', 'realName', 'nickname'] // 移除了avatar字段
+          },
+          {
+            model: User,
+            as: 'assignee',
+            attributes: ['id', 'username', 'realName', 'nickname']  // 移除了avatar字段
+          }
+        ]
       });
 
       if (!issue) {

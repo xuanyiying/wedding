@@ -1,5 +1,5 @@
 import { Model, DataTypes, Sequelize, Optional, BelongsToGetAssociationMixin } from 'sequelize';
-import { UserAttributes } from './User';
+import User, { UserAttributes } from './User';
 
 // Interface for UserPermission attributes
 export interface UserPermissionAttributes {
@@ -104,6 +104,17 @@ export const initUserPermission = (sequelize: Sequelize): void => {
     },
   );
 
+  UserPermission.belongsTo(User, {
+    foreignKey: 'userId',
+    as: 'user',
+    onDelete: 'CASCADE',
+  });
+
+  UserPermission.belongsTo(User, {
+    foreignKey: 'grantedBy',
+    as: 'granter',
+    onDelete: 'SET NULL',
+  });
 };
 
 /**

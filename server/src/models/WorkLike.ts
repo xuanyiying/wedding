@@ -1,6 +1,6 @@
 import { Model, DataTypes, Sequelize, Optional, BelongsToGetAssociationMixin } from 'sequelize';
-import { UserAttributes } from './User';
-import { WorkAttributes } from './Work';
+import User, { UserAttributes } from './User';
+import Work, { WorkAttributes } from './Work';
 
 // Interface for WorkLike attributes
 export interface WorkLikeAttributes {
@@ -88,6 +88,17 @@ export const initWorkLike = (sequelize: Sequelize): void => {
     },
   );
 
+  WorkLike.belongsTo(Work, {
+    foreignKey: 'workId',
+    as: 'work',
+    onDelete: 'CASCADE',
+  });
+
+  WorkLike.belongsTo(User, {
+    foreignKey: 'userId',
+    as: 'user',
+    onDelete: 'CASCADE',
+  });
 };
 
 export default WorkLike;

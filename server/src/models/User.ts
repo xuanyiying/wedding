@@ -1,7 +1,6 @@
 import { Model, DataTypes, Sequelize, Optional } from 'sequelize';
-import { PasswordUtils } from '@/utils/helpers';
-import { UserRole, UserStatus } from '@/types';
-import MediaProfile from '@/models/MediaProfile';
+import { PasswordUtils } from '../utils/helpers';
+import { UserRole, UserStatus } from '../types';
 
 // User attributes interface
 export interface UserAttributes {
@@ -80,15 +79,6 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
     return PasswordUtils.comparePassword(password, this.passwordHash);
   }
 
-  public async getMediaProfiles(): Promise<MediaProfile[]> {
-    const profiles = await MediaProfile.findAll({
-      where: { userId: this.id },
-    });
-    for (const f of profiles) {
-      f.file = await f.getFile();
-    }
-    return profiles;
-  }
   // Static method to find a user by username
   public static async findByUsername(username: string): Promise<User | null> {
     return this.findOne({ where: { username } });

@@ -58,8 +58,9 @@ class Schedule extends Model<ScheduleAttributes, ScheduleCreationAttributes> imp
   public readonly deletedAt!: Date;
 
   // Associations
-  public user?: User | null;
+  public readonly user?: User;
 
+  // Static method to check for conflicting schedules
   public static async hasConflict(
     userId: string,
     weddingDate: Date,
@@ -219,5 +220,7 @@ export const initSchedule = (sequelize: Sequelize): void => {
     },
   );
 
+  Schedule.belongsTo(User, { as: 'user', foreignKey: 'userId' });
+  Schedule.belongsTo(User, { as: 'customer', foreignKey: 'customerId' });
 };
 export default Schedule;

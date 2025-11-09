@@ -1,5 +1,5 @@
-import { Model, DataTypes, Sequelize, Optional } from 'sequelize';
-import User from './User';
+import { Model, DataTypes, Sequelize, Optional, BelongsToGetAssociationMixin } from 'sequelize';
+import User, { UserAttributes } from './User';
 
 // Interface for OperationLog attributes
 export interface OperationLogAttributes {
@@ -52,8 +52,14 @@ class OperationLog
 
   public readonly createdAt!: Date;
 
-  public readonly user?: User;
+  // Associations
+  public getUser!: BelongsToGetAssociationMixin<UserAttributes>;
 
+  public readonly user?: UserAttributes;
+
+  public static associations: {
+    user: any;
+  };
 }
 
 export const initOperationLog = (sequelize: Sequelize): void => {
@@ -171,6 +177,11 @@ export const initOperationLog = (sequelize: Sequelize): void => {
     },
   );
 
+  OperationLog.belongsTo(User, {
+    foreignKey: 'userId',
+    as: 'user',
+    onDelete: 'SET NULL',
+  });
 };
 
 export default OperationLog;

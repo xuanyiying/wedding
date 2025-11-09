@@ -61,8 +61,8 @@ class Work extends Model<WorkAttributes, WorkCreationAttributes> implements Work
   public readonly deletedAt!: Date;
 
   // Associations
-  public user?: User | null;
-  public files?: File[];
+  public readonly user?: User;
+  public readonly files?: File[];
   // Method to publish a work
   public async publish(): Promise<void> {
     if (this.status === WorkStatus.DRAFT) {
@@ -227,6 +227,7 @@ export const initWork = (sequelize: Sequelize): void => {
     },
   );
 
+  Work.belongsTo(User, { as: 'user', foreignKey: 'userId' });
 };
 
 export default Work;

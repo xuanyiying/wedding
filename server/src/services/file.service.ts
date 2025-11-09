@@ -1,5 +1,5 @@
 import { Op, WhereOptions } from 'sequelize';
-import { File, FileAttributes } from '../models';
+import { File, FileAttributes, User } from '../models';
 import { logger } from '../utils/logger';
 import * as path from 'path';
 import * as fs from 'fs/promises';
@@ -82,13 +82,18 @@ export class FileService {
 
     const { count, rows } = await File.findAndCountAll<File>({
       where,
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'username', 'realName'],
+        },
+      ],
       order: sortBy && sortOrder ? [[sortBy, sortOrder]] : [['createdAt', 'DESC']],
       limit: pageSize,
       offset,
     });
-    for (const file of rows) {
-      file.user = await file.getUser();
-    }
+
     return {
       files: rows,
       pagination: {
@@ -106,11 +111,19 @@ export class FileService {
   static async getFileById(id: string) {
     const file = await File.findOne({
       where: { id },
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'username', 'realName'],
+        },
+      ],
     });
+
     if (!file) {
       throw new Error('文件不存在');
     }
-    file.user = await file.getUser();
+
     return file;
   }
 

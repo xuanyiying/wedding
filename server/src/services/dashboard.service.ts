@@ -1,8 +1,7 @@
-import { Op, QueryTypes, WhereOptions } from 'sequelize';
-import { Schedule, Team, TeamMember, User } from '@/models/index';
-import { logger } from '@/utils/logger';
-import { ScheduleStatus, TeamMemberStatus, TeamStatus } from '@/types';
-import sequelize from '@/config/database';
+import { Op, WhereOptions } from 'sequelize';
+import { Schedule, User, Work, Team, TeamMember } from '../models';
+import { logger } from '../utils/logger';
+import { ScheduleStatus, TeamStatus, TeamMemberStatus } from '../types';
 
 interface DashboardStatsParams {
   startDate?: string;
@@ -30,126 +29,79 @@ export class DashboardService {
   static async getDashboardStats(params: DashboardStatsParams = {}) {
     try {
       const { startDate, endDate, userId } = params;
-      logger.info('getDashboardStats', params);
 
-      // 构建基础查询条件
-      let baseConditions = "";
-      const replacements: Record<string, any> = {};
-      
+      const where: WhereOptions = {};
+
       if (userId) {
-        baseConditions += " AND user_id = :userId";
-        replacements.userId = userId;
+        where.userId = userId;
       }
-      
-      if (startDate && endDate) {
-        baseConditions += " AND created_at BETWEEN :startDate AND :endDate";
-        replacements.startDate = new Date(startDate);
-        replacements.endDate = new Date(endDate);
+
+      if (startDate || endDate) {
+        where.createdAt = {};
+        if (startDate) {
+          (where.createdAt as any)[Op.gte] = new Date(startDate);
+        }
+        if (endDate) {
+          (where.createdAt as any)[Op.lte] = new Date(endDate);
+        }
       }
-      
-      baseConditions += " AND status IN (:statuses)";
-      replacements.statuses = [ScheduleStatus.BOOKED, ScheduleStatus.RESERVE, ScheduleStatus.COMPLETED];
 
-      // 总数查询
-      const totalQuery = `
-        SELECT COUNT(*) as total 
-        FROM schedules 
-        WHERE 1=1 ${baseConditions}
-      `;
-      
-      // 各状态统计查询
-      const statusQuery = `
-        SELECT 
-          SUM(CASE WHEN status = :bookedStatus THEN 1 ELSE 0 END) as booked,
-          SUM(CASE WHEN status = :reserveStatus THEN 1 ELSE 0 END) as reserve,
-          SUM(CASE WHEN status = :completedStatus THEN 1 ELSE 0 END) as completed
-        FROM schedules 
-        WHERE 1=1 ${baseConditions}
-      `;
-      replacements.bookedStatus = ScheduleStatus.BOOKED;
-      replacements.reserveStatus = ScheduleStatus.RESERVE;
-      replacements.completedStatus = ScheduleStatus.COMPLETED;
+      // 预订统计
+      const bookingWhere = {
+        ...where,
+        status: { [Op.in]: [ScheduleStatus.BOOKED, ScheduleStatus.RESERVE, ScheduleStatus.COMPLETED] },
+      };
 
-      // 收入统计
-      const revenueQuery = `
-        SELECT 
-          SUM(CASE WHEN status = :completedStatus THEN price ELSE 0 END) as total,
-          AVG(CASE WHEN status = :completedStatus THEN price ELSE NULL END) as avg,
-          COUNT(CASE WHEN status = :completedStatus THEN id ELSE NULL END) as booked
-        FROM schedules 
-        WHERE 1=1 ${baseConditions}
-      `;
-
-      logger.info('baseConditions', baseConditions);
-      
-      const [totalResult, statusResult, revenueResult] = await Promise.all([
-        sequelize.query(totalQuery, { 
-          replacements, 
-          type: QueryTypes.SELECT 
-        }),
-        sequelize.query(statusQuery, { 
-          replacements, 
-          type: QueryTypes.SELECT 
-        }),
-        sequelize.query(revenueQuery, { 
-          replacements: { ...replacements, completedStatus: ScheduleStatus.COMPLETED },
-          type: QueryTypes.SELECT 
-        })
+      const [total, booked, reserve, completed] = await Promise.all([
+        Schedule.count({ where: bookingWhere }),
+        Schedule.count({ where: { ...bookingWhere, status: ScheduleStatus.BOOKED } }),
+        Schedule.count({ where: { ...bookingWhere, status: ScheduleStatus.RESERVE } }),
+        Schedule.count({ where: { ...bookingWhere, status: ScheduleStatus.COMPLETED } }),
       ]);
 
-      const total = parseInt((totalResult[0] as any).total || '0');
-      const booked = parseInt((statusResult[0] as any).booked || '0');
-      const reserve = parseInt((statusResult[0] as any).reserve || '0');
-      const completed = parseInt((statusResult[0] as any).completed || '0');
-      const revenue = revenueResult[0] as any;
+      // 收入统计
+      const revenueStats = await Schedule.findAll({
+        where: { ...bookingWhere, status: ScheduleStatus.COMPLETED },
+        attributes: [
+          [Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'total'],
+          [Schedule.sequelize!.fn('AVG', Schedule.sequelize!.col('price')), 'avg'],
+          [Schedule.sequelize!.fn('COUNT', Schedule.sequelize!.col('id')), 'booked'],
+        ],
+        raw: true,
+      });
+
+      const revenue = revenueStats[0] as any;
 
       // 用户统计（如果不是特定主持人）
       let userStats = null;
       if (!userId) {
-        const [totalUsersResult, activeUsersResult] = await Promise.all([
-          sequelize.query('SELECT COUNT(*) as count FROM users', { type: QueryTypes.SELECT }),
-          sequelize.query(
-            'SELECT COUNT(*) as count FROM users WHERE last_login_at >= :lastLoginCutoff',
-            { 
-              replacements: { lastLoginCutoff: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
-              type: QueryTypes.SELECT 
-            }
-          ),
+        const [totalUsers, activeUsers] = await Promise.all([
+          User.count(),
+          User.count({
+            where: {
+              lastLoginAt: {
+                [Op.gte]: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30天内活跃
+              },
+            },
+          }),
         ]);
 
         userStats = {
-          total: (totalUsersResult[0] as any).count,
-          active: (activeUsersResult[0] as any).count,
+          total: totalUsers,
+          active: activeUsers,
         };
       }
 
       // 作品统计
-      let totalWorksResult, publishedWorksResult;
+      const workWhere: WhereOptions = {};
       if (userId) {
-        [totalWorksResult, publishedWorksResult] = await Promise.all([
-          sequelize.query('SELECT COUNT(*) as count FROM works WHERE user_id = :userId', { 
-            replacements: { userId },
-            type: QueryTypes.SELECT 
-          }),
-          sequelize.query('SELECT COUNT(*) as count FROM works WHERE user_id = :userId AND status = :status', { 
-            replacements: { userId, status: 'published' },
-            type: QueryTypes.SELECT 
-          }),
-        ]);
-      } else {
-        [totalWorksResult, publishedWorksResult] = await Promise.all([
-          sequelize.query('SELECT COUNT(*) as count FROM works', { 
-            type: QueryTypes.SELECT 
-          }),
-          sequelize.query('SELECT COUNT(*) as count FROM works WHERE status = :status', { 
-            replacements: { status: 'published' },
-            type: QueryTypes.SELECT 
-          }),
-        ]);
+        workWhere.userId = userId;
       }
 
-      const totalWorks = (totalWorksResult[0] as any).count;
-      const publishedWorks = (publishedWorksResult[0] as any).count;
+      const [totalWorks, publishedWorks] = await Promise.all([
+        Work.count({ where: workWhere }),
+        Work.count({ where: { ...workWhere, status: 'published' } }),
+      ]);
 
       // 今日统计
       const today = new Date();
@@ -157,26 +109,18 @@ export class DashboardService {
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
 
-      const todayConditions = `${baseConditions} AND created_at >= :todayStart AND created_at < :todayEnd`;
-      const todayReplacements = {
-        ...replacements,
-        todayStart: today,
-        todayEnd: tomorrow
+      const todayWhere = {
+        ...bookingWhere,
+        createdAt: {
+          [Op.gte]: today,
+          [Op.lt]: tomorrow,
+        },
       };
 
-      const [todayBookingsResult, todayRevenueResult] = await Promise.all([
-        sequelize.query(
-          `SELECT COUNT(*) as count FROM schedules WHERE 1=1 ${todayConditions}`,
-          { replacements: todayReplacements, type: QueryTypes.SELECT }
-        ),
-        sequelize.query(
-          `SELECT SUM(price) as revenue FROM schedules WHERE 1=1 ${todayConditions} AND status = :completedStatus`,
-          { replacements: {...todayReplacements, completedStatus: ScheduleStatus.COMPLETED}, type: QueryTypes.SELECT }
-        )
+      const [todayBookings, todayRevenue] = await Promise.all([
+        Schedule.count({ where: todayWhere }),
+        Schedule.sum('price', { where: { ...todayWhere, status: ScheduleStatus.COMPLETED } }),
       ]);
-
-      const todayBookingsCount = parseInt(((todayBookingsResult[0] as any).count || '0'));
-      const todayRevenue = parseFloat(((todayRevenueResult[0] as any).revenue || '0'));
 
       // 计算趋势数据（与上个月对比）
       const lastMonth = new Date();
@@ -184,60 +128,56 @@ export class DashboardService {
       const lastMonthStart = new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1);
       const lastMonthEnd = new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 0, 23, 59, 59);
 
-      const lastMonthConditions = `${baseConditions} AND created_at >= :lastMonthStart AND created_at <= :lastMonthEnd`;
-      const lastMonthReplacements = {
-        ...replacements,
-        lastMonthStart,
-        lastMonthEnd
+      const lastMonthWhere = {
+        ...bookingWhere,
+        createdAt: {
+          [Op.gte]: lastMonthStart,
+          [Op.lte]: lastMonthEnd,
+        },
       };
 
-      const [lastMonthBookingsResult, lastMonthUsersResult, lastMonthWorksResult] = await Promise.all([
-        sequelize.query(
-          `SELECT COUNT(*) as count FROM schedules WHERE 1=1 ${lastMonthConditions}`,
-          { replacements: lastMonthReplacements, type: QueryTypes.SELECT }
-        ),
-        userId
-          ? Promise.resolve([{ count: '0' }])
-          : sequelize.query(
-            'SELECT COUNT(*) as count FROM users WHERE created_at >= :lastMonthStart AND created_at <= :lastMonthEnd',
-            { replacements: lastMonthReplacements, type: QueryTypes.SELECT }
-          ),
-        sequelize.query(
-          `SELECT COUNT(*) as count FROM works WHERE 1=1 ${userId ? 'AND user_id = :userId' : ''} AND created_at >= :lastMonthStart AND created_at <= :lastMonthEnd`,
-          { replacements: { ...lastMonthReplacements, userId }, type: QueryTypes.SELECT }
-        ),
+      const [lastMonthBookings, lastMonthUsers, lastMonthWorks] = await Promise.all([
+        Schedule.count({ where: lastMonthWhere }),
+        userId ? 0 : User.count({
+          where: {
+            createdAt: {
+              [Op.gte]: lastMonthStart,
+              [Op.lte]: lastMonthEnd,
+            },
+          },
+        }),
+        Work.count({
+          where: {
+            ...(userId ? { userId } : {}),
+            createdAt: {
+              [Op.gte]: lastMonthStart,
+              [Op.lte]: lastMonthEnd,
+            },
+          },
+        }),
       ]);
 
-      const lastMonthBookings = parseInt(((lastMonthBookingsResult[0] as any).count || '0'));
-      const lastMonthUsers = parseInt(((lastMonthUsersResult[0] as any).count || '0'));
-      const lastMonthWorks = parseInt(((lastMonthWorksResult[0] as any).count || '0'));
-
       // 计算趋势百分比
-      const bookingTrendNum = lastMonthBookings > 0 ? ((total - lastMonthBookings) / lastMonthBookings) * 100 : 0;
-      const userTrendNum = lastMonthUsers > 0 ? (((parseInt(userStats?.total || '0')) - lastMonthUsers) / lastMonthUsers) * 100 : 0;
-      const workTrendNum = lastMonthWorks > 0 ? ((parseInt(totalWorks.toString()) - lastMonthWorks) / lastMonthWorks) * 100 : 0;
-
-      // 转换为数字类型
-      const bookingTrend =  bookingTrendNum || 0;
-      const userTrend = userTrendNum || 0;
-      const workTrend = workTrendNum || 0;
+      const bookingTrend = lastMonthBookings > 0 ? ((total - lastMonthBookings) / lastMonthBookings) * 100 : 0;
+      const userTrend = lastMonthUsers > 0 ? (((userStats?.total || 0) - lastMonthUsers) / lastMonthUsers) * 100 : 0;
+      const workTrend = lastMonthWorks > 0 ? ((totalWorks - lastMonthWorks) / lastMonthWorks) * 100 : 0;
 
       // 返回前端期望的扁平结构
       return {
         // 基础统计
-        totalUsers: parseInt(userStats?.total || '0'),
-        activeUsers: parseInt(userStats?.active || '0'),
-        monthlyBookings: parseInt(todayBookingsCount.toString()),
-        totalSchedules: parseInt(total.toString()),
-        totalWorks: parseInt(totalWorks.toString()),
-        publishedWorks: parseInt(publishedWorks.toString()),
+        totalUsers: userStats?.total || 0,
+        activeUsers: userStats?.active || 0,
+        monthlyBookings: todayBookings,
+        totalSchedules: total,
+        totalWorks: totalWorks,
+        publishedWorks: publishedWorks,
 
         // 预订统计
-        total: parseInt(total.toString()),
-        booked: parseInt(booked.toString()),
-        reserve: parseInt(reserve.toString()),
-        completed: parseInt(completed.toString()),
-        todayBookings: parseInt(todayBookingsCount.toString()),
+        total: total,
+        booked: booked,
+        reserve: reserve,
+        completed: completed,
+        todayBookings: todayBookings,
 
         // 收入统计
         totalRevenue: parseFloat(revenue.total || '0'),
@@ -255,8 +195,8 @@ export class DashboardService {
         },
         users: userStats,
         works: {
-          total: parseInt(totalWorks.toString()),
-          published: parseInt(publishedWorks.toString()),
+          total: totalWorks,
+          published: publishedWorks,
         },
       };
     } catch (error) {
@@ -272,13 +212,12 @@ export class DashboardService {
     try {
       const { period, year, month, userId } = params;
 
-      // 使用原生SQL查询收入趋势
-      let conditions = "WHERE is_paid = true";
-      const replacements: Record<string, any> = {};
+      const where: WhereOptions = {
+        isPaid: true,
+      };
 
       if (userId) {
-        conditions += " AND user_id = :userId";
-        replacements.userId = userId;
+        where.userId = userId;
       }
 
       let dateFormat: string;
@@ -321,24 +260,21 @@ export class DashboardService {
           throw new Error('无效的时间周期');
       }
 
-      conditions += " AND created_at >= :startDate AND created_at <= :endDate";
-      replacements.startDate = startDate;
-      replacements.endDate = endDate;
+      where.createdAt = {
+        [Op.gte]: startDate,
+        [Op.lte]: endDate,
+      };
 
-      const query = `
-        SELECT 
-          DATE_FORMAT(created_at, '${dateFormat}') as date,
-          SUM(price) as revenue,
-          COUNT(id) as bookings
-        FROM schedules 
-        ${conditions}
-        GROUP BY DATE_FORMAT(created_at, '${dateFormat}')
-        ORDER BY DATE_FORMAT(created_at, '${dateFormat}') ASC
-      `;
-
-      const revenueData: any = await sequelize.query(query, {
-        replacements,
-        type: QueryTypes.SELECT
+      const revenueData = await Schedule.findAll({
+        where,
+        attributes: [
+          [Schedule.sequelize!.fn('DATE_FORMAT', Schedule.sequelize!.col('createdAt'), dateFormat), 'date'],
+          [Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'revenue'],
+          [Schedule.sequelize!.fn('COUNT', Schedule.sequelize!.col('id')), 'bookings'],
+        ],
+        group: [Schedule.sequelize!.fn('DATE_FORMAT', Schedule.sequelize!.col('createdAt'), dateFormat)],
+        order: [[Schedule.sequelize!.fn('DATE_FORMAT', Schedule.sequelize!.col('createdAt'), dateFormat), 'ASC']],
+        raw: true,
       });
 
       return revenueData.map((item: any) => ({
@@ -359,14 +295,12 @@ export class DashboardService {
     try {
       const { period, days = 30, userId } = params;
 
-      // 使用原生SQL查询预订趋势
-      let conditions = "WHERE status IN (:statuses)";
-      const replacements: Record<string, any> = {};
-      replacements.statuses = [ScheduleStatus.BOOKED, ScheduleStatus.RESERVE, ScheduleStatus.COMPLETED];
+      const where: WhereOptions = {
+        status: { [Op.in]: [ScheduleStatus.BOOKED, ScheduleStatus.RESERVE, ScheduleStatus.COMPLETED] },
+      };
 
       if (userId) {
-        conditions += " AND user_id = :userId";
-        replacements.userId = userId;
+        where.userId = userId;
       }
 
       let dateFormat: string;
@@ -398,25 +332,28 @@ export class DashboardService {
           throw new Error('无效的时间周期');
       }
 
-      conditions += " AND created_at >= :startDate AND created_at <= :endDate";
-      replacements.startDate = startDate;
-      replacements.endDate = endDate;
+      where.createdAt = {
+        [Op.gte]: startDate,
+        [Op.lte]: endDate,
+      };
 
-      const query = `
-        SELECT 
-          DATE_FORMAT(created_at, '${dateFormat}') as period,
-          COUNT(id) as bookings,
-          COUNT(CASE WHEN status = 'confirmed' THEN 1 END) as confirmed,
-          COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed
-        FROM schedules 
-        ${conditions}
-        GROUP BY DATE_FORMAT(created_at, '${dateFormat}')
-        ORDER BY DATE_FORMAT(created_at, '${dateFormat}') ASC
-      `;
-
-      const trendData: any = await sequelize.query(query, {
-        replacements,
-        type: QueryTypes.SELECT
+      const trendData = await Schedule.findAll({
+        where,
+        attributes: [
+          [Schedule.sequelize!.fn('DATE_FORMAT', Schedule.sequelize!.col('createdAt'), dateFormat), 'period'],
+          [Schedule.sequelize!.fn('COUNT', Schedule.sequelize!.col('id')), 'bookings'],
+          [
+            Schedule.sequelize!.fn('COUNT', Schedule.sequelize!.literal("CASE WHEN status = 'confirmed' THEN 1 END")),
+            'confirmed',
+          ],
+          [
+            Schedule.sequelize!.fn('COUNT', Schedule.sequelize!.literal("CASE WHEN status = 'completed' THEN 1 END")),
+            'completed',
+          ],
+        ],
+        group: [Schedule.sequelize!.fn('DATE_FORMAT', Schedule.sequelize!.col('createdAt'), dateFormat)],
+        order: [[Schedule.sequelize!.fn('DATE_FORMAT', Schedule.sequelize!.col('createdAt'), dateFormat), 'ASC']],
+        raw: true,
       });
 
       return trendData.map((item: any) => ({
@@ -438,39 +375,32 @@ export class DashboardService {
     try {
       const { startDate, endDate, userId } = params;
 
-      // 使用原生SQL查询事件类型分布
-      let conditions = "WHERE status IN (:statuses)";
-      const replacements: Record<string, any> = {};
-      replacements.statuses = [ScheduleStatus.BOOKED, ScheduleStatus.RESERVE, ScheduleStatus.CANCELLED];
+      const where: WhereOptions = {
+        status: { [Op.in]: [ScheduleStatus.BOOKED, ScheduleStatus.RESERVE, ScheduleStatus.CANCELLED] },
+      };
 
       if (userId) {
-        conditions += " AND user_id = :userId";
-        replacements.userId = userId;
+        where.userId = userId;
       }
 
       if (startDate || endDate) {
+        where.createdAt = {};
         if (startDate) {
-          conditions += " AND created_at >= :startDate";
-          replacements.startDate = new Date(startDate);
+          (where.createdAt as any)[Op.gte] = new Date(startDate);
         }
         if (endDate) {
-          conditions += " AND created_at <= :endDate";
-          replacements.endDate = new Date(endDate);
+          (where.createdAt as any)[Op.lte] = new Date(endDate);
         }
       }
 
-      const query = `
-        SELECT 
-          COUNT(id) as count,
-          SUM(price) as revenue
-        FROM schedules 
-        ${conditions}
-        ORDER BY COUNT(id) DESC
-      `;
-
-      const data: any = await sequelize.query(query, {
-        replacements,
-        type: QueryTypes.SELECT
+      const data = await Schedule.findAll({
+        where,
+        attributes: [
+          [Schedule.sequelize!.fn('COUNT', Schedule.sequelize!.col('id')), 'count'],
+          [Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'revenue'],
+        ],
+        order: [[Schedule.sequelize!.fn('COUNT', Schedule.sequelize!.col('id')), 'DESC']],
+        raw: true,
       });
 
       return data.map((item: any) => ({
@@ -489,77 +419,43 @@ export class DashboardService {
   static async getRecentActivities(params: DashboardStatsParams = {}) {
     try {
       const { startDate, endDate, userId } = params;
-      
-      // 使用原生SQL查询最近活动
-      let conditions = "";
-      const replacements: Record<string, any> = {};
+      const where: WhereOptions = {};
 
       if (userId) {
-        conditions += " WHERE user_id = :userId";
-        replacements.userId = userId;
+        where.userId = userId;
       }
 
       if (startDate || endDate) {
-        const prefix = conditions ? " AND" : " WHERE";
-        conditions += prefix + " updated_at IS NOT NULL";
-        
+        where.updatedAt = {};
         if (startDate) {
-          conditions += " AND updated_at >= :startDate";
-          replacements.startDate = new Date(startDate);
+          (where.updatedAt as any)[Op.gte] = new Date(startDate);
         }
         if (endDate) {
-          conditions += " AND updated_at <= :endDate";
-          replacements.endDate = new Date(endDate);
+          (where.updatedAt as any)[Op.lte] = new Date(endDate);
         }
       }
 
-      const query = `
-        SELECT *
-        FROM schedules 
-        ${conditions}
-        ORDER BY updated_at DESC
-        LIMIT 20
-      `;
-
-      const activities: any = await sequelize.query(query, {
-        replacements,
-        type: QueryTypes.SELECT
+      const activities = await Schedule.findAll({
+        where,
+        include: [
+          {
+            model: User,
+            as: 'user',
+            attributes: ['id', 'username', 'realName'],
+          },
+          {
+            model: User,
+            as: 'customer',
+            attributes: ['id', 'username', 'realName'],
+            required: false,
+          },
+        ],
+        order: [['updatedAt', 'DESC']],
       });
-
-      // 手动获取用户信息
-      const userIds = [
-        ...new Set(
-          activities
-            .map((activity: any) => [activity.user_id])
-            .flat()
-        ),
-      ];
-
-      let users: any[] = [];
-      if (userIds.length > 0) {
-        const userQuery = `
-          SELECT id, username, real_name, avatar_url
-          FROM users 
-          WHERE id IN (:userIds)
-        `;
-
-        users = await sequelize.query(userQuery, {
-          replacements: { userIds },
-          type: QueryTypes.SELECT,
-        });
-      }
-
-      const userMap = users.reduce(
-        (map, user) => {
-          map[user.id] = user;
-          return map;
-        },
-        {} as Record<string, any>,
-      );
 
       return activities.map((activity: any) => {
         let actionType = '创建';
-        let description: string;
+        let description = '';
 
         switch (activity.status) {
           case ScheduleStatus.BOOKED:
@@ -586,15 +482,11 @@ export class DashboardService {
           id: activity.id,
           type: actionType,
           description,
-          user: userMap[activity.user_id]?.real_name || userMap[activity.user_id]?.username || '未知用户',
-          customer:
-            userMap[activity.customer_id]?.real_name ||
-            userMap[activity.customer_id]?.username ||
-            activity.customer_name ||
-            '未知客户',
-          timestamp: activity.updated_at,
+          user: activity.user?.realName || activity.user?.username || '未知用户',
+          customer: activity.customer?.realName || activity.customer?.username || activity.customerName || '未知客户',
+          timestamp: activity.updatedAt,
           status: activity.status,
-          eventType: activity.event_type,
+          eventType: activity.eventType,
         };
       });
     } catch (error) {
@@ -610,69 +502,57 @@ export class DashboardService {
     try {
       const { startDate, endDate, userId } = params;
 
-      // 使用原生SQL查询热门时间段
-      let conditions = "WHERE status IN (:statuses)";
-      const replacements: Record<string, any> = {};
-      replacements.statuses = [ScheduleStatus.BOOKED, ScheduleStatus.RESERVE, ScheduleStatus.COMPLETED];
+      const where: WhereOptions = {
+        status: { [Op.in]: [ScheduleStatus.BOOKED, ScheduleStatus.RESERVE, ScheduleStatus.COMPLETED] },
+      };
 
       if (userId) {
-        conditions += " AND user_id = :userId";
-        replacements.userId = userId;
+        where.userId = userId;
       }
 
       if (startDate || endDate) {
+        where.startTime = {};
         if (startDate) {
-          conditions += " AND start_time >= :startDate";
-          replacements.startDate = new Date(startDate);
+          (where.startTime as any)[Op.gte] = new Date(startDate);
         }
         if (endDate) {
-          conditions += " AND start_time <= :endDate";
-          replacements.endDate = new Date(endDate);
+          (where.startTime as any)[Op.lte] = new Date(endDate);
         }
       }
 
       // 按小时统计
-      const hourlyQuery = `
-        SELECT 
-          HOUR(start_time) as hour,
-          COUNT(id) as count
-        FROM schedules 
-        ${conditions}
-        GROUP BY HOUR(start_time)
-        ORDER BY COUNT(id) DESC
-      `;
+      const hourlyData = await Schedule.findAll({
+        where,
+        attributes: [
+          [Schedule.sequelize!.fn('HOUR', Schedule.sequelize!.col('startTime')), 'hour'],
+          [Schedule.sequelize!.fn('COUNT', Schedule.sequelize!.col('id')), 'count'],
+        ],
+        group: [Schedule.sequelize!.fn('HOUR', Schedule.sequelize!.col('startTime'))],
+        order: [[Schedule.sequelize!.fn('COUNT', Schedule.sequelize!.col('id')), 'DESC']],
+        raw: true,
+      });
 
       // 按星期统计
-      const weeklyQuery = `
-        SELECT 
-          DAYOFWEEK(start_time) as dayOfWeek,
-          COUNT(id) as count
-        FROM schedules 
-        ${conditions}
-        GROUP BY DAYOFWEEK(start_time)
-        ORDER BY COUNT(id) DESC
-      `;
-
-      const [hourlyData, weeklyData] = await Promise.all([
-        sequelize.query(hourlyQuery, {
-          replacements,
-          type: QueryTypes.SELECT
-        }),
-        sequelize.query(weeklyQuery, {
-          replacements,
-          type: QueryTypes.SELECT
-        })
-      ]);
+      const weeklyData = await Schedule.findAll({
+        where,
+        attributes: [
+          [Schedule.sequelize!.fn('DAYOFWEEK', Schedule.sequelize!.col('startTime')), 'dayOfWeek'],
+          [Schedule.sequelize!.fn('COUNT', Schedule.sequelize!.col('id')), 'count'],
+        ],
+        group: [Schedule.sequelize!.fn('DAYOFWEEK', Schedule.sequelize!.col('startTime'))],
+        order: [[Schedule.sequelize!.fn('COUNT', Schedule.sequelize!.col('id')), 'DESC']],
+        raw: true,
+      });
 
       const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
       return {
-        hourly: (hourlyData as any[]).map(item => ({
+        hourly: hourlyData.map((item: any) => ({
           hour: parseInt(item.hour),
           count: parseInt(item.count || '0'),
           label: `${item.hour}:00`,
         })),
-        weekly: (weeklyData as any[]).map(item => ({
+        weekly: weeklyData.map((item: any) => ({
           dayOfWeek: parseInt(item.dayOfWeek),
           count: parseInt(item.count || '0'),
           label: dayNames[parseInt(item.dayOfWeek) - 1] || '未知',
@@ -691,80 +571,68 @@ export class DashboardService {
     try {
       const { startDate, endDate, userId } = params;
 
-      // 使用原生SQL查询客户统计
-      let conditions = "WHERE status IN (:statuses)";
-      const replacements: Record<string, any> = {};
-      replacements.statuses = [ScheduleStatus.BOOKED, ScheduleStatus.RESERVE, ScheduleStatus.COMPLETED];
+      const where: WhereOptions = {
+        status: { [Op.in]: [ScheduleStatus.BOOKED, ScheduleStatus.RESERVE, ScheduleStatus.COMPLETED] },
+      };
 
       if (userId) {
-        conditions += " AND user_id = :userId";
-        replacements.userId = userId;
+        where.userId = userId;
       }
 
       if (startDate || endDate) {
+        where.createdAt = {};
         if (startDate) {
-          conditions += " AND created_at >= :startDate";
-          replacements.startDate = new Date(startDate);
+          (where.createdAt as any)[Op.gte] = new Date(startDate);
         }
         if (endDate) {
-          conditions += " AND created_at <= :endDate";
-          replacements.endDate = new Date(endDate);
+          (where.createdAt as any)[Op.lte] = new Date(endDate);
         }
       }
 
       // 新客户统计
-      const newCustomersQuery = `
-        SELECT 
-          customer_id,
-          customer_name,
-          COUNT(id) as bookingCount,
-          SUM(price) as totalSpent,
-          MIN(created_at) as firstBooking
-        FROM schedules 
-        ${conditions}
-        GROUP BY customer_id, customer_name
-        HAVING COUNT(id) = 1
-        ORDER BY MIN(created_at) DESC
-        LIMIT 10
-      `;
+      const newCustomers = await Schedule.findAll({
+        where,
+        attributes: [
+          'customerId',
+          'customerName',
+          [Schedule.sequelize!.fn('COUNT', Schedule.sequelize!.col('id')), 'bookingCount'],
+          [Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'totalSpent'],
+          [Schedule.sequelize!.fn('MIN', Schedule.sequelize!.col('createdAt')), 'firstBooking'],
+        ],
+        group: ['customerId', 'customerName'],
+        having: Schedule.sequelize!.literal('COUNT(id) = 1'), // 只有一次预订的新客户
+        order: [[Schedule.sequelize!.fn('MIN', Schedule.sequelize!.col('createdAt')), 'DESC']],
+        limit: 10,
+        raw: true,
+      });
 
       // 回头客统计
-      const returningCustomersQuery = `
-        SELECT 
-          customer_id,
-          customer_name,
-          COUNT(id) as bookingCount,
-          SUM(price) as totalSpent
-        FROM schedules 
-        ${conditions}
-        GROUP BY customer_id, customer_name
-        HAVING COUNT(id) > 1
-        ORDER BY SUM(price) DESC
-        LIMIT 10
-      `;
-
-      const [newCustomers, returningCustomers] = await Promise.all([
-        sequelize.query(newCustomersQuery, {
-          replacements,
-          type: QueryTypes.SELECT
-        }),
-        sequelize.query(returningCustomersQuery, {
-          replacements,
-          type: QueryTypes.SELECT
-        })
-      ]);
+      const returningCustomers = await Schedule.findAll({
+        where,
+        attributes: [
+          'customerId',
+          'customerName',
+          [Schedule.sequelize!.fn('COUNT', Schedule.sequelize!.col('id')), 'bookingCount'],
+          [Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'totalSpent'],
+        ],
+        group: ['customerId', 'customerName'],
+        having: Schedule.sequelize!.literal('COUNT(id) > 1'), // 多次预订的回头客
+        order: [[Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'DESC']],
+        limit: 10,
+        raw: true,
+      });
 
       return {
-        newCustomers: (newCustomers as any[]).map(customer => ({
-          id: customer.customer_id,
-          name: customer.customer_name || '未知客户',
+        newCustomers: newCustomers.map((customer: any) => ({
+          id: customer.customerId,
+          name: customer.customerName || '未知客户',
           bookingCount: parseInt(customer.bookingCount || '0'),
           totalSpent: parseFloat(customer.totalSpent || '0'),
           firstBooking: customer.firstBooking,
         })),
-        returningCustomers: (returningCustomers as any[]).map(customer => ({
-          id: customer.customer_id,
-          name: customer.customer_name || '未知客户',
+        returningCustomers: returningCustomers.map((customer: any) => ({
+          id: customer.customerId,
+          name: customer.customerName || '未知客户',
           bookingCount: parseInt(customer.bookingCount || '0'),
           totalSpent: parseFloat(customer.totalSpent || '0'),
         })),
@@ -781,175 +649,189 @@ export class DashboardService {
   static async getScheduleStats(params: DashboardStatsParams = {}) {
     try {
       const { startDate, endDate, userId } = params;
-
+      
       // 创建日期范围条件
       const dateWhere: WhereOptions = {};
       if (startDate || endDate) {
         dateWhere.weddingDate = {};
         if (startDate) {
-          (dateWhere.weddingDate as any)[Op.gte] = new Date(startDate as string);
+          (dateWhere.weddingDate as any)[Op.gte] = new Date(startDate);
         }
         if (endDate) {
-          (dateWhere.weddingDate as any)[Op.lte] = new Date(endDate as string);
+          (dateWhere.weddingDate as any)[Op.lte] = new Date(endDate);
         }
       }
-
+      
       // 如果指定了用户，则只查询该用户的档期
       const scheduleWhere: WhereOptions = {
         ...dateWhere,
-        ...(userId ? { userId } : {}),
+        ...(userId ? { userId } : {})
       };
 
       // 获取总档期数
       const totalCount = await Schedule.count({ where: scheduleWhere });
-
+      
       // 获取已完成的档期数
-      const completedCount = await Schedule.count({
-        where: {
-          ...scheduleWhere,
-          status: ScheduleStatus.COMPLETED,
-        },
+      const completedCount = await Schedule.count({ 
+        where: { 
+          ...scheduleWhere, 
+          status: ScheduleStatus.COMPLETED 
+        } 
       });
-
+      
       // 获取预定中的档期数
-      const reserveCount = await Schedule.count({
-        where: {
-          ...scheduleWhere,
-          status: ScheduleStatus.RESERVE,
-        },
+      const reserveCount = await Schedule.count({ 
+        where: { 
+          ...scheduleWhere, 
+          status: ScheduleStatus.RESERVE 
+        } 
       });
-
+      
       // 计算总收入
       const totalRevenueResult = await Schedule.findOne({
-        where: {
-          ...scheduleWhere,
-          status: ScheduleStatus.COMPLETED,
+        where: { 
+          ...scheduleWhere, 
+          status: ScheduleStatus.COMPLETED 
         },
-        attributes: [[Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'totalRevenue']],
-        raw: true,
+        attributes: [
+          [Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'totalRevenue']
+        ],
+        raw: true
       });
-
+      
       const totalRevenue = totalRevenueResult ? parseFloat((totalRevenueResult as any).totalRevenue || '0') : 0;
-
+      
       // 如果指定了用户，只返回个人统计数据
       if (userId) {
         return {
           totalCount,
           completedCount,
           reserveCount,
-          totalRevenue,
+          totalRevenue
         };
       }
-
+      
       // 获取所有团队统计数据
-      // 移除 Sequelize 关联，改为手动关联查询
       const teams: Team[] = await Team.findAll({
         where: {
-          status: TeamStatus.ACTIVE,
+          status: TeamStatus.ACTIVE
         },
-      });
-      for (const team of teams) {
-        team.members = await team.getMembers();
-      }
-      // 计算每个团队的统计数据
-      const teamStats = await Promise.all(
-        teams.map(async team => {
-          // 获取团队成员ID列表
-          const userIds = team.members?.map((member: TeamMember) => member.userId) || [];
-
-          // 团队档期条件
-          const teamMembersWhere: WhereOptions = {
-            ...dateWhere,
-            userId: {
-              [Op.in]: userIds,
+        include: [
+          {
+            model: TeamMember,
+            as: 'members',
+            where: {
+              status: TeamMemberStatus.ACTIVE
             },
+            include: [
+              {
+                model: User,
+                as: 'user'
+              }
+            ]
+          }
+        ]
+      });
+      
+      // 计算每个团队的统计数据
+      const teamStats = await Promise.all(teams.map(async (team: any) => {
+        // 获取团队成员ID列表
+        const memberIds = team.members?.map((member: any) => member.userId) || [];
+        
+        // 团队档期条件
+        const teamScheduleWhere: WhereOptions = {
+          ...dateWhere,
+          userId: {
+            [Op.in]: memberIds
+          }
+        };
+        
+        // 团队总档期数
+        const teamTotalCount = await Schedule.count({ where: teamScheduleWhere });
+        
+        // 团队已完成档期数
+        const teamCompletedCount = await Schedule.count({ 
+          where: { 
+            ...teamScheduleWhere, 
+            status: ScheduleStatus.COMPLETED 
+          } 
+        });
+        
+        // 团队总收入
+        const teamRevenueResult = await Schedule.findOne({
+          where: { 
+            ...teamScheduleWhere, 
+            status: ScheduleStatus.COMPLETED 
+          },
+          attributes: [
+            [Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'totalRevenue']
+          ],
+          raw: true
+        });
+        
+        const teamTotalRevenue = teamRevenueResult ? parseFloat((teamRevenueResult as any).totalRevenue || '0') : 0;
+        
+        // 计算团队成员统计数据
+        const memberStats = await Promise.all((team.members || []).map(async (member: any) => {
+          // 成员档期条件
+          const memberScheduleWhere: WhereOptions = {
+            ...dateWhere,
+            userId: member.userId
           };
 
-          // 团队总档期数
-          const teamTotalCount = await Schedule.count({ where: teamMembersWhere });
+          // 成员档期数
+          const scheduleCount = await Schedule.count({ where: memberScheduleWhere });
 
-          // 团队已完成档期数
-          const teamCompletedCount = await Schedule.count({
+          // 成员已完成档期数
+          const memberCompletedCount = await Schedule.count({
             where: {
-              ...teamMembersWhere,
-              status: ScheduleStatus.COMPLETED,
-            },
+              ...memberScheduleWhere,
+              status: ScheduleStatus.COMPLETED
+            }
           });
 
-          // 团队总收入
-          const teamRevenueResult = await Schedule.findOne({
+          // 成员收入
+          const memberRevenueResult = await Schedule.findOne({
             where: {
-              ...teamMembersWhere,
-              status: ScheduleStatus.COMPLETED,
+              ...memberScheduleWhere,
+              status: ScheduleStatus.COMPLETED
             },
-            attributes: [[Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'totalRevenue']],
-            raw: true,
+            attributes: [
+              [Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'revenue']
+            ],
+            raw: true
           });
 
-          const teamTotalRevenue = teamRevenueResult ? parseFloat((teamRevenueResult as any).totalRevenue || '0') : 0;
-
-          // 计算团队成员统计数据
-          const memberStats = await Promise.all(
-            (team.members || []).map(async (member: any) => {
-              // 成员档期条件
-              const memberScheduleWhere: WhereOptions = {
-                ...dateWhere,
-                userId: member.userId,
-              };
-
-              // 成员档期数
-              const scheduleCount = await Schedule.count({ where: memberScheduleWhere });
-
-              // 成员已完成档期数
-              const memberCompletedCount = await Schedule.count({
-                where: {
-                  ...memberScheduleWhere,
-                  status: ScheduleStatus.COMPLETED,
-                },
-              });
-
-              // 成员收入
-              const memberRevenueResult = await Schedule.findOne({
-                where: {
-                  ...memberScheduleWhere,
-                  status: ScheduleStatus.COMPLETED,
-                },
-                attributes: [[Schedule.sequelize!.fn('SUM', Schedule.sequelize!.col('price')), 'revenue']],
-                raw: true,
-              });
-
-              const revenue = memberRevenueResult ? parseFloat((memberRevenueResult as any).revenue || '0') : 0;
-
-              return {
-                userId: member.userId,
-                realName: member.memberUser?.realName || member.memberUser?.username || '未知用户',
-                avatarUrl: member.memberUser?.avatarUrl,
-                scheduleCount,
-                completedCount: memberCompletedCount,
-                revenue,
-              };
-            }),
-          );
+          const revenue = memberRevenueResult ? parseFloat((memberRevenueResult as any).revenue || '0') : 0;
 
           return {
-            teamId: team.id,
-            teamName: team.name,
-            totalRevenue: teamTotalRevenue,
-            completedCount: teamCompletedCount,
-            totalCount: teamTotalCount,
-            memberCount: memberStats.length,
-            memberStats,
+            userId: member.userId,
+            realName: member.memberUser?.realName || member.memberUser?.username || '未知用户',
+            avatarUrl: member.memberUser?.avatarUrl,
+            scheduleCount,
+            completedCount: memberCompletedCount,
+            revenue
           };
-        }),
-      );
-
+        }));
+        
+        return {
+          teamId: team.id,
+          teamName: team.name,
+          totalRevenue: teamTotalRevenue,
+          completedCount: teamCompletedCount,
+          totalCount: teamTotalCount,
+          memberCount: memberStats.length,
+          memberStats
+        };
+      }));
+      
       return {
         totalCount,
         completedCount,
         reserveCount,
         totalRevenue,
         teamStats,
-        teamCount: teams.length,
+        teamCount: teams.length
       };
     } catch (error) {
       logger.error('获取档期统计失败:', error);
@@ -967,7 +849,7 @@ export class DashboardService {
       // 获取今日日期范围
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today.getTime());
+      const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
 
       const where: WhereOptions = {
@@ -985,33 +867,33 @@ export class DashboardService {
       const totalSchedules = await Schedule.count({ where });
 
       // 获取今日团队档期数量（通过关联团队表查询）
-      // 完全移除 Sequelize 关联，改为手动关联查询
-      // 首先获取所有活跃的团队成员
-      const activeTeamMembers = await TeamMember.findAll({
-        where: {
-          status: TeamMemberStatus.ACTIVE,
-        },
-        attributes: ['userId'],
-        raw: true,
-      });
-
-      // 提取用户ID列表
-      const teamMemberUserIds = [
-        ...new Set(
-          activeTeamMembers
-            .map((member: any) => member.userId)
-            .filter((id): id is string => id !== null && id !== undefined),
-        ),
-      ];
-
-      // 查询这些用户的团队档期数量
       const teamSchedules = await Schedule.count({
-        where: {
-          ...where,
-          userId: {
-            [Op.in]: teamMemberUserIds,
+        where,
+        include: [
+          {
+            model: User,
+            as: 'user',
+            include: [
+              {
+                model: TeamMember,
+                as: 'invitedMembers',
+                required: true, // 必须有团队成员关联
+                where: {
+                  status: TeamMemberStatus.ACTIVE,
+                },
+                include: [
+                  {
+                    model: Team,
+                    as: 'team',
+                    where: {
+                      status: TeamStatus.ACTIVE,
+                    },
+                  },
+                ],
+              },
+            ],
           },
-        },
+        ],
       });
 
       // 获取今日个人档期数量（总数减去团队档期）
@@ -1027,60 +909,31 @@ export class DashboardService {
       ]);
 
       // 获取今日档期详细列表（可选，用于展示详情）
-      // 移除 Sequelize 关联，改为手动关联查询
       const todayScheduleList = await Schedule.findAll({
         where,
+        include: [
+          {
+            model: User,
+            as: 'user',
+            attributes: ['id', 'username', 'realName', 'avatarUrl'],
+          },
+          {
+            model: User,
+            as: 'customer',
+            attributes: ['id', 'username', 'realName'],
+            required: false,
+          },
+        ],
         order: [['weddingTime', 'ASC']],
         limit: 10, // 限制返回数量，避免数据过多
       });
-
-      // 手动获取用户信息
-      const userIds = [
-        ...new Set(
-          todayScheduleList
-            .map(schedule => schedule.userId)
-            .filter((id): id is string => id !== null && id !== undefined),
-        ),
-      ];
-      const customerIds = [
-        ...new Set(
-          todayScheduleList
-            .map(schedule => schedule.customerId)
-            .filter((id): id is string => id !== null && id !== undefined),
-        ),
-      ];
-      const allUserIds = [...userIds, ...customerIds].filter((id): id is string => id !== null && id !== undefined);
-
-      const users = await User.findAll({
-        where: {
-          id: {
-            [Op.in]: allUserIds,
-          },
-        },
-        raw: true,
-      });
-
-      const userMap = users.reduce(
-        (map, user) => {
-          map[user.id] = user;
-          return map;
-        },
-        {} as Record<string, any>,
-      );
-
-      // 占比计算
-      const teamPercentageNum = totalSchedules > 0 ? Math.round((teamSchedules / totalSchedules) * 100) : 0;
-      const personalPercentageNum = totalSchedules > 0 ? Math.round((personalSchedules / totalSchedules) * 100) : 0;
-      
-      const teamPercentage = teamPercentageNum || 0;
-      const personalPercentage = personalPercentageNum || 0;
 
       return {
         // 基础统计
         totalSchedules,
         teamSchedules,
         personalSchedules,
-
+        
         // 状态统计
         statusStats: {
           available: availableCount,
@@ -1091,8 +944,8 @@ export class DashboardService {
         },
 
         // 占比计算
-        teamPercentage: teamPercentage,
-        personalPercentage: personalPercentage,
+        teamPercentage: totalSchedules > 0 ? Math.round((teamSchedules / totalSchedules) * 100) : 0,
+        personalPercentage: totalSchedules > 0 ? Math.round((personalSchedules / totalSchedules) * 100) : 0,
 
         // 今日档期列表
         scheduleList: todayScheduleList.map((schedule: any) => ({
@@ -1104,19 +957,15 @@ export class DashboardService {
           location: schedule.location,
           eventType: schedule.eventType,
           weddingTime: schedule.weddingTime,
-          user: userMap[schedule.userId]
-            ? {
-                id: userMap[schedule.userId].id,
-                name: userMap[schedule.userId].realName || userMap[schedule.userId].username,
-                avatar: userMap[schedule.userId].avatarUrl,
-              }
-            : null,
-          customer: userMap[schedule.customerId]
-            ? {
-                id: userMap[schedule.customerId].id,
-                name: userMap[schedule.customerId].realName || userMap[schedule.customerId].username,
-              }
-            : null,
+          user: {
+            id: schedule.user?.id,
+            name: schedule.user?.realName || schedule.user?.username,
+            avatar: schedule.user?.avatarUrl,
+          },
+          customer: {
+            id: schedule.customer?.id,
+            name: schedule.customer?.realName || schedule.customer?.username || schedule.customerName,
+          },
         })),
 
         // 统计日期
@@ -1135,91 +984,45 @@ export class DashboardService {
     try {
       const { startDate, endDate, userId } = params;
 
-      // 使用原生SQL查询性能指标
-      let conditions = "WHERE status IN (:statuses)";
-      const replacements: Record<string, any> = {};
-      replacements.statuses = [ScheduleStatus.BOOKED, ScheduleStatus.RESERVE, ScheduleStatus.COMPLETED];
+      const where: WhereOptions = {
+        status: { [Op.in]: [ScheduleStatus.BOOKED, ScheduleStatus.RESERVE, ScheduleStatus.COMPLETED] },
+      };
 
       if (userId) {
-        conditions += " AND user_id = :userId";
-        replacements.userId = userId;
+        where.userId = userId;
       }
 
       if (startDate || endDate) {
+        where.createdAt = {};
         if (startDate) {
-          conditions += " AND created_at >= :startDate";
-          replacements.startDate = new Date(startDate);
+          (where.createdAt as any)[Op.gte] = new Date(startDate);
         }
         if (endDate) {
-          conditions += " AND created_at <= :endDate";
-          replacements.endDate = new Date(endDate);
+          (where.createdAt as any)[Op.lte] = new Date(endDate);
         }
       }
 
-      // 总预订数
-      const totalQuery = `
-        SELECT COUNT(*) as total FROM schedules ${conditions}
-      `;
-
-      // 完成的预订数
-      const completedQuery = `
-        SELECT COUNT(*) as completed 
-        FROM schedules 
-        ${conditions} AND status = :completedStatus
-      `;
-      replacements.completedStatus = ScheduleStatus.COMPLETED;
-
-      // 取消的预订数
-      const cancelledQuery = `
-        SELECT COUNT(*) as cancelled 
-        FROM schedules 
-        ${conditions} AND status = :cancelledStatus
-      `;
-      replacements.cancelledStatus = ScheduleStatus.CANCELLED;
-
-      // 平均预订价值
-      const avgQuery = `
-        SELECT AVG(price) as avgValue 
-        FROM schedules 
-        ${conditions} AND status = :completedStatus
-      `;
-
-      const [totalResult, completedResult, cancelledResult, avgResult] = await Promise.all([
-        sequelize.query(totalQuery, {
-          replacements,
-          type: QueryTypes.SELECT
-        }),
-        sequelize.query(completedQuery, {
-          replacements,
-          type: QueryTypes.SELECT
-        }),
-        sequelize.query(cancelledQuery, {
-          replacements,
-          type: QueryTypes.SELECT
-        }),
-        sequelize.query(avgQuery, {
-          replacements,
-          type: QueryTypes.SELECT
-        })
+      const [totalBookings, completedBookings, cancelledBookings] = await Promise.all([
+        Schedule.count({ where }),
+        Schedule.count({ where: { ...where, status: ScheduleStatus.COMPLETED } }),
+        Schedule.count({ where: { ...where, status: ScheduleStatus.CANCELLED } }),
       ]);
 
-      const totalBookings = parseInt(((totalResult[0] as any).total || '0'));
-      const completedBookings = parseInt(((completedResult[0] as any).completed || '0'));
-      const cancelledBookings = parseInt(((cancelledResult[0] as any).cancelled || '0'));
-
       // 计算转化率和完成率
-      const completionRateNum = totalBookings > 0 ? (completedBookings / totalBookings) * 100 : 0;
-      const cancellationRateNum = totalBookings > 0 ? (cancelledBookings / totalBookings) * 100 : 0;
+      const completionRate = totalBookings > 0 ? (completedBookings / totalBookings) * 100 : 0;
+      const cancellationRate = totalBookings > 0 ? (cancelledBookings / totalBookings) * 100 : 0;
 
-      const completionRate = completionRateNum || 0;
-      const cancellationRate = cancellationRateNum || 0;
-
-      const avgBookingValueResult = avgResult[0] as any;
+      // 平均预订价值
+      const avgBookingValue = await Schedule.findOne({
+        where: { ...where, status: ScheduleStatus.COMPLETED },
+        attributes: [[Schedule.sequelize!.fn('AVG', Schedule.sequelize!.col('price')), 'avgValue']],
+        raw: true,
+      });
 
       return {
         completionRate: parseFloat(completionRate.toFixed(2)),
         cancellationRate: parseFloat(cancellationRate.toFixed(2)),
-        averageBookingValue: parseFloat(avgBookingValueResult?.avgValue || '0'),
+        averageBookingValue: parseFloat((avgBookingValue as any)?.avgValue || '0'),
         totalBookings,
         completedBookings,
         cancelledBookings,
