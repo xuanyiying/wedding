@@ -28,7 +28,6 @@ import AdminWorksPage from './pages/admin/WorksPage';
 import TeamManagePage from './pages/admin/TeamManagePage';
 import ProfilePage from './pages/admin/ProfilePage';
 import ContactsPage from './pages/admin/ContactsPage';
-import IssuesPage from './pages/admin/IssuesPage';
 import { SettingsProvider } from './contexts/SettingsContext';
 
 // Ant Design 主题配置
@@ -58,7 +57,7 @@ const theme = {
 function AppInitializer() {
   // 使用认证初始化Hook
   useAuthInit();
-  
+
   const { settings } = useAppSettings();
 
   // 应用全局配置 - 使用SettingsContext中的数据，避免重复请求
@@ -144,7 +143,6 @@ function AnimatedRoutes() {
         <Route path="works" element={<AdminWorksPage />} />
         <Route path="contacts" element={<ContactsPage />} />
         <Route path="settings" element={<SettingsPage />} />
-        <Route path="issues" element={<IssuesPage />} />
       </Route>
 
       {/* 404 重定向 */}

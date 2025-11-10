@@ -25,8 +25,8 @@ export const usePageView = (pageType: 'team_member' | 'work' | 'team' | 'team_pa
     setError(null);
 
     try {
-      const data = await PageViewService.getPageViewStats(pageType, pageId);
-      setStats(data);
+      const response = await PageViewService.getPageViewStats(pageType, pageId);
+      setStats(response.data as PageViewStats || null);
     } catch (err) {
       setError(err instanceof Error ? err.message : '获取统计数据失败');
     } finally {
@@ -72,8 +72,8 @@ export const usePlayStats = (pageId: string) => {
     setError(null);
 
     try {
-      const data = await PageViewService.getPlayStats(pageId);
-      setPlayStats(data);
+      const response = await PageViewService.getPlayStats(pageId);
+      setPlayStats(response.data as PlayStats || null);
     } catch (err) {
       setError(err instanceof Error ? err.message : '获取播放统计失败');
     } finally {
@@ -110,8 +110,8 @@ export const useBatchPageView = (pageType: 'team_member' | 'work' | 'team' | 'te
     setError(null);
 
     try {
-      const data = await PageViewService.getBatchPageViewStats(pageType, pageIds);
-      setStatsMap(data);
+      const response = await PageViewService.getBatchPageViewStats(pageType, pageIds);
+      setStatsMap(response.data as Record<string, PageViewStats> || {});
     } catch (err) {
       setError(err instanceof Error ? err.message : '获取批量统计数据失败');
     } finally {

@@ -16,7 +16,11 @@ import {
 import styled from 'styled-components';
 import { userService, profileService } from '../../services';
 import { useAppSelector } from "../../store";
-import { FileType, type MediaFile, type User } from '../../types';
+import {
+  FileType,
+  type MediaFile,
+  type User,
+} from "../../types";
 import ProfileEditForm from '../../components/admin/profile/ProfileEditForm';
 import AvatarUploader from '../../components/AvatarUploader';
 import { MediaUploader } from '../../components/common/MediaUploader';
@@ -149,8 +153,9 @@ const ProfilePage: React.FC = () => {
       const mediaResponse = await profileService.getUserProfile(userId);
 
       if (mediaResponse.success && mediaResponse.data) {
-        console.log('processedMediaFiles:', mediaResponse.data?.files);
-        setMediaFiles(mediaResponse.data?.files || []);
+        const files = (mediaResponse.data as any).files;
+        console.log('processedMediaFiles:', mediaResponse?.data);
+        setMediaFiles(files);
       }
     } catch (error) {
       console.error('加载媒体文件失败:', error);

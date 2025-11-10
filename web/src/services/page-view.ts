@@ -1,4 +1,5 @@
 import request  from '../utils/request';
+import type { ApiResponse } from "../types";
 
 export interface PageViewStats {
   totalViews: number;
@@ -56,7 +57,7 @@ export class PageViewService {
   /**
    * 获取页面访问统计
    */
-  static async getPageViewStats(pageType: 'team_member' | 'work' | 'team' | 'team_page', pageId: string): Promise<PageViewStats> {
+  static async getPageViewStats(pageType: 'team_member' | 'work' | 'team' | 'team_page', pageId: string): Promise<ApiResponse<PageViewStats>> {
     return await request.get(`/page-views/stats/${pageType}/${pageId}`);
   }
 
@@ -66,7 +67,7 @@ export class PageViewService {
   static async getBatchPageViewStats(
     pageType: 'team_member' | 'work' | 'team' | 'team_page',
     pageIds: string[]
-  ): Promise<Record<string, PageViewStats>> {
+  ): Promise<ApiResponse<Record<string, PageViewStats>>> {
     return  await request.post(`/page-views/stats/${pageType}/batch`, {
       pageIds,
     });
@@ -89,14 +90,14 @@ export class PageViewService {
   /**
    * 获取作品播放统计
    */
-  static async getPlayStats(pageId: string): Promise<PlayStats> {
+  static async getPlayStats(pageId: string): Promise<ApiResponse<PlayStats>> {
     return await request.get(`/page-views/play/stats/${pageId}`);
   }
 
   /**
    * 批量获取作品播放统计
    */
-  static async getBatchPlayStats(pageIds: string[]): Promise<Record<string, PlayStats>> {
+  static async getBatchPlayStats(pageIds: string[]): Promise<ApiResponse<Record<string, PlayStats>>> {
     return await request.post('/page-views/play/stats/batch', {
       pageIds,
     });
@@ -109,7 +110,7 @@ export class PageViewService {
     pageType: 'team_member' | 'work' | 'team' | 'team_page',
     limit: number = 10,
     timeRange?: { start: Date; end: Date }
-  ): Promise<PopularPage[]> {
+  ): Promise<ApiResponse<PopularPage[]>> {
     const params: any = { limit };
     if (timeRange) {
       params.startDate = timeRange.start.toISOString();
@@ -126,7 +127,7 @@ export class PageViewService {
     pageType: 'team_member' | 'work' | 'team' | 'team_page',
     pageId?: string,
     days: number = 30
-  ): Promise<ViewTrend[]> {
+  ): Promise<ApiResponse<ViewTrend[]>> {
     const params: any = { days };
     if (pageId) {
       params.pageId = pageId;
@@ -138,7 +139,7 @@ export class PageViewService {
   /**
    * 获取管理员统计概览
    */
-  static async getAdminStats(days: number = 7): Promise<AdminStats> {
+  static async getAdminStats(days: number = 7): Promise<ApiResponse<AdminStats>> {
     return await request.get('/page-views/admin/stats', {
       params: { days },
     });

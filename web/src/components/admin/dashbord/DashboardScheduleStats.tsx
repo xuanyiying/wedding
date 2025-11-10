@@ -54,7 +54,7 @@ const DashboardScheduleStats: React.FC = () => {
       const response = await dashboardService.getScheduleStats(params);
       
       if (response.success) {
-        setStats(response.data);
+        setStats(response.data || null);
       }
     } catch (error) {
       console.error("获取统计数据失败:", error);

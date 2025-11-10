@@ -97,8 +97,10 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
     try {
       setWorksLoading(true);
       const response = await profileService.getUserProfile(userId);
-      if (response.success && response.data?.files) {
-        setMediaProfiles(response.data.files || []);
+
+      if (response.success && response.data) {
+        const files = (response.data as any).files || [];
+        setMediaProfiles(files);
       }
     } catch (error) {
       console.error('Failed to load member works:', error);

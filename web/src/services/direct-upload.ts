@@ -1,5 +1,5 @@
 import { DirectUploader, type DirectUploadResult, type DirectUploadProgress, type DirectUploadConfig } from '../utils/direct-upload';
-import { FileCategory, FileType } from '../types';
+import { type ApiResponse, FileCategory, FileType } from "../types";
 import { fileService } from '.';
 
 export class DirectUploadService {
@@ -174,13 +174,13 @@ export class DirectUploadService {
   /**
    * 删除文件
    */
-  async deleteFile(id: string): Promise<boolean> {
+  async deleteFile(id: string): Promise<ApiResponse<boolean>> {
     try {
-      await fileService.deleteFile(id);
-      return true;
+      const result = await fileService.deleteFile(id);
+      return result;
     } catch (error) {
       console.error('文件删除失败:', error);
-      return false;
+      throw error;
     }
   }
 }

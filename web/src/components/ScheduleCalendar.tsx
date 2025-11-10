@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Calendar, Spin } from 'antd';
 import type { CalendarProps } from 'antd';
 import { createStyles } from 'antd-style';
@@ -123,6 +123,21 @@ const useStyle = createStyles(({ token, css, cx }) => {
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
       }
     `,
+    moreEvents: css`
+      padding: 2px 6px;
+      margin: 1px 0;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: center;
+      background-color: ${token.colorFillTertiary};
+      color: ${token.colorText};
+      
+      &:hover {
+        background-color: ${token.colorFillSecondary};
+      }
+    `,
     legendSection: css`
       display: flex;
       justify-content: center;
@@ -190,6 +205,7 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
   fullscreen = false
 }) => {
   const { styles } = useStyle();
+  const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>({});
 
   // 获取指定日期的档期事件
   const getDateEvents = (date: Dayjs) => {
@@ -197,6 +213,14 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
       const scheduleDate = dayjs(schedule.weddingDate);
       return scheduleDate.isSame(date, 'day');
     });
+  };
+
+  // 切换展开/折叠状态
+  const toggleExpanded = (dateKey: string) => {
+    setExpandedDates(prev => ({
+      ...prev,
+      [dateKey]: !prev[dateKey]
+    }));
   };
 
   // 日历单元格渲染
@@ -210,8 +234,14 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
     const events = getDateEvents(date);
     const isToday = date.isSame(dayjs(), 'day');
     const isSelected = selectedDate?.isSame(date, 'date');
+    const dateKey = date.format('YYYY-MM-DD');
 
     if (info.type === 'date') {
+      // 确定要显示的事件列表（展开时显示全部，折叠时最多显示3个）
+      const isExpanded = expandedDates[dateKey];
+      const displayEvents = isExpanded ? events : events.slice(0, 3);
+      const hasMoreEvents = events.length > 3;
+
       return React.cloneElement(info.originNode, {
         ...(info.originNode as React.ReactElement<any>).props,
         className: classNames(styles.dateCell, {
@@ -284,8 +314,8 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
             </div>
 
             {/* 档期事件 */}
-            <div style={{ maxHeight: '80px', overflowY: 'auto' }}>
-              {events.map((event, index) => (
+            <div style={{ maxHeight: '80px', overflowY: 'auto', width: '100%' }}>
+              {displayEvents.map((event, index) => (
                 <div
                   key={`${event.id || 'event'}-${index}`}
                   className={styles.scheduleEvent}
@@ -301,6 +331,29 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                   {event.title.length > 6 ? event.title.substring(0, 6) + '...' : event.title}
                 </div>
               ))}
+              {hasMoreEvents && !isExpanded && (
+                <div
+                  className={styles.moreEvents}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleExpanded(dateKey);
+                  }}
+                  title={`${events.length - 3} 更多档期`}
+                >
+                  +{events.length - 3} 更多
+                </div>
+              )}
+              {isExpanded && (
+                <div
+                  className={styles.moreEvents}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleExpanded(dateKey);
+                  }}
+                >
+                  收起
+                </div>
+              )}
             </div>
           </div>
         ),

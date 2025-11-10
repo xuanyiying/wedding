@@ -93,7 +93,7 @@ uploadRequest.interceptors.request.use(
 );
 
 uploadRequest.interceptors.response.use(
-  (response: AxiosResponse<ApiResponse<unknown>>) => {
+  (response: AxiosResponse<ApiResponse>) => {
     const { data } = response;
 
     console.log('📥 收到上传响应:', {
@@ -104,13 +104,7 @@ uploadRequest.interceptors.response.use(
       message: data.message
     });
 
-    if (data.success) {
-      return response;
-    } else {
-      console.error('❌ 上传业务错误:', data.message);
-      safeMessage.error(data.message || ERROR_MESSAGES.UNKNOWN_ERROR);
-      return Promise.reject(new Error(data.message || ERROR_MESSAGES.UNKNOWN_ERROR));
-    }
+    return response;
   },
   async (error: AxiosError) => {
     const { response, code, message: errorMessage } = error;
@@ -204,7 +198,7 @@ request.interceptors.request.use(
 
 // 响应拦截器
 request.interceptors.response.use(
-  (response: AxiosResponse<ApiResponse<unknown>>) => {
+  (response: AxiosResponse<ApiResponse>) => {
     const { data } = response;
 
 
@@ -280,24 +274,42 @@ request.interceptors.response.use(
 
 // 封装请求方法
 export const http = {
-  get: <T = unknown>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> => {
-    return request.get(url, config).then(res => res.data);
+  get: async <T = unknown>(
+    url: string,
+    config?: AxiosRequestConfig,
+  ): Promise<ApiResponse<T>> => {
+    return await request.get(url, config).then(response => response.data);
   },
 
-  post: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> => {
-    return request.post(url, data, config).then(res => res.data);
+  post: async <T = unknown>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<ApiResponse<T>> => {
+    return await request.post(url, data, config).then(response => response.data);
   },
 
-  put: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> => {
-    return request.put(url, data, config).then(res => res.data);
+  put: async <T = unknown>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<ApiResponse<T>> => {
+    return  await request.put(url, data, config).then(response => response.data);
   },
 
-  patch: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> => {
-    return request.patch(url, data, config).then(res => res.data);
+  patch: async <T = unknown>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<ApiResponse<T>> => {
+    return await request.patch(url, data, config).then(response => response.data);
   },
 
-  delete: <T = unknown>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> => {
-    return request.delete(url, config).then(res => res.data);
+  delete: async <T = unknown>(
+    url: string,
+    config?: AxiosRequestConfig,
+  ): Promise<ApiResponse<T>> => {
+    return await request.delete(url, config).then(response => response.data);
   },
 
   upload: <T = unknown>(url: string, formData: FormData, config?: AxiosRequestConfig & { retryConfig?: RetryConfig }): Promise<ApiResponse<T>> => {
@@ -317,125 +329,14 @@ export const http = {
       `文件上传: ${url}`
     );
   },
-
-  // 带重试的上传方法（专门用于大文件）
-  uploadWithRetry: <T = unknown>(
-    url: string,
-    formData: FormData,
-    config?: AxiosRequestConfig & {
-      retryConfig?: RetryConfig;
-      onProgress?: (progress: number) => void;
-      onRetry?: (attempt: number, error: AxiosError) => void;
-    }
-  ): Promise<ApiResponse<T>> => {
-    const { retryConfig, onProgress, onRetry, ...axiosConfig } = config || {};
-
-    const customRetryConfig: RetryConfig = {
-      maxAttempts: 5, // 大文件上传重试更多次
-      delay: 2000,
-      backoff: true,
-      retryCondition: (error: any) => {
-        // 对于上传，更宽松的重试条件
-        if (!error.response) return true; // 网络错误
-        if (error.code === 'ECONNABORTED') return true; // 超时
-        if (error.response.status >= 500) return true; // 服务器错误
-        if (error.response.status === 408) return true; // 请求超时
-        if (error.response.status === 429) return true; // 请求过多
-        return false;
-      },
-      ...retryConfig,
-    };
-
-    return withRetry(
-      () => uploadRequest.post(url, formData, {
-        ...axiosConfig,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          ...axiosConfig?.headers,
-        },
-        onUploadProgress: (progressEvent) => {
-          if (onProgress && progressEvent.total) {
-            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            onProgress(progress);
-          }
-          if (axiosConfig?.onUploadProgress) {
-            axiosConfig.onUploadProgress(progressEvent);
-          }
-        },
-      }).then(res => res.data),
-      {
-        ...customRetryConfig,
-        retryCondition: (error: AxiosError) => {
-          const shouldRetry = customRetryConfig.retryCondition!(error);
-          if (shouldRetry && onRetry) {
-            // 这里需要获取当前尝试次数，暂时用1代替
-            onRetry(1, error);
-          }
-          return shouldRetry;
-        },
-      },
-      `大文件上传: ${url}`
-    );
-  },
-
-  download: (url: string, config?: AxiosRequestConfig): Promise<Blob> => {
-    return request.get(url, {
-      ...config,
-      responseType: 'blob',
-    }).then(res => res.data);
-  },
 };
 
 // 取消请求的工具
 export class RequestCanceler {
-  private pendingRequests = new Map<string, AbortController>();
-
-  /**
-   * 添加请求
-   * @param key 请求标识
-   * @returns AbortController
-   */
-  addRequest(key: string): AbortController {
-    this.cancelRequest(key); // 取消之前的同类请求
-    const controller = new AbortController();
-    this.pendingRequests.set(key, controller);
-    return controller;
-  }
-
-  /**
-   * 取消指定请求
-   * @param key 请求标识
-   */
-  cancelRequest(key: string): void {
-    const controller = this.pendingRequests.get(key);
-    if (controller) {
-      controller.abort();
-      this.pendingRequests.delete(key);
-    }
-  }
-
-  /**
-   * 取消所有请求
-   */
-  cancelAllRequests(): void {
-    this.pendingRequests.forEach(controller => {
-      controller.abort();
-    });
-    this.pendingRequests.clear();
-  }
-
-  /**
-   * 移除请求
-   * @param key 请求标识
-   */
-  removeRequest(key: string): void {
-    this.pendingRequests.delete(key);
-  }
 }
 
 // 全局请求取消器实例
-export const requestCanceler = new RequestCanceler();
-
+new RequestCanceler();
 // 重试机制配置
 export interface RetryConfig {
   maxAttempts?: number;
@@ -449,7 +350,7 @@ const defaultRetryConfig: Required<RetryConfig> = {
   maxAttempts: 3,
   delay: 2000, // 增加基础延迟到2秒
   backoff: true,
-  retryCondition: (error: any) => {
+  retryCondition: (error: AxiosError) => {
     // 如果是取消错误，则不进行重试
     if (error.code === 'ERR_CANCELED') {
       return false;
@@ -508,37 +409,5 @@ export const withRetry = async <T>(
 };
 
 // 带取消功能的请求方法
-export const createCancelableRequest = (key: string) => {
-  const controller = requestCanceler.addRequest(key);
-
-  return {
-    request: {
-      get: <T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> => {
-        return http.get(url, { ...config, signal: controller.signal });
-      },
-
-      post: <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> => {
-        return http.post(url, data, { ...config, signal: controller.signal });
-      },
-
-      put: <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> => {
-        return http.put(url, data, { ...config, signal: controller.signal });
-      },
-
-      patch: <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> => {
-        return http.patch(url, data, { ...config, signal: controller.signal });
-      },
-
-      delete: <T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> => {
-        return http.delete(url, { ...config, signal: controller.signal });
-      },
-    },
-
-    cancel: () => {
-      requestCanceler.cancelRequest(key);
-    },
-  };
-};
-
 export { uploadRequest };
 export default request;

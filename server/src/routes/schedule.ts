@@ -79,7 +79,7 @@ const router = Router();
 
 /**
  * @swagger
- * /api/schedules:
+ * /schedules:
  *   get:
  *     summary: 获取档期列表
  *     tags: [Schedules]
@@ -134,7 +134,7 @@ router.get('/',  ScheduleController.getSchedules);
 
 /**
  * @swagger
- * /api/schedules/client/availability:
+ * /schedules/client/availability:
  *   get:
  *     summary: 获取客户端档期可用性
  *     tags: [Schedules]
@@ -178,7 +178,7 @@ router.get('/client/availability', ScheduleController.getClientScheduleAvailabil
 
 /**
  * @swagger
- * /api/schedules/available-hosts:
+ * /schedules/available-hosts:
  *   get:
  *     summary: 根据时间查询可预订的主持人
  *     tags: [Schedules]
@@ -246,7 +246,7 @@ router.get(
 
 /**
  * @swagger
- * /api/schedules/{id}:
+ * /schedules/{id}:
  *   get:
  *     summary: 获取档期详情
  *     tags: [Schedules]
@@ -277,7 +277,7 @@ router.get('/:id', ScheduleController.getScheduleById);
 
 /**
  * @swagger
- * /api/schedules:
+ * /schedules:
  *   post:
  *     summary: 创建档期
  *     tags: [Schedules]
@@ -315,7 +315,7 @@ router.post('/', authMiddleware, ScheduleController.createSchedule);
 
 /**
  * @swagger
- * /api/schedules/{id}:
+ * /schedules/{id}:
  *   put:
  *     summary: 更新档期
  *     tags: [Schedules]
@@ -370,7 +370,7 @@ router.put(
 
 /**
  * @swagger
- * /api/schedules/{id}:
+ * /schedules/{id}:
  *   delete:
  *     summary: 删除档期
  *     tags: [Schedules]

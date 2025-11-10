@@ -110,7 +110,7 @@ const router = Router();
 
 /**
  * @swagger
- * /api/auth/login:
+ * /auth/login:
  *   post:
  *     summary: 用户登录
  *     tags: [Authentication]
@@ -145,7 +145,7 @@ router.post('/login', authValidators.login, login);
 
 /**
  * @swagger
- * /api/auth/register:
+ * /auth/register:
  *   post:
  *     summary: 用户注册
  *     tags: [Authentication]
@@ -174,7 +174,7 @@ router.post('/register', authValidators.register, register);
 
 /**
  * @swagger
- * /api/auth/refresh-token:
+ * /auth/refresh-token:
  *   post:
  *     summary: 刷新访问令牌
  *     tags: [Authentication]
@@ -209,7 +209,7 @@ router.post('/refresh-token', authValidators.refreshToken, refreshToken);
 
 /**
  * @swagger
- * /api/auth/check-username/{username}:
+ * /auth/check-username/{username}:
  *   get:
  *     summary: 检查用户名是否可用
  *     tags: [Authentication]
@@ -240,7 +240,7 @@ router.get('/check-username/:username', checkUsername);
 
 /**
  * @swagger
- * /api/auth/check-email/{email}:
+ * /auth/check-email/{email}:
  *   get:
  *     summary: 检查邮箱是否可用
  *     tags: [Authentication]
@@ -274,7 +274,7 @@ router.get('/check-email/:email', checkEmail);
 
 /**
  * @swagger
- * /api/auth/logout:
+ * /auth/logout:
  *   post:
  *     summary: 用户登出
  *     tags: [Authentication]
@@ -302,7 +302,7 @@ router.post('/logout', authMiddleware, logout);
 
 /**
  * @swagger
- * /api/auth/profile:
+ * /auth/profile:
  *   get:
  *     summary: 获取用户资料
  *     tags: [Authentication]
@@ -326,7 +326,7 @@ router.get('/profile', getProfile);
 
 /**
  * @swagger
- * /api/auth/me:
+ * /auth/me:
  *   get:
  *     summary: 获取当前用户信息
  *     tags: [Authentication]
@@ -350,7 +350,7 @@ router.get('/me', getCurrentUser);
 
 /**
  * @swagger
- * /api/auth/profile:
+ * /auth/profile:
  *   put:
  *     summary: 更新用户资料
  *     tags: [Authentication]
@@ -386,7 +386,7 @@ router.put('/profile', authMiddleware, authValidators.updateProfile, updateProfi
 
 /**
  * @swagger
- * /api/auth/change-password:
+ * /auth/change-password:
  *   post:
  *     summary: 修改密码
  *     tags: [Authentication]

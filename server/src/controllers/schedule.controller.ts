@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ScheduleService } from '../services/schedule.service';
 import { logger } from '../utils/logger';
-import { ScheduleStatus, WeddingTime } from '../types';
+import { ScheduleStatus, UserRole, WeddingTime } from '../types';
 import { AuthenticatedRequest } from '../interfaces';
 import { Resp } from '../utils/response';
 
@@ -124,21 +124,29 @@ export const deleteSchedule = async (req: AuthenticatedRequest, res: Response, n
  */
 export const checkScheduleConflict = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { userId, weddingDate, weddingTime, excludeId } = req.body;
-
+    let { userId, weddingDate, weddingTime, excludeId } = req.body;
+    // 非管理员用户只能检查自己的档期冲突
+    if (req.user?.role !== UserRole.USER && !userId) {
+       userId = req.user!.id;
+    }
+    // 如果缺少必要参数，直接返回无冲突
     if (!userId || !weddingDate || !weddingTime) {
-      Resp.badRequest(res, '缺少必要参数');
+      Resp.success(res, { hasConflict: false,userId }, '检查档期冲突成功');
       return;
     }
 
+    // 确保日期只包含日期部分，不包含时间部分
+    const dateOnly = new Date(weddingDate as string);
+    dateOnly.setHours(0, 0, 0, 0);
+
     const hasConflict = await ScheduleService.checkScheduleConflict(
       userId as string,
-      new Date(weddingDate),
+      dateOnly,
       weddingTime as WeddingTime,
       excludeId as string,
     );
 
-    Resp.success(res, { hasConflict }, '检查档期冲突成功');
+    Resp.success(res, { hasConflict, userId }, '检查档期冲突成功');
   } catch (error) {
     logger.error('检查档期冲突失败:', error);
     next(error);

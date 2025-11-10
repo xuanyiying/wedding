@@ -46,6 +46,7 @@ interface ScheduleEditModalProps {
   onWeddingTimeChange: (e: RadioChangeEvent) => void;
   onSearchAvailableHosts: () => void;
   onCheckScheduleConflict?: (date: Dayjs | null, time: string) => void;
+  onHostChange?: (hostId: string) => void; // 添加主持人变化处理
   setSearchModalVisible: (visible: boolean) => void;
 }
 
@@ -66,7 +67,9 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
   onWeddingDateChange,
   onWeddingTimeChange,
   onSearchAvailableHosts,
-  onCheckScheduleConflict }) => {
+  onCheckScheduleConflict,
+  onHostChange // 添加主持人变化处理
+}) => {
   const options = [
     { label: '午宴', value: 'lunch' },
     { label: '晚宴', value: 'dinner' },
@@ -168,7 +171,8 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                   getFieldValidateStatus('weddingDate')
                 }
                 help={
-                  (!isAdmin && conflictSchedules.length > 0) ? '该日期时间段已有档期安排，存在冲突' : 
+                  (!isAdmin && conflictSchedules.length > 0) ? 
+                  <span style={{ color: '#ff4d4f' }}>档期冲突</span> : 
                   getFieldHelp('weddingDate')
                 }
                 rules={[{ required: true, message: '请选择婚礼日期' }]}
@@ -195,7 +199,8 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                   getFieldValidateStatus('weddingTime')
                 }
                 help={
-                  (!isAdmin && conflictSchedules.length > 0) ? `冲突档期：${conflictSchedules.map(s => s.title).join('、')}` : 
+                  (!isAdmin && conflictSchedules.length > 0) ? 
+                  <span style={{ color: '#ff4d4f' }}>档期冲突</span> :
                   getFieldHelp('weddingTime')
                 }
               >
@@ -223,8 +228,15 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                 <Form.Item
                   name="hostId"
                   label="主持人"
-                  validateStatus={getFieldValidateStatus('hostId')}
-                  help={getFieldHelp('hostId')}
+                  validateStatus={
+                    (isAdmin && conflictSchedules.length > 0) ? 'error' : 
+                    getFieldValidateStatus('hostId')
+                  }
+                  help={
+                    (isAdmin && conflictSchedules.length > 0) ? 
+                    <span style={{ color: '#ff4d4f' }}>档期冲突：{conflictSchedules.map(s => s.user?.realName || s.user?.nickname || s.title).join('、')}</span> :
+                    getFieldHelp('hostId')
+                  }
                   rules={[{ required: true, message: '请选择主持人' }]}
                 >
                   <Select
@@ -235,6 +247,12 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                         ?.toLowerCase()
                         .includes(input.toLowerCase())
                     }
+                    onChange={(value) => {
+                      // 管理员选择主持人后触发冲突检查
+                      if (onHostChange) {
+                        onHostChange(value);
+                      }
+                    }}
                   >
                     {(availableHosts || []).map(host => (
                       <Option key={host.userId} value={host.userId}>

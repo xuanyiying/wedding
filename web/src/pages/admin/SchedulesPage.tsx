@@ -167,9 +167,9 @@ const SchedulesPage: React.FC = () => {
   // 保存档期
   const handleSave = async (values: any) => {
     try {
-      // 非管理员用户检查档期冲突
-      if (!isAdmin && conflictSchedules.length > 0) {
-        message.error('存在档期冲突，请选择其他时间');
+      // 检查档期冲突
+      if (conflictSchedules.length > 0) {
+        message.error('存在档期冲突，请选择其他时间或主持人');
         return;
       }
 
@@ -240,26 +240,73 @@ const SchedulesPage: React.FC = () => {
     }
   }, [weddingDate, selectedWeddingTime]);
 
-  // 检查档期冲突（非管理员功能）
-  const handleCheckScheduleConflict = useCallback(async () => {
-    if (!weddingDate || !selectedWeddingTime || !user?.id) {
+  // 检查档期冲突（通用功能）
+  const handleCheckScheduleConflict = useCallback(async (date: Dayjs | null, time: string) => {
+    // 对于管理员，需要主持人ID；对于非管理员，使用当前用户ID
+    const hostId = isAdmin ? form.getFieldValue('hostId') : user?.id;
+    
+    if (!date || !time || !hostId) {
       setConflictSchedules([]);
       return;
     }
 
     try {
       const response = await scheduleService.checkScheduleConflict({
-        userId: user.id,
-        weddingDate: weddingDate.format('YYYY-MM-DD'),
-        weddingTime: selectedWeddingTime,
+        userId: hostId,
+        weddingDate: date.format('YYYY-MM-DD'),
+        weddingTime: time,
         excludeId: editingSchedule?.id // 编辑时排除当前档期
       });
-      setConflictSchedules(response.data?.conflicts || []);
+      // 如果有冲突，则显示冲突信息（这里简化处理，实际应该获取具体冲突的档期）
+      if (response.data?.hasConflict) {
+        // 临时创建一个模拟的冲突档期用于显示
+        setConflictSchedules([{
+          id: 'conflict',
+          userId: hostId,
+          title: '时间冲突',
+          weddingDate: date.format('YYYY-MM-DD'),
+          weddingTime: time as 'lunch' | 'dinner',
+          status: 'booked',
+        } as Schedule]);
+      } else {
+        setConflictSchedules([]);
+      }
     } catch (error) {
       console.error('检查档期冲突失败:', error);
       setConflictSchedules([]);
     }
-  }, [weddingDate, selectedWeddingTime, user, editingSchedule]);
+  }, [isAdmin, user, editingSchedule, form]);
+
+  // 处理主持人变化（管理员功能）
+  const handleHostChange = useCallback(async (hostId: string) => {
+    if (weddingDate && selectedWeddingTime && hostId) {
+      try {
+        const response = await scheduleService.checkScheduleConflict({
+          userId: hostId,
+          weddingDate: weddingDate.format('YYYY-MM-DD'),
+          weddingTime: selectedWeddingTime,
+          excludeId: editingSchedule?.id
+        });
+        // 如果有冲突，则显示冲突信息（这里简化处理，实际应该获取具体冲突的档期）
+        if (response.data?.hasConflict) {
+          // 临时创建一个模拟的冲突档期用于显示
+          setConflictSchedules([{
+            id: 'conflict',
+            userId: hostId,
+            title: '时间冲突',
+            weddingDate: weddingDate.format('YYYY-MM-DD'),
+            weddingTime: selectedWeddingTime as 'lunch' | 'dinner',
+            status: 'booked',
+          } as Schedule]);
+        } else {
+          setConflictSchedules([]);
+        }
+      } catch (error) {
+        console.error('检查档期冲突失败:', error);
+        setConflictSchedules([]);
+      }
+    }
+  }, [weddingDate, selectedWeddingTime, editingSchedule]);
 
   // 处理婚礼日期变化
   const handleWeddingDateChange = useCallback((date: Dayjs | null) => {
@@ -267,8 +314,11 @@ const SchedulesPage: React.FC = () => {
     form.setFieldsValue({ weddingDate: date });
     if (isAdmin && date && selectedWeddingTime) {
       handleSearchAvailableHosts();
+      // 管理员模式下检查冲突
+      handleCheckScheduleConflict(date, selectedWeddingTime);
     } else if (!isAdmin) {
-      handleCheckScheduleConflict();
+      // 非管理员模式下检查冲突
+      handleCheckScheduleConflict(date, selectedWeddingTime);
     }
   }, [isAdmin, selectedWeddingTime, handleSearchAvailableHosts, handleCheckScheduleConflict, form]);
 
@@ -279,8 +329,13 @@ const SchedulesPage: React.FC = () => {
     form.setFieldsValue({ weddingTime: time });
     if (isAdmin && weddingDate && time) {
       handleSearchAvailableHosts();
+      // 管理员模式下检查冲突
+      handleCheckScheduleConflict(weddingDate, time);
+    } else if (!isAdmin && weddingDate) {
+      // 非管理员模式下检查冲突
+      handleCheckScheduleConflict(weddingDate, time);
     }
-  }, [isAdmin, weddingDate, handleSearchAvailableHosts, form]);
+  }, [isAdmin, weddingDate, handleSearchAvailableHosts, handleCheckScheduleConflict, form]);
 
   // 处理查询
   const handleSearch = async (searchFilters: any) => {
@@ -372,6 +427,7 @@ const SchedulesPage: React.FC = () => {
         onWeddingTimeChange={handleWeddingTimeChange}
         onSearchAvailableHosts={handleSearchAvailableHosts}
         onCheckScheduleConflict={handleCheckScheduleConflict}
+        onHostChange={handleHostChange} // 添加主持人变化处理
         setSearchModalVisible={setSearchModalVisible}
       />
     </SchedulesContainer>

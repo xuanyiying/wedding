@@ -57,49 +57,49 @@ const router = Router();
  */
 
 /**
- * @route GET /api/issues
+ * @route GET /issues
  * @desc 获取问题列表
  * @access Private
  */
 router.get('/', authMiddleware, IssueController.getIssues);
 
 /**
- * @route GET /api/issues/stats
+ * @route GET /issues/stats
  * @desc 获取问题统计
  * @access Private
  */
 router.get('/stats', authMiddleware, IssueController.getIssueStats);
 
 /**
- * @route GET /api/issues/:id
+ * @route GET /issues/:id
  * @desc 获取单个问题详情
  * @access Private
  */
 router.get('/:id', authMiddleware, IssueController.getIssue);
 
 /**
- * @route POST /api/issues
+ * @route POST /issues
  * @desc 创建新问题
  * @access Private
  */
 router.post('/', authMiddleware, IssueController.createIssue);
 
 /**
- * @route PUT /api/issues/:id
+ * @route PUT /issues/:id
  * @desc 更新问题
  * @access Private
  */
 router.put('/:id', authMiddleware, IssueController.updateIssue);
 
 /**
- * @route DELETE /api/issues/:id
+ * @route DELETE /issues/:id
  * @desc 删除问题
  * @access Private (仅创建者或管理员)
  */
 router.delete('/:id', authMiddleware, IssueController.deleteIssue);
 
 /**
- * @route POST /api/issues/:id/vote
+ * @route POST /issues/:id/vote
  * @desc 投票问题
  * @access Private
  */

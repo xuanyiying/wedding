@@ -4,6 +4,8 @@ import { logger } from '../utils/logger';
 import { ScheduleStatus, WeddingTime, UserRole, UserStatus, TeamMemberStatus, TeamStatus } from '../types';
 import { TeamService } from '@/services/team.service';
 import { DashboardScheduleStats, PersonalScheduleStats, TeamScheduleStats } from '@/interfaces';
+import { createError } from '@/middlewares//error';
+
 interface GetSchedulesParams {
   page: number;
   pageSize: number;
@@ -123,13 +125,6 @@ export class ScheduleService {
    * 创建档期
    */
   static async createSchedule(data: ScheduleCreationAttributes) {
-    // 检查时间冲突
-    logger.info(`检查时间冲突: ${JSON.stringify(data)}`);
-    const hasConflict = await Schedule.hasConflict(data.userId, new Date(data.weddingDate), data.weddingTime);
-
-    if (hasConflict) {
-      throw new Error('时间冲突：该时间段已有其他档期安排');
-    }
 
     const schedule = await Schedule.create(data);
 
@@ -146,13 +141,13 @@ export class ScheduleService {
     });
 
     if (!schedule) {
-      throw new Error('档期不存在');
+      throw createError.notFound('档期不存在');
     }
 
     // 检查权限（只有档期所有者或管理员可以修改）
     if (schedule.userId !== currentUserId) {
       // 这里可以添加管理员权限检查
-      throw new Error('无权限操作此档期');
+      throw createError.authorization('无权限操作此档期');
     }
 
     // 如果更新时间，检查冲突
@@ -161,7 +156,12 @@ export class ScheduleService {
       const hasConflict = await Schedule.hasConflict(schedule.userId, weddingDate, data.weddingTime, id);
 
       if (hasConflict) {
-        throw new Error('时间冲突：该时间段已有其他档期安排');
+        throw createError.conflict('档期冲突：该时间段已有其他档期安排', {
+          conflict: true,
+          userId: schedule.userId,
+          weddingDate: data.weddingDate,
+          weddingTime: data.weddingTime
+        });
       }
     }
 
@@ -178,12 +178,12 @@ export class ScheduleService {
     });
 
     if (!schedule) {
-      throw new Error('档期不存在');
+      throw createError.notFound('档期不存在');  // 使用 createError.notFound 而不是 new Error
     }
 
     // 检查权限
     if (schedule.userId !== currentUserId) {
-      throw new Error('无权限操作此档期');
+      throw createError.authorization('无权限操作此档期');  // 使用 createError.authorization 而不是 new Error
     }
 
     // 软删除
@@ -196,7 +196,11 @@ export class ScheduleService {
    * 检查档期冲突
    */
   static async checkScheduleConflict(userId: string, weddingDate: Date, weddingTime: WeddingTime, excludeId?: string) {
-    return Schedule.hasConflict(userId, weddingDate, weddingTime, excludeId);
+    // 确保日期只包含日期部分，不包含时间部分
+    const dateOnly = new Date(weddingDate);
+    dateOnly.setHours(0, 0, 0, 0);
+    
+    return Schedule.hasConflict(userId, dateOnly, weddingTime, excludeId);
   }
 
   /**
@@ -625,7 +629,4 @@ export class ScheduleService {
     };
   }
 }
-
-
-
 

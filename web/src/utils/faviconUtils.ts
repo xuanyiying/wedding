@@ -51,27 +51,3 @@ export const updateFavicon = (options: FaviconOptions): void => {
     console.error('❌ 更新Favicon失败:', error);
   }
 };
-
-/**
- * 验证favicon URL是否有效
- * @param url favicon URL
- * @returns Promise<boolean>
- */
-export const validateFaviconUrl = async (url: string): Promise<boolean> => {
-  try {
-    const response = await fetch(url, { method: 'HEAD' });
-    const contentType = response.headers.get('content-type');
-    return response.ok && (contentType?.includes('image') ?? false);
-  } catch {
-    return false;
-  }
-};
-
-/**
- * 获取当前favicon URL
- * @returns string | null
- */
-export const getCurrentFaviconUrl = (): string | null => {
-  const favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement;
-  return favicon?.href || null;
-};

@@ -67,10 +67,17 @@ class Schedule extends Model<ScheduleAttributes, ScheduleCreationAttributes> imp
     weddingTime: WeddingTime,
     excludeScheduleId?: string,
   ): Promise<boolean> {
+    // 确保只比较日期部分，忽略时间部分
+    const weddingDateOnly = new Date(weddingDate);
+    weddingDateOnly.setHours(0, 0, 0, 0);
+    
     const where: any = {
       userId,
       status: { [Op.ne]: ScheduleStatus.CANCELLED },
-      weddingDate: { [Op.eq]: weddingDate },
+      weddingDate: {
+        [Op.gte]: weddingDateOnly,
+        [Op.lt]: new Date(weddingDateOnly.getTime() + 24 * 60 * 60 * 1000) // 加一天
+      },
       weddingTime: { [Op.eq]: weddingTime },
     };
 
@@ -120,7 +127,7 @@ export const initSchedule = (sequelize: Sequelize): void => {
         comment: '详细描述',
       },
       weddingDate: {
-        type: DataTypes.DATE,
+        type: DataTypes.DATEONLY, // 改为 DATEONLY 类型，只保存日期部分
         allowNull: false,
         field: 'wedding_date',
         comment: '婚礼日期',

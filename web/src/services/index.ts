@@ -71,12 +71,14 @@ export const authService = {
 // 日程相关API
 export const scheduleService = {
   // 获取日程列表
-  getSchedules: (params?: PaginationParams & {
-    startDate?: string;
-    endDate?: string;
-    status?: string;
-    userId?: string;
-  }): Promise<ApiResponse<{ schedules: Schedule[]; total: number }>> => {
+  getSchedules: (
+    params?: PaginationParams & {
+      startDate?: string;
+      endDate?: string;
+      status?: string;
+      userId?: string;
+    },
+  ): Promise<ApiResponse<{ schedules: Schedule[]; total: number }>> => {
     return http.get("/schedules", { params });
   },
 
@@ -86,12 +88,17 @@ export const scheduleService = {
   },
 
   // 创建日程
-  createSchedule: (data: Omit<Schedule, "id" | "createdAt" | "updatedAt">): Promise<ApiResponse<Schedule>> => {
+  createSchedule: (
+    data: Omit<Schedule, "id" | "createdAt" | "updatedAt">,
+  ): Promise<ApiResponse<Schedule>> => {
     return http.post("/schedules", data);
   },
 
   // 更新日程
-  updateSchedule: (id: string, data: Partial<Schedule>): Promise<ApiResponse<Schedule>> => {
+  updateSchedule: (
+    id: string,
+    data: Partial<Schedule>,
+  ): Promise<ApiResponse<Schedule>> => {
     return http.put(`/schedules/${id}`, data);
   },
 
@@ -101,26 +108,40 @@ export const scheduleService = {
   },
 
   // 批量更新日程状态
-  batchUpdateStatus: (ids: string[], status: string): Promise<ApiResponse<null>> => {
+  batchUpdateStatus: (
+    ids: string[],
+    status: string,
+  ): Promise<ApiResponse<null>> => {
     return http.put("/schedules/batch-status", { ids, status });
   },
 
   // 获取可用时间段
-  getAvailableSlots: (date: string, hostId?: string): Promise<ApiResponse<DayAvailability[]>> => {
+  getAvailableSlots: (
+    date: string,
+    hostId?: string,
+  ): Promise<ApiResponse<DayAvailability[]>> => {
     return http.get("/schedules/available-slots", { params: { date, hostId } });
   },
 
   // 获取用户档期日历
-  getUserScheduleCalendar: (userId: string, year: number, month: number): Promise<ApiResponse<Array<{
-    date: string;
-    schedules: Array<{
-      id: string;
-      title: string;
-      status: string;
-      startTime: string;
-      endTime: string;
-    }>;
-  }>>> => {
+  getUserScheduleCalendar: (
+    userId: string,
+    year: number,
+    month: number,
+  ): Promise<
+    ApiResponse<
+      Array<{
+        date: string;
+        schedules: Array<{
+          id: string;
+          title: string;
+          status: string;
+          startTime: string;
+          endTime: string;
+        }>;
+      }>
+    >
+  > => {
     return http.get(`/schedules/calendar/${userId}/${year}/${month}`);
   },
 
@@ -130,7 +151,7 @@ export const scheduleService = {
     teamId: string;
     weddingDate: string;
     weddingTime: string;
-  }): Promise<ApiResponse<{ hosts: TeamMember[], total: number }>> => {
+  }): Promise<ApiResponse<{ hosts: TeamMember[]; total: number }>> => {
     return http.get("/schedules/available-hosts", { params });
   },
 
@@ -140,10 +161,13 @@ export const scheduleService = {
     weddingDate: string;
     weddingTime: string;
     excludeId?: string;
-  }): Promise<ApiResponse<{
-    conflicts: Schedule[];
-  }>> => {
-    return http.get("/schedules/check-conflict", { params });
+  }): Promise<
+    ApiResponse<{
+      hasConflict: boolean;
+      userId: string;
+    }>
+  > => {
+    return http.post("/schedules/check-conflict", params);
   },
 
   // 获取团队档期统计数据
@@ -161,7 +185,7 @@ export const scheduleService = {
     endDate?: string;
   }): Promise<ApiResponse<any>> => {
     return http.get("/schedules/stats/all-teams", { params });
-  }
+  },
 };
 
 // 作品相关API

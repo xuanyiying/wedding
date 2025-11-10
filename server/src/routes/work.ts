@@ -75,7 +75,7 @@ const router = Router();
 
 /**
  * @swagger
- * /api/works:
+ * /works:
  *   get:
  *     summary: 获取作品列表
  *     tags: [Works]
@@ -138,7 +138,7 @@ router.get('/', WorkController.getWorks);
 
 /**
  * @swagger
- * /api/works/{id}:
+ * /works/{id}:
  *   get:
  *     summary: 获取作品详情
  *     tags: [Works]
@@ -169,7 +169,7 @@ router.get('/:id', WorkController.getWorkById);
 
 /**
  * @swagger
- * /api/works:
+ * /works:
  *   post:
  *     summary: 创建作品
  *     tags: [Works]
@@ -207,7 +207,7 @@ router.post('/', authMiddleware, WorkController.createWork);
 
 /**
  * @swagger
- * /api/works/{id}:
+ * /works/{id}:
  *   put:
  *     summary: 更新作品
  *     tags: [Works]
@@ -258,7 +258,7 @@ router.put('/:id', authMiddleware, WorkController.updateWork);
 
 /**
  * @swagger
- * /api/works/{id}:
+ * /works/{id}:
  *   delete:
  *     summary: 删除作品
  *     tags: [Works]

@@ -514,6 +514,19 @@ export interface AppError {
   message: string;
   details?: Record<string, unknown>;
 }
+
+// 错误响应接口
+export interface ErrorResponse {
+  success: false;
+  statusCode: number;
+  message: string;
+  error: {
+    code: string;
+    details?: any;
+  };
+  timestamp: string;
+  requestId: string;
+}
 //  团队成员类型
 export interface TeamMember {
   id: string;
