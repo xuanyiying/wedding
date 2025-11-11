@@ -168,7 +168,7 @@ const ScheduleStats: React.FC = () => {
         <Row gutter={[16, 16]} className="stats-card-row" style={{ marginBottom: 24 }}>
         <Col xs={12} sm={6}>
           <StatCard
-            title="我的档期数"
+            title="档期数"
             value={personalStats?.scheduleCount || 0}
             prefix={<BarChartOutlined style={{ color: "#1890ff" }} />}
           />
@@ -182,13 +182,14 @@ const ScheduleStats: React.FC = () => {
         </Col>
         <Col xs={12} sm={6}>
           <StatCard
-            title="我的收入"
-            value={`¥${personalStats?.revenue?.toFixed(2) || "0.00"}`}
+            title="收入"
+            value={personalStats?.revenue || 0}
             prefix={<MoneyCollectOutlined style={{ color: "#f5222d" }} />}
+            suffix="元"
           />
         </Col>
       </Row>
-        )};
+        )}
     </StatsContainer>
   );
 };

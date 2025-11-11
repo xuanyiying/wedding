@@ -250,74 +250,85 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
         children: (
           <div className={styles.text}>
             {/* 阳历和农历日期居中显示 */}
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 4,
-              minHeight: '40px',
-              width: '100%',
-              textAlign: 'center',
-              padding: '8px 0 2px 0',
-              position: 'relative',
-              zIndex: 2
-            }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 4,
+                minHeight: "40px",
+                width: "100%",
+                textAlign: "center",
+                padding: "8px 0 2px 0",
+                position: "relative",
+                zIndex: 2,
+              }}
+            >
               {/* 阳历日期 */}
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '100%'
-              }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "100%",
+                }}
+              >
                 <span
                   className={classNames({
                     [styles.weekend]: isWeekend,
-                    gray: !date.isSame(dayjs(), 'month'),
+                    gray: !date.isSame(dayjs(), "month"),
                   })}
                   style={{
-                    fontWeight: isToday ? 'bold' : 'normal',
-                    color: isToday ? '#ffffff' : undefined,
-                    fontSize: '16px',
-                    lineHeight: '1.2',
-                    textAlign: 'center'
+                    fontWeight: isToday ? "bold" : "normal",
+                    color: isToday ? "#ffffff" : undefined,
+                    fontSize: "16px",
+                    lineHeight: "1.2",
+                    textAlign: "center",
                   }}
                 >
-                  {date.get('date')}
+                  {date.get("date")}
                 </span>
               </div>
 
               {/* 农历信息 */}
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginTop: '2px',
-                color: isToday ? '#ffffff' : undefined,
-                fontWeight: isToday ? 'bold' : 'normal',
-                width: '100%'
-              }}>
-                <div className={styles.lunar} style={{
-                  fontSize: '11px',
-                  lineHeight: '1.2',
-                  textAlign: 'center',
-                  width: '100%',
-                  wordBreak: 'break-all',
-                  color: isToday ? '#ffffff' : undefined,
-                  fontWeight: isToday ? 'bold' : 'normal',
-                }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginTop: "2px",
+                  color: isToday ? "#ffffff" : undefined,
+                  fontWeight: isToday ? "bold" : "normal",
+                  width: "100%",
+                }}
+              >
+                <div
+                  className={styles.lunar}
+                  style={{
+                    fontSize: "11px",
+                    lineHeight: "1.2",
+                    textAlign: "center",
+                    width: "100%",
+                    wordBreak: "break-all",
+                    color: isToday ? "#ffffff" : undefined,
+                    fontWeight: isToday ? "bold" : "normal",
+                  }}
+                >
                   {displayHoliday || solarTerm || lunar}
                 </div>
               </div>
             </div>
 
             {/* 档期事件 */}
-            <div style={{ maxHeight: '80px', overflowY: 'auto', width: '100%' }}>
-              {displayEvents.map((event, index) => (
+            <div
+              style={{ maxHeight: "80px", overflowY: "auto", width: "100%" }}
+            >
+              {displayEvents?.map((event, index) => (
                 <div
-                  key={`${event.id || 'event'}-${index}`}
+                  key={`${event.id || "event"}-${index}`}
                   className={styles.scheduleEvent}
                   style={{
                     background: getStatusBackground(event.status),
@@ -326,9 +337,9 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                     e.stopPropagation();
                     onEventClick?.(event);
                   }}
-                  title={`${event.title} - ${getStatusText(event.status)}${event.hostName ? ` (${event.hostName})` : ''}`}
+                  title={`${event.customerName} - ${getStatusText(event.status)}${event.hostName ? ` (${event.hostName})` : ""}`}
                 >
-                  {event.title.length > 6 ? event.title.substring(0, 6) + '...' : event.title}
+                  {event.customerName || "未命名档期"}
                 </div>
               ))}
               {hasMoreEvents && !isExpanded && (

@@ -130,6 +130,74 @@ const router = Router();
  */
 router.get('/',  ScheduleController.getSchedules);
 
+// 获取我的档期列表（带权限控制）
+
+/**
+ * @swagger
+ * /schedules/my:
+ *   get:
+ *     summary: 获取我的档期列表（带权限控制）
+ *     description: 普通用户只能看到自己的档期，管理员可以查看团队成员的档期。默认显示当前登录用户的本月档期。
+ *     tags: [Schedules]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: 页码
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 100
+ *         description: 每页数量
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         description: 用户ID（仅管理员可用）
+ *       - in: query
+ *         name: teamId
+ *         schema:
+ *           type: string
+ *         description: 团队ID（仅管理员可用）
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [available, booked, reserve, completed, cancelled]
+ *         description: 档期状态筛选
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: 开始日期筛选（默认为本月第一天）
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: 结束日期筛选（默认为本月最后一天）
+ *     responses:
+ *       200:
+ *         description: 档期列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PaginationResponse'
+ *       401:
+ *         description: 未授权
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/my', authMiddleware, ScheduleController.getMySchedules);
+
 // 获取客户端档期可用性
 
 /**

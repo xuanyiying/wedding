@@ -36,6 +36,47 @@ export const getSchedules = async (req: Request, res: Response, next: NextFuncti
 };
 
 /**
+ * 获取我的档期列表（带权限控制）
+ * 普通用户只能看到自己的档期
+ * 管理员可以查看团队成员的档期
+ * 进入页面时默认显示当前登录用户的本月档期
+ */
+export const getMySchedules = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { page = 1, pageSize = 100, userId, teamId, status, startDate, endDate } = req.query;
+    const currentUserId = req.user!.id;
+    const currentUserRole = req.user!.role;
+
+    // 如果没有指定日期范围，默认查询本月
+    let queryStartDate = startDate as string;
+    let queryEndDate = endDate as string;
+    
+    if (!queryStartDate || !queryEndDate) {
+      const monthRange = getCurrentMonthRange();
+      queryStartDate = monthRange.start;
+      queryEndDate = monthRange.end;
+    }
+
+    const result = await ScheduleService.getMySchedules({
+      page: Number(page),
+      pageSize: Number(pageSize),
+      currentUserId,
+      currentUserRole,
+      userId: userId as string,
+      teamId: teamId as string,
+      status: status as ScheduleStatus,
+      startDate: queryStartDate,
+      endDate: queryEndDate,
+    });
+
+    Resp.success(res, result, '获取档期列表成功');
+  } catch (error) {
+    logger.error('获取我的档期列表失败:', error);
+    next(error);
+  }
+};
+
+/**
  * 获取档期详情
  */
 export const getScheduleById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -124,14 +165,14 @@ export const deleteSchedule = async (req: AuthenticatedRequest, res: Response, n
  */
 export const checkScheduleConflict = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    let { userId, weddingDate, weddingTime } = req.body;
+    let { userId, weddingDate, weddingTime, excludeId } = req.body;
     // 非管理员用户只能检查自己的档期冲突
     if (req.user?.role !== UserRole.USER && !userId) {
        userId = req.user!.id;
     }
     // 如果缺少必要参数，直接返回无冲突
     if (!userId || !weddingDate || !weddingTime) {
-      Resp.success(res, { hasConflict: false, userId }, '检查档期冲突成功');
+      Resp.success(res, { hasConflict: false, customerName: null, hostName: null }, '检查档期冲突成功');
       return;
     }
 
@@ -143,6 +184,7 @@ export const checkScheduleConflict = async (req: Request, res: Response, next: N
       userId as string,
       dateOnly,
       weddingTime as WeddingTime,
+      excludeId as string | undefined,
     );
     Resp.success(res, data, '检查档期冲突成功');
   } catch (error) {

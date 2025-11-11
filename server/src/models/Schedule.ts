@@ -1,6 +1,7 @@
 import { Model, DataTypes, Sequelize, Optional, Op } from 'sequelize';
 import User from './User';
 import { ScheduleStatus, WeddingTime } from '../types';
+import logger from '@/utils/logger';
 
 // Schedule attributes interface
 export interface ScheduleAttributes {
@@ -65,6 +66,7 @@ class Schedule extends Model<ScheduleAttributes, ScheduleCreationAttributes> imp
     userId: string,
     weddingDate: Date,
     weddingTime: WeddingTime,
+    excludeScheduleId?: string,
   ): Promise<Schedule | null> {
     // 确保只比较日期部分，忽略时间部分
     const weddingDateOnly = new Date(weddingDate);
@@ -80,11 +82,24 @@ class Schedule extends Model<ScheduleAttributes, ScheduleCreationAttributes> imp
       weddingTime: { [Op.eq]: weddingTime },
     };
 
-    // 同一天. 相同时段冲突
-    return await Schedule.findOne({
-      where,
-    });
+    // 如果提供了excludeScheduleId，排除该档期
+    if (excludeScheduleId) {
+      where.id = { [Op.ne]: excludeScheduleId };
+    }
 
+    // 同一天. 相同时段冲突
+    const schedule = await Schedule.findOne({
+      where,
+      attributes: [
+        'id',
+        'userId',
+        'weddingDate',
+        'weddingTime',
+        'customerName',
+      ],
+    });
+    logger.debug('hasConflict schedule', schedule);
+    return schedule;
   }
 }
 

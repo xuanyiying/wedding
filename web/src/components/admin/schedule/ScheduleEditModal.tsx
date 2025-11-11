@@ -57,16 +57,16 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  
+
   // 表单状态
   const [weddingDate, setWeddingDate] = useState<Dayjs | null>(null);
   const [weddingTime, setWeddingTime] = useState<"lunch" | "dinner">("lunch");
   const [selectedHostId, setSelectedHostId] = useState<string>("");
-  
+
   // 冲突检查状态
   const [hasConflict, setHasConflict] = useState(false);
   const [conflictMessage, setConflictMessage] = useState("");
-  
+
   // 可用主持人列表
   const [availableHosts, setAvailableHosts] = useState<TeamMember[]>([]);
   const [hostsLoading, setHostsLoading] = useState(false);
@@ -80,30 +80,40 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
         setWeddingDate(date);
         setWeddingTime(schedule.weddingTime || "lunch");
         setSelectedHostId(schedule.userId || "");
-        
+
         form.setFieldsValue({
           ...schedule,
           weddingDate: date,
           hostId: schedule.userId,
         });
+
+        // 编辑模式下，如果有用户信息，将其添加到可用主持人列表
+        if (schedule.user && isAdmin) {
+          setAvailableHosts([
+            {
+              userId: schedule.userId,
+              user: schedule.user,
+            } as TeamMember,
+          ]);
+        }
       } else {
         // 新增模式
         setWeddingDate(null);
         setWeddingTime("lunch");
         setHasConflict(false);
         setConflictMessage("");
-        
+
         const defaultHostId = isAdmin ? "" : user?.id || "";
         setSelectedHostId(defaultHostId);
-        
+
         form.resetFields();
         form.setFieldsValue({
           weddingTime: "lunch",
           status: ScheduleStatus.RESERVE,
           hostId: defaultHostId,
         });
+        setAvailableHosts([]);
       }
-      setAvailableHosts([]);
     }
   }, [visible, schedule, form, isAdmin, user?.id]);
 
@@ -120,19 +130,42 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
         weddingDate: weddingDate.format("YYYY-MM-DD"),
         weddingTime: weddingTime,
       });
-      setAvailableHosts(response.data?.hosts || []);
+      const hosts = response.data?.hosts || [];
+
+      // 如果是编辑模式且当前主持人不在列表中，添加进去
+      if (schedule?.user && schedule.userId) {
+        const hasCurrentHost = hosts.some((h) => h.userId === schedule.userId);
+        if (!hasCurrentHost) {
+          hosts.unshift({
+            userId: schedule.userId,
+            user: schedule.user,
+          } as TeamMember);
+        }
+      }
+
+      setAvailableHosts(hosts);
     } catch (error) {
       console.error("加载可用主持人失败:", error);
-      setAvailableHosts([]);
+      // 如果加载失败但是编辑模式，至少保留当前主持人
+      if (schedule?.user) {
+        setAvailableHosts([
+          {
+            userId: schedule.userId,
+            user: schedule.user,
+          } as TeamMember,
+        ]);
+      } else {
+        setAvailableHosts([]);
+      }
     } finally {
       setHostsLoading(false);
     }
-  }, [isAdmin, weddingDate, weddingTime]);
+  }, [isAdmin, weddingDate, weddingTime, schedule]);
 
   // 检查档期冲突
   const checkConflict = useCallback(async () => {
     const hostId = selectedHostId || (isAdmin ? "" : user?.id || "");
-    
+
     if (!weddingDate || !weddingTime || !hostId) {
       setHasConflict(false);
       setConflictMessage("");
@@ -144,16 +177,21 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
         userId: hostId,
         weddingDate: weddingDate.format("YYYY-MM-DD"),
         weddingTime: weddingTime,
+        excludeId: schedule?.id, // 编辑时排除当前档期
       });
-      
+
       if (response.data?.hasConflict) {
         setHasConflict(true);
         if (isAdmin) {
-          setConflictMessage(`【${response.data?.hostName}】档期冲突`);
+          const msg = response.data?.hostName
+            ? `【${response.data?.hostName}】档期冲突`
+            : `档期冲突`;
+          setConflictMessage(msg);
         } else {
-          setConflictMessage(
-            `该时间已被【${response.data?.customerName}】预约，请选择其他时间`
-          );
+          const msg = response.data?.customerName
+            ? `档期冲突，该时间已被【${response.data?.customerName}】预约`
+            : `档期冲突`;
+          setConflictMessage(msg);
         }
       } else {
         setHasConflict(false);
@@ -161,7 +199,9 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
       }
     } catch (error: unknown) {
       console.error("检查档期冲突失败:", error);
-      const err = error as { response?: { status?: number; data?: { message?: string } } };
+      const err = error as {
+        response?: { status?: number; data?: { message?: string } };
+      };
       if (err?.response?.status === 409) {
         setHasConflict(true);
         setConflictMessage(err?.response?.data?.message || "档期冲突");
@@ -170,7 +210,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
         setConflictMessage("");
       }
     }
-  }, [selectedHostId, isAdmin, weddingDate, weddingTime, user?.id, schedule?.id]);
+  }, [selectedHostId, isAdmin, weddingDate, weddingTime, user?.id, schedule]);
 
   // 当日期或时间变化时，加载可用主持人
   useEffect(() => {
@@ -240,7 +280,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
   // 处理删除
   const handleDeleteClick = async () => {
     if (!schedule) return;
-    
+
     try {
       setLoading(true);
       await onDelete(schedule.id);
@@ -373,6 +413,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                 <Select placeholder="请选择档期状态">
                   <Option value={ScheduleStatus.RESERVE}>预留</Option>
                   <Option value={ScheduleStatus.BOOKED}>已预订</Option>
+                  <Option value={ScheduleStatus.COMPLETED}>已完成</Option>
                   <Option value={ScheduleStatus.CANCELLED}>已取消</Option>
                 </Select>
               </Form.Item>
@@ -406,10 +447,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                 { pattern: /^1[3-9]\d{9}$/, message: "请输入正确的手机号码" },
               ]}
             >
-              <Input
-                placeholder="请输入客户电话"
-                prefix={<PhoneOutlined />}
-              />
+              <Input placeholder="请输入客户电话" prefix={<PhoneOutlined />} />
             </Form.Item>
           </Col>
         </Row>

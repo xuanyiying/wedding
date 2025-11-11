@@ -17,6 +17,18 @@ interface GetSchedulesParams {
   endDate?: string;
 }
 
+interface GetMySchedulesParams {
+  page: number;
+  pageSize: number;
+  currentUserId: string;
+  currentUserRole: UserRole;
+  userId?: string;
+  teamId?: string;
+  status?: ScheduleStatus;
+  startDate?: string;
+  endDate?: string;
+}
+
 interface GetPublicSchedulesParams {
   page: number;
   pageSize: number;
@@ -47,6 +59,108 @@ export class ScheduleService {
     if (teamId) {
       where.teamId = teamId;
     }
+    if (startDate && endDate) {
+      where.weddingDate = {
+        [Op.between]: [new Date(startDate), new Date(endDate)],
+      };
+    } else if (startDate) {
+      where.weddingDate = {
+        [Op.gte]: new Date(startDate),
+      };
+    } else if (endDate) {
+      where.weddingDate = {
+        [Op.lte]: new Date(endDate),
+      };
+    }
+
+    const { count, rows } = await Schedule.findAndCountAll({
+      where,
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'username', 'realName', 'avatarUrl'],
+        },
+        {
+          model: User,
+          as: 'customer',
+          attributes: ['id', 'username', 'realName'],
+          required: false,
+        },
+      ],
+      order: [['weddingDate', 'ASC']],
+      limit: pageSize,
+      offset,
+    });
+
+    return {
+      schedules: rows,
+      pagination: {
+        page,
+        pageSize,
+        total: count,
+        totalPages: Math.ceil(count / pageSize),
+      },
+    };
+  }
+
+  /**
+   * 获取我的档期列表（带权限控制）
+   * 普通用户只能看到自己的档期
+   * 管理员可以查看团队成员的档期
+   */
+  static async getMySchedules(params: GetMySchedulesParams) {
+    const { page, pageSize, currentUserId, currentUserRole, userId, teamId, status, startDate, endDate } = params;
+    const offset = (page - 1) * pageSize;
+
+    const where: WhereOptions = {};
+
+    // 权限控制
+    const isAdmin = currentUserRole === UserRole.ADMIN || currentUserRole === UserRole.SUPER_ADMIN;
+    
+    if (isAdmin) {
+      // 管理员可以查看指定用户或团队的档期
+      if (userId) {
+        where.userId = userId;
+      } else if (teamId) {
+        // 获取团队成员ID列表
+        const teamMembers = await TeamMember.findAll({
+          where: {
+            teamId,
+            status: TeamMemberStatus.ACTIVE,
+          },
+          attributes: ['userId'],
+        });
+        const userIds = teamMembers.map(member => member.userId);
+        if (userIds.length > 0) {
+          where.userId = { [Op.in]: userIds };
+        } else {
+          // 团队没有成员，返回空结果
+          return {
+            schedules: [],
+            pagination: {
+              page,
+              pageSize,
+              total: 0,
+              totalPages: 0,
+            },
+          };
+        }
+      } else {
+        // 如果没有指定userId或teamId，默认显示当前用户的档期
+        where.userId = currentUserId;
+      }
+    } else {
+      // 普通用户只能查看自己的档期
+      where.userId = currentUserId;
+    }
+
+    // 状态筛选
+    if (status) {
+      where.status = status;
+    }
+
+    // 日期范围筛选
     if (startDate && endDate) {
       where.weddingDate = {
         [Op.between]: [new Date(startDate), new Date(endDate)],
@@ -156,7 +270,7 @@ export class ScheduleService {
    */
   static async deleteSchedule(id: string, currentUserId: string) {
     const schedule = await Schedule.findOne({
-      where: { id },
+      where: { id ,userId: currentUserId},
     });
 
     if (!schedule) {
@@ -169,7 +283,7 @@ export class ScheduleService {
     }
 
     // 软删除
-    await schedule.update({ deletedAt: new Date() });
+    await schedule.update({ deletedAt: new Date(), status: ScheduleStatus.CANCELLED });
 
     logger.info(`档期已删除: ${id}, 操作用户: ${currentUserId}`);
   }
@@ -177,12 +291,17 @@ export class ScheduleService {
   /**
    * 检查档期冲突
    */
-  static async checkScheduleConflict(userId: string, weddingDate: Date, weddingTime: WeddingTime) {
+  static async checkScheduleConflict(
+    userId: string,
+    weddingDate: Date,
+    weddingTime: WeddingTime,
+    excludeScheduleId?: string,
+  ) {
     // 确保日期只包含日期部分，不包含时间部分
     const dateOnly = new Date(weddingDate);
     dateOnly.setHours(0, 0, 0, 0);
 
-    const schedule = await Schedule.hasConflict(userId, dateOnly, weddingTime);
+    const schedule = await Schedule.hasConflict(userId, dateOnly, weddingTime, excludeScheduleId);
     return {
       hasConflict: schedule !== null,
       customerName: schedule ? schedule.customerName : null,

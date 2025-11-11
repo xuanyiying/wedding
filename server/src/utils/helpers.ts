@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { config } from '../config/config';
 import { logger } from './logger';
-
+import { UserRole } from '@/types';
 // 密码相关工具
 export class PasswordUtils {
   // 哈希密码
@@ -435,3 +435,6 @@ export class FileUtils {
     return config.upload.allowedAudioTypes.includes(mimetype);
   }
 }
+export const notAdmin = (user: { id: string; role: UserRole } | undefined): boolean => {
+  return user?.role === UserRole.USER;
+};

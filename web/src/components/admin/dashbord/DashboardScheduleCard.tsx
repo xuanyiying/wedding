@@ -27,7 +27,7 @@ import type { RangePickerProps } from "antd/es/date-picker";
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
 
-const DashboardScheduleStats: React.FC = () => {
+const DashboardScheduleCard: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState<DashboardScheduleStats | null>(null);
   const [statsTimeRange, setStatsTimeRange] = useState<"month" | "quarter" | "year" | "custom">("month");
@@ -120,24 +120,25 @@ const DashboardScheduleStats: React.FC = () => {
   ];
 
   return (
-    <div>
+    <div style={{ width: '100%', overflowX: 'hidden' }}>
       {/* 统计时间范围选择器 */}
-      <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
-        <Col>
-          <Space direction="vertical">
+      <Row justify="space-between" align="middle" style={{ marginBottom: 16 }} gutter={[8, 8]}>
+        <Col xs={24} sm={24} md={12} lg={12}>
+          <Space direction="vertical" style={{ width: '100%' }}>
             <Radio.Group
               defaultValue="month"
               buttonStyle="solid"
               onChange={(e) => setStatsTimeRange(e.target.value)}
               value={statsTimeRange}
+              style={{ display: 'flex', flexWrap: 'wrap' }}
             >
-              <Radio.Button value="month">本月</Radio.Button>
-              <Radio.Button value="quarter">本季度</Radio.Button>
-              <Radio.Button value="year">本年</Radio.Button>
-              <Radio.Button value="custom">自定义</Radio.Button>
+              <Radio.Button value="month" style={{ margin: '4px' }}>本月</Radio.Button>
+              <Radio.Button value="quarter" style={{ margin: '4px' }}>本季度</Radio.Button>
+              <Radio.Button value="year" style={{ margin: '4px' }}>本年</Radio.Button>
+              <Radio.Button value="custom" style={{ margin: '4px' }}>自定义</Radio.Button>
             </Radio.Group>
             {statsTimeRange === "custom" && (
-              <RangePicker onChange={onRangeChange} />
+              <RangePicker onChange={onRangeChange} style={{ marginTop: 8, width: '100%' }} />
             )}
           </Space>
         </Col>
@@ -152,7 +153,7 @@ const DashboardScheduleStats: React.FC = () => {
           {/* 统计卡片 */}
           {stats && (
             <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-              <Col xs={24} sm={12} lg={6}>
+              <Col xs={12} sm={12} md={12} lg={6}>
                 <Card>
                   <Statistic
                     title="总档期数"
@@ -161,7 +162,7 @@ const DashboardScheduleStats: React.FC = () => {
                   />
                 </Card>
               </Col>
-              <Col xs={24} sm={12} lg={6}>
+              <Col xs={12} sm={12} md={12} lg={6}>
                 <Card>
                   <Statistic
                     title="已完成"
@@ -170,7 +171,7 @@ const DashboardScheduleStats: React.FC = () => {
                   />
                 </Card>
               </Col>
-              <Col xs={24} sm={12} lg={6}>
+              <Col xs={12} sm={12} md={12} lg={6}>
                 <Card>
                   <Statistic
                     title="预定中"
@@ -179,7 +180,7 @@ const DashboardScheduleStats: React.FC = () => {
                   />
                 </Card>
               </Col>
-              <Col xs={24} sm={12} lg={6}>
+              <Col xs={12} sm={12} md={12} lg={6}>
                 <Card>
                   <Statistic
                     title="总收入"
@@ -209,6 +210,7 @@ const DashboardScheduleStats: React.FC = () => {
                 rowKey="teamId"
                 pagination={false}
                 scroll={{ x: true }}
+                style={{ width: '100%' }}
               />
             </Card>
           )}
@@ -227,4 +229,4 @@ const DashboardScheduleStats: React.FC = () => {
   );
 };
 
-export default DashboardScheduleStats;
+export default DashboardScheduleCard;

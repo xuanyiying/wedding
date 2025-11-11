@@ -6,6 +6,9 @@ const StyledContentCard = styled.div`
   border-radius: var(--admin-border-radius);
   margin-bottom: 24px;
   box-shadow: var(--admin-card-shadow);
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 `;
 
 interface ContentCardProps {

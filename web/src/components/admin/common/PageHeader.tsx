@@ -13,6 +13,9 @@ const HeaderContainer = styled.div`
   margin-bottom: 24px;
   padding: 16px 0;
   border-bottom: 1px solid var(--admin-border-color);
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
   
   @media (max-width: 768px) {
     flex-direction: column;

@@ -82,6 +82,19 @@ export const scheduleService = {
     return http.get("/schedules", { params });
   },
 
+  // 获取我的档期列表（带权限控制）
+  getMySchedules: (
+    params?: PaginationParams & {
+      startDate?: string;
+      endDate?: string;
+      status?: string;
+      userId?: string;
+      teamId?: string;
+    },
+  ): Promise<ApiResponse<{ schedules: Schedule[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } }>> => {
+    return http.get("/schedules/my", { params });
+  },
+
   // 获取单个日程
   getSchedule: (id: string): Promise<ApiResponse<{ schedule: Schedule }>> => {
     return http.get(`/schedules/${id}`);

@@ -68,28 +68,37 @@ const SchedulesPage: React.FC = () => {
   }, [initTheme]);
 
   useEffect(() => {
-    loadSchedules();
+    // 默认加载当前用户的本月档期
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+
+    loadSchedules({
+      startDate,
+      endDate,
+    });
   }, []);
 
   // 加载档期数据
   const loadSchedules = async (queryFilters?: {
     teamId?: string;
     userId?: string;
-    date?: string;
+    startDate?: string;
+    endDate?: string;
     status?: string;
     weddingTime?: "lunch" | "dinner";
   }) => {
     setLoading(true);
     try {
-      const params: Record<string, string | number> = { page: 1, limit: 100 };
-      
+      const params: Record<string, string | number> = { page: 1, pageSize: 100 };
+
       if (queryFilters?.userId) params.userId = queryFilters.userId;
-      if (queryFilters?.date) params.date = queryFilters.date;
+      if (queryFilters?.startDate) params.startDate = queryFilters.startDate;
+      if (queryFilters?.endDate) params.endDate = queryFilters.endDate;
       if (queryFilters?.status) params.status = queryFilters.status;
-      if (queryFilters?.weddingTime) params.weddingTime = queryFilters.weddingTime;
       if (queryFilters?.teamId) params.teamId = queryFilters.teamId;
 
-      const response = await scheduleService.getSchedules(params);
+      const response = await scheduleService.getMySchedules(params);
       const scheduleData = response.data?.schedules || [];
       setSchedules(scheduleData);
     } catch (error) {
@@ -156,7 +165,46 @@ const SchedulesPage: React.FC = () => {
   // 处理查询
   const handleSearch = async (searchFilters: QueryFilters) => {
     setFilters(searchFilters);
-    await loadSchedules(searchFilters);
+
+    // 构建查询参数
+    const queryParams: {
+      teamId?: string;
+      userId?: string;
+      startDate?: string;
+      endDate?: string;
+      status?: string;
+      weddingTime?: "lunch" | "dinner";
+    } = {};
+
+    if (searchFilters.teamId) {
+      queryParams.teamId = searchFilters.teamId;
+    }
+
+    if (searchFilters.userId) {
+      queryParams.userId = searchFilters.userId;
+    }
+
+    if (searchFilters.weddingTime) {
+      queryParams.weddingTime = searchFilters.weddingTime;
+    }
+
+    // 如果选择了具体日期，查询该日期所在月份
+    if (searchFilters.weddingDate) {
+      const selectedDate = searchFilters.weddingDate.toDate();
+      const startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1).toISOString().split('T')[0];
+      const endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).toISOString().split('T')[0];
+      queryParams.startDate = startDate;
+      queryParams.endDate = endDate;
+    } else {
+      // 如果没有选择日期，默认查询本月
+      const now = new Date();
+      const startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+      const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+      queryParams.startDate = startDate;
+      queryParams.endDate = endDate;
+    }
+
+    await loadSchedules(queryParams);
   };
 
   // 处理重置
@@ -166,9 +214,18 @@ const SchedulesPage: React.FC = () => {
       teamId: "",
       userId: "",
       weddingDate: null,
-      weddingTime: "lunch",
+      weddingTime: undefined,
     });
-    await loadSchedules();
+
+    // 重置后查询当前用户的本月档期
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+
+    await loadSchedules({
+      startDate,
+      endDate,
+    });
   };
 
   // 转换档期数据，添加主持人名称
@@ -185,19 +242,16 @@ const SchedulesPage: React.FC = () => {
   return (
     <SchedulesContainer>
       <ScheduleStats />
-
-      <QueryBar
-        showMealFilter={true}
-        onQuery={handleSearch}
-        initialFilters={filters}
-        onReset={handleReset}
-      />
-
       <Row gutter={16}>
         <Col xs={24} lg={24}>
           <ContentCard>
             <HeaderContainer>
-              <div></div>
+              <QueryBar
+                showMealFilter={true}
+                onQuery={handleSearch}
+                initialFilters={filters}
+                onReset={handleReset}
+              />
               <Button
                 type="primary"
                 icon={<PlusOutlined />}

@@ -24,6 +24,18 @@ const WorksContainer = styled.div`
     margin-top: 24px;
   }
   
+  /* 移动端统计卡片行优化 */
+  .stats-row {
+    @media (max-width: 768px) {
+      margin-bottom: 16px !important;
+      
+      .ant-col {
+        padding-left: 6px !important;
+        padding-right: 6px !important;
+      }
+    }
+  }
+  
   /* 移动端筛选栏优化 */
   .ant-row {
     @media (max-width: 768px) {
@@ -219,12 +231,11 @@ const WorksPage: React.FC = () => {
   const handlePreviewWork = (work: Work) => {
     const contentUrls: string[] = [];
     work.files?.forEach(file => {
-      if (file.fileUrl) {
-        contentUrls.push(file.fileUrl);
-      }
       if (file.fileType === FileType.VIDEO && file.thumbnailUrl) {
+        contentUrls.push(file.thumbnailUrl);
       }
       if (file.fileType === FileType.IMAGE && file.fileUrl) {
+        contentUrls.push(file.fileUrl);
       }
     })
     const workCardData: WorkCardType = {
@@ -346,46 +357,25 @@ const WorksPage: React.FC = () => {
       />
 
       {/* 统计卡片 */}
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col xs={12} sm={8} lg={4}>
+      <Row gutter={[16, 16]}  style={{ marginBottom: 24 }}>
+        <Col xs={8} sm={6} md={6} lg={4}>
           <StatCard
             title="总作品"
             value={stats.total}
             loading={loading}
           />
         </Col>
-        <Col xs={12} sm={8} lg={4}>
+        <Col xs={8} sm={6} md={6} lg={4}>
           <StatCard
             title="公开作品"
             value={stats.public}
             loading={loading}
           />
         </Col>
-        <Col xs={12} sm={8} lg={4}>
+        <Col xs={8} sm={6} md={6} lg={4}>
           <StatCard
             title="精选作品"
             value={stats.featured}
-            loading={loading}
-          />
-        </Col>
-        <Col xs={12} sm={8} lg={4}>
-          <StatCard
-            title="总浏览"
-            value={stats.views}
-            loading={loading}
-          />
-        </Col>
-        <Col xs={12} sm={8} lg={4}>
-          <StatCard
-            title="总点赞"
-            value={stats.likes}
-            loading={loading}
-          />
-        </Col>
-        <Col xs={12} sm={8} lg={4}>
-          <StatCard
-            title="总下载"
-            value={stats.downloads}
             loading={loading}
           />
         </Col>
@@ -510,7 +500,7 @@ const WorksPage: React.FC = () => {
             views: editingWork.viewCount || 0,
             likes: editingWork.likeCount || 0,
             downloads: editingWork.downloads || 0,
-            shares : editingWork.shareCount || 0
+            shares: editingWork.shareCount || 0
           } : undefined}
           onSubmit={handleSave}
           onCancel={() => setModalVisible(false)}

@@ -1,23 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import React, { useState, useEffect } from "react";
+import styled from "styled-components";
 
-import { type Team } from '../../types';
-import ShowcaseSection from '../../components/client/ShowcaseSection';
-import { useOutletContext } from 'react-router-dom';
-import WorksList from '../../components/client/WorksList';
-import ContactForm from '../../components/client/ContactForm';
-import { ScrollNavigation } from '../../components/client/ScrollNavigation';
-import TeamMemberDetailModal from '../../components/client/TeamMemberDetailModal';
-import ScheduleSection from '../../components/ScheduleSection';
-import { type ClientTeamMember } from '../../hooks/useTeamData';
-import TeamList from '../../components/client/TeamList';
-import TeamShowcaseSection from '../../components/client/TeamShowcaseSection';
-import { useTheme } from '../../hooks/useTheme';
-import { applyThemeSettings } from '../../utils/themeUtils';
-import TeamMemberList from '../../components/client/TeamMemberList';
-import { useTeamData } from '../../hooks/useTeamData';
-import useAppSettings from '../../hooks/useAppSettings';
-// 移除HeroSection的导入，因为我们不再使用它
+import { type Team } from "../../types";
+import ShowcaseSection from "../../components/client/ShowcaseSection";
+import { useOutletContext } from "react-router-dom";
+import WorksList from "../../components/client/WorksList";
+import ContactForm from "../../components/client/ContactForm";
+import { ScrollNavigation } from "../../components/client/ScrollNavigation";
+import TeamMemberDetailModal from "../../components/client/TeamMemberDetailModal";
+import ScheduleSection from "../../components/ScheduleSection";
+import { type ClientTeamMember } from "../../hooks/useTeamData";
+import TeamList from "../../components/client/TeamList";
+import TeamShowcaseSection from "../../components/client/TeamShowcaseSection";
+import { useTheme } from "../../hooks/useTheme";
+import { applyThemeSettings } from "../../utils/themeUtils";
+import TeamMemberList from "../../components/client/TeamMemberList";
+import { useTeamData } from "../../hooks/useTeamData";
+import useAppSettings from "../../hooks/useAppSettings";
+import { LoadingOutlined } from "@ant-design/icons";
 
 interface OutletContextType {
   setActiveSection: (sectionId: string) => void;
@@ -33,13 +33,13 @@ const SectionWrapper = styled.section`
   padding: 4rem 2rem;
   min-height: 60vh;
   scroll-margin-top: 64px; /* 为固定导航栏预留空间 */
-  
+
   /* 确保section有足够的高度用于滚动检测 */
   &:first-child {
     padding-top: 2rem; /* 减少顶部内边距，因为我们移除了HeroSection */
     min-height: 60vh;
   }
-  
+
   &:last-child {
     min-height: 80vh;
     padding-bottom: 6rem;
@@ -48,12 +48,12 @@ const SectionWrapper = styled.section`
   @media (max-width: 768px) {
     padding: 3rem 1rem;
     min-height: 50vh;
-    
+
     &:first-child {
       min-height: 50vh;
       padding-top: 2rem;
     }
-    
+
     &:last-child {
       min-height: 70vh;
       padding-bottom: 4rem;
@@ -70,7 +70,9 @@ const TeamSectionWrapper = styled.div`
 const HomePage: React.FC = () => {
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<ClientTeamMember | null>(null);
+  const [selectedMember, setSelectedMember] = useState<ClientTeamMember | null>(
+    null,
+  );
 
   // 使用站点设置和主题钩子
   const { settings, loading } = useAppSettings();
@@ -87,17 +89,22 @@ const HomePage: React.FC = () => {
   // 应用主题设置
   useEffect(() => {
     // 初始化客户端主题
-    initTheme('client');
+    initTheme("client");
 
     // 如果有自定义主题设置，应用它们
     if (settings?.theme) {
       // 确保 theme 对象包含所有必需的属性
       const themeWithDefaults = {
         ...settings.theme,
-        colors: settings.theme.colors ? {
-          ...settings.theme.colors,
-          accent: settings.theme.colors.accent || settings.theme.colors.primary || '#D4A574'
-        } : undefined
+        colors: settings.theme.colors
+          ? {
+              ...settings.theme.colors,
+              accent:
+                settings.theme.colors.accent ||
+                settings.theme.colors.primary ||
+                "#D4A574",
+            }
+          : undefined,
       };
       applyThemeSettings(themeWithDefaults);
     }
@@ -117,7 +124,7 @@ const HomePage: React.FC = () => {
   };
 
   const handleViewDetails = (userId: string) => {
-    const member = teamMembers.find(m => m.userId === userId);
+    const member = teamMembers.find((m) => m.userId === userId);
     if (member) {
       setSelectedMember(member);
       setModalVisible(true);
@@ -131,7 +138,7 @@ const HomePage: React.FC = () => {
 
   // 处理加载状态
   if (loading || !settings) {
-    return <div>加载中...</div>;
+    return <LoadingOutlined />;
   }
 
   // 从新的设置结构中提取数据
@@ -148,10 +155,10 @@ const HomePage: React.FC = () => {
     <PageContainer>
       <ScrollNavigation
         sections={[
-          { id: 'team', path: '/' }, // 首页直接显示团队部分
-          { id: 'portfolio', path: '/works' },
-          { id: 'schedule', path: '/schedule' },
-          { id: 'contact', path: '/contact' }
+          { id: "team", path: "/" }, // 首页直接显示团队部分
+          { id: "portfolio", path: "/works" },
+          { id: "schedule", path: "/schedule" },
+          { id: "contact", path: "/contact" },
         ]}
         onSectionChange={setActiveSection}
         headerHeight={64}
@@ -161,8 +168,11 @@ const HomePage: React.FC = () => {
       <SectionWrapper id="team">
         {!selectedTeam ? (
           <TeamList
-            title={teamSection?.title || '我们的团队'}
-            description={teamSection?.description || '专业的婚礼策划团队，为您打造独一无二的梦想婚礼'}
+            title={teamSection?.title || "我们的团队"}
+            description={
+              teamSection?.description ||
+              "专业的婚礼策划团队，为您打造独一无二的梦想婚礼"
+            }
             onTeamSelect={handleTeamSelect}
           />
         ) : (
@@ -183,8 +193,8 @@ const HomePage: React.FC = () => {
       {(teamShowcaseSection?.visible ?? true) !== false && selectedTeam && (
         <TeamShowcaseSection
           team={selectedTeam}
-          title={teamShowcaseSection?.title || '团队展示'}
-          description={teamShowcaseSection?.description || '了解我们的专业团队'}
+          title={teamShowcaseSection?.title || "团队展示"}
+          description={teamShowcaseSection?.description || "了解我们的专业团队"}
           visible={(teamShowcaseSection?.visible ?? true) !== false}
         />
       )}
@@ -209,7 +219,10 @@ const HomePage: React.FC = () => {
           <ScheduleSection
             team={selectedTeam}
             title={scheduleSectionSettings?.title || "我们的档期"}
-            description={scheduleSectionSettings?.description || "查看我们团队的档期安排，计划您的重要日子。"}
+            description={
+              scheduleSectionSettings?.description ||
+              "查看我们团队的档期安排，计划您的重要日子。"
+            }
           />
         </SectionWrapper>
       )}

@@ -35,7 +35,7 @@ import type { User } from '../../types';
 import { UserRole, UserStatus } from '../../types';
 import { userService } from '../../services';
 import { useTheme } from '../../hooks/useTheme';
-import { PageHeader, StatCard, ContentCard } from '../../components/admin/common';
+import { PageHeader, ContentCard } from '../../components/admin/common';
 
 const { Option } = Select;
 
@@ -500,53 +500,12 @@ const UsersPage: React.FC = () => {
       ),
     },
   ];
-
-  // 统计数据
-  const stats = {
-    total: users.length,
-    active: users.filter(u => u.status === UserStatus.ACTIVE).length,
-    users: users.filter(u => u.role === UserRole.USER).length,
-    newThisMonth: users.filter(u => dayjs(u.joinDate).isAfter(dayjs().subtract(1, 'month'))).length
-  };
-
   return (
     <PageContainer>
       <PageHeader
         title="用户管理"
         subtitle="管理系统用户、主持人和客户信息"
       />
-
-      {/* 统计卡片 */}
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={6}>
-          <StatCard
-            title="总用户数"
-            value={stats.total}
-            prefix={<UserOutlined />}
-          />
-        </Col>
-        <Col xs={24} sm={6}>
-          <StatCard
-            title="活跃用户"
-            value={stats.active}
-            valueStyle={{ color: "var(--admin-success-color)" }}
-          />
-        </Col>
-        <Col xs={24} sm={6}>
-          <StatCard
-            title="用户数"
-            value={stats.users}
-            valueStyle={{ color: "var(--admin-primary-color)" }}
-          />
-        </Col>
-        <Col xs={24} sm={6}>
-          <StatCard
-            title="本月新增"
-            value={stats.newThisMonth}
-            valueStyle={{ color: "var(--admin-warning-color)" }}
-          />
-        </Col>
-      </Row>
 
       {/* 搜索和操作栏 */}
       <ContentCard>
