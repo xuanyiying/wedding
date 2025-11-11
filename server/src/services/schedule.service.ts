@@ -24,7 +24,6 @@ interface GetPublicSchedulesParams {
   endDate?: string;
 }
 
-
 export class ScheduleService {
   /**
    * 获取档期列表
@@ -125,7 +124,6 @@ export class ScheduleService {
    * 创建档期
    */
   static async createSchedule(data: ScheduleCreationAttributes) {
-
     const schedule = await Schedule.create(data);
 
     // 返回包含关联数据的档期
@@ -149,22 +147,6 @@ export class ScheduleService {
       // 这里可以添加管理员权限检查
       throw createError.authorization('无权限操作此档期');
     }
-
-    // 如果更新时间，检查冲突
-    if (data.weddingDate && data.weddingTime) {
-      const weddingDate = data.weddingDate ? new Date(data.weddingDate) : schedule.weddingDate;
-      const hasConflict = await Schedule.hasConflict(schedule.userId, weddingDate, data.weddingTime, id);
-
-      if (hasConflict) {
-        throw createError.conflict('档期冲突：该时间段已有其他档期安排', {
-          conflict: true,
-          userId: schedule.userId,
-          weddingDate: data.weddingDate,
-          weddingTime: data.weddingTime
-        });
-      }
-    }
-
     await schedule.update(data);
     return this.getScheduleById(id);
   }
@@ -178,12 +160,12 @@ export class ScheduleService {
     });
 
     if (!schedule) {
-      throw createError.notFound('档期不存在');  // 使用 createError.notFound 而不是 new Error
+      throw createError.notFound('档期不存在'); // 使用 createError.notFound 而不是 new Error
     }
 
     // 检查权限
     if (schedule.userId !== currentUserId) {
-      throw createError.authorization('无权限操作此档期');  // 使用 createError.authorization 而不是 new Error
+      throw createError.authorization('无权限操作此档期'); // 使用 createError.authorization 而不是 new Error
     }
 
     // 软删除
@@ -195,12 +177,17 @@ export class ScheduleService {
   /**
    * 检查档期冲突
    */
-  static async checkScheduleConflict(userId: string, weddingDate: Date, weddingTime: WeddingTime, excludeId?: string) {
+  static async checkScheduleConflict(userId: string, weddingDate: Date, weddingTime: WeddingTime) {
     // 确保日期只包含日期部分，不包含时间部分
     const dateOnly = new Date(weddingDate);
     dateOnly.setHours(0, 0, 0, 0);
-    
-    return Schedule.hasConflict(userId, dateOnly, weddingTime, excludeId);
+
+    const schedule = await Schedule.hasConflict(userId, dateOnly, weddingTime);
+    return {
+      hasConflict: schedule !== null,
+      customerName: schedule ? schedule.customerName : null,
+      hostName: schedule ? schedule.user?.realName : null,
+    };
   }
 
   /**
@@ -208,7 +195,7 @@ export class ScheduleService {
    */
   static async getUserScheduleCalendar(userId: string, year: number, month: number) {
     const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0, 23, 59, 59);
+    const endDate = new Date(year, month, 0);
 
     const schedules = await Schedule.findAll({
       where: {
@@ -217,7 +204,7 @@ export class ScheduleService {
           [Op.between]: [startDate, endDate],
         },
       },
-      attributes: ['id', 'title', 'weddingDate', 'weddingTime', 'status'],
+      attributes: ['id', 'title', 'customerName', 'weddingDate', 'weddingTime', 'status'],
       order: [
         ['weddingDate', 'ASC'],
         ['weddingTime', 'ASC'],
@@ -511,7 +498,6 @@ export class ScheduleService {
     };
   }
 
-
   /**
    * 获取单个团队的档期统计数据
    */
@@ -568,7 +554,7 @@ export class ScheduleService {
     return this.getSingleTeamStats(teamId, startDate, endDate);
   }
 
-  static async getAllTeamsScheduleStats(startDate: string, endDate: string) : Promise<DashboardScheduleStats> {
+  static async getAllTeamsScheduleStats(startDate: string, endDate: string): Promise<DashboardScheduleStats> {
     // 获取所有活跃团队
     const teams = await Team.findAll({
       where: {
@@ -581,18 +567,22 @@ export class ScheduleService {
       }),
     );
     const totalReserveCount = 0; // 在当前实现中没有直接计算预定数量
-    
+
     return {
       teamStats: results,
       totalCount: results.reduce((sum, stat) => sum + stat.totalCount, 0),
       completedCount: results.reduce((sum, stat) => sum + stat.completedCount, 0),
       reserveCount: totalReserveCount,
       totalRevenue: results.reduce((sum, stat) => sum + stat.totalRevenue, 0),
-      teamCount: results.length
+      teamCount: results.length,
     };
   }
-// 获取个人档期统计数据
-  static async getPersonalSchedulesStats(userId: string, startDate: string, endDate: string): Promise<PersonalScheduleStats> {
+  // 获取个人档期统计数据
+  static async getPersonalSchedulesStats(
+    userId: string,
+    startDate: string,
+    endDate: string,
+  ): Promise<PersonalScheduleStats> {
     // 获取用户的所有已完成档期
     const schedules = await Schedule.findAll({
       where: {
@@ -629,4 +619,3 @@ export class ScheduleService {
     };
   }
 }
-

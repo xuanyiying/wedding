@@ -15,7 +15,6 @@ import type { Dayjs } from 'dayjs';
 import ScheduleCalendar from '../../ScheduleCalendar';
 import styled from 'styled-components';
 
-// 添加响应式样式
 const DisplayContainer = styled.div`
   .calendar-col {
     @media (max-width: 992px) {
@@ -33,24 +32,54 @@ const DisplayContainer = styled.div`
 
 const { Title } = Typography;
 
-interface ScheduleEvent extends Schedule {
+interface ScheduleWithHost extends Schedule {
   hostName: string;
 }
 
 interface ScheduleDisplayProps {
-  filteredEvents: ScheduleEvent[];
+  schedules: ScheduleWithHost[];
   selectedDate: Dayjs;
-  selectedDateSchedules: Schedule[];
+  selectedDateSchedules: ScheduleWithHost[];
   loading: boolean;
   onDateSelect: (date: Dayjs) => void;
-  onEventClick: (event: ScheduleEvent) => void;
-  onAddSchedule: () => void;
+  onEventClick: (schedule: Schedule) => void;
   onEditSchedule: (schedule: Schedule) => void;
-  onDeleteSchedule: (scheduleId: string) => void;
+  onDeleteSchedule: (scheduleId: string) => Promise<void>;
 }
 
+// 状态颜色映射
+const getStatusColor = (status: string): string => {
+  const colorMap: Record<string, string> = {
+    [ScheduleStatus.AVAILABLE]: '#90EE90',
+    [ScheduleStatus.BOOKED]: '#1890ff',
+    [ScheduleStatus.RESERVE]: '#FFB366',
+    [ScheduleStatus.COMPLETED]: '#52c41a',
+    [ScheduleStatus.CANCELLED]: '#ff4d4f',
+  };
+  return colorMap[status] || '#90EE90';
+};
+
+// 状态标签映射
+const getStatusTag = (status: string): React.ReactNode => {
+  const tagMap: Record<string, { text: string; color: string }> = {
+    [ScheduleStatus.AVAILABLE]: { text: '可预约', color: '#90EE90' },
+    [ScheduleStatus.BOOKED]: { text: '已预订', color: '#1890ff' },
+    [ScheduleStatus.RESERVE]: { text: '待确认', color: '#FFB366' },
+    [ScheduleStatus.COMPLETED]: { text: '已完成', color: '#52c41a' },
+    [ScheduleStatus.CANCELLED]: { text: '已取消', color: '#ff4d4f' },
+  };
+  
+  const tag = tagMap[status] || { text: status, color: '#90EE90' };
+  return <Tag style={{ color: tag.color, borderColor: tag.color }}>{tag.text}</Tag>;
+};
+
+// 格式化餐次时间
+const formatWeddingTime = (time: 'lunch' | 'dinner'): string => {
+  return time === 'lunch' ? '午宴' : '晚宴';
+};
+
 const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
-  filteredEvents,
+  schedules,
   selectedDate,
   selectedDateSchedules,
   loading,
@@ -59,51 +88,14 @@ const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
   onEditSchedule,
   onDeleteSchedule
 }) => {
-  // 状态颜色
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case ScheduleStatus.AVAILABLE:
-        return '#90EE90';
-      case ScheduleStatus.BOOKED:
-        return '#1890ff';
-      case ScheduleStatus.RESERVE:
-        return '#FFB366';
-      case ScheduleStatus.COMPLETED:
-        return '#52c41a';
-      case ScheduleStatus.CANCELLED:
-        return '#ff4d4f';
-      default:
-        return '#90EE90';
-    }
-  };
-
-  // 状态标签
-  const getStatusTag = (status: string) => {
-    switch (status) {
-      case ScheduleStatus.AVAILABLE:
-        return <Tag style={{ color: '#90EE90', borderColor: '#90EE90' }}>可预约</Tag>;
-      case ScheduleStatus.BOOKED:
-        return <Tag style={{ color: '#1890ff', borderColor: '#1890ff' }}>已预订</Tag>;
-      case ScheduleStatus.RESERVE:
-        return <Tag style={{ color: '#FFB366', borderColor: '#FFB366' }}>待确认</Tag>;
-      case ScheduleStatus.COMPLETED:
-        return <Tag style={{ color: '#52c41a', borderColor: '#52c41a' }}>已完成</Tag>;
-      case ScheduleStatus.CANCELLED:
-        return <Tag style={{ color: '#ff4d4f', borderColor: '#ff4d4f' }}>已取消</Tag>;
-      default:
-        return <Tag style={{ color: '#90EE90', borderColor: '#90EE90' }}>{status}</Tag>;
-    }
-  };
-
   return (
     <DisplayContainer>
       <Row gutter={[32, 16]}>
-        {/* 日历展示 xs lg 24 18 - 8:2比例显示 */}
+        {/* 日历展示 */}
         <Col xs={24} lg={18} className="calendar-col">
           <ContentCard>
-            {/* 使用ScheduleCalendar组件 */}
             <ScheduleCalendar
-              schedules={filteredEvents}
+              schedules={schedules}
               selectedDate={selectedDate}
               onDateSelect={onDateSelect}
               onEventClick={onEventClick}
@@ -113,12 +105,12 @@ const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
           </ContentCard>
         </Col>
 
-        {/* 选中日期的档期列表 - 8:2比例显示 */}
+        {/* 选中日期的档期列表 */}
         <Col xs={24} lg={6} className="schedule-list-col">
           <ContentCard>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <Title level={4} style={{ margin: 0 }}>
-                {selectedDate.format('YYYY年MM月DD日')} 档期
+                {selectedDate.format('YYYY年MM月DD日')}
               </Title>
             </div>
 
@@ -133,7 +125,7 @@ const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
                 renderItem={schedule => (
                   <List.Item
                     actions={[
-                      <Tooltip title="编辑">
+                      <Tooltip key="edit" title="编辑">
                         <Button
                           type="text"
                           icon={<EditOutlined />}
@@ -141,10 +133,13 @@ const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
                         />
                       </Tooltip>,
                       <Popconfirm
+                        key="delete"
                         title="确定删除这个档期吗？"
+                        description="删除后将无法恢复"
                         onConfirm={() => onDeleteSchedule(schedule.id)}
                         okText="确定"
                         cancelText="取消"
+                        okButtonProps={{ danger: true }}
                       >
                         <Tooltip title="删除">
                           <Button
@@ -165,35 +160,35 @@ const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
                       }
                       title={
                         <Space>
-                          <span>{schedule.title || schedule.customerName}</span>
+                          <span>{schedule.customerName || schedule.title || '未命名'}</span>
                           {getStatusTag(schedule.status)}
                         </Space>
                       }
                       description={
-                        <div>
-                          {schedule.customerName && (
-                            <div>
-                              <UserOutlined /> {schedule.customerName}
+                        <div style={{ fontSize: '12px' }}>
+                          {schedule.hostName && (
+                            <div style={{ marginBottom: '4px' }}>
+                              <UserOutlined /> 主持人: {schedule.hostName}
                             </div>
                           )}
                           {schedule.customerPhone && (
-                            <div>
+                            <div style={{ marginBottom: '4px' }}>
                               <PhoneOutlined /> {schedule.customerPhone}
                             </div>
                           )}
                           {schedule.weddingTime && (
-                            <div>
-                              <ClockCircleOutlined /> {schedule.weddingTime === 'lunch' ? '午宴' : '晚宴'}
+                            <div style={{ marginBottom: '4px' }}>
+                              <ClockCircleOutlined /> {formatWeddingTime(schedule.weddingTime)}
                             </div>
                           )}
                           {schedule.location && (
-                            <div>
+                            <div style={{ marginBottom: '4px' }}>
                               <EnvironmentOutlined /> {schedule.location}
                             </div>
                           )}
                           {schedule.price && (
-                            <div style={{ color: '#f5222d', fontWeight: 'bold' }}>
-                              ¥{schedule.price}
+                            <div style={{ color: '#f5222d', fontWeight: 'bold', marginTop: '8px' }}>
+                              ¥{schedule.price.toLocaleString()}
                             </div>
                           )}
                         </div>

@@ -85,6 +85,12 @@ export const adminTheme = {
     inverse: '#ffffff',
     hover: '#f5f5f5',
   },
+  
+  // 表单相关
+  form: {
+    labelRequiredColor: '#ff4d4f', // 必填标识颜色
+    labelColor: '#262626', // 标签颜色
+  },
 };
 
 // 深色主题变量 - Ant Design 深色主题
@@ -173,6 +179,12 @@ export const adminDarkTheme = {
   state: {
     inverse: 'rgba(255, 255, 255, 0.85)',
     hover: '#303030',
+  },
+  
+  // 表单相关
+  form: {
+    labelRequiredColor: '#ff4d4f', // 必填标识颜色
+    labelColor: 'rgba(255, 255, 255, 0.85)', // 标签颜色
   },
 };
 

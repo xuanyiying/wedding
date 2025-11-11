@@ -65,8 +65,7 @@ class Schedule extends Model<ScheduleAttributes, ScheduleCreationAttributes> imp
     userId: string,
     weddingDate: Date,
     weddingTime: WeddingTime,
-    excludeScheduleId?: string,
-  ): Promise<boolean> {
+  ): Promise<Schedule | null> {
     // 确保只比较日期部分，忽略时间部分
     const weddingDateOnly = new Date(weddingDate);
     weddingDateOnly.setHours(0, 0, 0, 0);
@@ -81,16 +80,11 @@ class Schedule extends Model<ScheduleAttributes, ScheduleCreationAttributes> imp
       weddingTime: { [Op.eq]: weddingTime },
     };
 
-    if (excludeScheduleId) {
-      where.id = { [Op.ne]: excludeScheduleId };
-    }
-
     // 同一天. 相同时段冲突
-    const conflictingSchedule = await Schedule.findOne({
+    return await Schedule.findOne({
       where,
     });
 
-    return !!conflictingSchedule;
   }
 }
 

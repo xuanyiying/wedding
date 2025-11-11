@@ -1,36 +1,27 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Button,
-  message,
-  Row,
-  Col,
-  Form
-} from 'antd';
-import {
-  PlusOutlined
-} from '@ant-design/icons';
-import { ContentCard } from '../../components/admin/common';
-import { type Schedule, UserRole, type Team, type TeamMember } from '../../types';
-import type { Dayjs } from 'dayjs';
-import dayjs from 'dayjs';
-import styled from 'styled-components';
-import { scheduleService } from '../../services';
-import { useTheme } from '../../hooks/useTheme';
-import { useAppSelector } from '../../store';
-import QueryBar, { type QueryFilters } from '../../components/common/QueryBar';
-import ScheduleStats from '../../components/admin/schedule/ScheduleStats';
-import ScheduleDisplay from '../../components/admin/schedule/ScheduleDisplay';
-import ScheduleEditModal from '../../components/admin/schedule/ScheduleEditModal';
+import React, { useState, useEffect } from "react";
+import { Button, message, Row, Col } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
+import { ContentCard } from "../../components/admin/common";
+import { type Schedule, UserRole } from "../../types";
+import type { Dayjs } from "dayjs";
+import dayjs from "dayjs";
+import styled from "styled-components";
+import { scheduleService } from "../../services";
+import { useTheme } from "../../hooks/useTheme";
+import { useAppSelector } from "../../store";
+import QueryBar, { type QueryFilters } from "../../components/common/QueryBar";
+import ScheduleStats from "../../components/admin/schedule/ScheduleStats";
+import ScheduleDisplay from "../../components/admin/schedule/ScheduleDisplay";
+import ScheduleEditModal from "../../components/admin/schedule/ScheduleEditModal";
 
 const SchedulesContainer = styled.div`
   padding: 16px;
-  
+
   @media (max-width: 768px) {
     padding: 8px;
   }
 `;
 
-// 添加响应式样式
 const HeaderContainer = styled.div`
   display: flex;
   justify-content: space-between;
@@ -38,166 +29,113 @@ const HeaderContainer = styled.div`
   margin-bottom: 16px;
   flex-wrap: wrap;
   gap: 12px;
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
     align-items: stretch;
   }
 `;
 
+interface ScheduleWithHost extends Schedule {
+  hostName: string;
+}
+
 const SchedulesPage: React.FC = () => {
+  // 数据状态
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
+  const [filters, setFilters] = useState<QueryFilters>({
+    search: "",
+    teamId: "",
+    userId: "",
+    weddingDate: null,
+    weddingTime: "lunch",
+  });
+
+  // 模态框状态
   const [modalVisible, setModalVisible] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
 
-  // 模态框相关状态
-  const [form] = Form.useForm();
-  const [weddingDate, setWeddingDate] = useState<Dayjs | null>(null);
-  const [selectedWeddingTime, setSelectedWeddingTime] = useState<string>('lunch');
-  const [availableHosts, setAvailableHosts] = useState<TeamMember[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchModalVisible, setSearchModalVisible] = useState(false);
-  const [conflictSchedules, setConflictSchedules] = useState<Schedule[]>([]);
-
-  const [selectedTeam] = useState<Team>();
-
-  // 筛选条件状态
-  const [filters, setFilters] = useState<QueryFilters>({
-    search: '',
-    teamId: '',
-    userId: '',
-    weddingDate: null,
-    weddingTime: 'lunch',
-  });
-  // 初始化admin主题和用户认证
+  // 用户信息
   const { initTheme } = useTheme();
   const user = useAppSelector((state) => state.auth.user);
-  const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN;
+  const isAdmin =
+    user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN;
 
   useEffect(() => {
-    initTheme('admin');
+    initTheme("admin");
   }, [initTheme]);
 
+  useEffect(() => {
+    loadSchedules();
+  }, []);
+
+  // 加载档期数据
   const loadSchedules = async (queryFilters?: {
     teamId?: string;
     userId?: string;
     date?: string;
     status?: string;
-    weddingTime?: 'lunch' | 'dinner';
+    weddingTime?: "lunch" | "dinner";
   }) => {
     setLoading(true);
     try {
-      const params: any = { page: 1, limit: 100 };
-      // 处理成员ID查询
-      if (queryFilters?.userId) {
-        params.userId = queryFilters.userId;
-      }
-      // 处理日期查询
-      if (queryFilters?.date) {
-        params.date = queryFilters.date;
-      }
+      const params: Record<string, string | number> = { page: 1, limit: 100 };
+      
+      if (queryFilters?.userId) params.userId = queryFilters.userId;
+      if (queryFilters?.date) params.date = queryFilters.date;
+      if (queryFilters?.status) params.status = queryFilters.status;
+      if (queryFilters?.weddingTime) params.weddingTime = queryFilters.weddingTime;
+      if (queryFilters?.teamId) params.teamId = queryFilters.teamId;
 
-      // 处理状态查询
-      if (queryFilters?.status) {
-        params.status = queryFilters.status;
-      }
-
-      // 处理餐次类型查询
-      if (queryFilters?.weddingTime) {
-        params.weddingTime = queryFilters.weddingTime;
-      }
-      if (queryFilters?.teamId) {
-        params.teamId = queryFilters.teamId;
-      }
-      console.log('Loading schedules with params:', params);
       const response = await scheduleService.getSchedules(params);
-      console.log('Schedules API response:', response);
-
       const scheduleData = response.data?.schedules || [];
-      console.log('Schedule data:', scheduleData);
-
       setSchedules(scheduleData);
     } catch (error) {
-      console.error('加载档期数据失败:', error);
-      message.error('加载档期数据失败');
+      console.error("加载档期数据失败:", error);
+      message.error("加载档期数据失败");
     } finally {
       setLoading(false);
     }
   };
 
-  // 处理日期选择 
+  // 处理日期选择
   const handleDateSelect = (date: Dayjs) => {
     setSelectedDate(date);
-    loadSchedules({ date: date.format('YYYY-MM-DD') });
   };
 
-  // 处理事件点击
-  const handleEventClick = (schedule: Schedule) => {
-    setEditingSchedule(schedule);
-    setModalVisible(true);
-  };
-
-  // 打开添加/编辑模态框
-  const openModal = (schedule?: Schedule) => {
+  // 打开模态框
+  const handleOpenModal = (schedule?: Schedule) => {
     setEditingSchedule(schedule || null);
     setModalVisible(true);
+  };
 
-    // 重置模态框状态
-    if (schedule) {
-      // 编辑模式
-      setWeddingDate(schedule.weddingDate ? dayjs(schedule.weddingDate) : null);
-      setSelectedWeddingTime(schedule.weddingTime || 'lunch');
-      form.setFieldsValue({
-        ...schedule,
-        weddingDate: schedule.weddingDate ? dayjs(schedule.weddingDate) : null,
-      });
-    } else {
-      // 新增模式
-      setWeddingDate(null);
-      setSelectedWeddingTime('lunch');
-      setConflictSchedules([]);
-      form.resetFields();
-    }
-    setAvailableHosts([]);
-    setSearchModalVisible(false);
+  // 关闭模态框
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setEditingSchedule(null);
   };
 
   // 保存档期
-  const handleSave = async (values: any) => {
+  const handleSave = async (scheduleData: Record<string, unknown>) => {
     try {
-      // 检查档期冲突
-      if (conflictSchedules.length > 0) {
-        message.error('存在档期冲突，请选择其他时间或主持人');
-        return;
-      }
-
-      // 如果isPaid为true，自动将状态设置为完成
-      if (values.isPaid === true) {
-        values.status = 'completed';
-      }
-
-      const scheduleData = {
-        ...values,
-        weddingDate: values.weddingDate ? values.weddingDate.format('YYYY-MM-DD') : null,
-      };
-
       if (editingSchedule) {
-        await scheduleService.updateSchedule(editingSchedule.id, scheduleData);
-        message.success('档期更新成功');
+        await scheduleService.updateSchedule(editingSchedule.id, scheduleData as Partial<Schedule>);
+        message.success("档期更新成功");
       } else {
-        await scheduleService.createSchedule(scheduleData);
-        message.success('档期添加成功');
+        await scheduleService.createSchedule(scheduleData as Omit<Schedule, "id" | "createdAt" | "updatedAt">);
+        message.success("档期添加成功");
       }
-
-      setModalVisible(false);
+      handleCloseModal();
       await loadSchedules();
-    } catch (error: any) {
-      console.error('保存档期失败:', error);
-      // 显示具体的错误信息
-      const errorMessage = error?.response?.data?.message || error?.message || '操作失败，请重试';
+    } catch (error: unknown) {
+      console.error("保存档期失败:", error);
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      const errorMessage =
+        err?.response?.data?.message || err?.message || "操作失败，请重试";
       message.error(`操作失败: ${errorMessage}`);
+      throw error;
     }
   };
 
@@ -205,230 +143,92 @@ const SchedulesPage: React.FC = () => {
   const handleDelete = async (scheduleId: string) => {
     try {
       await scheduleService.deleteSchedule(scheduleId);
-      message.success('档期删除成功');
+      message.success("档期删除成功");
       await loadSchedules();
-      setModalVisible(false);
+      handleCloseModal();
     } catch (error) {
-      console.error('删除档期失败:', error);
-      message.error('删除失败，请重试');
+      console.error("删除档期失败:", error);
+      message.error("删除失败，请重试");
+      throw error;
     }
   };
 
-  // 查询可用主持人（管理员功能）
-  const handleSearchAvailableHosts = useCallback(async () => {
-    if (!weddingDate || !selectedWeddingTime) {
-      message.warning('请先选择婚礼日期和时间');
-      return;
-    }
-
-    setSearchLoading(true);
-    try {
-      const response = await scheduleService.getAvailableHosts({
-        teamId: selectedTeam?.id || 'all',
-        weddingDate: weddingDate.format('YYYY-MM-DD'),
-        weddingTime: selectedWeddingTime
-      });
-      console.log('Available hosts:', response.data);
-      setAvailableHosts(response.data?.hosts || []);
-      setSearchModalVisible(true);
-    } catch (error) {
-      console.error('查询可用主持人失败:', error);
-      message.error('查询可用主持人失败');
-      setAvailableHosts([]);
-    } finally {
-      setSearchLoading(false);
-    }
-  }, [weddingDate, selectedWeddingTime]);
-
-  // 检查档期冲突（通用功能）
-  const handleCheckScheduleConflict = useCallback(async (date: Dayjs | null, time: string) => {
-    // 对于管理员，需要主持人ID；对于非管理员，使用当前用户ID
-    const hostId = isAdmin ? form.getFieldValue('hostId') : user?.id;
-    
-    if (!date || !time || !hostId) {
-      setConflictSchedules([]);
-      return;
-    }
-
-    try {
-      const response = await scheduleService.checkScheduleConflict({
-        userId: hostId,
-        weddingDate: date.format('YYYY-MM-DD'),
-        weddingTime: time,
-        excludeId: editingSchedule?.id // 编辑时排除当前档期
-      });
-      // 如果有冲突，则显示冲突信息（这里简化处理，实际应该获取具体冲突的档期）
-      if (response.data?.hasConflict) {
-        // 临时创建一个模拟的冲突档期用于显示
-        setConflictSchedules([{
-          id: 'conflict',
-          userId: hostId,
-          title: '时间冲突',
-          weddingDate: date.format('YYYY-MM-DD'),
-          weddingTime: time as 'lunch' | 'dinner',
-          status: 'booked',
-        } as Schedule]);
-      } else {
-        setConflictSchedules([]);
-      }
-    } catch (error) {
-      console.error('检查档期冲突失败:', error);
-      setConflictSchedules([]);
-    }
-  }, [isAdmin, user, editingSchedule, form]);
-
-  // 处理主持人变化（管理员功能）
-  const handleHostChange = useCallback(async (hostId: string) => {
-    if (weddingDate && selectedWeddingTime && hostId) {
-      try {
-        const response = await scheduleService.checkScheduleConflict({
-          userId: hostId,
-          weddingDate: weddingDate.format('YYYY-MM-DD'),
-          weddingTime: selectedWeddingTime,
-          excludeId: editingSchedule?.id
-        });
-        // 如果有冲突，则显示冲突信息（这里简化处理，实际应该获取具体冲突的档期）
-        if (response.data?.hasConflict) {
-          // 临时创建一个模拟的冲突档期用于显示
-          setConflictSchedules([{
-            id: 'conflict',
-            userId: hostId,
-            title: '时间冲突',
-            weddingDate: weddingDate.format('YYYY-MM-DD'),
-            weddingTime: selectedWeddingTime as 'lunch' | 'dinner',
-            status: 'booked',
-          } as Schedule]);
-        } else {
-          setConflictSchedules([]);
-        }
-      } catch (error) {
-        console.error('检查档期冲突失败:', error);
-        setConflictSchedules([]);
-      }
-    }
-  }, [weddingDate, selectedWeddingTime, editingSchedule]);
-
-  // 处理婚礼日期变化
-  const handleWeddingDateChange = useCallback((date: Dayjs | null) => {
-    setWeddingDate(date);
-    form.setFieldsValue({ weddingDate: date });
-    if (isAdmin && date && selectedWeddingTime) {
-      handleSearchAvailableHosts();
-      // 管理员模式下检查冲突
-      handleCheckScheduleConflict(date, selectedWeddingTime);
-    } else if (!isAdmin) {
-      // 非管理员模式下检查冲突
-      handleCheckScheduleConflict(date, selectedWeddingTime);
-    }
-  }, [isAdmin, selectedWeddingTime, handleSearchAvailableHosts, handleCheckScheduleConflict, form]);
-
-  // 处理婚礼时间变化
-  const handleWeddingTimeChange = useCallback((e: any) => {
-    const time = e.target.value;
-    setSelectedWeddingTime(time);
-    form.setFieldsValue({ weddingTime: time });
-    if (isAdmin && weddingDate && time) {
-      handleSearchAvailableHosts();
-      // 管理员模式下检查冲突
-      handleCheckScheduleConflict(weddingDate, time);
-    } else if (!isAdmin && weddingDate) {
-      // 非管理员模式下检查冲突
-      handleCheckScheduleConflict(weddingDate, time);
-    }
-  }, [isAdmin, weddingDate, handleSearchAvailableHosts, handleCheckScheduleConflict, form]);
-
   // 处理查询
-  const handleSearch = async (searchFilters: any) => {
+  const handleSearch = async (searchFilters: QueryFilters) => {
     setFilters(searchFilters);
     await loadSchedules(searchFilters);
   };
 
   // 处理重置
-  const handleReset = () => {
-    setFilters(filters => ({ ...filters, date: null }));
-    // 重新加载所有数据
-    loadSchedules();
+  const handleReset = async () => {
+    setFilters({
+      search: "",
+      teamId: "",
+      userId: "",
+      weddingDate: null,
+      weddingTime: "lunch",
+    });
+    await loadSchedules();
   };
+
+  // 转换档期数据，添加主持人名称
+  const schedulesWithHost: ScheduleWithHost[] = schedules.map((s) => ({
+    ...s,
+    hostName: s.user?.realName || "未知主持人",
+  }));
+
+  // 获取选中日期的档期
+  const selectedDateSchedules = schedulesWithHost.filter((s) =>
+    dayjs(s.weddingDate).isSame(selectedDate, "day")
+  );
+
   return (
     <SchedulesContainer>
-      {/* 统计组件 */}
-      <ScheduleStats
-      />
+      <ScheduleStats />
 
-      {/* 条件查询栏 */}
       <QueryBar
         showMealFilter={true}
-        onQuery={(filters: QueryFilters) => handleSearch(filters)}
+        onQuery={handleSearch}
         initialFilters={filters}
         onReset={handleReset}
       />
 
       <Row gutter={16}>
-        {/* 日历视图 */}
         <Col xs={24} lg={24}>
           <ContentCard>
-            {/* 操作按钮区域 */}
             <HeaderContainer>
-              <div></div> {/* 占位符，保持布局平衡 */}
+              <div></div>
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
-                onClick={() => openModal()}
+                onClick={() => handleOpenModal()}
               >
                 添加档期
               </Button>
             </HeaderContainer>
 
-            {/* 档期显示组件 */}
             <ScheduleDisplay
-              filteredEvents={schedules.map(s => ({ ...s, hostName: s.user?.realName || s.user?.nickname || '未分配' }))}
+              schedules={schedulesWithHost}
               selectedDate={selectedDate}
-              selectedDateSchedules={schedules.filter(s => dayjs(s.weddingDate).isSame(selectedDate, 'day')).map(s => ({ ...s, hostName: s.user?.realName || s.user?.nickname || '未分配' }))}
-              onDateSelect={handleDateSelect}
-              onEventClick={handleEventClick}
-              onAddSchedule={() => openModal()}
-              onEditSchedule={(schedule: Schedule) => openModal(schedule)}
-              onDeleteSchedule={async (id: string) => {
-                try {
-                  await scheduleService.deleteSchedule(id);
-                  message.success('删除成功');
-                  loadSchedules();
-                } catch (error: any) {
-                  message.error('删除失败: ' + error.message);
-                }
-              }}
+              selectedDateSchedules={selectedDateSchedules}
               loading={loading}
+              onDateSelect={handleDateSelect}
+              onEventClick={handleOpenModal}
+              onEditSchedule={handleOpenModal}
+              onDeleteSchedule={handleDelete}
             />
           </ContentCard>
         </Col>
       </Row>
 
-      {/* 添加/编辑档期模态框 */}
       <ScheduleEditModal
         visible={modalVisible}
-        editingSchedule={editingSchedule}
-        form={form}
+        schedule={editingSchedule}
         user={user}
         isAdmin={isAdmin}
-        weddingDate={weddingDate}
-        selectedWeddingTime={selectedWeddingTime}
-        availableHosts={availableHosts}
-        searchLoading={searchLoading}
-        searchModalVisible={searchModalVisible}
-        conflictSchedules={conflictSchedules}
-        onCancel={() => {
-          setModalVisible(false);
-          setConflictSchedules([]);
-          setAvailableHosts([]);
-        }}
+        onCancel={handleCloseModal}
         onSave={handleSave}
         onDelete={handleDelete}
-        onWeddingDateChange={handleWeddingDateChange}
-        onWeddingTimeChange={handleWeddingTimeChange}
-        onSearchAvailableHosts={handleSearchAvailableHosts}
-        onCheckScheduleConflict={handleCheckScheduleConflict}
-        onHostChange={handleHostChange} // 添加主持人变化处理
-        setSearchModalVisible={setSearchModalVisible}
       />
     </SchedulesContainer>
   );

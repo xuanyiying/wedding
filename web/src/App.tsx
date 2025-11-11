@@ -50,6 +50,10 @@ const theme = {
       darkItemBg: 'var(--admin-sidebar-bg)',
       darkItemSelectedBg: 'var(--admin-primary-color)',
     },
+    Form: {
+      labelRequiredColor: 'var(--admin-form-label-required-color, #ff4d4f)',
+      labelColor: 'var(--admin-form-label-color, #262626)',
+    }
   },
 };
 

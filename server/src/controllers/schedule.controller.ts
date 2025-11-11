@@ -124,14 +124,14 @@ export const deleteSchedule = async (req: AuthenticatedRequest, res: Response, n
  */
 export const checkScheduleConflict = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    let { userId, weddingDate, weddingTime, excludeId } = req.body;
+    let { userId, weddingDate, weddingTime } = req.body;
     // 非管理员用户只能检查自己的档期冲突
     if (req.user?.role !== UserRole.USER && !userId) {
        userId = req.user!.id;
     }
     // 如果缺少必要参数，直接返回无冲突
     if (!userId || !weddingDate || !weddingTime) {
-      Resp.success(res, { hasConflict: false,userId }, '检查档期冲突成功');
+      Resp.success(res, { hasConflict: false, userId }, '检查档期冲突成功');
       return;
     }
 
@@ -139,14 +139,12 @@ export const checkScheduleConflict = async (req: Request, res: Response, next: N
     const dateOnly = new Date(weddingDate as string);
     dateOnly.setHours(0, 0, 0, 0);
 
-    const hasConflict = await ScheduleService.checkScheduleConflict(
+    const data = await ScheduleService.checkScheduleConflict(
       userId as string,
       dateOnly,
       weddingTime as WeddingTime,
-      excludeId as string,
     );
-
-    Resp.success(res, { hasConflict, userId }, '检查档期冲突成功');
+    Resp.success(res, data, '检查档期冲突成功');
   } catch (error) {
     logger.error('检查档期冲突失败:', error);
     next(error);

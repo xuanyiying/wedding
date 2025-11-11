@@ -164,7 +164,8 @@ export const scheduleService = {
   }): Promise<
     ApiResponse<{
       hasConflict: boolean;
-      userId: string;
+      hostName: string;
+      customerName: string;
     }>
   > => {
     return http.post("/schedules/check-conflict", params);

@@ -85,6 +85,12 @@ export const clientTheme = {
     inverse: '#FFFFFF',
     primaryHover: '#333333',
   },
+  
+  // 表单相关
+  form: {
+    labelRequiredColor: '#ff4d4f', // 必填标识颜色
+    labelColor: '#000000', // 标签颜色
+  },
 };
 
 // 优雅白色主题
@@ -173,6 +179,12 @@ export const clientDarkTheme = {
   state: {
     inverse: '#333333',
     primaryHover: '#F8F9FA',
+  },
+  
+  // 表单相关
+  form: {
+    labelRequiredColor: '#ff4d4f', // 必填标识颜色
+    labelColor: '#333333', // 标签颜色
   },
 };
 

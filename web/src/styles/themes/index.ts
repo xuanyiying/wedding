@@ -23,6 +23,7 @@ export interface Theme {
     warning: string;
     error: string;
     info: string;
+    [key: string]: string;
   };
   text: {
     primary: string;
@@ -55,6 +56,10 @@ export interface Theme {
     secondary: string;
     accent: string;
     [key: string]: string;
+  };
+  form: {
+    labelRequiredColor: string;
+    labelColor: string;
   };
 }
 
@@ -203,6 +208,10 @@ export class ThemeManager {
     root.style.setProperty(`--${themePrefix}-gradient-primary`, theme.gradient.primary);
     root.style.setProperty(`--${themePrefix}-gradient-secondary`, theme.gradient.secondary);
     root.style.setProperty(`--${themePrefix}-gradient-accent`, theme.gradient.accent);
+    
+    // 表单相关
+    root.style.setProperty(`--${themePrefix}-form-label-required-color`, theme.form.labelRequiredColor);
+    root.style.setProperty(`--${themePrefix}-form-label-color`, theme.form.labelColor);
 
     // Admin主题特殊属性
     if ('sidebar' in theme) {
@@ -268,6 +277,10 @@ export class ThemeManager {
       root.style.setProperty('--client-primary-color', clientThemeForCSS.primary.main);
       root.style.setProperty('--client-primary-light', clientThemeForCSS.primary.light);
       root.style.setProperty('--client-primary-dark', clientThemeForCSS.primary.dark);
+      
+      // Client表单相关
+      root.style.setProperty('--client-form-label-required-color', clientThemeForCSS.form.labelRequiredColor);
+      root.style.setProperty('--client-form-label-color', clientThemeForCSS.form.labelColor);
     }
   }
 
