@@ -72,13 +72,11 @@ const ArrowButton = styled.button<{ direction: 'left' | 'right' }>`
 `;
 
 const ThumbnailsContainer = styled.div`
-  position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   gap: 8px;
-  z-index: 2;
+  padding-bottom: 6px;
+  justify-content: center;
+  background: var(--client-bg-layout);
 `;
 
 const Thumbnail = styled.button.withConfig({
@@ -87,7 +85,7 @@ const Thumbnail = styled.button.withConfig({
   width: 60px;
   height: 40px;
   border-radius: 4px;
-  border: ${props => props.active ? '2px solid white' : '2px solid rgba(255, 255, 255, 0.5)'};
+  border: ${props => props.active ? '2px solid var(--client-primary-color)' : '2px solid transparent'};
   background-image: url(${props => props.image});
   background-size: cover;
   background-position: center;
@@ -96,7 +94,6 @@ const Thumbnail = styled.button.withConfig({
   overflow: hidden;
   
   &:hover {
-    border-color: white;
     transform: scale(1.1);
   }
 `;
@@ -204,26 +201,32 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
       onMouseLeave={handleMouseLeave}
       onClick={handleContainerClick}
     >
-      <CarouselContainer height={height}>
-        <ImageContainer translateX={-currentIndex * 100}>
-          {images.map((image, index) => (
-            <ImageItem key={index}>
-              <img src={image} alt={`作品图片 ${index + 1}`} />
-            </ImageItem>
-          ))}
-        </ImageContainer>
+      <div>
+        <CarouselContainer height={height}>
+          <ImageContainer translateX={-currentIndex * 100}>
+            {images.map((image, index) => (
+              <ImageItem key={index}>
+                <img src={image} alt={`作品图片 ${index + 1}`} />
+              </ImageItem>
+            ))}
+          </ImageContainer>
 
-        {showArrows && (
-          <>
-            <ArrowButton direction="left" onClick={goToPrevious}>
-              <LeftOutlined />
-            </ArrowButton>
-            <ArrowButton direction="right" onClick={goToNext}>
-              <RightOutlined />
-            </ArrowButton>
-          </>
-        )}
+          {showArrows && (
+            <>
+              <ArrowButton direction="left" onClick={goToPrevious}>
+                <LeftOutlined />
+              </ArrowButton>
+              <ArrowButton direction="right" onClick={goToNext}>
+                <RightOutlined />
+              </ArrowButton>
+            </>
+          )}
 
+          <ImageCount>
+            {currentIndex + 1} / {images.length}
+          </ImageCount>
+        </CarouselContainer>
+        
         {showDots && (
           <ThumbnailsContainer>
             {images.map((image, index) => (
@@ -236,11 +239,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
             ))}
           </ThumbnailsContainer>
         )}
-
-        <ImageCount>
-          {currentIndex + 1} / {images.length}
-        </ImageCount>
-      </CarouselContainer>
+      </div>
     </CarouselWrapper>
   );
 };

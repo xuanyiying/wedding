@@ -4,7 +4,7 @@ import { UploadOutlined, PlayCircleOutlined, PauseCircleOutlined, ReloadOutlined
 import type { VideoCoverSelection } from './types';
 import { VideoFrameExtractor, type VideoFrame } from '../../../utils/video-frame-extractor';
 import './VideoCoverModal.scss';
-import { useAppSelector } from '../../../store/hooks';
+import { useAppSelector } from "../../../store";
 import { SUPPORTED_IMAGE_TYPES } from './FileValidator';
 
 interface VideoCoverModalProps {
@@ -587,8 +587,42 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
               <div className="frames-container">
                 {/* 水平单行布局 */}
                 <div className="frames-horizontal-scroll">
-                  {/* 视频帧缩略图 */}
                   <div className="frames-scroll-content">
+                    {/* 从相册选择按钮 */}
+                    {extractedFrames.length > 0 && (
+                      <div className="album-select-button-wrapper">
+                        <div
+                          className={`album-select-button ${selectedCover?.type === 'upload' ? 'selected' : ''
+                            }`}
+                          onClick={handleOpenAlbum}
+                        >
+                          <div className="album-button-content">
+                            {selectedCover?.type === 'upload' && uploadedCoverUrl ? (
+                              <>
+                                <img
+                                  src={uploadedCoverUrl}
+                                  alt="Uploaded cover"
+                                  onError={(e) => {
+                                    console.error('封面图片加载失败:', e);
+                                    setError('封面图片加载失败');
+                                  }}
+                                />
+                                <div className="selected-overlay">
+                                  <div className="selected-icon">✓</div>
+                                </div>
+                              </>
+                            ) : (
+                              <div className="album-placeholder">
+                                <CameraOutlined className="album-icon" />
+                                <div className="album-text">从相册选择</div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* 视频帧缩略图 */}
                     {extractedFrames.map((frame, index) => (
                       <div
                         key={index}
@@ -613,40 +647,6 @@ const VideoCoverModal: React.FC<VideoCoverModalProps> = ({
                         </div>
                       </div>
                     ))}
-                  
-                  {/* 从相册选择按钮 */}
-                  {extractedFrames.length > 0 && (
-                    <div className="album-select-button-wrapper">
-                      <div
-                        className={`album-select-button ${selectedCover?.type === 'upload' ? 'selected' : ''
-                          }`}
-                        onClick={handleOpenAlbum}
-                      >
-                        <div className="album-button-content">
-                          {selectedCover?.type === 'upload' && uploadedCoverUrl ? (
-                            <>
-                              <img
-                                src={uploadedCoverUrl}
-                                alt="Uploaded cover"
-                                onError={(e) => {
-                                  console.error('封面图片加载失败:', e);
-                                  setError('封面图片加载失败');
-                                }}
-                              />
-                              <div className="selected-overlay">
-                                <div className="selected-icon">✓</div>
-                              </div>
-                            </>
-                          ) : (
-                            <div className="album-placeholder">
-                              <CameraOutlined className="album-icon" />
-                              <div className="album-text">从相册选择</div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
                   </div>
                 </div>
 

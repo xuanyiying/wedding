@@ -58,16 +58,14 @@ const WorkCard: React.FC<WorkCardProps> = ({ work, onClick }) => {
             </div>
           ) : (
             // 图片类型：使用轮播组件，4:3宽高比
-            <div style={{ paddingBottom: '75%', position: 'relative', height: 0 }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-                <ImageCarousel 
-                  images={displayImages}
-                  height="100%"
-                  showDots={displayImages.length > 1}
-                  showArrows={displayImages.length > 1}
-                  autoPlay={false}
-                />
-              </div>
+            <div style={{ position: 'relative', height: '100%' }}>
+              <ImageCarousel 
+                images={displayImages}
+                height="100%"
+                showDots={displayImages.length > 1}
+                showArrows={displayImages.length > 1}
+                autoPlay={false}
+              />
             </div>
           )}
           {work.isFeatured && <FeaturedBadge>精选</FeaturedBadge>}

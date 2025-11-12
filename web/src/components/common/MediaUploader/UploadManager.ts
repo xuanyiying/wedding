@@ -10,6 +10,7 @@ import type { DirectUploadResult, DirectUploadProgress, DirectUploadStatusType }
 import { DirectUploadStatus } from '../../../utils/direct-upload';
 import type { MediaFileItem, MediaUploadConfig, UploadProgressInfo, VideoCoverSelection } from './types';
 import { UploadStatus } from './types';
+import { http } from "../../../utils/request.ts";
 
 // 默认配置
 const DEFAULT_CONFIG: MediaUploadConfig = {
@@ -65,6 +66,7 @@ interface FileProgress {
   speed: number;
   remainingTime: number;
   status: DirectUploadStatusType;
+  lastUpdate?: number;
 }
 
 export interface UploadManagerOptions {
@@ -89,7 +91,7 @@ export class UploadManager {
   private networkMetrics: NetworkMetrics = { speed: 0, latency: 0, stability: 'stable' };
   
   // 进度节流
-  private progressThrottlers = new Map<string, NodeJS.Timeout>();
+  private progressThrottlers = new Map<string, ReturnType<typeof setTimeout>>();
   
   constructor(options: UploadManagerOptions = {}) {
     this.options = options;
@@ -216,18 +218,14 @@ export class UploadManager {
   ): Promise<void> {
     try {
       const formData = new FormData();
-      formData.append('chunk', chunk);
+      formData.append('chunk', chunk, `chunk_${chunkIndex}`);
       formData.append('chunkIndex', chunkIndex.toString());
       formData.append('uploadId', uploadId);
-      formData.append('fileName', fileName);
 
-      const response = await fetch('/api/files/chunk/upload', {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await http.upload('/files/chunk/upload', formData);
 
-      if (!response.ok) {
-        throw new Error(`分块上传失败: ${response.statusText}`);
+      if (!response.success) {
+        throw new Error(`分块上传失败: ${response.message}`);
       }
     } catch (error) {
       if (retryCount < CHUNK_CONFIG.RETRY_ATTEMPTS) {
@@ -248,9 +246,23 @@ export class UploadManager {
   ): Promise<DirectUploadResult> {
     const { chunkSize, concurrent } = this.calculateChunkStrategy(file.size);
     const chunks = this.createFileChunks(file, chunkSize);
-    const uploadId = `upload_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     
-    // 创建上传会话
+    // 1. 初始化分块上传，从服务器获取 uploadId
+    const initResponse = await http.post<{ uploadId: string; uploadUrl: string }>('/files/chunk/init', {
+      filename: file.name,
+      fileSize: file.size,
+      mimeType: file.type,
+      category: this.config.category,
+      totalChunks: chunks.length
+    });
+
+    if (!initResponse.success || !initResponse.data?.uploadId) {
+      throw new Error('初始化分块上传失败');
+    }
+
+    const uploadId = initResponse.data.uploadId;
+    
+    // 创建本地上传会话
     const session: UploadSession = {
       id: uploadId,
       fileId,
@@ -264,7 +276,7 @@ export class UploadManager {
     };
     this.uploadSessions.set(uploadId, session);
 
-    // 并发上传分块
+    // 2. 并发上传分块
     const semaphore = new Semaphore(concurrent);
     const uploadPromises = chunks.map((chunk, index) =>
       semaphore.acquire(async () => {
@@ -279,24 +291,16 @@ export class UploadManager {
 
     await Promise.all(uploadPromises);
 
-    // 完成上传
-    const response = await fetch('/api/files/chunk/complete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        uploadId,
-        fileName: file.name,
-        fileSize: file.size,
-        totalChunks: chunks.length,
-        category: this.config.category
-      })
+    // 3. 完成上传
+    const completeResponse = await http.post('/files/chunk/complete', {
+      uploadId
     });
 
-    if (!response.ok) {
+    if (!completeResponse.success) {
       throw new Error('完成分块上传失败');
     }
 
-    const result = await response.json();
+    const result = completeResponse.data as DirectUploadResult;
     this.uploadSessions.delete(uploadId);
 
     return {
@@ -322,12 +326,12 @@ export class UploadManager {
       loaded,
       total,
       percentage: Math.round((loaded / total) * 100),
-      speed: existing ? (loaded - existing.loaded) / ((now - (existing as any).lastUpdate) / 1000) : 0,
+      speed: existing && existing.lastUpdate ? (loaded - existing.loaded) / ((now - existing.lastUpdate) / 1000) : 0,
       remainingTime: existing && existing.speed > 0 ? (total - loaded) / existing.speed : 0,
-      status: loaded >= total ? DirectUploadStatus.COMPLETED : DirectUploadStatus.UPLOADING
+      status: loaded >= total ? DirectUploadStatus.COMPLETED : DirectUploadStatus.UPLOADING,
+      lastUpdate: now
     };
 
-    (progress as any).lastUpdate = now;
     this.fileProgresses.set(fileId, progress);
 
     // 节流更新
@@ -335,7 +339,7 @@ export class UploadManager {
       clearTimeout(this.progressThrottlers.get(fileId)!);
     }
 
-    this.progressThrottlers.set(fileId, setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       this.options.onFileProgress?.(fileId, {
         loaded,
         total,
@@ -345,7 +349,8 @@ export class UploadManager {
         status: progress.status
       });
       this.updateOverallProgress();
-    }, 100));
+    }, 100);
+    this.progressThrottlers.set(fileId, timeoutId);
   }
 
   /**
@@ -438,7 +443,7 @@ export class UploadManager {
       }
 
       return result;
-    } catch (error: any) {
+    } catch (error) {
       const progress = this.fileProgresses.get(fileItem.id);
       if (progress) {
         progress.status = DirectUploadStatus.ERROR;
@@ -554,8 +559,8 @@ export class UploadManager {
 
       this.options.onUploadSuccess?.(results);
       return results;
-    } catch (error: any) {
-      this.options.onUploadError?.(error);
+    } catch (error) {
+      this.options.onUploadError?.(error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }
@@ -598,7 +603,7 @@ export class UploadManager {
     this.cancelUpload();
     this.uploadSessions.clear();
     this.fileProgresses.clear();
-    this.progressThrottlers.forEach(timer => clearTimeout(timer));
+    this.progressThrottlers.forEach(timeoutId => clearTimeout(timeoutId));
     this.progressThrottlers.clear();
   }
 }

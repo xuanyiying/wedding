@@ -83,7 +83,7 @@ router.get('/user/:userId/:type', getUserMedia);
 
 // 分块上传相关路由
 router.post('/chunk/init', authMiddleware, initChunkUpload);
-router.post('/chunk/upload', authMiddleware, uploadMiddleware.single('chunk'), uploadChunk);
+router.post('/chunk/upload', authMiddleware, uploadMiddleware.single('chunk'), handleUploadError, uploadChunk);
 router.get('/chunk/status/:uploadId', authMiddleware, checkChunkUploadStatus);
 router.post('/chunk/complete', authMiddleware, completeChunkUpload);
 

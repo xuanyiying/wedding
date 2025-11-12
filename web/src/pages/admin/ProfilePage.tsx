@@ -147,6 +147,7 @@ const ProfilePage: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState('basic');
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
@@ -173,7 +174,8 @@ const ProfilePage: React.FC = () => {
       if (userData?.id) {
         await loadMediaFiles(userData.id);
       }
-    } catch (error: any) {
+    } catch (error) {
+      console.error('加载用户信息失败:', error);
       message.error('加载用户信息失败');
     } finally {
       setLoading(false);
@@ -183,6 +185,7 @@ const ProfilePage: React.FC = () => {
 
   useEffect(() => {
     loadCurrentUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadMediaFiles = async (userId: string) => {
@@ -190,7 +193,7 @@ const ProfilePage: React.FC = () => {
       const mediaResponse = await profileService.getUserProfile(userId);
 
       if (mediaResponse.success && mediaResponse.data) {
-        const files = (mediaResponse.data as any).files;
+        const files = (mediaResponse.data as { files: MediaFile[] }).files;
         console.log('processedMediaFiles:', mediaResponse?.data);
         setMediaFiles(files);
       }
@@ -212,7 +215,7 @@ const ProfilePage: React.FC = () => {
   }, []);
 
   // 处理基本信息保存
-  const handleBasicInfoSave = async (values: Partial<any>) => {
+  const handleBasicInfoSave = async (values: Partial<User>) => {
     try {
       setLoading(true);
 
@@ -233,9 +236,11 @@ const ProfilePage: React.FC = () => {
       await userService.updateCurrentUserProfile(submitValues);
       message.success('基本信息保存成功');
       await loadCurrentUser();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Profile update error:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || '保存失败，请检查网络连接后重试';
+      const errorMessage = (error as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message ||
+        (error as { message?: string })?.message ||
+        '保存失败，请检查网络连接后重试';
       message.error(errorMessage);
     } finally {
       setLoading(false);
@@ -254,43 +259,18 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  // 处理媒体文件重新排序
-  const handleReorder = useCallback(async (newOrderedFiles: MediaFile[]) => {
-    try {
-      console.log('🔄 开始处理重新排序:', newOrderedFiles.map(f => ({ id: f.id, order: f.mediaOrder })));
+  // 处理媒体文件重新排序 - 仅更新本地状态，不调用API
+  const handleReorder = useCallback((newOrderedFiles: MediaFile[]) => {
+    console.log('🔄 本地排序更新:', newOrderedFiles.map(f => ({ id: f.id, order: f.mediaOrder })));
 
-      // 立即更新本地状态以提供即时反馈
-      setMediaFiles(newOrderedFiles);
+    // 立即更新本地状态
+    setMediaFiles(newOrderedFiles);
 
-      // 准备排序数据并发送到后端
-      if (newOrderedFiles.length > 0 && currentUser?.id) {
-        const sortData = newOrderedFiles
-          .filter(media => media.id)
-          .map((media, index) => ({
-            id: media.id as string,
-            mediaOrder: media.mediaOrder ?? index,
-          }));
+    // 标记有未保存的更改
+    setHasUnsavedChanges(true);
+  }, []);
 
-        console.log('🔄 发送排序数据到后端:', sortData);
-        await profileService.updateMediaProfilesOrder({ orderData: sortData });
-
-        // 重新加载媒体文件以确保数据同步
-        await loadMediaFiles(currentUser.id);
-
-        message.success('排序已保存');
-      }
-    } catch (error) {
-      console.error('重新排序失败:', error);
-      message.error('排序保存失败，请重试');
-
-      // 如果保存失败，重新加载原始数据
-      if (currentUser?.id) {
-        await loadMediaFiles(currentUser.id);
-      }
-    }
-  }, [currentUser?.id]);
-
-  // 保存公开资料
+  // 保存公开资料和媒体排序
   const handleSavePublicProfile = async () => {
     try {
       setSaving(true);
@@ -310,20 +290,28 @@ const ProfilePage: React.FC = () => {
         await userService.toggleCurrentUserProfilePublish(isPublicProfilePublished);
       }
 
-      // 保存媒体文件排序
-      if (mediaFiles.length > 0 && currentUser?.id) {
+      // 保存媒体文件排序（仅在有未保存更改时）
+      if (hasUnsavedChanges && mediaFiles.length > 0 && currentUser?.id) {
         try {
           const sortData = mediaFiles
-            .filter(media => media.id) // 过滤掉没有id的媒体文件
-            .map((media, index) => ({
-              id: media.id as string, // 类型断言，因为我们已经过滤了undefined的情况
-              mediaOrder: index,
+            .filter(media => media.id)
+            .map((media) => ({
+              id: media.id as string,
+              mediaOrder: media.mediaOrder ?? 0,
             }));
 
+          console.log('💾 保存排序到数据库:', sortData);
           await profileService.updateMediaProfilesOrder({ orderData: sortData });
+
+          // 重新加载以确保数据同步
           await loadMediaFiles(currentUser.id);
+
+          // 清除未保存标记
+          setHasUnsavedChanges(false);
         } catch (error) {
           console.error('保存排序失败:', error);
+          message.error('排序保存失败');
+          return;
         }
       }
 
@@ -350,11 +338,30 @@ const ProfilePage: React.FC = () => {
           })
         }
         await loadMediaFiles(currentUser.id);
+        // 清除未保存标记（因为是新上传的文件）
+        setHasUnsavedChanges(false);
       } catch (error) {
         console.error('重新加载媒体文件失败:', error);
       }
     }
   };
+
+  // 重置排序 - 恢复到数据库中的顺序
+  const handleResetOrder = useCallback(async () => {
+    if (currentUser?.id) {
+      try {
+        setLoading(true);
+        await loadMediaFiles(currentUser.id);
+        setHasUnsavedChanges(false);
+        message.success('已恢复原始排序');
+      } catch (error) {
+        console.error('重置排序失败:', error);
+        message.error('重置失败');
+      } finally {
+        setLoading(false);
+      }
+    }
+  }, [currentUser?.id]);
 
   // 预览媒体文件
   const handlePreview = (file: MediaFile) => {
@@ -440,13 +447,23 @@ const ProfilePage: React.FC = () => {
                           {isPublicProfilePublished ? "公开展示" : "私有状态"}
                         </span>
 
+                        {hasUnsavedChanges && (
+                          <Button
+                            size="small"
+                            onClick={handleResetOrder}
+                            disabled={saving}
+                          >
+                            重置
+                          </Button>
+                        )}
+
                         <Button
-                          type="default"
+                          type={hasUnsavedChanges ? "primary" : "default"}
                           size="small"
                           loading={saving}
                           onClick={handleSavePublicProfile}
                         >
-                          保存排序
+                          {hasUnsavedChanges ? "保存排序 *" : "保存排序"}
                         </Button>
                       </Space>
                     </div>

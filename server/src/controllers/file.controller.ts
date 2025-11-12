@@ -4,6 +4,7 @@ import { Resp } from '../utils/response';
 import { logger } from '../utils/logger';
 import { FileType } from '../types';
 import { AuthenticatedRequest } from '../interfaces';
+import * as fs from 'fs';
 
 /**
  * 上传单个文件
@@ -383,33 +384,68 @@ export const initChunkUpload = async (req: AuthenticatedRequest, res: Response, 
  */
 export const uploadChunk = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
+    console.log('📥 收到分块上传请求:', {
+      method: req.method,
+      url: req.url,
+      hasUser: !!req.user,
+      userId: req.user?.id,
+      contentType: req.headers['content-type'],
+      contentLength: req.headers['content-length'],
+      bodyKeys: Object.keys(req.body || {}),
+      hasFile: !!req.file
+    });
+
     const { uploadId, chunkIndex } = req.body;
     const userId = req.user!.id;
 
-    if (!req.file || !req.file.buffer) {
-      Resp.badRequest(res, '分块文件数据无效或未正确上传');
+    // 验证必需参数
+    if (!uploadId) {
+      console.error('❌ 缺少 uploadId 参数');
+      Resp.badRequest(res, '缺少 uploadId 参数');
       return;
     }
 
-    console.log('📤 接收分块上传请求:', {
+    if (chunkIndex === undefined || chunkIndex === null) {
+      console.error('❌ 缺少 chunkIndex 参数');
+      Resp.badRequest(res, '缺少 chunkIndex 参数');
+      return;
+    }
+
+    // 检查是否通过 multer 处理了文件
+    if (!req.file) {
+      console.error('❌ 分块文件未正确上传');
+      Resp.badRequest(res, '分块文件未正确上传');
+      return;
+    }
+
+    // 从 form-data 中获取 chunk 数据
+    let chunkData: Buffer;
+    if (req.file.buffer) {
+      // 使用内存中的 buffer
+      chunkData = req.file.buffer;
+    } else if (req.file.path) {
+      // 从磁盘读取文件
+      chunkData = await fs.promises.readFile(req.file.path);
+    } else {
+      console.error('❌ 分块文件数据无效');
+      Resp.badRequest(res, '分块文件数据无效');
+      return;
+    }
+
+    console.log('📤 处理分块上传:', {
       userId,
       uploadId,
       chunkIndex,
-      hasFile: !!req.file,
       fileSize: req.file.size,
       fileName: req.file.originalname,
       mimeType: req.file.mimetype,
-      bufferSize: req.file.buffer?.length,
-      headers: {
-        contentType: req.headers['content-type'],
-        contentLength: req.headers['content-length']
-      }
+      bufferSize: chunkData.length
     });
 
     const result = await FileService.uploadChunk({
       uploadId,
       chunkIndex: typeof chunkIndex === 'string' ? parseInt(chunkIndex) : chunkIndex,
-      chunkData: req.file.buffer,
+      chunkData: chunkData,
       userId
     });
 
@@ -468,18 +504,22 @@ export const checkChunkUploadStatus = async (req: AuthenticatedRequest, res: Res
  */
 export const completeChunkUpload = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { uploadId, fileId } = req.body;
+    const { uploadId } = req.body;
     const userId = req.user!.id;
+
+    if (!uploadId) {
+      console.error('❌ 缺少 uploadId 参数');
+      Resp.badRequest(res, '缺少 uploadId 参数');
+      return;
+    }
 
     console.log('🔄 完成分块上传:', {
       userId,
-      uploadId,
-      fileId
+      uploadId
     });
 
     const result = await FileService.completeChunkUpload({
       uploadId,
-      fileId,
       userId
     });
 

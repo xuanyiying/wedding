@@ -910,11 +910,11 @@ export class FileService {
    */
   static async completeChunkUpload(params: {
     uploadId: string;
-    fileId: string;
     userId: string;
   }) {
 
-    const { uploadId, fileId, userId } = params;
+    const { uploadId, userId } = params;
+    const fileId = generateId(); // 生成新的文件ID
 
     // 从Redis获取上传会话
     const sessionKey = `${CHUNK_UPLOAD_PREFIX}${uploadId}`;
@@ -1012,7 +1012,7 @@ export class FileService {
 
       // 生成文件名和路径
       const fileExtension = path.extname(session.filename);
-      const uniqueFilename = `${generateId}${fileExtension}`;
+      const uniqueFilename = `${generateId()}${fileExtension}`;
 
       // 确定文件类型
       const fileType = this.getFileTypeFromMimeType(session.mimeType);
