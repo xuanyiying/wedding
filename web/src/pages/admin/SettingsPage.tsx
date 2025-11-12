@@ -19,9 +19,11 @@ const SettingsContainer = styled.div`
   padding: 24px;
   background: var(--admin-bg-layout);
   min-height: calc(100vh - 64px);
+  max-width: 100vw;
+  overflow-x: hidden;
   
   @media (max-width: 768px) {
-    padding: 16px;
+    padding: 12px;
   }
 `;
 
@@ -32,9 +34,12 @@ const TabCard = styled.div`
   box-shadow: var(--admin-shadow-sm);
   padding: 32px;
   margin-bottom: 24px;
+  max-width: 100%;
+  overflow-x: hidden;
   
   @media (max-width: 768px) {
-    padding: 20px;
+    padding: 16px;
+    margin-bottom: 16px;
   }
 `;
 

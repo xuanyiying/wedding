@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import 'dayjs/locale/zh-cn';
 import dayjs from 'dayjs';
 import './index.css';
+import './styles/admin-mobile.css';
 import App from './App';
 
 // 设置dayjs为中文

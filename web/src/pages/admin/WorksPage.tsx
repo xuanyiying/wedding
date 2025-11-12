@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Row, Col, Modal, message } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useTheme } from '../../hooks/useTheme';
-import { WorkType, WorkStatus, type Work, FileType } from '../../types';
+import { WorkType, WorkStatus, WorkCategory, type Work, FileType, type FileInfo } from '../../types';
 import { workService } from '../../services';
 import { useDirectUpload } from '../../hooks/useDirectUpload';
 import type { RootState } from '../../store';
@@ -15,41 +15,25 @@ import styled from 'styled-components';
 
 const WorksContainer = styled.div`
   padding: 16px;
-  
+
   @media (max-width: 768px) {
     padding: 8px;
   }
-  
-  .works-grid {
-    margin-top: 24px;
-  }
-  
-  /* 移动端统计卡片行优化 */
-  .stats-row {
-    @media (max-width: 768px) {
-      margin-bottom: 16px !important;
-      
-      .ant-col {
-        padding-left: 6px !important;
-        padding-right: 6px !important;
-      }
-    }
-  }
-  
   /* 移动端筛选栏优化 */
+
   .ant-row {
     @media (max-width: 768px) {
       gap: 8px !important;
       margin-bottom: 16px !important;
     }
   }
-  
+
   .ant-input {
     @media (max-width: 768px) {
       width: 100% !important;
     }
   }
-  
+
   .ant-select {
     @media (max-width: 768px) {
       width: 100% !important;
@@ -272,31 +256,31 @@ const WorksPage: React.FC = () => {
   };
 
   // 保存作品
-  const handleSave = async (values: any) => {
+  const handleSave = async (values: Record<string, unknown>) => {
     try {
       const workData: Omit<Work, 'id' | 'createdAt' | 'updatedAt'> = {
         userId: user?.id || '',
-        title: values.title,
-        description: values.description || null,
+        title: (values.title as string) || '',
+        description: (values.description as string) || null,
         type: values.type as WorkType,
-        category: values.category,
-        tags: values.tags || null,
-        weddingDate: values.weddingDate || null,
-        author: values.author || user?.username || null,
-        customer: values.customer || null,
+        category: values.category as WorkCategory,
+        tags: (values.tags as string[]) || null,
+        weddingDate: (values.weddingDate as Date) || null,
+        author: (values.author as string) || user?.username || null,
+        customer: (values.customer as string) || null,
         downloads: 0,
-        isPublic: values.isPublic || false,
+        isPublic: Boolean(values.isPublic),
         equipmentInfo: null,
         technicalInfo: null,
         status: WorkStatus.PUBLISHED,
-        isFeatured: values.isFeatured || false,
+        isFeatured: Boolean(values.isFeatured),
         viewCount: 0,
         likeCount: 0,
         shareCount: 0,
         sortOrder: 0,
         publishedAt: new Date().toISOString(),
         deletedAt: null,
-        files: values.files || []
+        files: (values.files as FileInfo[]) || []
       };
 
       if (editingWork) {
@@ -344,7 +328,7 @@ const WorksPage: React.FC = () => {
     <WorksContainer>
       <PageHeader
         title="作品管理"
-        subtitle="管理您的摄影作品"
+        subtitle="管理您的作品"
         actions={[
           {
             key: 'add',
@@ -356,23 +340,23 @@ const WorksPage: React.FC = () => {
         ]}
       />
 
-      {/* 统计卡片 */}
-      <Row gutter={[16, 16]}  style={{ marginBottom: 24 }}>
-        <Col xs={8} sm={6} md={6} lg={4}>
+      {/* 统计卡片  xs  sm md lg */}
+      <Row gutter={[24, 24]} style={{ margin: 24 }}>
+        <Col xs={7} sm={6}>
           <StatCard
             title="总作品"
             value={stats.total}
             loading={loading}
           />
         </Col>
-        <Col xs={8} sm={6} md={6} lg={4}>
+        <Col xs={7} sm={6}>
           <StatCard
             title="公开作品"
             value={stats.public}
             loading={loading}
           />
         </Col>
-        <Col xs={8} sm={6} md={6} lg={4}>
+        <Col xs={7} sm={6}>
           <StatCard
             title="精选作品"
             value={stats.featured}
@@ -380,7 +364,6 @@ const WorksPage: React.FC = () => {
           />
         </Col>
       </Row>
-
       {/* 筛选栏 */}
       <QueryBar
         showMealFilter={false}

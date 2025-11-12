@@ -77,6 +77,8 @@ const PageContainer = styled.div`
   background: var(--admin-bg-layout);
   min-height: 100vh;
   padding: 16px;
+  max-width: 100vw;
+  overflow-x: hidden;
   
   @media (max-width: 768px) {
     padding: 8px;

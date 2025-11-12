@@ -37,6 +37,8 @@ const { TextArea } = Input;
 
 const ContactsContainer = styled.div`
   padding: 16px;
+  max-width: 100vw;
+  overflow-x: hidden;
   
   @media (max-width: 768px) {
     padding: 8px;
@@ -48,6 +50,22 @@ const ContactsContainer = styled.div`
   
   .ant-typography {
     color: var(--admin-text-secondary);
+  }
+
+  /* 移动端表格适配 */
+  @media (max-width: 768px) {
+    .ant-table-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .ant-table {
+      font-size: 12px;
+    }
+
+    .ant-table-cell {
+      padding: 8px 4px !important;
+    }
   }
 `;
 
@@ -80,42 +98,42 @@ const ContactsPage: React.FC = () => {
     statusModalVisible: false,
     filters: {},
   });
-  
+
   const [form] = Form.useForm();
   const { initTheme } = useTheme();
-  
+
   useEffect(() => {
     initTheme('admin');
   }, [initTheme]);
-  
+
   useEffect(() => {
     loadContacts();
   }, [state.current, state.pageSize, state.filters]);
-  
+
   const loadContacts = async () => {
     setState(prev => ({ ...prev, loading: true }));
-    
+
     try {
       const params: any = {
         page: state.current,
         limit: state.pageSize,
       };
-      
+
       if (state.filters.status) {
         params.status = state.filters.status;
       }
-      
+
       if (state.filters.dateRange) {
         params.startDate = state.filters.dateRange[0].format('YYYY-MM-DD');
         params.endDate = state.filters.dateRange[1].format('YYYY-MM-DD');
       }
-      
+
       if (state.filters.search) {
         params.search = state.filters.search;
       }
-      
+
       const response = await contactService.getContacts(params);
-      
+
       if (response.success && response.data) {
         setState(prev => ({
           ...prev,
@@ -129,16 +147,16 @@ const ContactsPage: React.FC = () => {
       setState(prev => ({ ...prev, loading: false }));
     }
   };
-  
+
   const handleStatusUpdate = async (values: { status: string; notes?: string }) => {
     if (!state.selectedContact) return;
-    
+
     try {
       const response = await contactService.updateContactStatus(
         state.selectedContact.id || '',
         values.status
       );
-      
+
       if (response.success) {
         message.success('状态更新成功');
         setState(prev => ({ ...prev, statusModalVisible: false, selectedContact: null }));
@@ -148,7 +166,7 @@ const ContactsPage: React.FC = () => {
       message.error('状态更新失败');
     }
   };
-  
+
 
   const resetFilters = () => {
     setState(prev => ({
@@ -157,7 +175,7 @@ const ContactsPage: React.FC = () => {
       current: 1,
     }));
   };
-  
+
   const getStatusColor = (status: string) => {
     const statusMap: Record<string, string> = {
       pending: 'orange',
@@ -167,7 +185,7 @@ const ContactsPage: React.FC = () => {
     };
     return statusMap[status] || 'default';
   };
-  
+
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
       pending: '待处理',
@@ -177,13 +195,13 @@ const ContactsPage: React.FC = () => {
     };
     return statusMap[status] || status;
   };
-  
+
   const columns: ColumnsType<ContactForm> = [
     {
       title: '客户信息',
       key: 'customer',
-      width: 200,
-      fixed: 'left',
+      width: 150,
+      fixed: window.innerWidth > 768 ? 'left' : undefined,
       render: (_, record) => (
         <div>
           <div style={{ fontWeight: 500, marginBottom: 4 }}>{record.name}</div>
@@ -265,8 +283,8 @@ const ContactsPage: React.FC = () => {
     {
       title: '操作',
       key: 'actions',
-      width: 150,
-      fixed: 'right',
+      width: 120,
+      fixed: window.innerWidth > 768 ? 'right' : undefined,
       render: (_, record) => (
         <Space>
           <Button
@@ -300,21 +318,21 @@ const ContactsPage: React.FC = () => {
       ),
     },
   ];
-  
+
   return (
     <ContactsContainer>
       <PageHeader title="联系表单管理" />
-      
+
       {/* 统计卡片 */}
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} md={6}>
+      <Row gutter={[8, 8]} style={{ marginBottom: 16 }}>
+        <Col xs={12} sm={12} md={6}>
           <StatCard
             title="总表单数"
             value={state.total}
             prefix={<MailOutlined />}
           />
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={12} sm={12} md={6}>
           <StatCard
             title="待处理"
             value={state.contacts.filter(c => (c.status || 'pending') === 'pending').length}
@@ -322,7 +340,7 @@ const ContactsPage: React.FC = () => {
             valueStyle={{ color: '#faad14' }}
           />
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={12} sm={12} md={6}>
           <StatCard
             title="已联系"
             value={state.contacts.filter(c => (c.status || 'pending') === 'contacted').length}
@@ -330,7 +348,7 @@ const ContactsPage: React.FC = () => {
             valueStyle={{ color: '#1890ff' }}
           />
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={12} sm={12} md={6}>
           <StatCard
             title="已完成"
             value={state.contacts.filter(c => (c.status || 'pending') === 'completed').length}
@@ -339,7 +357,7 @@ const ContactsPage: React.FC = () => {
           />
         </Col>
       </Row>
-      
+
       {/* 筛选器 */}
       <FilterBar
         filters={[
@@ -371,18 +389,18 @@ const ContactsPage: React.FC = () => {
           search: state.filters.search
         }}
         onChange={(key, value) => {
-           setState(prev => ({
-             ...prev,
-             filters: { ...prev.filters, [key]: value },
-             current: 1
-           }));
-           if (key === 'search') {
-             loadContacts();
-           }
-         }}
-         onReset={resetFilters}
+          setState(prev => ({
+            ...prev,
+            filters: { ...prev.filters, [key]: value },
+            current: 1
+          }));
+          if (key === 'search') {
+            loadContacts();
+          }
+        }}
+        onReset={resetFilters}
       />
-      
+
       {/* 表格 */}
       <ContentCard>
         <Table
@@ -405,11 +423,11 @@ const ContactsPage: React.FC = () => {
               }));
             },
           }}
-          scroll={{ x: 1200, y: 600 }}
+          scroll={{ x: 1000 }}
           size="small"
         />
       </ContentCard>
-      
+
       {/* 详情模态框 */}
       <Modal
         title="联系表单详情"
@@ -476,7 +494,7 @@ const ContactsPage: React.FC = () => {
           </Descriptions>
         )}
       </Modal>
-      
+
       {/* 状态更新模态框 */}
       <Modal
         title="更新处理状态"
@@ -506,7 +524,7 @@ const ContactsPage: React.FC = () => {
               <Option value="cancelled">已取消</Option>
             </Select>
           </Form.Item>
-          
+
           <Form.Item
             name="notes"
             label="处理备注"

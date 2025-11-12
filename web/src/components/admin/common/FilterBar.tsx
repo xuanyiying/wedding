@@ -17,6 +17,8 @@ const FilterContainer = styled.div`
   background: var(--admin-bg-container);
   border-radius: 8px;
   border: 1px solid var(--admin-border-color);
+  max-width: 100%;
+  overflow-x: hidden;
   
   .ant-select {
     min-width: 120px;
@@ -29,10 +31,21 @@ const FilterContainer = styled.div`
   @media (max-width: 768px) {
     flex-direction: column;
     align-items: stretch;
+    padding: 12px;
+    gap: 12px;
+    margin-bottom: 16px;
     
     .ant-select,
     .ant-input-search {
       min-width: auto;
+      width: 100%;
+    }
+
+    .ant-space {
+      width: 100%;
+    }
+
+    .ant-space-item {
       width: 100%;
     }
   }
@@ -129,7 +142,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
       <Space wrap size="middle" style={{ flex: 1 }}>
         {filters.map(renderFilter)}
       </Space>
-      
+
       {showReset && onReset && (
         <Button
           icon={<ReloadOutlined />}

@@ -54,6 +54,8 @@ const { TextArea } = Input;
 
 const TeamContainer = styled.div`
   padding: 16px;
+  max-width: 100vw;
+  overflow-x: hidden;
   
   @media (max-width: 768px) {
     padding: 8px;

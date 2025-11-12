@@ -10,12 +10,30 @@ const StyledCard = styled(Card)`
   margin-bottom: 16px;
   border-radius: 8px;
   transition: all 0.3s ease;
+  max-width: 100%;
+  overflow-x: hidden;
 
   &:hover {
     box-shadow: var(--admin-shadow-lg);
     transform: translateY(-2px);
   }
 
+  @media (max-width: 768px) {
+    margin-bottom: 12px;
+
+    .ant-card-head {
+      padding: 12px;
+      font-size: 14px;
+    }
+
+    .ant-card-body {
+      padding: 12px;
+    }
+
+    .ant-card-extra {
+      margin-left: 8px;
+    }
+  }
 `;
 
 const InfoRow = styled.div`
@@ -77,7 +95,7 @@ const ScheduleCard: React.FC<ScheduleCardProps> = ({
   const getStatusTag = (status: Schedule['status']) => {
     const statusConfig = {
       reserve: { color: 'orange', text: '待确认' },
-      booked: { color: 'blue', text: '已预订' },    
+      booked: { color: 'blue', text: '已预订' },
       completed: { color: 'green', text: '已完成' },
       cancelled: { color: 'red', text: '已取消' },
     };

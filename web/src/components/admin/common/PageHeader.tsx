@@ -20,19 +20,25 @@ const HeaderContainer = styled.div`
   @media (max-width: 768px) {
     flex-direction: column;
     align-items: stretch;
+    margin-bottom: 16px;
+    padding: 12px 0;
   }
 `;
 
 const HeaderLeft = styled.div`
   flex: 1;
+  min-width: 0;
 `;
 
 const HeaderRight = styled.div`
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
   
   @media (max-width: 768px) {
-    justify-content: flex-end;
+    justify-content: flex-start;
+    margin-top: 12px;
+    gap: 6px;
   }
 `;
 
@@ -41,6 +47,16 @@ const TitleContainer = styled.div`
   align-items: center;
   gap: 12px;
   margin-bottom: 8px;
+
+  @media (max-width: 768px) {
+    gap: 8px;
+  }
+
+  h2 {
+    @media (max-width: 768px) {
+      font-size: 18px !important;
+    }
+  }
 `;
 
 interface BreadcrumbItem {
@@ -107,7 +123,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
             }))}
           />
         )}
-        
+
         <TitleContainer>
           {showBack && (
             <Button
@@ -117,25 +133,25 @@ const PageHeader: React.FC<PageHeaderProps> = ({
               size="small"
             />
           )}
-          
+
           <Title level={2} style={{ margin: 0 }}>
             {title}
           </Title>
         </TitleContainer>
-        
+
         {subtitle && (
           <Typography.Text type="secondary">
             {subtitle}
           </Typography.Text>
         )}
-        
+
         {extra && (
           <div style={{ marginTop: 12 }}>
             {extra}
           </div>
         )}
       </HeaderLeft>
-      
+
       {actions.length > 0 && (
         <HeaderRight>
           <Space>

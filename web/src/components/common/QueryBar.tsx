@@ -84,9 +84,13 @@ const QueryBarContainer = styled.div`
   }
 
   @media (max-width: 768px) {
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 6px;
+    
     .query-row {
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
     
     .query-item,
@@ -100,11 +104,45 @@ const QueryBarContainer = styled.div`
       margin-top: 0;
     }
     
+    .ant-select,
+    .ant-picker {
+      height: 40px;
+      
+      .ant-select-selector {
+        height: 40px !important;
+        padding: 0 11px !important;
+        
+        .ant-select-selection-item,
+        .ant-select-selection-placeholder {
+          line-height: 38px !important;
+        }
+      }
+    }
+    
+    .ant-picker {
+      height: 40px !important;
+      
+      .ant-picker-input > input {
+        height: 38px;
+        line-height: 38px;
+      }
+    }
+    
     .query-actions {
       justify-content: stretch;
+      gap: 10px;
+      margin-top: 2px;
       
       .ant-btn {
         flex: 1;
+        height: 40px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 6px;
+        
+        .anticon {
+          font-size: 16px;
+        }
       }
     }
   }
@@ -185,7 +223,7 @@ const QueryBar: React.FC<QueryBarProps> = ({
   // 初始化数据
   useEffect(() => {
     fetchTeams();
-    
+
     // 如果有初始筛选条件，设置到state中
     if (initialFilters) {
       setFilters(initialFilters);
@@ -200,7 +238,7 @@ const QueryBar: React.FC<QueryBarProps> = ({
         ...initialFilters
       }));
     }
-  }, [JSON.stringify(initialFilters)]);
+  }, [initialFilters]);
 
   // 当选择团队时，获取对应的成员列表
   useEffect(() => {
@@ -262,30 +300,30 @@ const QueryBar: React.FC<QueryBarProps> = ({
         {/* 成员选择 */}
         {showMemberFilter && (
           <div className="query-item">
-          <Select
-            placeholder="选择成员"
-            value={filters.userId}
-            onChange={(value) => handleFilterChange('userId', value)}
-            loading={loadingMembers}
-            disabled={!filters.teamId}
-            allowClear
-          >
-            <Option value="">全部成员</Option>
-            {user && (
-              <Option key={user.id} value={user.id}>
-                {getCurrentUserDisplayName()}
-              </Option>
-            )}
-            {members
-              .filter(member => member.user.id !== user?.id)
-              .map(member => (
-                <Option key={member.user.id} value={member.user.id}>
-                  {member.user.realName || member.user.nickname || member.user.username}
+            <Select
+              placeholder="选择成员"
+              value={filters.userId}
+              onChange={(value) => handleFilterChange('userId', value)}
+              loading={loadingMembers}
+              disabled={!filters.teamId}
+              allowClear
+            >
+              <Option value="">全部成员</Option>
+              {user && (
+                <Option key={user.id} value={user.id}>
+                  {getCurrentUserDisplayName()}
                 </Option>
-              ))
-            }
-          </Select>
-        </div>
+              )}
+              {members
+                .filter(member => member.user.id !== user?.id)
+                .map(member => (
+                  <Option key={member.user.id} value={member.user.id}>
+                    {member.user.realName || member.user.nickname || member.user.username}
+                  </Option>
+                ))
+              }
+            </Select>
+          </div>
         )}
 
         {/* 日期选择 */}

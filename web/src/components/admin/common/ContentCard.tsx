@@ -9,6 +9,13 @@ const StyledContentCard = styled.div`
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
+  padding: 16px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 16px;
+    padding: 12px;
+    border-radius: 8px;
+  }
 `;
 
 interface ContentCardProps {

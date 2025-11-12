@@ -17,6 +17,12 @@ const ChangePasswordContainer = styled.div`
   justify-content: center;
   background: var(--admin-gradient-primary);
   padding: 20px;
+  overflow-x: hidden;
+  max-width: 100vw;
+
+  @media (max-width: 768px) {
+    padding: 12px;
+  }
 `;
 
 const ChangePasswordCard = styled(Card)`
@@ -28,6 +34,21 @@ const ChangePasswordCard = styled(Card)`
   
   .ant-card-body {
     padding: 40px;
+  }
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+    border-radius: 12px;
+
+    .ant-card-body {
+      padding: 24px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .ant-card-body {
+      padding: 20px;
+    }
   }
 `;
 

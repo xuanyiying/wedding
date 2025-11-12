@@ -22,6 +22,7 @@ const LoginContainer = styled.div`
   bottom: 0;
   padding: 20px;
   box-sizing: border-box;
+  overflow-x: hidden;
   
   &::before {
     content: '';
@@ -38,7 +39,11 @@ const LoginContainer = styled.div`
   }
   
   @media (max-width: 768px) {
-    padding: 16px;
+    padding: 12px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 8px;
   }
 `;
 
@@ -54,14 +59,24 @@ const LoginCard = styled(Card)`
   position: relative;
   z-index: 1;
 
+  .ant-card-body {
+    padding: 32px;
+  }
+
   @media (max-width: 768px) {
     max-width: 100%;
     min-height: auto;
     border-radius: var(--admin-border-radius-lg);
 
+    .ant-card-body {
+      padding: 24px;
+    }
   }
 
   @media (max-width: 480px) {
+    .ant-card-body {
+      padding: 20px;
+    }
   }
 `;
 

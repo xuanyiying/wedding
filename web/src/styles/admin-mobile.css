@@ -1,0 +1,311 @@
+/* Admin 移动端适配全局样式 */
+
+/* 基础容器适配 */
+@media (max-width: 768px) {
+  /* 确保页面不会出现横向滚动 */
+  body,
+  html,
+  #root {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+  }
+
+  /* 所有容器都限制在视口宽度内 */
+  * {
+    max-width: 100vw;
+    box-sizing: border-box;
+  }
+
+  /* Ant Design 表格移动端适配 */
+  .ant-table-wrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ant-table {
+    min-width: 100% !important;
+  }
+
+  .ant-table-thead > tr > th,
+  .ant-table-tbody > tr > td {
+    padding: 8px 4px !important;
+    font-size: 12px !important;
+    white-space: nowrap;
+  }
+
+  /* 表格固定列在移动端的处理 */
+  .ant-table-cell-fix-left,
+  .ant-table-cell-fix-right {
+    position: sticky !important;
+    z-index: 2;
+  }
+
+  /* Modal 移动端适配 */
+  .ant-modal {
+    max-width: calc(100vw - 32px) !important;
+    margin: 16px auto !important;
+  }
+
+  .ant-modal-content {
+    max-width: 100% !important;
+  }
+
+  .ant-modal-body {
+    padding: 16px !important;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+  }
+
+  /* Form 移动端适配 */
+  .ant-form-item {
+    margin-bottom: 16px !important;
+  }
+
+  .ant-form-item-label {
+    padding-bottom: 4px !important;
+  }
+
+  /* Button 移动端适配 */
+  .ant-btn {
+    padding: 4px 12px !important;
+    font-size: 14px !important;
+    height: auto !important;
+    min-height: 32px;
+  }
+
+  .ant-btn-sm {
+    padding: 2px 8px !important;
+    font-size: 12px !important;
+    min-height: 28px;
+  }
+
+  /* Space 组件移动端适配 */
+  .ant-space {
+    flex-wrap: wrap !important;
+  }
+
+  /* Row 和 Col 移动端适配 */
+  .ant-row {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .ant-col {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+  }
+
+  /* Card 移动端适配 */
+  .ant-card {
+    margin-bottom: 12px !important;
+  }
+
+  .ant-card-body {
+    padding: 12px !important;
+  }
+
+  .ant-card-head {
+    padding: 12px !important;
+    min-height: auto !important;
+  }
+
+  /* Tabs 移动端适配 */
+  .ant-tabs-nav {
+    margin-bottom: 12px !important;
+  }
+
+  .ant-tabs-tab {
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+  }
+
+  /* Descriptions 移动端适配 */
+  .ant-descriptions-item-label,
+  .ant-descriptions-item-content {
+    padding: 8px !important;
+    font-size: 12px !important;
+  }
+
+  /* Select 移动端适配 */
+  .ant-select {
+    font-size: 14px !important;
+  }
+
+  .ant-select-dropdown {
+    max-width: calc(100vw - 32px) !important;
+  }
+
+  /* DatePicker 移动端适配 */
+  .ant-picker-dropdown {
+    max-width: calc(100vw - 32px) !important;
+  }
+
+  /* Input 移动端适配 */
+  .ant-input,
+  .ant-input-number {
+    font-size: 14px !important;
+  }
+
+  /* Pagination 移动端适配 */
+  .ant-pagination {
+    text-align: center !important;
+  }
+
+  .ant-pagination-item,
+  .ant-pagination-prev,
+  .ant-pagination-next {
+    min-width: 28px !important;
+    height: 28px !important;
+    line-height: 28px !important;
+    font-size: 12px !important;
+  }
+
+  /* Avatar 移动端适配 */
+  .ant-avatar {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .ant-avatar-lg {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  /* Tag 移动端适配 */
+  .ant-tag {
+    font-size: 11px !important;
+    padding: 0 6px !important;
+    line-height: 18px !important;
+  }
+
+  /* Statistic 移动端适配 */
+  .ant-statistic-title {
+    font-size: 12px !important;
+  }
+
+  .ant-statistic-content {
+    font-size: 18px !important;
+  }
+
+  /* List 移动端适配 */
+  .ant-list-item {
+    padding: 8px 12px !important;
+  }
+
+  .ant-list-item-meta-title {
+    font-size: 14px !important;
+  }
+
+  .ant-list-item-meta-description {
+    font-size: 12px !important;
+  }
+
+  /* Drawer 移动端适配 */
+  .ant-drawer-content-wrapper {
+    max-width: 100vw !important;
+  }
+
+  /* Message 和 Notification 移动端适配 */
+  .ant-message,
+  .ant-notification {
+    max-width: calc(100vw - 32px) !important;
+  }
+
+  /* Upload 移动端适配 */
+  .ant-upload-list-item {
+    font-size: 12px !important;
+  }
+
+  /* Calendar 移动端适配 */
+  .ant-picker-calendar {
+    font-size: 12px !important;
+  }
+
+  .ant-picker-calendar-header {
+    padding: 8px !important;
+  }
+
+  /* Breadcrumb 移动端适配 */
+  .ant-breadcrumb {
+    font-size: 12px !important;
+  }
+
+  /* Typography 移动端适配 */
+  .ant-typography {
+    font-size: 14px !important;
+  }
+
+  h1.ant-typography,
+  .ant-typography h1 {
+    font-size: 24px !important;
+  }
+
+  h2.ant-typography,
+  .ant-typography h2 {
+    font-size: 20px !important;
+  }
+
+  h3.ant-typography,
+  .ant-typography h3 {
+    font-size: 18px !important;
+  }
+
+  h4.ant-typography,
+  .ant-typography h4 {
+    font-size: 16px !important;
+  }
+
+  /* Popover 和 Tooltip 移动端适配 */
+  .ant-popover,
+  .ant-tooltip {
+    max-width: calc(100vw - 32px) !important;
+  }
+
+  /* Steps 移动端适配 */
+  .ant-steps-item-title {
+    font-size: 12px !important;
+  }
+
+  .ant-steps-item-description {
+    font-size: 11px !important;
+  }
+
+  /* Menu 移动端适配 */
+  .ant-menu-item {
+    font-size: 14px !important;
+    padding: 8px 12px !important;
+  }
+
+  /* Collapse 移动端适配 */
+  .ant-collapse-header {
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+  }
+
+  .ant-collapse-content-box {
+    padding: 12px !important;
+  }
+}
+
+/* 超小屏幕适配 (< 576px) */
+@media (max-width: 576px) {
+  .ant-modal {
+    max-width: calc(100vw - 16px) !important;
+    margin: 8px auto !important;
+  }
+
+  .ant-table-thead > tr > th,
+  .ant-table-tbody > tr > td {
+    padding: 6px 2px !important;
+    font-size: 11px !important;
+  }
+
+  .ant-btn {
+    padding: 2px 8px !important;
+    font-size: 12px !important;
+  }
+
+  .ant-form-item {
+    margin-bottom: 12px !important;
+  }
+}

@@ -32,6 +32,12 @@ const ProfileContainer = styled.div`
   padding: 12px;
   max-width: 1200px;
   margin: 0 auto;
+  overflow-x: hidden;
+
+  @media (max-width: 768px) {
+    padding: 8px;
+    max-width: 100vw;
+  }
 `;
 
 const PublicProfileContainer = styled.div`
@@ -42,6 +48,10 @@ const PublicProfileContainer = styled.div`
     color: #333;
     border-radius: 12px 12px 0 0;
 
+    @media (max-width: 768px) {
+      padding: 24px 16px;
+    }
+
     .avatar {
       margin: 0 auto 16px auto;
       width: 120px;
@@ -50,18 +60,31 @@ const PublicProfileContainer = styled.div`
       display: flex;
       align-items: center;
       justify-content: center;
+
+      @media (max-width: 768px) {
+        width: 80px;
+        height: 80px;
+      }
     }
 
     .name {
       font-size: 24px;
       font-weight: 600;
       margin-bottom: 8px;
+
+      @media (max-width: 768px) {
+        font-size: 20px;
+      }
     }
 
     .title {
       font-size: 14px;
       opacity: 0.9;
       margin-bottom: 16px;
+
+      @media (max-width: 768px) {
+        font-size: 12px;
+      }
     }
 
     .stats {
@@ -70,6 +93,10 @@ const PublicProfileContainer = styled.div`
       gap: 32px;
       margin-top: 24px;
 
+      @media (max-width: 768px) {
+        gap: 16px;
+        flex-wrap: wrap;
+      }
     }
   }
 
@@ -80,6 +107,10 @@ const PublicProfileContainer = styled.div`
     .section {
       padding: 24px;
       border-bottom: 1px solid #f0f0f0;
+
+      @media (max-width: 768px) {
+        padding: 16px;
+      }
 
       &:last-child {
         border-bottom: none;
@@ -92,6 +123,12 @@ const PublicProfileContainer = styled.div`
         display: flex;
         align-items: center;
         gap: 8px;
+        flex-wrap: wrap;
+
+        @media (max-width: 768px) {
+          font-size: 14px;
+          margin-bottom: 12px;
+        }
 
         .anticon {
           color: #667eea;
@@ -164,7 +201,7 @@ const ProfilePage: React.FC = () => {
   // 处理头像变更（仅更新本地状态，上传由AvatarUploader内部处理）
   const handleAvatarChange = useCallback((url: string) => {
     // 只更新本地状态，避免重复API调用
-    setCurrentUser( (prev) => {
+    setCurrentUser((prev) => {
       // 避免不必要的状态更新，防止无限循环
       if (prev?.avatarUrl === url) {
         return prev;
@@ -191,8 +228,8 @@ const ProfilePage: React.FC = () => {
       }
 
       // 移除格式化后的日期字段，避免类型冲突
-      const {...submitValues } = values;
-      
+      const { ...submitValues } = values;
+
       await userService.updateCurrentUserProfile(submitValues);
       message.success('基本信息保存成功');
       await loadCurrentUser();
@@ -338,7 +375,7 @@ const ProfilePage: React.FC = () => {
                 <ProfileEditForm
                   initialValues={{ ...currentUser }}
                   onSubmit={handleBasicInfoSave}
-                  onCancel={() => {}}
+                  onCancel={() => { }}
                   loading={loading}
                   avatarUrl={currentUser?.avatarUrl}
                   onAvatarChange={handleAvatarChange}
@@ -452,8 +489,8 @@ const ProfilePage: React.FC = () => {
       >
         {previewImage &&
           (previewImage.includes(".mp4") ||
-          previewImage.includes(".mov") ||
-          previewImage.includes(".avi") ? (
+            previewImage.includes(".mov") ||
+            previewImage.includes(".avi") ? (
             <video
               src={previewImage}
               controls
