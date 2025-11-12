@@ -11,7 +11,6 @@ import {
   MenuUnfoldOutlined,
   BellOutlined,
   LockOutlined,
-  BugOutlined
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
@@ -241,12 +240,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
         icon: <PictureOutlined />,
         label: '作品管理',
         roles: ['super_admin', 'admin', 'user'], // 所有用户可见
-      },
-      {
-        key: '/admin/issues',
-        icon: <BugOutlined />,
-        label: 'bug管理',
-        roles: ['super_admin', 'admin', 'user'], // 所有用户可见
       }
     ];
 
@@ -270,8 +263,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
       '/admin/schedules': '档期管理',
       '/admin/works': '作品管理',
       '/admin/contacts': '联系人管理',
-      '/admin/settings': '系统设置',
-      '/admin/issues': 'bug管理',
     };
 
     const pathSegments = location.pathname.split('/').filter(Boolean);
