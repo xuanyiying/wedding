@@ -109,8 +109,8 @@ const TeamManagePage: React.FC = () => {
       if (response.success) {
         setTeams(response.data?.teams || []);
       }
-    } catch (error) {
-      message.error('获取团队列表失败');
+    } catch (error: any) {
+      message.error('获取团队列表失败', error);
     } finally {
       setLoading(false);
     }
@@ -137,8 +137,8 @@ const TeamManagePage: React.FC = () => {
           total: response.data?.total || 0,
         }));
       }
-    } catch (error) {
-      message.error('获取用户列表失败');
+    } catch (error: any) {
+      message.error('获取用户列表失败', error);
     } finally {
       setUsersLoading(false);
     }
@@ -205,7 +205,7 @@ const TeamManagePage: React.FC = () => {
         message.success(editingTeam ? '团队更新成功' : '团队创建成功');
         setModalVisible(false);
         form.resetFields();
-        fetchTeams();
+        await fetchTeams();
       } else {
         message.error(response.message || (editingTeam ? '团队更新失败' : '团队创建失败'));
       }
@@ -227,10 +227,10 @@ const TeamManagePage: React.FC = () => {
       const response = await teamService.deleteTeam(id);
       if (response.success) {
         message.success('团队删除成功');
-        fetchTeams();
+        await fetchTeams();
       }
-    } catch (error) {
-      message.error('团队删除失败');
+    } catch (error: any) {
+      message.error('团队删除失败', error);
     }
   };
   const handleInviteCancel = () => {
@@ -241,7 +241,7 @@ const TeamManagePage: React.FC = () => {
     setUserSearchText('');
   };
   // 邀请成员
-  const handleInvite = async (values: unknown) => {
+  const handleInvite = async (values: any) => {
     if (!selectedTeam || selectedUserIds.length === 0) {
       message.warning('请选择要邀请的用户');
       return;
@@ -260,10 +260,10 @@ const TeamManagePage: React.FC = () => {
         setSelectedUserIds([]);
         setAvailableUsers([]);
         setUserSearchText('');
-        fetchTeams();
+        await fetchTeams();
       }
-    } catch (error) {
-      message.error('邀请发送失败');
+    } catch (error: any) {
+      message.error('邀请发送失败', error);
     }
   };
 
@@ -284,8 +284,8 @@ const TeamManagePage: React.FC = () => {
       if (response.success) {
         setTeamMembers(response.data?.members || []);
       }
-    } catch (error) {
-      message.error('获取团队成员失败');
+    } catch (error: any) {
+      message.error('获取团队成员失败', error);
     } finally {
       setMembersLoading(false);
     }
@@ -306,12 +306,12 @@ const TeamManagePage: React.FC = () => {
       if (response.success) {
         message.success('成员删除成功');
         if (selectedTeam) {
-          fetchTeamMembers(selectedTeam.id);
-          fetchTeams(); // 刷新团队列表以更新成员数量
+          await fetchTeamMembers(selectedTeam.id);
+          await fetchTeams(); // 刷新团队列表以更新成员数量
         }
       }
-    } catch (error) {
-      message.error('删除成员失败');
+    } catch (error: any) {
+      message.error('删除成员失败', error);
     }
   };
 
@@ -328,12 +328,12 @@ const TeamManagePage: React.FC = () => {
         message.success(`成功删除 ${selectedMemberIds.length} 位成员`);
         setSelectedMemberIds([]);
         if (selectedTeam) {
-          fetchTeamMembers(selectedTeam.id);
-          fetchTeams(); // 刷新团队列表以更新成员数量
+          await fetchTeamMembers(selectedTeam.id);
+          await fetchTeams(); // 刷新团队列表以更新成员数量
         }
       }
-    } catch (error) {
-      message.error('批量删除成员失败');
+    } catch (error: any) {
+      message.error('批量删除成员失败', error);
     }
   };
 
