@@ -20,6 +20,7 @@ import SchedulePage from './pages/client/SchedulePage';
 import TeamPage from './pages/client/TeamPage';
 import WorksPage from './pages/client/WorksPage';
 import WorkDetailPage from './pages/client/WorkDetailPage';
+import TeamMemberDetailPage from './pages/client/TeamMemberDetailPage'; // 新增导入
 import DashboardPage from './pages/admin/DashboardPage';
 import UsersPage from './pages/admin/UsersPage';
 import SettingsPage from './pages/admin/SettingsPage';
@@ -128,6 +129,7 @@ function AnimatedRoutes() {
         <Route index element={<HomePage />} />
         <Route path="team" element={<TeamPage />} />
         <Route path="team/:id" element={<TeamPage />} />
+        <Route path="team-member/:userId" element={<TeamMemberDetailPage />} /> // 新增路由
         <Route path="works" element={<WorksPage />} />
         <Route path="works/:id" element={<WorkDetailPage />} />
         <Route path="schedule" element={<SchedulePage />} />

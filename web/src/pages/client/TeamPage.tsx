@@ -121,6 +121,7 @@ const TeamPage: React.FC = () => {
         member={selectedMember}
         onClose={handleModalClose}
         onContact={() => navigate('/contact')}
+        isStandalonePage={false}
       />
     </PageContainer>
   );

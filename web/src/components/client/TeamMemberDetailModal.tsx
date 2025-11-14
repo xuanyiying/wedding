@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Avatar, Typography, Divider, Button, Spin, Tabs } from 'antd';
-import { CalendarOutlined, UserOutlined } from '@ant-design/icons';
+import { Modal, Avatar, Typography, Divider, Button, Spin, Tabs, message } from 'antd';
+import { CalendarOutlined, UserOutlined, ShareAltOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import { type Schedule, type MediaFile } from '../../types';
 import { scheduleService, profileService } from '../../services';
@@ -15,6 +15,7 @@ interface TeamMemberDetailModalProps {
   member: ClientTeamMember | null;
   onClose: () => void;
   onContact?: () => void;
+  isStandalonePage?: boolean; // 新增属性
 }
 
 const DetailModal = styled(Modal)`
@@ -81,10 +82,26 @@ const StyledTabs = styled(Tabs)`
   }
 `;
 
+// 独立页面样式
+const StandaloneContainer = styled.div`
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background: var(--client-bg-container);
+  border-radius: var(--client-border-radius-lg);
+  box-shadow: var(--client-shadow-lg);
+  min-height: 100vh;
+`;
+
+const BackButton = styled(Button)`
+  margin-bottom: 20px;
+`;
+
 const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
   visible,
   member,
   onClose,
+  isStandalonePage = false
 }) => {
   const [mediaProfiles, setMediaProfiles] = useState<MediaFile[]>([]);
   const [memberSchedules, setMemberSchedules] = useState<Schedule[]>([]);
@@ -131,9 +148,31 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
     }
   };
 
+  // 微信分享功能
+  const handleWechatShare = () => {
+    if (!member) return;
+    
+    // 检查是否在微信浏览器中
+    const isWechat = /MicroMessenger/i.test(navigator.userAgent);
+    
+    if (isWechat) {
+      // 如果在微信中，使用微信JS SDK进行分享
+      message.success('请点击右上角菜单分享给朋友');
+    } else {
+      // 如果不在微信中，复制链接到剪贴板
+      const url = `${window.location.origin}/team-member/${member.userId}`;
+      navigator.clipboard.writeText(url).then(() => {
+        message.success('链接已复制到剪贴板，请去微信粘贴分享');
+      }).catch(() => {
+        // 降级方案：显示链接
+        message.info(`请复制链接去微信分享: ${url}`);
+      });
+    }
+  };
+
   // 记录页面访问并加载数据
   useEffect(() => {
-    if (visible && member?.userId) {
+    if ((visible || isStandalonePage) && member?.userId) {
       loadMediaProfile(member.userId);
       loadMemberSchedules(member.userId);
     } else {
@@ -141,20 +180,11 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
       setMediaProfiles([]);
       setMemberSchedules([]);
     }
-  }, [visible, member?.userId]);
+  }, [visible, member?.userId, isStandalonePage]);
 
-  return (
-    <DetailModal
-      title={member?.name}
-      open={visible}
-      onCancel={onClose}
-      footer={[
-        <Button key="close" onClick={onClose}>
-          关闭
-        </Button>
-      ]}
-      width={600}
-    >
+  // 渲染内容
+  const renderContent = () => (
+    <>
       {member && (
         <div>
           {/* 头像和基本信息 */}
@@ -225,6 +255,38 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({
           />
         </div>
       )}
+    </>
+  );
+
+  // 如果是独立页面模式，渲染为普通页面
+  if (isStandalonePage) {
+    return (
+      <StandaloneContainer>
+        <BackButton onClick={onClose} icon={<UserOutlined />}>
+          返回团队页面
+        </BackButton>
+        {renderContent()}
+      </StandaloneContainer>
+    );
+  }
+
+  // 否则渲染为模态框
+  return (
+    <DetailModal
+      title={member?.name}
+      open={visible}
+      onCancel={onClose}
+      footer={[
+        <Button key="share" onClick={handleWechatShare} icon={<ShareAltOutlined />}>
+          分享到微信
+        </Button>,
+        <Button key="close" onClick={onClose}>
+          关闭
+        </Button>
+      ]}
+      width={600}
+    >
+      {renderContent()}
     </DetailModal>
   );
 };

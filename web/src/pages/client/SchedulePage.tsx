@@ -187,6 +187,7 @@ const SchedulePage: React.FC = () => {
         member={selectedMember}
         visible={modalVisible}
         onClose={handleModalClose}
+        isStandalonePage={false}
       />
     </PageContainer>
   );
