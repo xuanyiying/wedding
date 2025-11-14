@@ -54,10 +54,8 @@ services:
       - ./deployment/environments/.env.${ENVIRONMENT:-prod}
     # 只需要覆盖特定的环境变量
     environment:
-      - NODE_ENV=${NODE_ENV:-prod}
+      - NODE_ENV=production
       - PORT=3000
-      - LOG_FILE=/app/logs/app.log
-      - LOG_ERROR_FILE=/app/logs/error.log
     volumes:
       - ./deployment/uploads:/app/uploads
       - ./deployment/logs/api:/app/logs

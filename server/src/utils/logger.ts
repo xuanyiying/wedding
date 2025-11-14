@@ -1,5 +1,5 @@
 import winston from 'winston';
-
+import DailyRotateFile from 'winston-daily-rotate-file';
 import { config } from '../config/config';
 
 // 自定义日志格式
@@ -61,29 +61,31 @@ if (config.nodeEnv === 'development') {
   );
 }
 
-// 文件传输器
-if (config.nodeEnv === 'prod') {
-  // 普通日志文件
+// 文件传输器 - 使用日志轮转
+if (config.nodeEnv === 'production' || config.nodeEnv === 'prod') {
+  // 普通日志文件 - 按天轮转
   transports.push(
-    new winston.transports.File({
-      filename: config.logging.file,
+    new DailyRotateFile({
+      filename: 'logs/app-%DATE%.log',
+      datePattern: 'YYYY-MM-DD',
       format: logFormat,
       level: 'info',
-      maxsize: 10485760, // 10MB
-      maxFiles: 5,
-      tailable: true,
+      maxSize: '20m',
+      maxFiles: '30d',
+      zippedArchive: true,
     }),
   );
 
-  // 错误日志文件
+  // 错误日志文件 - 按天轮转
   transports.push(
-    new winston.transports.File({
-      filename: config.logging.errorFile,
+    new DailyRotateFile({
+      filename: 'logs/error-%DATE%.log',
+      datePattern: 'YYYY-MM-DD',
       format: logFormat,
       level: 'error',
-      maxsize: 10485760, // 10MB
-      maxFiles: 5,
-      tailable: true,
+      maxSize: '20m',
+      maxFiles: '30d',
+      zippedArchive: true,
     }),
   );
 }

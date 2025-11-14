@@ -190,10 +190,26 @@
   /* List 移动端适配 */
   .ant-list-item {
     padding: 8px 12px !important;
+    flex-wrap: wrap !important;
+  }
+
+  .ant-list-item-meta {
+    width: 100% !important;
+    flex: 1 !important;
+  }
+
+  .ant-list-item-meta-avatar {
+    margin-right: 8px !important;
+  }
+
+  .ant-list-item-meta-content {
+    flex: 1 !important;
+    min-width: 0 !important;
   }
 
   .ant-list-item-meta-title {
     font-size: 14px !important;
+    margin-bottom: 4px !important;
   }
 
   .ant-list-item-meta-description {

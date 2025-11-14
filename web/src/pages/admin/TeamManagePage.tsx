@@ -241,7 +241,7 @@ const TeamManagePage: React.FC = () => {
     setUserSearchText('');
   };
   // 邀请成员
-  const handleInvite = async (values: any) => {
+  const handleInvite = async (values: unknown) => {
     if (!selectedTeam || selectedUserIds.length === 0) {
       message.warning('请选择要邀请的用户');
       return;
@@ -702,7 +702,13 @@ const TeamManagePage: React.FC = () => {
               </div>
             </div>
 
-            <div style={{ border: '1px solid var(--admin-border-color)', borderRadius: 6, maxHeight: 300, overflow: 'auto' }}>
+            <div style={{
+              border: '1px solid var(--admin-border-color)',
+              borderRadius: 6,
+              maxHeight: 300,
+              overflow: 'auto',
+              minHeight: 200
+            }}>
               <Spin spinning={usersLoading}>
                 {availableUsers.length > 0 ? (
                   <List
@@ -712,24 +718,30 @@ const TeamManagePage: React.FC = () => {
                         style={{
                           padding: '12px 16px',
                           cursor: 'pointer',
-                          backgroundColor: selectedUserIds.includes(user.id) ? 'var(--admin-functional-success-bg)' : 'transparent'
+                          backgroundColor: selectedUserIds.includes(user.id) ? 'var(--admin-functional-success-bg)' : 'transparent',
+                          display: 'flex',
+                          alignItems: 'flex-start'
                         }}
+                        onClick={() => handleUserSelect(user.id, !selectedUserIds.includes(user.id))}
                       >
                         <List.Item.Meta
                           avatar={
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                               <Checkbox
                                 checked={selectedUserIds.includes(user.id)}
-                                onChange={(e) => handleUserSelect(user.id, e.target.checked)}
+                                onChange={(e) => {
+                                  e.stopPropagation();
+                                  handleUserSelect(user.id, e.target.checked);
+                                }}
                               />
                               <Avatar src={user.avatarUrl} size={32}>
                                 {(user.realName || user.nickname)?.charAt(0)}
                               </Avatar>
                             </div>
                           }
-                          title={user.realName || user.nickname || user.username}
+                          title={<div style={{ wordBreak: 'break-word' }}>{user.realName || user.nickname || user.username}</div>}
                           description={
-                            <div>
+                            <div style={{ wordBreak: 'break-word' }}>
                               <div>{user.email}</div>
                               {user.phone && <div style={{ fontSize: 12, color: 'var(--admin-text-tertiary)' }}>{user.phone}</div>}
                             </div>
