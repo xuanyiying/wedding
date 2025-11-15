@@ -120,13 +120,8 @@ RUN apk update && \
     adduser -u 1001 -G nodejs -s /bin/sh -D wedding && \
     rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
 
-# 设置工作目录并创建目录
+# 设置工作目录
 WORKDIR /app
-
-# 创建必要的目录并设置权限
-RUN mkdir -p logs uploads temp && \
-    chown -R wedding:nodejs /app && \
-    chmod -R 755 /app/logs
 
 # 复制构建产物和优化后的生产依赖
 COPY --from=builder --chown=wedding:nodejs /app/dist ./dist

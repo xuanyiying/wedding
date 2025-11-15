@@ -823,7 +823,7 @@ main() {
     
     # 创建必要目录
     create_directories
-    
+
     # 显示环境摘要
     show_environment_summary
     

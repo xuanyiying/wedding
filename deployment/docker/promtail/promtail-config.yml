@@ -1,0 +1,28 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # 采集 Docker 容器 stdout 日志
+  - job_name: containers
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: containers
+          __path__: /var/lib/docker/containers/*/*log
+
+  # 采集挂载的本地日志文件（如 nginx, mysql 等）
+  - job_name: wedding-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: wedding-logs
+          __path__: /var/log/wedding/**/*.log

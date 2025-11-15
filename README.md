@@ -1,190 +1,221 @@
-# Wedding Client 婚礼工作室官网
+# Wedding Club - 一站式婚礼服务平台
 
-一个现代化的婚礼工作室官网系统，包含客户展示端和管理后台，采用前后端分离架构开发。
+<div align="center">
 
-## 🚀 快速开始
+[![Node.js](https://img.shields.io/badge/Node.js-18.x-green.svg)](https://nodejs.org/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-blue.svg)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-### 简单启动
-```bash
-# 1. 克隆项目
-git clone <repository-url>
-cd wedding-client
+一站式婚礼服务平台，包含客户管理、作品展示、日程安排、团队协作等核心功能。
 
-# 2. 一键启动（推荐）
-./deploy.sh deploy
+</div>
 
-# 3. 查看服务状态
-./deploy.sh status
-```
+## 🌟 项目特点
 
-### 访问地址
-- **前端展示**: http://localhost
-- **管理后台**: http://localhost/admin  
-- **API接口**: http://localhost/api
-- **MinIO控制台**: http://localhost:9001
+- **全栈解决方案**: 前端React + 后端Node.js + 数据库MySQL + 缓存Redis
+- **现代化架构**: 微服务设计，Docker容器化部署
+- **响应式设计**: 支持PC、平板、手机等多设备访问
+- **安全可靠**: JWT认证、权限控制、数据加密
+- **高性能**: Redis缓存、数据库优化、CDN加速
+- **易扩展**: 模块化设计，便于功能扩展
 
-### 默认账户
-- **管理员**: admin / admin123
-- **邮箱**: admin@wedding.com
+## 🏗️ 技术架构
+
+### 前端技术栈
+- React 18 + TypeScript
+- Vite 构建工具
+- Ant Design 组件库
+- React Router v6
+- Zustand 状态管理
+
+### 后端技术栈
+- Node.js 18+
+- Express.js
+- TypeScript
+- MySQL 8.0
+- Redis 7.x
+- MinIO 对象存储
+- JWT 认证
+
+### 基础设施
+- Docker + Docker Compose
+- Nginx 反向代理
+- ELK 日志分析 (可选)
 
 ## 📁 项目结构
 
 ```
-wedding-client/
-├── deploy.sh              # 🚀 主部署脚本（根目录）
-├── 📂 deployment/          # 🚀 部署配置文件
-│   ├── docker/            #    Docker配置
-│   ├── environments/      #    环境配置
-│   └── scripts/           #    工具脚本集合
-│       ├── check-db-init.sh      #    数据库状态检查
-│       ├── database-management.sh #    数据库管理
-│       ├── health-check.sh       #    系统健康检查
-│       ├── nginx-entrypoint.sh   #    Nginx启动脚本
-│       └── setup.sh              #    环境初始化
-├── 📂 docs/               # 📚 项目文档
-├── 📂 server/             # 🔧 后端服务
-└── 📂 web/                # 🎨 前端应用
+.
+├── deployment/          # 部署配置和脚本
+│   ├── docker/         # Docker配置文件
+│   ├── environments/   # 环境配置文件
+│   ├── scripts/        # 部署脚本
+│   └── logs/           # 日志目录
+├── server/             # 后端服务
+│   ├── src/            # 源代码
+│   ├── config/         # 配置文件
+│   └── scripts/        # 服务脚本
+├── web/                # 前端应用
+│   ├── src/            # 源代码
+│   └── public/         # 静态资源
+└── docker-compose.yml  # Docker编排文件
 ```
 
-## 🛠️ 技术栈
-
-### 前端
-- **React 18** + **TypeScript** - 现代化用户界面
-- **Redux Toolkit** - 状态管理
-- **Ant Design 5** - 企业级UI组件
-- **Vite** - 快速构建工具
-
-### 后端  
-- **Node.js 18+** + **TypeScript** - 服务端运行时
-- **Express.js** - Web框架
-- **MySQL 8.0** - 主数据库
-- **Redis 7** - 缓存数据库
-- **JWT** - 身份认证
-
-### 基础设施
-- **Docker** + **Docker Compose** - 容器化部署
-- **Nginx** - 反向代理
-- **MinIO** - 对象存储
-
-## 🎯 核心功能
-
-### 客户展示端
-- ✨ **首页展示** - 工作室介绍与作品展示
-- 👥 **团队介绍** - 主持人团队展示
-- 📅 **档期查询** - 实时档期状态查看
-- 🎬 **作品展示** - 图片/视频作品展示
-- 📞 **联系咨询** - 在线咨询与联系
-
-### 管理后台
-- 📊 **数据仪表盘** - 业务数据统计
-- 👤 **用户管理** - 用户信息与权限管理
-- 📅 **档期管理** - 档期安排与冲突检测
-- 🎨 **作品管理** - 作品上传与审核
-- 👥 **团队管理** - 团队成员管理
-- ⚙️ **系统设置** - 系统配置管理
-
-## 📋 常用命令
-
-### 服务管理
-```bash
-./deploy.sh start      # 启动所有服务
-./deploy.sh stop       # 停止所有服务  
-./deploy.sh restart    # 重启所有服务
-./deploy.sh status     # 查看服务状态
-```
-
-### 部署操作
-```bash
-./deploy.sh deploy     # 完整部署
-./deploy.sh init       # 数据库初始化
-```
-
-### 工具脚本
-```bash
-./deployment/scripts/database-management.sh backup    # 数据库备份
-./deployment/scripts/health-check.sh                  # 健康检查
-./deploy.sh diagnose                                  # nginx问题诊断
-```
-
-### 文档查看
-```bash
-cat docs/README.md     # 文档索引
-```
-
-## 📚 详细文档
-
-| 文档类型 | 链接 | 说明 |
-|----------|------|------|
-| 📋 **文档索引** | [docs/README.md](docs/README.md) | 所有文档的导航目录 |
-| 🚀 **部署指南** | [docs/DEPLOYMENT_README.md](docs/DEPLOYMENT_README.md) | 详细部署说明 |
-| 🏗️ **架构设计** | [docs/complete-architecture-design.md](docs/complete-architecture-design.md) | 系统架构说明 |
-| 🗄️ **数据库设计** | [docs/database-design.md](docs/database-design.md) | 数据库表结构 |
-| 🔐 **权限系统** | [docs/PERMISSION_GUIDE.md](docs/PERMISSION_GUIDE.md) | 权限系统使用指南 |
-
-## 🔧 开发指南
+## 🚀 快速开始
 
 ### 环境要求
 - Node.js 18+
-- Docker & Docker Compose
-- MySQL 8.0
-- Redis 7
+- Docker + Docker Compose
+- Git
 
-### 本地开发
+### 安装步骤
+
+1. **克隆项目**
 ```bash
-# 后端开发
+git clone <repository-url>
+cd wedding-client
+```
+
+2. **配置环境变量**
+```bash
+# 复制环境配置模板
+cp deployment/environments/.env.example deployment/environments/.env.dev
+cp deployment/environments/.env.example deployment/environments/.env.prod
+
+# 编辑配置文件
+vim deployment/environments/.env.dev
+```
+
+3. **启动服务**
+```bash
+# 开发环境
+./deploy.sh dev deploy
+
+# 生产环境
+./deploy.sh prod deploy
+```
+
+4. **访问应用**
+- 前端界面: http://localhost:8080
+- API文档: http://localhost:8080/api/v1/docs
+- 管理后台: http://localhost:8080/admin
+
+## 📊 服务监控与可观测性
+
+系统提供完善的日志和监控功能，详情请参考 [可观测性指南](deployment/OBSERVABILITY.md)。
+
+### 快速查看日志
+```bash
+# 查看所有服务日志
+./deployment/scripts/view-logs.sh
+
+# 查看API服务日志
+./deployment/scripts/view-logs.sh api
+
+# 实时监控服务状态
+./deployment/scripts/monitor-services.sh
+```
+
+### 健康检查
+所有服务都提供健康检查端点：
+- API服务: `http://localhost:3000/health`
+- Web服务: `http://localhost/health`
+
+## 🔧 开发指南
+
+### 后端开发
+```bash
 cd server
 npm install
 npm run dev
+```
 
-# 前端开发  
+### 前端开发
+```bash
 cd web
 npm install
 npm run dev
 ```
 
-### 数据库初始化
-```bash
-# 自动初始化（推荐）
-./deploy.sh init
+### 代码规范
+- 使用ESLint和Prettier保持代码风格一致
+- 遵循RESTful API设计规范
+- 使用TypeScript类型检查
 
-# 手动初始化
-./deployment/scripts/database-management.sh init
+## 🛡️ 安全特性
+
+- JWT Token认证
+- 密码加密存储
+- SQL注入防护
+- XSS攻击防护
+- CSRF防护
+- 权限访问控制
+
+## 📈 性能优化
+
+- Redis缓存热点数据
+- 数据库索引优化
+- 静态资源CDN加速
+- 图片懒加载
+- 服务端渲染支持
+
+## 📚 API文档
+
+API文档使用Swagger生成，启动服务后访问:
+- http://localhost:8080/api/v1/docs
+
+## 🎨 管理后台
+
+系统提供完整的管理后台，包含以下功能模块：
+- 用户管理
+- 作品管理
+- 日程管理
+- 团队管理
+- 系统设置
+- 数据统计
+
+## 📦 部署说明
+
+### 多环境支持
+- 开发环境 (dev)
+- 测试环境 (test)  
+- 生产环境 (prod)
+
+### 部署命令
+```bash
+# 部署到生产环境
+./deploy.sh prod deploy
+
+# 重启服务
+./deploy.sh prod restart
+
+# 停止服务
+./deploy.sh prod stop
+
+# 查看日志
+./deploy.sh prod logs
 ```
 
-## 🛡️ 安全建议
-
-1. **修改默认密码** - 首次部署后立即修改管理员密码
-2. **配置SMTP** - 设置邮件服务以支持密码重置
-3. **启用HTTPS** - 生产环境建议配置SSL证书
-4. **定期备份** - 使用 `./start.sh backup` 定期备份数据
-
-## 🆘 故障排除
-
-### 常见问题
-- **服务启动失败**: 检查端口占用 `docker ps`
-- **数据库连接失败**: 确认环境变量配置
-- **文件上传失败**: 检查MinIO服务状态
-- **网络问题**: 查看 [Docker网络指南](docs/DOCKER_NETWORK_GUIDE.md)
-
-### 获取帮助
-```bash
-./deploy.sh help       # 查看帮助信息
-./deploy.sh diagnose   # nginx问题诊断
-./deployment/scripts/health-check.sh  # 系统健康检查
-```
-
-## 📄 许可证
-
-本项目采用 MIT 许可证，详见 [LICENSE](LICENSE) 文件。
+详细部署说明请参考 [部署文档](deployment/README.md)。
 
 ## 🤝 贡献指南
 
-1. Fork 项目
-2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送分支 (`git push origin feature/AmazingFeature`)
-5. 开启 Pull Request
+欢迎提交Issue和Pull Request来改进项目。
+
+1. Fork项目
+2. 创建功能分支
+3. 提交更改
+4. 推送到分支
+5. 创建Pull Request
+
+## 📄 许可证
+
+本项目采用MIT许可证，详情请查看 [LICENSE](LICENSE) 文件。
+
+## 📞 联系方式
+
+如有问题，请提交Issue或通过以下方式联系：
+- 邮箱: [your-email@example.com](mailto:your-email@example.com)
+- 微信: [your-wechat]
 
 ---
-
-**快速体验**: `./deploy.sh deploy` 一键部署，几分钟内即可访问完整系统！

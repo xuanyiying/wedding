@@ -1,21 +1,6 @@
 import winston from 'winston';
-import DailyRotateFile from 'winston-daily-rotate-file';
-import { config } from '../config/config';
-import fs from 'fs';
-import path from 'path';
 
-// 确保日志目录存在
-const logDir = path.join(process.cwd(), 'logs');
-if (!fs.existsSync(logDir)) {
-  try {
-    fs.mkdirSync(logDir, { recursive: true });
-    // 设置目录权限
-    fs.chmodSync(logDir, 0o755);
-  } catch (error) {
-    console.error('Failed to create logs directory:', error);
-    // 如果无法创建目录，使用控制台输出作为备选方案
-  }
-}
+import { config } from '../config/config';
 
 // 自定义日志格式
 const logFormat = winston.format.combine(
@@ -76,37 +61,31 @@ if (config.nodeEnv === 'development') {
   );
 }
 
-// 文件传输器 - 使用日志轮转
-if (config.nodeEnv === 'production' || config.nodeEnv === 'prod') {
-  try {
-    // 普通日志文件 - 按天轮转
-    transports.push(
-      new DailyRotateFile({
-        filename: path.join(logDir, 'app-%DATE%.log'),
-        datePattern: 'YYYY-MM-DD',
-        format: logFormat,
-        level: 'info',
-        maxSize: '20m',
-        maxFiles: '30d',
-        zippedArchive: true,
-      }),
-    );
+// 文件传输器
+if (config.nodeEnv === 'prod') {
+  // 普通日志文件
+  transports.push(
+    new winston.transports.File({
+      filename: config.logging.file,
+      format: logFormat,
+      level: 'info',
+      maxsize: 10485760, // 10MB
+      maxFiles: 5,
+      tailable: true,
+    }),
+  );
 
-    // 错误日志文件 - 按天轮转
-    transports.push(
-      new DailyRotateFile({
-        filename: path.join(logDir, 'error-%DATE%.log'),
-        datePattern: 'YYYY-MM-DD',
-        format: logFormat,
-        level: 'error',
-        maxSize: '20m',
-        maxFiles: '30d',
-        zippedArchive: true,
-      }),
-    );
-  } catch (error) {
-    console.error('Failed to setup file logging transports:', error);
-  }
+  // 错误日志文件
+  transports.push(
+    new winston.transports.File({
+      filename: config.logging.errorFile,
+      format: logFormat,
+      level: 'error',
+      maxsize: 10485760, // 10MB
+      maxFiles: 5,
+      tailable: true,
+    }),
+  );
 }
 
 // 创建 logger 实例
