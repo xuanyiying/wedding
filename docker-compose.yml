@@ -58,7 +58,7 @@ services:
       - PORT=3000
     volumes:
       - ./deployment/uploads:/app/uploads
-      - ./deployment/logs/api:/app/logs
+      - api_logs:/app/logs
     depends_on:
       - mysql
       - redis
@@ -225,3 +225,5 @@ volumes:
     name: wedding-service-minio-${ENVIRONMENT:-prod}-data
   nginx_cache:
     name: wedding-service-nginx-${ENVIRONMENT:-prod}-cache
+  api_logs:
+    name: wedding-service-api-${ENVIRONMENT:-prod}-logs
