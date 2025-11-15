@@ -217,8 +217,9 @@ services:
     ports:
       - "3100:3100"
     volumes:
-      - ./deployment/docker/loki/loki-config.yaml:/etc/loki/local-config.yaml
-    command: -config.file=/etc/loki/local-config.yaml
+      - ./deployment/docker/loki/loki-config.yaml:/etc/loki/loki-config.yaml
+      - ./deployment/logs/loki:/tmp/loki
+    command: -config.file=/etc/loki/loki-config.yaml
     networks:
       - wedding-service-network
 
