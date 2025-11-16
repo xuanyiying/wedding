@@ -218,10 +218,11 @@ services:
       - "3100:3100"
     volumes:
       - ./deployment/docker/loki/loki-config.yaml:/etc/loki/loki-config.yaml
-      - ./deployment/logs/loki:/tmp/loki
+      - ./deployment/logs/loki:/loki
     command: -config.file=/etc/loki/loki-config.yaml -config.expand-env=true
     networks:
       - wedding-service-network
+    user: "0:0"  # 以root用户运行
 
   promtail:
     image: grafana/promtail:2.9.6
