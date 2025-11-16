@@ -219,7 +219,7 @@ services:
     volumes:
       - ./deployment/docker/loki/loki-config.yaml:/etc/loki/loki-config.yaml
       - ./deployment/logs/loki:/tmp/loki
-    command: -config.file=/etc/loki/loki-config.yaml
+    command: -config.file=/etc/loki/loki-config.yaml -config.expand-env=true
     networks:
       - wedding-service-network
 
