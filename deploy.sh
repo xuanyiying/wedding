@@ -132,7 +132,7 @@ parse_args() {
     while [[ $# -gt 0 ]]; do
         case $1 in
             --force)
-                FORCE_FLAG="--force-recreate --remove-orphans"
+                FORCE_FLAG="true"
                 shift
                 ;;
             --no-cache)
@@ -264,6 +264,11 @@ create_directories() {
         "./deployment/logs/mysql"
         "./deployment/logs/redis"
         "./deployment/logs/minio"
+        "./deployment/logs/loki"
+        "./deployment/logs/grafana"
+        "./deployment/loki/chunks"
+        "./deployment/loki/boltdb-shipper-active"
+        "./deployment/loki/boltdb-shipper-cache"
         "./deployment/uploads/images"
         "./deployment/uploads/videos"
         "./deployment/ssl"
@@ -275,6 +280,13 @@ create_directories() {
             log_info "创建目录: $dir"
         fi
     done
+    
+    # 设置 Loki 目录权限
+    if [[ -d "./deployment/loki" ]]; then
+        chmod -R 777 ./deployment/loki 2>/dev/null || true
+        chmod -R 777 ./deployment/logs/loki 2>/dev/null || true
+        chmod -R 777 ./deployment/logs/grafana 2>/dev/null || true
+    fi
 }
 
 # 检查是否需要跳过服务构建
@@ -282,7 +294,7 @@ should_skip_service_build() {
     local service="$1"
     
     # 如果强制构建，不跳过任何服务
-    if [[ -n "$FORCE_FLAG" ]]; then
+    if [[ "$FORCE_FLAG" == "true" ]]; then
         return 1
     fi
     
@@ -421,7 +433,7 @@ init_database() {
     local retry_count=0
     
     # 检查是否跳过了API服务
-    if should_skip_service_build "api" && [[ -z "$FORCE_FLAG" ]]; then
+    if should_skip_service_build "api" && [[ "$FORCE_FLAG" != "true" ]]; then
         log_dev "跳过数据库初始化 (API服务未构建)"
         return 0
     fi
@@ -610,11 +622,19 @@ deploy_services() {
         return 0
     fi
     
+    # 强制模式下，只停止应用容器（保留数据库容器）
+    if [[ -n "$FORCE_FLAG" ]]; then
+        log_warning "强制模式：停止应用容器和日志容器..."
+        $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" stop api web nginx loki promtail grafana 2>/dev/null || true
+        $DOCKER_COMPOSE --env-file "./deployment/environments/.env.$ENVIRONMENT" rm -f api web nginx loki promtail grafana 2>/dev/null || true
+        sleep 2
+    fi
+    
     local up_args="-d"
     local deploy_services=($(get_deploy_services))
     
     if [[ -n "$FORCE_FLAG" ]]; then
-        up_args="$up_args $FORCE_FLAG"
+        up_args="$up_args --remove-orphans"
     fi
     
     # 显示部署信息
@@ -788,8 +808,8 @@ show_environment_summary() {
         fi
     fi
     
-    if [[ -n "$FORCE_FLAG" ]]; then
-        log_warning "强制模式: 将重新构建所有服务"
+    if [[ "$FORCE_FLAG" == "true" ]]; then
+        log_warning "强制模式: 将停止旧容器并重新构建所有服务"
     fi
     
     if [[ -n "$SKIP_BUILD_FLAG" ]]; then
