@@ -287,7 +287,7 @@ services:
     container_name: wedding-service-grafana-${ENVIRONMENT:-prod}
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3001:3001"
     environment:
       - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
       - GF_AUTH_ANONYMOUS_ENABLED=true
