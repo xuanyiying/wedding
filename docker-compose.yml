@@ -28,6 +28,13 @@ services:
       - NODE_ENV=${NODE_ENV:-prod}
     networks:
       - wedding-service-network
+    # 日志驱动配置 - 支持 docker logs 和 Loki 日志收集
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+        labels: "service=web,environment=${ENVIRONMENT:-prod}"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s
@@ -66,6 +73,13 @@ services:
       - redis
     networks:
       - wedding-service-network
+    # 日志驱动配置 - 支持 docker logs 和 Loki 日志收集
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+        labels: "service=api,environment=${ENVIRONMENT:-prod}"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
@@ -203,6 +217,13 @@ services:
         condition: service_healthy
     networks:
       - wedding-service-network
+    # 日志驱动配置 - 支持 docker logs 和 Loki 日志收集
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+        labels: "service=nginx,environment=${ENVIRONMENT:-prod}"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/nginx-health"]
       interval: 15s
@@ -211,48 +232,51 @@ services:
       start_period: 30s
 
   loki:
-    image: grafana/loki:2.9.6
-    container_name: wedding-loki
-    restart: unless-stopped
+    image: grafana/loki:latest
     ports:
       - "3100:3100"
-    volumes:
-      - ./deployment/docker/loki/loki-config.yaml:/etc/loki/loki-config.yaml
-      - ./deployment/logs/loki:/loki
-    command: -config.file=/etc/loki/loki-config.yaml -config.expand-env=true
+    command: -config.file=/etc/loki/local-config.yaml
     networks:
       - wedding-service-network
-    user: "0:0"  # 以root用户运行
 
   promtail:
-    image: grafana/promtail:2.9.6
-    container_name: wedding-promtail
-    restart: unless-stopped
+    image: grafana/promtail:latest
     volumes:
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./deployment/logs:/var/log/wedding:ro
-      - ./deployment/docker/promtail/promtail-config.yaml:/etc/promtail/config.yml
+      - /var/log:/var/log
     command: -config.file=/etc/promtail/config.yml
     networks:
       - wedding-service-network
-    depends_on:
-      - loki
 
   grafana:
-    image: grafana/grafana:10.2.3
-    container_name: wedding-grafana
-    restart: unless-stopped
-    ports:
-      - "3001:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    volumes:
-      - grafana_data:/var/lib/grafana
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_FEATURE_TOGGLES_ENABLE=alertingSimplifiedRouting,alertingQueryAndExpressionsStepMode
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        mkdir -p /etc/grafana/provisioning/datasources
+        cat <<EOF > /etc/grafana/provisioning/datasources/ds.yaml
+        apiVersion: 1
+        datasources:
+        - name: Loki
+          type: loki
+          access: proxy 
+          orgId: 1
+          url: http://loki:3100
+          basicAuth: false
+          isDefault: true
+          version: 1
+          editable: false
+        EOF
+        /run.sh
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
     networks:
       - wedding-service-network
-    depends_on:
-      - loki
 
 # =============================================================================
 # 网络和数据卷配置保持不变

@@ -44,24 +44,16 @@ const consoleFormat = winston.format.combine(
 // 创建传输器数组
 const transports: winston.transport[] = [];
 
-// 控制台传输器
-if (config.nodeEnv === 'development') {
-  transports.push(
-    new winston.transports.Console({
-      format: consoleFormat,
-      level: 'debug',
-    }),
-  );
-} else {
-  transports.push(
-    new winston.transports.Console({
-      format: logFormat,
-      level: config.logging.level,
-    }),
-  );
-}
+// 控制台传输器 - 始终输出到 stdout/stderr，用于 Docker 日志收集
+// 这是关键：Docker 容器需要应用日志输出到 stdout/stderr 才能被 docker logs 捕获
+transports.push(
+  new winston.transports.Console({
+    format: config.nodeEnv === 'development' ? consoleFormat : logFormat,
+    level: config.logging.level,
+  }),
+);
 
-// 文件传输器
+// 文件传输器 - 仅在生产环境启用
 if (config.nodeEnv === 'prod') {
   // 普通日志文件
   transports.push(
