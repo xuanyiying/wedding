@@ -1,0 +1,88 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # Docker 容器日志
+  - job_name: docker
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: docker
+          __path__: /var/log/containers/*.log
+
+  # Wedding Service 应用日志
+  - job_name: wedding-service
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: wedding-service
+          __path__: /var/log/wedding-service/**/*.log
+
+  # API 服务日志
+  - job_name: api
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: api
+          service: api
+          __path__: /var/log/wedding-service/api/*.log
+
+  # Web 服务日志
+  - job_name: web
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: web
+          service: web
+          __path__: /var/log/wedding-service/web/*.log
+
+  # Nginx 日志
+  - job_name: nginx
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx
+          service: nginx
+          __path__: /var/log/wedding-service/nginx/*.log
+
+  # MySQL 日志
+  - job_name: mysql
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: mysql
+          service: mysql
+          __path__: /var/log/wedding-service/mysql/*.log
+
+  # Redis 日志
+  - job_name: redis
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: redis
+          service: redis
+          __path__: /var/log/wedding-service/redis/*.log
+
+  # MinIO 日志
+  - job_name: minio
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: minio
+          service: minio
+          __path__: /var/log/wedding-service/minio/*.log

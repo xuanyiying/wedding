@@ -233,26 +233,71 @@ services:
 
   loki:
     image: grafana/loki:latest
+    container_name: wedding-service-loki-${ENVIRONMENT:-prod}
+    restart: unless-stopped
     ports:
       - "3100:3100"
+    # 创建必要的目录并设置权限
+    user: "0:0"
+    volumes:
+      - ./deployment/loki:/loki
+      - ./deployment/logs/loki:/var/log/loki
+    environment:
+      - TZ=Asia/Shanghai
     command: -config.file=/etc/loki/local-config.yaml
     networks:
       - wedding-service-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service=loki,environment=${ENVIRONMENT:-prod}"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3100/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   promtail:
     image: grafana/promtail:latest
+    container_name: wedding-service-promtail-${ENVIRONMENT:-prod}
+    restart: unless-stopped
     volumes:
       - /var/log:/var/log
+      - ./deployment/logs:/var/log/wedding-service
+      - ./deployment/docker/promtail/config.yml:/etc/promtail/config.yml:ro
+    environment:
+      - TZ=Asia/Shanghai
     command: -config.file=/etc/promtail/config.yml
     networks:
       - wedding-service-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service=promtail,environment=${ENVIRONMENT:-prod}"
+    depends_on:
+      - loki
 
   grafana:
+    image: grafana/grafana:latest
+    container_name: wedding-service-grafana-${ENVIRONMENT:-prod}
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
     environment:
       - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_FEATURE_TOGGLES_ENABLE=alertingSimplifiedRouting,alertingQueryAndExpressionsStepMode
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - TZ=Asia/Shanghai
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./deployment/logs/grafana:/var/log/grafana
     entrypoint:
       - sh
       - -euc
@@ -272,11 +317,22 @@ services:
           editable: false
         EOF
         /run.sh
-    image: grafana/grafana:latest
-    ports:
-      - "3000:3000"
     networks:
       - wedding-service-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service=grafana,environment=${ENVIRONMENT:-prod}"
+    depends_on:
+      - loki
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 # =============================================================================
 # 网络和数据卷配置保持不变
