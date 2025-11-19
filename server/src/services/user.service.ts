@@ -105,19 +105,16 @@ export class UserService {
     status?: UserStatus;
   }) {
     try {
-      // 检查用户名和邮箱是否已存在
+      // 检查用户名是否已存在
       const existingUser = await User.findOne({
         where: {
-          [Op.or]: [{ username: userData.username }, { email: userData.email }],
+          [Op.or]: [{ username: userData.username }],
         },
       });
 
       if (existingUser) {
         if (existingUser.username === userData.username) {
           throw new Error('用户名已存在');
-        }
-        if (existingUser.email === userData.email) {
-          throw new Error('邮箱已存在');
         }
       }
 
@@ -130,6 +127,7 @@ export class UserService {
         salt: '', // You may need to generate a proper salt
         role: userData.role || UserRole.USER,
         status: userData.status || UserStatus.ACTIVE,
+        email: userData.email,
       });
 
       // 返回用户信息（不包含密码）
