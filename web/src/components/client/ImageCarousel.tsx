@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 
@@ -15,18 +15,21 @@ interface ImageCarouselProps {
 const CarouselContainer = styled.div<{ height: string }>`
   position: relative;
   width: 100%;
-  height: ${props => props.height};
+  height: ${props => props.height === '100%' ? 'auto' : props.height};
+  flex: ${props => props.height === '100%' ? '1' : '0 0 auto'};
   overflow: hidden;
   border-radius: var(--client-border-radius);
   background: var(--client-bg-layout);
+  display: flex;
+  flex-direction: column;
 `;
 
 const ImageContainer = styled.div.withConfig({
   shouldForwardProp: (prop) => prop !== 'translateX'
-})<{ translateX: number }>`
+}) <{ translateX: number }>`
   display: flex;
   width: 100%;
-  height: 100%;
+  flex: 1;
   transform: translateX(${props => props.translateX}%);
   transition: transform 0.3s ease-in-out;
 `;
@@ -74,14 +77,31 @@ const ArrowButton = styled.button<{ direction: 'left' | 'right' }>`
 const ThumbnailsContainer = styled.div`
   display: flex;
   gap: 8px;
-  padding-bottom: 6px;
+  padding: 8px 0;
   justify-content: center;
   background: var(--client-bg-layout);
+  overflow-x: auto;
+  overflow-y: visible;
+  flex-wrap: nowrap;
+  
+  /* 隐藏滚动条但保持可滚动 */
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+  }
 `;
 
 const Thumbnail = styled.button.withConfig({
   shouldForwardProp: (prop) => prop !== 'active'
-})<{ active: boolean; image: string }>`
+}) <{ active: boolean; image: string }>`
   width: 60px;
   height: 40px;
   border-radius: 4px;
@@ -99,10 +119,22 @@ const Thumbnail = styled.button.withConfig({
 `;
 
 const CarouselWrapper = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  
   &:hover {
     ${ArrowButton} {
       opacity: 1;
     }
+  }
+  
+  > div {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
   }
 `;
 
@@ -131,20 +163,20 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
   const [isHovered, setIsHovered] = useState(false);
 
-  const goToSlide = (index: number, e?: React.MouseEvent) => {
+  const goToSlide = useCallback((index: number, e?: React.MouseEvent) => {
     e?.stopPropagation();
     setCurrentIndex(index);
-  };
+  }, []);
 
-  const goToPrevious = (e?: React.MouseEvent) => {
+  const goToPrevious = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();
     setCurrentIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
-  };
+  }, [images.length]);
 
-  const goToNext = (e?: React.MouseEvent) => {
+  const goToNext = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();
     setCurrentIndex(prev => (prev === images.length - 1 ? 0 : prev + 1));
-  };
+  }, [images.length]);
 
   // 自动播放逻辑
   useEffect(() => {
@@ -164,7 +196,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
         clearInterval(autoPlayRef.current);
       }
     };
-  }, [autoPlay, isHovered, autoPlayInterval, currentIndex, images]);
+  }, [autoPlay, isHovered, autoPlayInterval, currentIndex, images, goToNext]);
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -195,7 +227,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
   }
 
   return (
-    <CarouselWrapper 
+    <CarouselWrapper
       className={className}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -226,7 +258,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
             {currentIndex + 1} / {images.length}
           </ImageCount>
         </CarouselContainer>
-        
+
         {showDots && (
           <ThumbnailsContainer>
             {images.map((image, index) => (

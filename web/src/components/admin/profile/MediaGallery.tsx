@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useMemo } from "react";
+import React, { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import { Button, Popconfirm } from "antd";
 import {
   EyeOutlined,
@@ -6,6 +6,8 @@ import {
   PlayCircleOutlined,
   UpOutlined,
   DownOutlined,
+  CloseOutlined,
+  DragOutlined,
 } from "@ant-design/icons";
 import styled from "styled-components";
 import { type MediaFile, FileType } from "../../../types";
@@ -338,6 +340,90 @@ const ErrorPlaceholder = styled.div<{ $isMobile: boolean }>`
   }
 `;
 
+// 视频播放器背景遮罩
+const VideoPlayerOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 1000;
+`;
+
+// 视频播放器容器（可拖动）
+const VideoPlayerContainer = styled.div<{ $x: number; $y: number }>`
+  position: fixed;
+  left: ${props => props.$x}px;
+  top: ${props => props.$y}px;
+  z-index: 1001;
+  background: rgba(0, 0, 0, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+`;
+
+// 拖动手柄
+const DragHandle = styled.div`
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px 16px;
+  cursor: move;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+  
+  .drag-icon {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 16px;
+  }
+`;
+
+const VideoPlayerElement = styled.video`
+  width: 100%;
+  height: auto;
+  max-width: 90vw;
+  max-height: calc(90vh - 100px);
+  display: block;
+`;
+
+const VideoCloseButton = styled.div`
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+`;
+
+const VideoControls = styled.div`
+  background: rgba(0, 0, 0, 0.6);
+  padding: 12px 20px;
+  color: white;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+`;
+
 const MediaGallery: React.FC<MediaGalleryProps> = ({
   mediaFiles,
   onPreview,
@@ -352,7 +438,14 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
     y: number;
     time: number;
   } | null>(null);
+  const [playingVideo, setPlayingVideo] = useState<MediaFile | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
 
   // 响应式信息
   const responsive = useResponsive();
@@ -413,6 +506,30 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
     });
   }, []);
 
+  // 居中视频播放器
+  const centerVideoPlayer = useCallback(() => {
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    const playerWidth = Math.min(windowWidth * 0.9, 1200);
+    const playerHeight = Math.min(windowHeight * 0.9, 800);
+
+    setPosition({
+      x: (windowWidth - playerWidth) / 2,
+      y: (windowHeight - playerHeight) / 2
+    });
+  }, []);
+
+  // 处理预览 - 视频播放或图片预览
+  const handlePreview = useCallback((file: MediaFile) => {
+    if (file.fileType === FileType.VIDEO && file.fileUrl) {
+      setPlayingVideo(file);
+      setIsPaused(false);
+      centerVideoPlayer();
+    } else {
+      onPreview(file);
+    }
+  }, [centerVideoPlayer, onPreview]);
+
   // 触摸结束处理
   const handleTouchEnd = useCallback(
     (e: React.TouchEvent, file: MediaFile) => {
@@ -425,13 +542,106 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
 
       // 如果移动距离很小且时间很短，认为是点击
       if (deltaX < 10 && deltaY < 10 && deltaTime < 500) {
-        onPreview(file);
+        handlePreview(file);
       }
 
       setTouchStart(null);
     },
-    [touchStart, onPreview],
+    [touchStart, handlePreview],
   );
+
+  // 关闭视频播放
+  const handleCloseVideo = useCallback(() => {
+    if (videoRef.current) {
+      videoRef.current.pause();
+    }
+    setPlayingVideo(null);
+    setIsPaused(false);
+  }, []);
+
+  // 处理视频点击（暂停/播放）
+  const handleVideoClick = useCallback(() => {
+    if (videoRef.current) {
+      if (videoRef.current.paused) {
+        videoRef.current.play();
+        setIsPaused(false);
+      } else {
+        videoRef.current.pause();
+        setIsPaused(true);
+      }
+    }
+  }, []);
+
+  // 开始拖动
+  const handleDragStart = useCallback((e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    });
+  }, [position.x, position.y]);
+
+  // 拖动中
+  const handleDragMove = useCallback((e: MouseEvent) => {
+    if (isDragging) {
+      const newX = e.clientX - dragStart.x;
+      const newY = e.clientY - dragStart.y;
+
+      // 限制在窗口范围内
+      const maxX = window.innerWidth - (videoContainerRef.current?.offsetWidth || 0);
+      const maxY = window.innerHeight - (videoContainerRef.current?.offsetHeight || 0);
+
+      setPosition({
+        x: Math.max(0, Math.min(newX, maxX)),
+        y: Math.max(0, Math.min(newY, maxY))
+      });
+    }
+  }, [isDragging, dragStart.x, dragStart.y]);
+
+  // 结束拖动
+  const handleDragEnd = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  // 键盘事件处理
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (playingVideo) {
+        if (e.key === 'Escape') {
+          handleCloseVideo();
+        } else if (e.key === ' ') {
+          e.preventDefault();
+          handleVideoClick();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [playingVideo, handleCloseVideo, handleVideoClick]);
+
+  // 拖动事件处理
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleDragMove);
+      window.addEventListener('mouseup', handleDragEnd);
+      return () => {
+        window.removeEventListener('mousemove', handleDragMove);
+        window.removeEventListener('mouseup', handleDragEnd);
+      };
+    }
+  }, [isDragging, handleDragMove, handleDragEnd]);
+
+  // 窗口大小变化时重新居中
+  useEffect(() => {
+    if (playingVideo) {
+      const handleResize = () => centerVideoPlayer();
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, [playingVideo, centerVideoPlayer]);
 
   /**
    * 顺序调整核心逻辑 - 上移操作
@@ -584,7 +794,7 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
           key={id}
           $isMobile={responsiveProps.isMobile}
           $isTouchDevice={responsiveProps.isTouchDevice}
-          onClick={() => onPreview(file)}
+          onClick={() => handlePreview(file)}
           onTouchStart={handleTouchStart}
           onTouchEnd={(e) => handleTouchEnd(e, file)}
         >
@@ -678,7 +888,7 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
               size="small"
               onClick={(e) => {
                 e.stopPropagation();
-                onPreview(file);
+                handlePreview(file);
               }}
             />
             <Popconfirm
@@ -712,7 +922,7 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
       handleTouchEnd,
       handleMoveUp,
       handleMoveDown,
-      onPreview,
+      handlePreview,
       onDelete,
     ],
   );
@@ -748,22 +958,56 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
   }
 
   return (
-    <MediaGalleryContainer
-      ref={containerRef}
-      $isMobile={responsiveProps.isMobile}
-      $isTablet={responsiveProps.isTablet}
-    >
-      {validMediaFiles.length > 0 ? (
-        <div className="media-list">
-          {validMediaFiles.map((file, index) => renderMediaItem(file, index))}
-        </div>
-      ) : (
-        <div className="empty-state">
-          <div className="empty-icon">📷</div>
-          <div>暂无媒体文件</div>
-        </div>
+    <>
+      <MediaGalleryContainer
+        ref={containerRef}
+        $isMobile={responsiveProps.isMobile}
+        $isTablet={responsiveProps.isTablet}
+      >
+        {validMediaFiles.length > 0 ? (
+          <div className="media-list">
+            {validMediaFiles.map((file, index) => renderMediaItem(file, index))}
+          </div>
+        ) : (
+          <div className="empty-state">
+            <div className="empty-icon">📷</div>
+            <div>暂无媒体文件</div>
+          </div>
+        )}
+      </MediaGalleryContainer>
+
+      {/* 视频播放器 */}
+      {playingVideo && (
+        <>
+          <VideoPlayerOverlay onClick={handleCloseVideo} />
+          <VideoPlayerContainer
+            ref={videoContainerRef}
+            $x={position.x}
+            $y={position.y}
+          >
+            <DragHandle onMouseDown={handleDragStart}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'rgba(255, 255, 255, 0.8)' }}>
+                <DragOutlined className="drag-icon" />
+                <span style={{ fontSize: '14px' }}>拖动移动窗口</span>
+              </div>
+              <VideoCloseButton onClick={handleCloseVideo}>
+                <CloseOutlined />
+              </VideoCloseButton>
+            </DragHandle>
+            <VideoPlayerElement
+              ref={videoRef}
+              src={playingVideo.fileUrl}
+              autoPlay
+              controls={false}
+              onClick={handleVideoClick}
+            />
+            <VideoControls>
+              {isPaused ? '点击播放' : '点击暂停'} | 按空格键切换 | 按ESC退出
+            </VideoControls>
+          </VideoPlayerContainer>
+        </>
       )}
-    </MediaGalleryContainer>
+    </>
   );
 };
 

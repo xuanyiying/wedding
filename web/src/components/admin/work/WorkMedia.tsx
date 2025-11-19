@@ -16,6 +16,8 @@ const MediaWrapper = styled.div`
   width: 100%;
   height: 100%;
   position: relative;
+  display: flex;
+  flex-direction: column;
   
   img {
     width: 100%;
@@ -40,6 +42,7 @@ const PlayButton = styled.div`
   font-size: 24px;
   cursor: pointer;
   transition: all 0.3s ease;
+  z-index: 1;
   
   &:hover {
     background: rgba(0, 0, 0, 0.8);
@@ -72,6 +75,9 @@ const AbsoluteContent = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 `;
 
 interface WorkMediaProps {
