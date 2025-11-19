@@ -105,6 +105,6 @@
     "npm": ">=8.0.0"
   },
   "_moduleAliases": {
-    "@": "dist"
+    "@": "src"
   }
 }
