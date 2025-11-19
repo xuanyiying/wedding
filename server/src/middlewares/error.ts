@@ -12,9 +12,9 @@ interface ErrorConfig {
 
 const getErrorConfig = (): ErrorConfig => ({
     logLevel: process.env.NODE_ENV === 'prod' ? 'error' : 'warn',
-    includeStack: process.env.NODE_ENV === 'dev',
-    includeDetails: process.env.NODE_ENV === 'dev',
-    sanitizeDetails: process.env.NODE_ENV === 'prod',
+    includeStack: true, // 始终包含堆栈信息，便于调试
+    includeDetails: true, // 始终包含错误详情
+    sanitizeDetails: process.env.NODE_ENV === 'prod', // 生产环境过滤敏感信息
 });
 
 // 敏感信息过滤

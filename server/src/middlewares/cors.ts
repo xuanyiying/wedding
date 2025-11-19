@@ -126,6 +126,16 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
     timestamp: new Date().toISOString(),
   });
 
+  // 保存原始的 json 方法
+  const originalJson = res.json.bind(res);
+  let responseBody: any = null;
+
+  // 拦截 json 响应以捕获错误信息
+  res.json = function (body: any) {
+    responseBody = body;
+    return originalJson(body);
+  };
+
   // 监听响应完成
   res.on('finish', () => {
     const duration = Date.now() - startTime;
@@ -139,6 +149,15 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
 
     if (res.statusCode >= 400) {
       console.error('❌ 请求失败:', logData);
+      // 输出错误详情
+      if (responseBody) {
+        console.error('错误详情:', {
+          message: responseBody.message,
+          error: responseBody.error,
+          stack: responseBody.stack,
+          details: responseBody.details,
+        });
+      }
     } else {
       console.log('✅ 请求成功:', logData);
     }
