@@ -1,8 +1,7 @@
-require('module-alias/register');
 import express from 'express';
 import helmet from 'helmet';
 import compression from 'compression';
-import morgan from 'morgan';
+import morgan from 'morgan'; // HTTP请求日志中间件
 // import rateLimit from 'express-rate-limit'; // 已临时注释以解决频繁刷新token导致的429错误
 import path from 'path';
 import swaggerUi from 'swagger-ui-express';

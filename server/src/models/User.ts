@@ -6,7 +6,7 @@ import { UserRole, UserStatus } from '../types';
 export interface UserAttributes {
   id: string;
   username: string;
-  email: string;
+  email?: string;
   phone?: string;
   passwordHash: string;
   salt: string;
@@ -46,7 +46,7 @@ export interface UserCreationAttributes extends Optional<UserAttributes, 'id'> {
 class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
   public id!: string;
   public username!: string;
-  public email!: string;
+  public email?: string;
   public phone?: string;
   public passwordHash!: string;
   public salt!: string;
@@ -106,7 +106,7 @@ export const initUser = (sequelize: Sequelize): void => {
       },
       email: {
         type: new DataTypes.STRING(100),
-        allowNull: false,
+        allowNull: true,
         validate: {
           isEmail: true,
         },
@@ -114,6 +114,7 @@ export const initUser = (sequelize: Sequelize): void => {
       },
       phone: {
         type: new DataTypes.STRING(20),
+        allowNull: true,
         comment: '手机号',
       },
       passwordHash: {

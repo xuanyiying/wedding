@@ -106,5 +106,34 @@
   },
   "_moduleAliases": {
     "@": "dist"
+  },
+  "paths": {
+    "@/*": [
+      "src/*"
+    ],
+    "@/types/*": [
+      "src/types/*"
+    ],
+    "@/models/*": [
+      "src/models/*"
+    ],
+    "@/utils/*": [
+      "src/utils/*"
+    ],
+    "@/controllers/*": [
+      "src/controllers/*"
+    ],
+    "@/services/*": [
+      "src/services/*"
+    ],
+    "@/middlewares/*": [
+      "src/middlewares/*"
+    ],
+    "@/config/*": [
+      "src/config/*"
+    ],
+    "@interfaces/*": [
+      "src/interfaces/*"
+    ]
   }
 }

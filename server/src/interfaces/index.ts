@@ -75,7 +75,7 @@ export interface ApiResponse<T = any> {
 export interface User {
   id: string;
   username: string;
-  email: string;
+  email?: string;
   phone?: string;
   avatar?: string;
   role: UserRole;
