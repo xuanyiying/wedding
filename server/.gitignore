@@ -197,3 +197,4 @@ test-results/
 
 # Sentry
 .sentryclirc
+.env

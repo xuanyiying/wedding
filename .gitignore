@@ -30,3 +30,4 @@ deployment/ssl
 
 web/package-lock.json
 server/package-lock.json
+server/.env
