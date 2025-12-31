@@ -40,7 +40,7 @@ log_info "MINIO_SERVICE_PORT=${MINIO_SERVICE_PORT}"
 log_info "SERVER_HOST=${SERVER_HOST}"
 
 # 替换环境变量
-envsubst '${API_SERVICE_NAME} ${API_SERVICE_PORT} ${WEB_SERVICE_NAME} ${WEB_SERVICE_PORT} ${MINIO_SERVICE_NAME} ${MINIO_SERVICE_PORT} ${SERVER_HOST}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
+envsubst '${API_SERVICE_NAME} ${API_SERVICE_PORT} ${WEB_SERVICE_NAME} ${WEB_SERVICE_PORT} ${SERVER_HOST}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
 
 # 测试nginx配置
 log_info "执行nginx配置语法检查"
