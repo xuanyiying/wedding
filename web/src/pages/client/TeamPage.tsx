@@ -78,6 +78,7 @@ const TeamPage: React.FC = () => {
   };
 
   const handleViewDetails = (userId: string) => {
+    // 优先从 teamMembers 中查找
     const member = teamMembers.find(m => m.userId === userId);
     if (member) {
       setSelectedMember(member);

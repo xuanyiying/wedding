@@ -172,30 +172,6 @@ groups:
           summary: "Redis connection spike"
           description: "Redis has {{ $value }} connected clients on {{ $labels.instance }}"
 
-  - name: wedding-club-storage
-    rules:
-      # MinIO server down
-      - alert: MinIOServerDown
-        expr: up{job=~"minio-.*"} == 0
-        for: 2m
-        labels:
-          severity: warning
-          service: storage
-        annotations:
-          summary: "MinIO server is down"
-          description: "MinIO server {{ $labels.instance }} has been down for more than 2 minutes"
-
-      # High MinIO disk usage
-      - alert: HighMinIODiskUsage
-        expr: minio_cluster_disk_usage_free_bytes / minio_cluster_disk_usage_total_bytes < 0.1
-        for: 5m
-        labels:
-          severity: warning
-          service: storage
-        annotations:
-          summary: "High MinIO disk usage"
-          description: "MinIO disk usage is above 90% on cluster"
-
   - name: wedding-club-nginx
     rules:
       # Nginx server down
@@ -219,6 +195,41 @@ groups:
         annotations:
           summary: "High Nginx error rate"
           description: "Nginx error rate is above 5% on {{ $labels.instance }}"
+
+  - name: wedding-club-oss
+    rules:
+      # MinIO server down
+      - alert: MinIOServerDown
+        expr: up{job="minio"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: storage
+        annotations:
+          summary: "MinIO server is down"
+          description: "MinIO server {{ $labels.instance }} has been down for more than 1 minute"
+
+      # High MinIO storage usage
+      - alert: HighMinIOStorageUsage
+        expr: minio_storage_usage_bytes / minio_storage_total_bytes > 0.85
+        for: 10m
+        labels:
+          severity: warning
+          service: storage
+        annotations:
+          summary: "High MinIO storage usage"
+          description: "MinIO storage usage is above 85% on {{ $labels.instance }}"
+
+      # MinIO error rate
+      - alert: HighMinIOErrorRate
+        expr: rate(minio_http_requests_total{status=~"5.."}[5m]) / rate(minio_http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: storage
+        annotations:
+          summary: "High MinIO error rate"
+          description: "MinIO error rate is above 5% on {{ $labels.instance }}"
 
   - name: wedding-club-ssl
     rules:

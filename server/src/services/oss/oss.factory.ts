@@ -1,12 +1,13 @@
 import { OssService } from './oss.service';
 import { MinIOService, MinIOConfig } from './minio.service';
 import { AliyunOssService, OSSConfig } from './aliyun-oss.service';
+import { TencentCOSService, TencentCOSConfig } from './tencent-cos.service';
 
 export type OssType = 'minio' | 'aliyun' | 'tencent' | 'aws';
 
 export interface OssConfig {
   type: OssType;
-  config: MinIOConfig | OSSConfig;
+  config: MinIOConfig | OSSConfig | TencentCOSConfig;
 }
 
 export class OssFactory {
@@ -23,6 +24,9 @@ export class OssFactory {
 
       case 'aliyun':
         return new AliyunOssService(config.config as OSSConfig);
+
+      case 'tencent':
+        return new TencentCOSService(config.config as TencentCOSConfig);
 
       default:
         throw new Error(`Unsupported OSS type: ${config.type}`);
@@ -79,6 +83,16 @@ export class OssFactory {
           endpoint: process.env.OSS_ENDPOINT,
           secure: process.env.OSS_USE_SSL === 'true'
         } as OSSConfig
+      };
+    } else if (ossType === 'tencent') {
+      return {
+        type: ossType,
+        config: {
+          region: process.env.OSS_REGION || 'ap-beijing',
+          secretId: process.env.OSS_ACCESS_KEY || '',
+          secretKey: process.env.OSS_SECRET_KEY || '',
+          bucket: process.env.OSS_BUCKET || 'luhe-medias-1393897272',
+        } as TencentCOSConfig
       };
     }
 

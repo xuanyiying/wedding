@@ -84,5 +84,5 @@ scrape_configs:
           - localhost
         labels:
           job: minio
-          service: minio
+          service: storage
           __path__: /var/log/wedding-service/minio/*.log

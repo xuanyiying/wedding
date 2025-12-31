@@ -1,5 +1,5 @@
 import React from 'react';
-import { EyeOutlined, HeartOutlined, MessageOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import { EyeOutlined, HeartOutlined, ShareAltOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { type Work } from '../../types';
 import ImageCarousel from './ImageCarousel';
 import {
@@ -43,30 +43,24 @@ const WorkCard: React.FC<WorkCardProps> = ({ work, onClick }) => {
       <WorkMediaContainer>
         <WorkMedia>
           {isVideo ? (
-            // 视频类型：4:3宽高比响应式布局
-            <div style={{ paddingBottom: '75%', position: 'relative', height: 0 }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-                <img 
-                  src={work.files?.[0]?.thumbnailUrl ?? ''} 
-                  alt={work.title} 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-                <PlayButton>
-                  <PlayCircleOutlined />
-                </PlayButton>
-              </div>
-            </div>
-          ) : (
-            // 图片类型：使用轮播组件，4:3宽高比
-            <div style={{ position: 'relative', height: '100%' }}>
-              <ImageCarousel 
-                images={displayImages}
-                height="100%"
-                showDots={displayImages.length > 1}
-                showArrows={displayImages.length > 1}
-                autoPlay={false}
+            <>
+              <img 
+                src={work.files?.[0]?.thumbnailUrl ?? ''} 
+                alt={work.title} 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
-            </div>
+              <PlayButton>
+                <PlayCircleOutlined />
+              </PlayButton>
+            </>
+          ) : (
+            <ImageCarousel 
+              images={displayImages}
+              height="100%"
+              showDots={false}
+              showArrows={displayImages.length > 1}
+              autoPlay={false}
+            />
           )}
           {work.isFeatured && <FeaturedBadge>精选</FeaturedBadge>}
         </WorkMedia>
@@ -76,17 +70,17 @@ const WorkCard: React.FC<WorkCardProps> = ({ work, onClick }) => {
         <WorkDescription>{work.description}</WorkDescription>
         <WorkMetaInfo>
           <MetaItem>
-                        <HeartOutlined /> {work.likeCount}
+            <HeartOutlined /> {work.likeCount || 0}
           </MetaItem>
           <MetaItem>
-                        <MessageOutlined /> {work.shareCount}
+            <ShareAltOutlined /> {work.shareCount || 0}
           </MetaItem>
           <MetaItem>
-                        <EyeOutlined /> {work.viewCount}
+            <EyeOutlined /> {work.viewCount || 0}
           </MetaItem>
         </WorkMetaInfo>
         <WorkTagsContainer>
-                              {(work.tags ?? []).map((tag: string) => (
+          {(work.tags ?? []).map((tag: string) => (
             <DouyinTag key={tag}>{tag}</DouyinTag>
           ))}
         </WorkTagsContainer>

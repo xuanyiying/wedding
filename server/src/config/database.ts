@@ -33,6 +33,7 @@ export const sequelize = new Sequelize({
 // 数据库连接函数
 export const connectDatabase = async (): Promise<void> => {
   try {
+    logger.info(`Attempting to connect to database at ${config.database.host}:${config.database.port} with user ${config.database.username}`);
     await sequelize.authenticate();
     logger.info('Database connection has been established successfully.');
 

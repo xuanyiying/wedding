@@ -176,7 +176,8 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, t
 
   // 处理团队成员卡片点击
   const handleMemberClick = (member: ClientTeamMember) => {
-    const fullMember = teamMembers.find(m => m.userId === member.userId);
+    // 优先从可用成员列表中查找，如果找不到再从原始团队列表中查找
+    const fullMember = availableMembers.find(m => m.userId === member.userId) || teamMembers.find(m => m.userId === member.userId);
     if (fullMember) {
       setSelectedMember(fullMember);
       setModalVisible(true);
@@ -188,8 +189,10 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, t
     setModalVisible(false);
     setSelectedMember(null);
   };
+
   const handleViewDetails = (userId: string) => {
-    const member = teamMembers.find(m => m.userId === userId);
+    // 优先从可用成员列表中查找，如果找不到再从原始团队列表中查找
+    const member = availableMembers.find(m => m.userId === userId) || teamMembers.find(m => m.userId === userId);
     if (member) {
       setSelectedMember(member);
       setModalVisible(true);

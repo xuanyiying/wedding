@@ -119,7 +119,8 @@ const SchedulePage: React.FC = () => {
 
   // 查看团队成员详情
   const handleViewDetails = (userId: string) => {
-    const member = teamMembers.find(m => m.userId === userId);
+    // 优先从当前显示的可用成员列表中查找，如果找不到再从原始团队列表中查找
+    const member = availableMembers.find(m => m.userId === userId) || teamMembers.find(m => m.userId === userId);
     if (member) {
       setSelectedMember(member);
       setModalVisible(true);

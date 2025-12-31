@@ -25,8 +25,6 @@ DB_PORT="${DB_PORT:-3306}"
 REDIS_HOST="${REDIS_HOST:-localhost}"
 REDIS_PORT="${REDIS_PORT:-6379}"
 NGINX_URL="${NGINX_URL:-http://localhost:80}"
-OSS_URL="${OSS_URL:-${OSS_PUBLIC_ENDPOINT:-http://localhost:9000}}"
-MINIO_URL="${OSS_URL}"  # 兼容性保留
 
 # Health check thresholds
 CPU_THRESHOLD="${CPU_THRESHOLD:-80}"
@@ -105,7 +103,6 @@ Commands:
     frontend                Check frontend availability
     api                     Check API endpoints
     nginx                   Check Nginx status
-    minio                   Check MinIO storage
     docker                  Check Docker containers
     ssl                     Check SSL certificates
     dependencies            Check external dependencies
@@ -122,8 +119,7 @@ Options:
     --redis-host HOST          Redis host (default: localhost)
     --redis-port PORT          Redis port (default: 6379)
     --nginx-url URL            Nginx URL (default: http://localhost:80)
-    --oss-url URL              OSS URL (default: http://localhost:9000)
-    --minio-url URL            MinIO URL (alias for --oss-url, deprecated)
+    --oss-url URL              OSS URL
     --timeout SECONDS          Health check timeout (default: 30)
     --retries COUNT            Number of retries (default: 3)
     --interval SECONDS         Interval between retries (default: 5)
@@ -184,16 +180,6 @@ while [[ $# -gt 0 ]]; do
             NGINX_URL="$2"
             shift 2
             ;;
-        --oss-url)
-            OSS_URL="$2"
-            MINIO_URL="$2"  # 兼容性保留
-            shift 2
-            ;;
-        --minio-url)
-            OSS_URL="$2"
-            MINIO_URL="$2"  # 兼容性保留
-            shift 2
-            ;;
         --timeout)
             HEALTH_CHECK_TIMEOUT="$2"
             shift 2
@@ -246,7 +232,7 @@ while [[ $# -gt 0 ]]; do
             show_help
             exit 0
             ;;
-        all|system|services|database|redis|frontend|api|nginx|minio|docker|ssl|dependencies|performance|security|continuous)
+        all|system|services|database|redis|frontend|api|nginx|docker|ssl|dependencies|performance|security|continuous)
             COMMAND="$1"
             shift
             ;;
@@ -650,38 +636,6 @@ check_nginx() {
     HEALTH_DETAILS["nginx"]="$nginx_details"
     
     log_verbose "Nginx check completed: $nginx_status"
-}
-
-# Check MinIO storage
-check_minio() {
-    log_verbose "Checking MinIO storage"
-    
-    local minio_status="healthy"
-    local minio_details=""
-    
-    local result
-    result=$(http_request "$MINIO_URL/minio/health/live" "$HEALTH_CHECK_TIMEOUT" "$HEALTH_CHECK_RETRIES")
-    local status_code=$(echo "$result" | cut -d: -f1)
-    local response_time=$(echo "$result" | cut -d: -f2)
-    
-    HEALTH_METRICS["minio_response_time"]="$response_time"
-    
-    if [[ "$status_code" == "200" ]]; then
-        if (( response_time > RESPONSE_TIME_THRESHOLD )); then
-            minio_status="warning"
-            minio_details="MinIO accessible but slow (${response_time}ms > ${RESPONSE_TIME_THRESHOLD}ms)"
-        else
-            minio_details="MinIO accessible (${response_time}ms)"
-        fi
-    else
-        minio_status="critical"
-        minio_details="MinIO not accessible (HTTP $status_code)"
-    fi
-    
-    HEALTH_RESULTS["minio"]="$minio_status"
-    HEALTH_DETAILS["minio"]="$minio_details"
-    
-    log_verbose "MinIO check completed: $minio_status"
 }
 
 # Check Docker containers
@@ -1261,7 +1215,6 @@ run_health_checks() {
             check_frontend
             check_api
             check_nginx
-            check_minio
             check_docker
             check_ssl
             check_dependencies
@@ -1275,7 +1228,6 @@ run_health_checks() {
             check_frontend
             check_api
             check_nginx
-            check_minio
             ;;
         "database")
             check_database
@@ -1291,9 +1243,6 @@ run_health_checks() {
             ;;
         "nginx")
             check_nginx
-            ;;
-        "minio")
-            check_minio
             ;;
         "docker")
             check_docker

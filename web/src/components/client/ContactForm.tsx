@@ -231,8 +231,6 @@ const ContactForm: React.FC = () => {
       }}>
         <Text type="secondary" style={{ fontSize: '14px' }}>
           提交后我们会在24小时内与您联系，为您提供专业的婚礼主持咨询服务。
-          <br />
-          您也可以直接拨打咨询热线：<Text strong>400-888-8888</Text>
         </Text>
       </div>
     </FormCard>

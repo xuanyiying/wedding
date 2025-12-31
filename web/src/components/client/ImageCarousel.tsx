@@ -15,8 +15,7 @@ interface ImageCarouselProps {
 const CarouselContainer = styled.div<{ height: string }>`
   position: relative;
   width: 100%;
-  height: ${props => props.height === '100%' ? 'auto' : props.height};
-  flex: ${props => props.height === '100%' ? '1' : '0 0 auto'};
+  height: ${props => props.height};
   overflow: hidden;
   border-radius: var(--client-border-radius);
   background: var(--client-bg-layout);

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, Tag, Typography, Avatar } from 'antd';
-import { EyeOutlined, HeartOutlined, MessageOutlined, CalendarOutlined, UserOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import { EyeOutlined, HeartOutlined, ShareAltOutlined, CalendarOutlined, UserOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import { type Work } from '../../types';
 import { formatDate } from '../../utils';
@@ -180,13 +180,13 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, visible, onClos
 
       <MetaInfo>
         <MetaItem>
-          <HeartOutlined /> {work.likeCount}
+          <HeartOutlined /> {work.likeCount || 0}
         </MetaItem>
         <MetaItem>
-          <MessageOutlined /> {work.shareCount}
+          <ShareAltOutlined /> {work.shareCount || 0}
         </MetaItem>
         <MetaItem>
-          <EyeOutlined /> {work.viewCount}
+          <EyeOutlined /> {work.viewCount || 0}
         </MetaItem>
         {isVideo && (
           <MetaItem>

@@ -7,6 +7,9 @@ export const DouyinWorkCard = styled.div`
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: var(--client-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   
   &:hover {
     transform: translateY(-4px);
@@ -18,12 +21,18 @@ export const WorkMediaContainer = styled.div`
   position: relative;
   width: 100%;
   overflow: hidden;
+  padding-bottom: 75%; /* 4:3 Aspect Ratio */
+  height: 0;
 `;
 
 export const WorkMedia = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   width: 100%;
   height: 100%;
-  position: relative;
   
   img {
     width: 100%;
@@ -74,6 +83,9 @@ export const FeaturedBadge = styled.div`
 
 export const WorkInfo = styled.div`
   padding: 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 `;
 
 export const WorkTitle = styled.h3`
@@ -82,6 +94,7 @@ export const WorkTitle = styled.h3`
   color: var(--client-text-primary);
   margin: 0 0 6px 0;
   line-height: 1.4;
+  height: 2.8em;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -93,6 +106,7 @@ export const WorkDescription = styled.p`
   color: var(--client-text-secondary);
   margin: 0 0 8px 0;
   line-height: 1.4;
+  height: 2.8em;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -122,6 +136,9 @@ export const WorkTagsContainer = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+  height: 20px;
+  overflow: hidden;
+  margin-top: auto;
 `;
 
 export const DouyinTag = styled.span`
