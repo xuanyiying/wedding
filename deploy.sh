@@ -212,6 +212,8 @@ setup_environment() {
     if [[ -f "$env_file" ]]; then
         log_info "加载环境变量文件: $env_file"
         
+        # 临时关闭 -u (unbound variable) 检查，以允许环境文件中的变量替换
+        set +u
         # 使用set -a自动导出变量，然后source文件
         set -a
         if source "$env_file"; then
@@ -219,9 +221,11 @@ setup_environment() {
         else
             log_error "环境变量文件加载失败"
             set +a
+            set -u
             return 1
         fi
         set +a
+        set -u
     else
         log_error "环境变量文件不存在: $env_file"
         return 1
