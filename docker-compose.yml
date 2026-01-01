@@ -353,8 +353,8 @@ volumes:
     name: wedding-service-mysql-${ENVIRONMENT:-prod}-data
   redis_data:
     name: wedding-service-redis-${ENVIRONMENT:-prod}-data
-  minio_data:
-    name: wedding-service-minio-${ENVIRONMENT:-prod}-data
+  #minio_data:
+    #name: wedding-service-minio-${ENVIRONMENT:-prod}-data
   nginx_cache:
     name: wedding-service-nginx-${ENVIRONMENT:-prod}-cache
   grafana_data:
