@@ -38,7 +38,7 @@ server {
     add_header X-XSS-Protection "1; mode=block" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: *.myqcloud.com http://${SERVER_HOST}:${MINIO_SERVICE_PORT}; font-src 'self' data:; connect-src 'self' https: *.myqcloud.com http://${SERVER_HOST}:${MINIO_SERVICE_PORT} blob:; media-src 'self' blob: https: *.myqcloud.com http://${SERVER_HOST}:${MINIO_SERVICE_PORT}; object-src 'none'; child-src 'self' blob:; frame-ancestors 'self'; base-uri 'self'; form-action 'self' *.myqcloud.com http://${SERVER_HOST}:${MINIO_SERVICE_PORT};" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: *.myqcloud.com; font-src 'self' data:; connect-src 'self' https: *.myqcloud.com blob:; media-src 'self' blob: https: *.myqcloud.com; object-src 'none'; child-src 'self' blob:; frame-ancestors 'self'; base-uri 'self'; form-action 'self' *.myqcloud.com;" always;
 
     # 健康检查端点 - 使用动态解析
     location /health {
