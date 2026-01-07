@@ -26,6 +26,9 @@ services:
     # 也可以同时使用 environment 覆盖特定变量
     environment:
       - NODE_ENV=${NODE_ENV:-prod}
+    depends_on:
+      api:
+        condition: service_healthy
     networks:
       - wedding-service-network
     # 日志驱动配置 - 支持 docker logs 和 Loki 日志收集
@@ -79,8 +82,10 @@ services:
       - ./deployment/uploads:/app/uploads
       - ./deployment/logs/api:/app/logs
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - wedding-service-network
     # 日志驱动配置 - 支持 docker logs 和 Loki 日志收集

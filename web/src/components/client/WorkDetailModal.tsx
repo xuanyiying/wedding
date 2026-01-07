@@ -193,9 +193,9 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, visible, onClos
             <PlayCircleOutlined /> {playStats?.totalPlays || 0}
           </MetaItem>
         )}
-        {work.weddingDate && (
+        {work.date && (
           <MetaItem>
-            <CalendarOutlined /> {formatDate(work.weddingDate)}
+            <CalendarOutlined /> {formatDate(work.date)}
           </MetaItem>
         )}
       </MetaInfo>

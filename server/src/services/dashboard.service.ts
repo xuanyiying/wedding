@@ -653,12 +653,12 @@ export class DashboardService {
       // 创建日期范围条件
       const dateWhere: WhereOptions = {};
       if (startDate || endDate) {
-        dateWhere.weddingDate = {};
+        dateWhere.date = {};
         if (startDate) {
-          (dateWhere.weddingDate as any)[Op.gte] = new Date(startDate);
+          (dateWhere.date as any)[Op.gte] = new Date(startDate);
         }
         if (endDate) {
-          (dateWhere.weddingDate as any)[Op.lte] = new Date(endDate);
+          (dateWhere.date as any)[Op.lte] = new Date(endDate);
         }
       }
       
@@ -853,7 +853,7 @@ export class DashboardService {
       tomorrow.setDate(tomorrow.getDate() + 1);
 
       const where: WhereOptions = {
-        weddingDate: {
+        date: {
           [Op.gte]: today,
           [Op.lt]: tomorrow,
         },
@@ -924,7 +924,7 @@ export class DashboardService {
             required: false,
           },
         ],
-        order: [['weddingTime', 'ASC']],
+        order: [['timeSlot', 'ASC']],
         limit: 10, // 限制返回数量，避免数据过多
       });
 
@@ -956,7 +956,7 @@ export class DashboardService {
           endTime: schedule.endTime,
           location: schedule.location,
           eventType: schedule.eventType,
-          weddingTime: schedule.weddingTime,
+          timeSlot: schedule.timeSlot,
           user: {
             id: schedule.user?.id,
             name: schedule.user?.realName || schedule.user?.username,

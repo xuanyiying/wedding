@@ -201,7 +201,7 @@ export const selectFilteredSchedules = (state: { schedule: ScheduleState }) => {
 
     // 日期范围过滤
     if (filters.dateRange) {
-      const scheduleDate = new Date(schedule.weddingDate);
+      const scheduleDate = new Date(schedule.date);
       const startDate = new Date(filters.dateRange.start);
       const endDate = new Date(filters.dateRange.end);
 

@@ -88,8 +88,14 @@ export const getWorkById = async (req: Request, res: Response, next: NextFunctio
  */
 export const createWork = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
+    const { files, ...otherData } = req.body;
+    
+    // 将前端传来的 files 对象数组转换为后端需要的 fileIds 字符串数组
+    const fileIds = files ? files.map((f: any) => f.fileId || f.id).filter(Boolean) : [];
+
     const workData = {
-      ...req.body,
+      ...otherData,
+      fileIds,
       userId: req.user!.id,
     };
 
@@ -108,12 +114,19 @@ export const updateWork = async (req: AuthenticatedRequest, res: Response, next:
   try {
     const { id } = req.params;
     const workId = id;
-    const updateData = req.body;
+    const { files, ...otherData } = req.body;
     const currentUserId = req.user!.id;
 
     if (!workId) {
       const error = new Error('无效的作品ID');
       return next(error);
+    }
+
+    const updateData: any = { ...otherData };
+    
+    // 如果传了 files，则同步更新 fileIds
+    if (files) {
+      updateData.fileIds = files.map((f: any) => f.fileId || f.id).filter(Boolean);
     }
 
     const work = await WorkService.updateWork(workId, updateData, currentUserId);

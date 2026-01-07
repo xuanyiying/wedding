@@ -14,6 +14,7 @@ export interface WorkAttributes {
   tags: string[] | null;
   location: string | null;
   date: Date | null;
+  timeSlot: string | null;
   equipmentInfo: any | null;
   technicalInfo: any | null;
   status: WorkStatus;
@@ -48,6 +49,7 @@ class Work extends Model<WorkAttributes, WorkCreationAttributes> implements Work
   public tags!: string[] | null;
   public location!: string | null;
   public date!: Date | null;
+  public timeSlot!: string | null;
   public equipmentInfo!: any | null;
   public technicalInfo!: any | null;
   public status!: WorkStatus;
@@ -145,8 +147,14 @@ export const initWork = (sequelize: Sequelize): void => {
       date: {
         type: DataTypes.DATEONLY,
         allowNull: true,
-        field: 'wedding_date',
+        field: 'date',
         comment: '婚礼日期',
+      },
+      timeSlot: {
+        type: DataTypes.STRING(20),
+        allowNull: true,
+        field: 'time_slot',
+        comment: '婚礼时间段',
       },
       equipmentInfo: {
         type: DataTypes.JSON,

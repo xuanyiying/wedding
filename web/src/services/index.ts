@@ -149,8 +149,8 @@ export const scheduleService = {
           id: string;
           title: string;
           status: string;
-          startTime: string;
-          endTime: string;
+          date: string;
+          timeSlot: string;
         }>;
       }>
     >
@@ -162,8 +162,8 @@ export const scheduleService = {
   // 根据时间查询可用主持人
   getAvailableHosts: (params: {
     teamId: string;
-    weddingDate: string;
-    weddingTime: string;
+    date: string;
+    timeSlot: string;
   }): Promise<ApiResponse<{ hosts: TeamMember[]; total: number }>> => {
     return http.get("/schedules/available-hosts", { params });
   },
@@ -171,8 +171,8 @@ export const scheduleService = {
   // 检查档期冲突
   checkScheduleConflict: (params: {
     userId: string;
-    weddingDate: string;
-    weddingTime: string;
+    date: string;
+    timeSlot: string;
     excludeId?: string;
   }): Promise<
     ApiResponse<{
@@ -398,19 +398,19 @@ export const dashboardService = {
       id: string;
       title: string;
       status: string;
-      startTime: string;
-      endTime: string;
+      date: string;
+      timeSlot: string;
       location: string;
-      eventType: string;
-      weddingTime: string;
       user: {
         id: string;
-        name: string;
-        avatar: string;
+        username: string;
+        realName: string;
+        avatarUrl: string;
       };
       customer: {
         id: string;
-        name: string;
+        username: string;
+        realName: string;
       };
     }>;
     date: string;

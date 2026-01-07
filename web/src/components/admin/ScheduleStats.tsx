@@ -32,19 +32,19 @@ const ScheduleStats: React.FC<ScheduleStatsProps> = ({
       const startOfWeek = dayjs().startOf('week');
       const endOfWeek = dayjs().endOf('week');
       filtered = filtered.filter(s => {
-        const date = dayjs(s.weddingDate);
+        const date = dayjs(s.date);
         return date.isAfter(startOfWeek) && date.isBefore(endOfWeek);
       });
     } else if (statsTimeRange === 'month') {
       const startOfMonth = dayjs().startOf('month');
       const endOfMonth = dayjs().endOf('month');
       filtered = filtered.filter(s => {
-        const date = dayjs(s.weddingDate);
+        const date = dayjs(s.date);
         return date.isAfter(startOfMonth) && date.isBefore(endOfMonth);
       });
     } else if (statsTimeRange === 'custom' && customDateRange[0] && customDateRange[1]) {
       filtered = filtered.filter(s => {
-        const date = dayjs(s.weddingDate);
+        const date = dayjs(s.date);
         return date.isAfter(customDateRange[0]) && date.isBefore(customDateRange[1]);
       });
     }

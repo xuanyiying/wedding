@@ -7,16 +7,16 @@ export class ContactController {
   // 提交联系表单
   async submitContact(req: Request, res: Response): Promise<void> {
     try {
-      const { name, phone, email, weddingDate, weddingTime, location, guestCount, serviceType, budget, requirements } =
+      const { name, phone, email, date, timeSlot, location, guestCount, serviceType, budget, requirements } =
         req.body;
 
       // 处理时间格式：从完整的 ISO 字符串中提取时间部分
-      let formattedWeddingTime = weddingTime;
-      if (weddingTime && typeof weddingTime === 'string') {
+      let formattedTimeSlot = timeSlot;
+      if (timeSlot && typeof timeSlot === 'string') {
         // 如果是 ISO 格式的日期时间字符串，提取时间部分
-        if (weddingTime.includes('T')) {
-          const timeDate = new Date(weddingTime);
-          formattedWeddingTime = timeDate.toTimeString().split(' ')[0]; // 格式：HH:MM:SS
+        if (timeSlot.includes('T')) {
+          const timeDate = new Date(timeSlot);
+          formattedTimeSlot = timeDate.toTimeString().split(' ')[0]; // 格式：HH:MM:SS
         }
       }
 
@@ -24,8 +24,8 @@ export class ContactController {
         name,
         phone,
         email,
-        weddingDate,
-        weddingTime: formattedWeddingTime,
+        date,
+        timeSlot: formattedTimeSlot,
         location,
         guestCount,
         serviceType,

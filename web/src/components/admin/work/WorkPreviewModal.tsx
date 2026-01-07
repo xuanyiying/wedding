@@ -394,7 +394,7 @@ const WorkPreviewModal: React.FC<WorkPreviewModalProps> = ({
             
               <div className="info-item">
                 <span className="label">婚礼日期:</span>
-                <span className="value">{work.weddingDate?.toLocaleDateString() || '未知'}</span>
+                <span className="value">{work.date ? new Date(work.date).toLocaleDateString() : '未知'}</span>
               </div>
               
               <div className="info-item">

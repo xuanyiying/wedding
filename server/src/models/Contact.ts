@@ -6,8 +6,8 @@ export interface ContactAttributes {
   name: string;
   phone: string;
   email: string;
-  weddingDate: string;
-  weddingTime: string;
+  date: string;
+  timeSlot: string;
   location: string;
   guestCount: number;
   serviceType: 'wedding' | 'engagement' | 'anniversary' | 'other';
@@ -29,8 +29,8 @@ export class Contact extends Model<ContactAttributes, ContactCreationAttributes>
   public name!: string;
   public phone!: string;
   public email!: string;
-  public weddingDate!: string;
-  public weddingTime!: string;
+  public date!: string;
+  public timeSlot!: string;
   public location!: string;
   public guestCount!: number;
   public serviceType!: 'wedding' | 'engagement' | 'anniversary' | 'other';
@@ -71,17 +71,17 @@ export const initContact = (sequelize: Sequelize): void => {
           isEmail: true,
         },
       },
-      weddingDate: {
+      date: {
         type: DataTypes.DATEONLY,
         allowNull: false,
         comment: '婚礼日期',
-        field: 'wedding_date',
+        field: 'date',
       },
-      weddingTime: {
-        type: DataTypes.TIME,
+      timeSlot: {
+        type: DataTypes.STRING(20),
         allowNull: false,
-        comment: '婚礼时间',
-        field: 'wedding_time',
+        comment: '婚礼时间段',
+        field: 'time_slot',
       },
       location: {
         type: DataTypes.STRING(255),

@@ -231,7 +231,7 @@ const WorksPage: React.FC = () => {
       tags: work.tags || [],
       author: work.author || '',
       customer: work.customer || undefined,
-      weddingDate: work.weddingDate || undefined,
+      date: work.date || undefined,
       isPublic: work.isPublic ?? false,
       isFeatured: work.isFeatured ?? false,
       views: work.viewCount || 0,
@@ -265,7 +265,7 @@ const WorksPage: React.FC = () => {
         type: values.type as WorkType,
         category: values.category as WorkCategory,
         tags: (values.tags as string[]) || null,
-        weddingDate: (values.weddingDate as Date) || null,
+        date: (values.date as Date) || null,
         author: (values.author as string) || user?.username || null,
         customer: (values.customer as string) || null,
         downloads: 0,
@@ -371,7 +371,7 @@ const WorksPage: React.FC = () => {
           const newFilters = {
             teamId: queryFilters.teamId || '',
             userId: queryFilters.userId || '',
-            weddingDate: queryFilters.weddingDate || null,
+            date: queryFilters.date || null,
             search: queryFilters.search || '',
           };
           setFilters(newFilters);
@@ -419,10 +419,10 @@ const WorksPage: React.FC = () => {
                   <span>📥</span>
                   <span>{formatCount(work.downloads || 0)}</span>
                 </MetaItem>
-                {work.weddingDate && (
+                {work.date && (
                   <MetaItem>
                     <span>📅</span>
-                    <span>{new Date(work.weddingDate).toLocaleDateString('zh-CN')}</span>
+                    <span>{new Date(work.date).toLocaleDateString('zh-CN')}</span>
                   </MetaItem>
                 )}
               </WorkMetaInfo>
@@ -477,7 +477,7 @@ const WorksPage: React.FC = () => {
             tags: editingWork.tags || [],
             author: editingWork.author || '',
             customer: editingWork.customer || '',
-            weddingDate: editingWork.weddingDate ? new Date(editingWork.weddingDate) : undefined,
+            date: editingWork.date ? new Date(editingWork.date) : undefined,
             isPublic: editingWork.isPublic ?? false,
             isFeatured: editingWork.isFeatured ?? false,
             views: editingWork.viewCount || 0,

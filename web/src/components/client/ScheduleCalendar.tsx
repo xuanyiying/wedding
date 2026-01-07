@@ -20,7 +20,7 @@ const CalendarWrapper = styled.div`
 
 const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ events, onSelectDate, onPanelChange, onEventClick }) => {
   const dateCellRender = (value: Dayjs) => {
-    const listData = events.filter(event => dayjs(event.weddingDate).isSame(value, 'day'));
+    const listData = events.filter(event => dayjs(event.date).isSame(value, 'day'));
     return (
       <ul className="events">
         {listData.map(item => (

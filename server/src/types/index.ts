@@ -79,7 +79,7 @@ export enum EventType {
   OTHER = 'other', // 其他
 }
 
-export enum WeddingTime {
+export enum TimeSlot {
   LUNCH = 'lunch', // 午宴
   DINNER = 'dinner', // 晚宴
 }

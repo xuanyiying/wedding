@@ -23,14 +23,14 @@ const submitContactSchema = Joi.object({
       'any.required': '邮箱地址不能为空',
       'string.email': '请输入正确的邮箱地址',
     }),
-  weddingDate: Joi.date()
+  date: Joi.date()
     .iso()
     .required()
     .messages({
       'any.required': '婚礼日期不能为空',
       'date.format': '请输入正确的日期格式',
     }),
-  weddingTime: Joi.string()
+  timeSlot: Joi.string()
     .required()
     .messages({
       'any.required': '婚礼时间不能为空',

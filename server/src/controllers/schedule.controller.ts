@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ScheduleService } from '../services/schedule.service';
 import { logger } from '../utils/logger';
-import { ScheduleStatus, UserRole, WeddingTime } from '../types';
+import { ScheduleStatus, UserRole, TimeSlot } from '../types';
 import { AuthenticatedRequest } from '../interfaces';
 import { Resp } from '../utils/response';
 
@@ -163,12 +163,12 @@ export const deleteSchedule = async (req: AuthenticatedRequest, res: Response, n
 /**
  * 检查档期冲突
  */
-export const checkScheduleConflict = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const checkScheduleConflict = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     let { userId, date, timeSlot, excludeId } = req.body;
     // 非管理员用户只能检查自己的档期冲突
-    if (req.user?.role !== UserRole.USER && !userId) {
-       userId = req.user!.id;
+    if (req.user?.role !== UserRole.ADMIN) {
+      userId = req.user!.id;
     }
     // 如果缺少必要参数，直接返回无冲突
     if (!userId || !date || !timeSlot) {
@@ -183,7 +183,7 @@ export const checkScheduleConflict = async (req: Request, res: Response, next: N
     const data = await ScheduleService.checkScheduleConflict(
       userId as string,
       dateOnly,
-      timeSlot as WeddingTime,
+      timeSlot as TimeSlot,
       excludeId as string | undefined,
     );
     Resp.success(res, data, '检查档期冲突成功');
@@ -274,8 +274,8 @@ export const getAvailableHosts = async (req: Request, res: Response, next: NextF
 
     const result = await ScheduleService.getAvailableHosts({
       teamId: teamId as string,
-      weddingDate: new Date(date as string),
-      weddingTime: timeSlot as WeddingTime,
+      date: new Date(date as string),
+      timeSlot: timeSlot as TimeSlot,
     });
 
     Resp.success(res, result, '获取可预订主持人成功');
@@ -285,7 +285,7 @@ export const getAvailableHosts = async (req: Request, res: Response, next: NextF
   }
 };
 
-export const getPersonalSchedulesStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getPersonalSchedulesStats = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     let { startDate, endDate } = req.query;
     if (!startDate || !endDate) {

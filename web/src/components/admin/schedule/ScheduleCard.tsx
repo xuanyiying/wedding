@@ -63,8 +63,8 @@ export interface Schedule {
   hostName: string;
   clientName: string;
   clientPhone: string;
-  weddingDate: string;
-  weddingTime: 'lunch' | 'dinner';
+  date: string;
+  timeSlot: 'lunch' | 'dinner';
   location: string;
   status: 'reserve' | 'booked' | 'completed' | 'cancelled';
   notes?: string;
@@ -169,7 +169,7 @@ const ScheduleCard: React.FC<ScheduleCardProps> = ({
       <InfoRow>
         <ClockCircleOutlined />
         <Text strong>婚礼日期：</Text>
-        <Text>{formatDateTime(schedule.weddingDate)}</Text>
+        <Text>{dayjs(schedule.date).format('YYYY-MM-DD')} {schedule.timeSlot === 'lunch' ? '午宴' : '晚宴'}</Text>
       </InfoRow>
 
       <InfoRow>

@@ -99,7 +99,7 @@ export interface Work {
   tags: string[];
   author: string;
   customer?: string;
-  weddingDate?: Date;
+  date?: Date;
   isPublic: boolean;
   isFeatured: boolean;
   views: number;
@@ -259,7 +259,7 @@ const WorkCard: React.FC<WorkCardProps> = ({
             <div style={{ fontSize: 12, color: 'var(--admin-text-secondary)', marginBottom: 8 }}>
               <div>作者: {work.author}</div>
               {work.customer && <div>客户: {work.customer}</div>}
-              {work.weddingDate && <div>地点: {formatDate(work.weddingDate)}</div>}
+              {work.date && <div>日期: {formatDate(work.date)}</div>}
             </div>
 
             <SwitchContainer>

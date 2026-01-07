@@ -1,5 +1,5 @@
 -- 婚礼服务平台数据库表结构初始化脚本
--- 注意：此脚本仅用于手动创建表结构，生产环境建议使用Sequelize自动同步
+-- 注意：此脚本支持幂等性，重复执行不会破坏现有数据
 -- 创建时间: 2025-06-27
 -- 设置字符集和排序规则
 SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -8,14 +8,14 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- ----------------------------
 -- Table structure for contacts
 -- ----------------------------
-DROP TABLE IF EXISTS `contacts`;
-CREATE TABLE `contacts` (
+-- DROP TABLE IF EXISTS `contacts`;
+CREATE TABLE IF NOT EXISTS `contacts` (
                             `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '联系表单ID',
                             `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '联系人姓名',
                             `phone` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '联系电话',
                             `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '邮箱地址',
-                            `wedding_date` date NOT NULL COMMENT '婚礼日期',
-                            `wedding_time` time NOT NULL COMMENT '婚礼时间',
+                            `date` date NOT NULL COMMENT '婚礼日期',
+                            `time_slot` varchar(20) NOT NULL COMMENT '婚礼时间段',
                             `location` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '婚礼地点',
                             `guest_count` int NOT NULL COMMENT '宾客人数',
                             `service_type` enum('wedding','engagement','anniversary','other') COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '服务类型',
@@ -33,8 +33,8 @@ CREATE TABLE `contacts` (
 -- ----------------------------
 -- Table structure for files
 -- ----------------------------
-DROP TABLE IF EXISTS `files`;
-CREATE TABLE `files` (
+-- DROP TABLE IF EXISTS `files`;
+CREATE TABLE IF NOT EXISTS `files` (
                          `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '文件ID',
                          `user_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '上传用户ID',
                          `original_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '原始文件名',
@@ -69,8 +69,8 @@ CREATE TABLE `files` (
 -- ----------------------------
 -- Table structure for issues
 -- ----------------------------
-DROP TABLE IF EXISTS `issues`;
-CREATE TABLE `issues` (
+-- DROP TABLE IF EXISTS `issues`;
+CREATE TABLE IF NOT EXISTS `issues` (
                           `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
                           `title` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
                           `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -109,8 +109,8 @@ CREATE TABLE `issues` (
 -- ----------------------------
 -- Table structure for media_profiles
 -- ----------------------------
-DROP TABLE IF EXISTS `media_profiles`;
-CREATE TABLE `media_profiles` (
+-- DROP TABLE IF EXISTS `media_profiles`;
+CREATE TABLE IF NOT EXISTS `media_profiles` (
                                   `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '用户公开资料ID',
                                   `user_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '用户ID',
                                   `file_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '文件ID',
@@ -131,8 +131,8 @@ CREATE TABLE `media_profiles` (
 -- ----------------------------
 -- Table structure for operation_logs
 -- ----------------------------
-DROP TABLE IF EXISTS `operation_logs`;
-CREATE TABLE `operation_logs` (
+-- DROP TABLE IF EXISTS `operation_logs`;
+CREATE TABLE IF NOT EXISTS `operation_logs` (
                                   `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '日志ID',
                                   `user_id` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '操作用户ID',
                                   `module` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '模块名称',
@@ -162,8 +162,8 @@ CREATE TABLE `operation_logs` (
 -- ----------------------------
 -- Table structure for schedules
 -- ----------------------------
-DROP TABLE IF EXISTS `schedules`;
-CREATE TABLE `schedules` (
+-- DROP TABLE IF EXISTS `schedules`;
+CREATE TABLE IF NOT EXISTS `schedules` (
                              `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '日程ID',
                              `user_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '用户ID (主持人或团队成员)',
                              `customer_id` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '客户ID',
@@ -200,8 +200,8 @@ CREATE TABLE `schedules` (
 -- ----------------------------
 -- Table structure for system_configs
 -- ----------------------------
-DROP TABLE IF EXISTS `system_configs`;
-CREATE TABLE `system_configs` (
+-- DROP TABLE IF EXISTS `system_configs`;
+CREATE TABLE IF NOT EXISTS `system_configs` (
                                   `id` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '配置ID',
                                   `config_key` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '配置键',
                                   `config_value` text COLLATE utf8mb4_unicode_ci COMMENT '配置值',
@@ -227,8 +227,8 @@ CREATE TABLE `system_configs` (
 -- ----------------------------
 -- Table structure for team_members
 -- ----------------------------
-DROP TABLE IF EXISTS `team_members`;
-CREATE TABLE `team_members` (
+-- DROP TABLE IF EXISTS `team_members`;
+CREATE TABLE IF NOT EXISTS `team_members` (
                                 `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '团队成员ID',
                                 `team_id` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
                                 `user_id` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -254,8 +254,8 @@ CREATE TABLE `team_members` (
 -- ----------------------------
 -- Table structure for teams
 -- ----------------------------
-DROP TABLE IF EXISTS `teams`;
-CREATE TABLE `teams` (
+-- DROP TABLE IF EXISTS `teams`;
+CREATE TABLE IF NOT EXISTS `teams` (
                          `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '团队ID',
                          `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '团队名称',
                          `description` text COLLATE utf8mb4_unicode_ci COMMENT '团队描述',
@@ -306,8 +306,8 @@ CREATE TABLE `teams` (
 -- ----------------------------
 -- Table structure for user_permissions
 -- ----------------------------
-DROP TABLE IF EXISTS `user_permissions`;
-CREATE TABLE `user_permissions` (
+-- DROP TABLE IF EXISTS `user_permissions`;
+CREATE TABLE IF NOT EXISTS `user_permissions` (
                                     `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '权限ID',
                                     `user_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '用户ID',
                                     `permission` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '权限标识',
@@ -330,8 +330,8 @@ CREATE TABLE `user_permissions` (
 -- ----------------------------
 -- Table structure for users
 -- ----------------------------
-DROP TABLE IF EXISTS `users`;
-CREATE TABLE `users` (
+-- DROP TABLE IF EXISTS `users`;
+CREATE TABLE IF NOT EXISTS `users` (
                          `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '用户ID',
                          `username` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '用户名',
                          `email` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '邮箱',
@@ -370,8 +370,8 @@ CREATE TABLE `users` (
 -- ----------------------------
 -- Table structure for view_stats
 -- ----------------------------
-DROP TABLE IF EXISTS `view_stats`;
-CREATE TABLE `view_stats` (
+-- DROP TABLE IF EXISTS `view_stats`;
+CREATE TABLE IF NOT EXISTS `view_stats` (
                               `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '访问记录ID',
                               `page_type` enum('team_member','work','homepage') COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '页面类型',
                               `page_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '页面ID（团队成员ID、作品ID或null表示首页）',
@@ -394,8 +394,8 @@ CREATE TABLE `view_stats` (
 -- ----------------------------
 -- Table structure for work_likes
 -- ----------------------------
-DROP TABLE IF EXISTS `work_likes`;
-CREATE TABLE `work_likes` (
+-- DROP TABLE IF EXISTS `work_likes`;
+CREATE TABLE IF NOT EXISTS `work_likes` (
                               `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '点赞ID',
                               `work_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '作品ID',
                               `user_id` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '用户ID',
@@ -414,8 +414,8 @@ CREATE TABLE `work_likes` (
 -- ----------------------------
 -- Table structure for works
 -- ----------------------------
-DROP TABLE IF EXISTS `works`;
-CREATE TABLE `works` (
+-- DROP TABLE IF EXISTS `works`;
+CREATE TABLE IF NOT EXISTS `works` (
                          `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '作品ID',
                          `user_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '用户ID',
                          `title` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '作品标题',
@@ -425,7 +425,8 @@ CREATE TABLE `works` (
                          `file_ids` json DEFAULT NULL COMMENT '文件ID列表',
                          `tags` json DEFAULT NULL COMMENT '标签',
                          `location` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '拍摄地点',
-                         `wedding_date` date DEFAULT NULL COMMENT '婚礼日期',
+                         `date` date DEFAULT NULL COMMENT '婚礼日期',
+                         `time_slot` varchar(20) DEFAULT NULL COMMENT '婚礼时间段',
                          `equipment_info` json DEFAULT NULL COMMENT '设备信息',
                          `technical_info` json DEFAULT NULL COMMENT '技术参数',
                          `status` enum('draft','published','archived','deleted') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft' COMMENT '发布状态',

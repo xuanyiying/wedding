@@ -58,10 +58,10 @@ const ScheduleDetailModal: React.FC<ScheduleDetailModalProps> = ({ event, visibl
             <UserOutlined /> <Text strong>主持人:</Text> {event.user?.realName || event.user?.nickname}
           </Col>
           <Col span={12}>
-            <CalendarOutlined /> <Text strong>日期:</Text> {event.weddingDate}
+            <CalendarOutlined /> <Text strong>日期:</Text> {event.date}
           </Col>
           <Col span={12}>
-            <ClockCircleOutlined /> <Text strong>时间:</Text> {event.weddingTime === 'lunch' ? '午宴' : '晚宴'}
+            <ClockCircleOutlined /> <Text strong>时间:</Text> {event.timeSlot === 'lunch' ? '午宴' : '晚宴'}
           </Col>
           <Col span={24}>
             <EnvironmentOutlined /> <Text strong>地点:</Text> {event.location}

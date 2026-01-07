@@ -26,7 +26,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # 默认参数
 ENVIRONMENT="${1:-prod}"
-DB_HOST="wedding-service-mysql-"${ENVIRONMENT}
+PROJECT_NAME="wedding-service"
 COMPOSE_FILE="docker-compose.yml"
 
 # 颜色输出
@@ -435,185 +435,104 @@ init_database() {
     local environment=$1
     local max_retries=30
     local retry_count=0
-    
-    # 检查是否跳过了API服务
-    if should_skip_service_build "api" && [[ "$FORCE_FLAG" != "true" ]]; then
-        log_dev "跳过数据库初始化 (API服务未构建)"
-        return 0
-    fi
+    local mysql_container="${PROJECT_NAME}-mysql-${environment}"
     
     log_info "开始数据库初始化流程..."
     
     # 1. 等待数据库服务就绪
-    log_info "等待数据库服务启动..."
+    log_info "等待数据库服务启动并进入就绪状态..."
     while [ $retry_count -lt $max_retries ]; do
-        if docker exec ${DB_NAME}-mysql-${environment} mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "SELECT 1;" >/dev/null 2>&1; then
-            log_success "数据库服务已就绪"
+        if docker exec ${mysql_container} mysqladmin ping -h localhost -u root -p${MYSQL_ROOT_PASSWORD} --silent >/dev/null 2>&1; then
+            log_success "数据库服务已连接"
             break
         fi
         
         retry_count=$((retry_count + 1))
-        log_info "等待数据库启动... (${retry_count}/${max_retries})"
+        log_info "等待数据库就绪... (${retry_count}/${max_retries})"
         sleep 2
     done
     
     if [ $retry_count -eq $max_retries ]; then
-        log_error "数据库服务启动超时"
+        log_error "数据库服务就绪超时"
         return 1
     fi
     
-    # 2. 验证数据库和表结构
-    log_info "验证数据库结构..."
-    if ! docker exec ${DB_HOST}-mysql-${environment} mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "USE ${DB_NAME}; SHOW TABLES;" >/dev/null 2>&1; then
-        log_error "数据库 ${DB_NAME} 不存在或表结构未创建"
-        return 1
-    fi
+    # 2. 检查并创建数据库
+    log_info "检查数据库 ${DB_NAME} 是否存在..."
+    docker exec ${mysql_container} mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
     
-    # 获取表数量
-    local table_count=$(docker exec ${DB_HOST}-mysql-${environment} mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "USE ${DB_NAME}; SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='${DB_NAME}';" -s -N 2>/dev/null)
-    log_info "发现 ${table_count} 个数据表"
+    # 3. 检查表结构是否存在
+    log_info "验证数据库表结构..."
+    local table_count=$(docker exec ${mysql_container} mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='${DB_NAME}';" -s -N 2>/dev/null || echo "0")
     
-    # 3. 检查是否已初始化
-    log_info "检查数据库初始化状态..."
-    local admin_exists=$(docker exec ${DB_HOST}-mysql-${environment} mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "USE ${DB_NAME}; SELECT COUNT(*) FROM users WHERE username='admin';" -s -N 2>/dev/null || echo "0")
-    
-    if [ "$admin_exists" -gt "0" ]; then
-        log_info "检测到管理员用户已存在，跳过数据初始化"
-        validate_initialization_data "$environment"
-        return $?
-    fi
-    
-    # 4. 复制初始化脚本到容器
-    log_info "准备数据库初始化脚本..."
-    local init_script_path="server/scripts/database-data-init.sql"
-    
-    if [ ! -f "$init_script_path" ]; then
-        log_error "初始化脚本不存在: $init_script_path"
-        return 1
-    fi
-    
-    # 创建临时脚本，替换数据库名称
-    local temp_script="/tmp/database-init-${environment}.sql"
-    sed "s/USE wedding_service;/USE ${DB_NAME};/g" "$init_script_path" > "$temp_script"
-    
-    if ! docker cp "$temp_script" ${DB_HOST}-mysql-${environment}:/tmp/init.sql; then
-        log_error "复制初始化脚本到容器失败"
-        rm -f "$temp_script"
-        return 1
-    fi
-    
-    rm -f "$temp_script"
-    log_success "初始化脚本已准备就绪"
-    
-    # 4.1 清理数据库索引
-    log_info "清理数据库索引..."
-    if clean_database_indexes "$environment"; then
-        log_success "数据库索引清理成功"
+    # 如果表数量较少（如少于10个），认为需要执行初始化脚本
+    if [ "$table_count" -lt "10" ]; then
+        log_warning "检测到表结构不完整 (当前表数量: ${table_count})，准备执行完整初始化..."
+        
+        local init_script_path="server/scripts/database-init.sql"
+        if [ ! -f "$init_script_path" ]; then
+            log_error "初始化脚本不存在: $init_script_path"
+            return 1
+        fi
+        
+        # 复制并执行初始化脚本
+        if ! docker cp "$init_script_path" ${mysql_container}:/tmp/database-init.sql; then
+            log_error "复制初始化脚本到容器失败"
+            return 1
+        fi
+        
+        log_info "执行初始化脚本..."
+        if ! docker exec ${mysql_container} mysql -u root -p${MYSQL_ROOT_PASSWORD} ${DB_NAME} -e "source /tmp/database-init.sql" >/dev/null 2>&1; then
+            log_error "执行初始化脚本失败"
+            return 1
+        fi
+        log_success "表结构初始化完成"
     else
-        log_warning "数据库索引清理失败，继续执行数据库初始化"
+        log_info "表结构已存在 (当前表数量: ${table_count})，跳过完整初始化"
     fi
     
-    # 5. 执行数据库初始化
-    log_info "执行数据库数据初始化..."
-    local init_output
-    init_output=$(docker exec ${DB_HOST}-mysql-${environment} mysql -u root -p${MYSQL_ROOT_PASSWORD} ${DB_NAME} -e "source /tmp/init.sql" 2>&1)
-    local init_exit_code=$?
+    # 4. 确保超级管理员数据存在（幂等操作）
+    log_info "确保超级管理员账号已初始化..."
+    # 注意：database-init.sql 中已经包含了 INSERT IGNORE INTO users 逻辑
+    # 如果需要额外确保，可以在这里执行特定的 SQL
     
-    if [ $init_exit_code -ne 0 ]; then
-        log_error "数据库初始化执行失败:"
-        echo "$init_output" | while IFS= read -r line; do
-            log_error "  $line"
-        done
+    # 5. 执行健康检查
+    if health_check_database "$environment"; then
+        log_success "数据库初始化与健康检查通过"
+        return 0
+    else
+        log_error "数据库健康检查失败"
         return 1
     fi
+}
+
+# 数据库健康检查函数
+health_check_database() {
+    local environment=$1
+    local check_failed=0
+    local mysql_container="${PROJECT_NAME}-mysql-${environment}"
     
-    # 6. 解析初始化结果
-    log_info "解析初始化执行结果..."
-    echo "$init_output" | while IFS= read -r line; do
-        if [[ "$line" =~ ^[0-9]+$ ]] || [[ "$line" =~ "Data initialization completed successfully" ]] || [[ "$line" =~ "admin" ]]; then
-            log_info "  $line"
+    log_info "执行数据库深度健康检查..."
+    
+    # 检查核心表是否存在
+    local core_tables=("users" "schedules" "works" "contacts" "teams")
+    for table in "${core_tables[@]}"; do
+        if ! docker exec ${mysql_container} mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "USE ${DB_NAME}; DESCRIBE \`${table}\`;" >/dev/null 2>&1; then
+            log_error "✗ 核心表缺失: ${table}"
+            check_failed=1
         fi
     done
     
-    # 7. 数据校验
-    log_info "执行数据完整性校验..."
-    if ! validate_initialization_data "$environment"; then
-        log_error "数据校验失败"
-        return 1
-    fi
-    
-    # 8. 清理临时文件
-    docker exec ${DB_HOST}-mysql-${environment} rm -f /tmp/init.sql >/dev/null 2>&1
-    
-    log_success "数据库初始化流程完成"
-    return 0
-}
-
-# 数据校验函数
-validate_initialization_data() {
-    local environment=$1
-    local validation_failed=0
-    
-    log_info "开始数据完整性校验..."
-    
-    # 校验管理员用户
-    local admin_count=$(docker exec ${DB_HOST}-mysql-${environment} mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "USE ${DB_NAME}; SELECT COUNT(*) FROM users WHERE username='admin' AND role='super_admin';" -s -N 2>/dev/null || echo "0")
-    if [ "$admin_count" -eq "1" ]; then
-        log_success "✓ 管理员用户校验通过"
+    # 检查超级管理员是否存在
+    local admin_exists=$(docker exec ${mysql_container} mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "USE ${DB_NAME}; SELECT COUNT(*) FROM users WHERE role='super_admin';" -s -N 2>/dev/null || echo "0")
+    if [ "$admin_exists" -gt "0" ]; then
+        log_success "✓ 超级管理员账号校验通过"
     else
-        log_error "✗ 管理员用户校验失败 (期望:1, 实际:$admin_count)"
-        validation_failed=1
+        log_error "✗ 未发现超级管理员账号"
+        check_failed=1
     fi
     
-    # 校验系统配置
-    local config_count=$(docker exec ${DB_HOST}-mysql-${environment} mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "USE ${DB_NAME}; SELECT COUNT(*) FROM system_configs;" -s -N 2>/dev/null || echo "0")
-    if [ "$config_count" -ge "5" ]; then
-        log_success "✓ 系统配置校验通过 ($config_count 项配置)"
-    else
-        log_error "✗ 系统配置校验失败 (期望:>=5, 实际:$config_count)"
-        validation_failed=1
-    fi
-    
-    # 校验用户权限
-    local permission_count=$(docker exec ${DB_HOST}-mysql-${environment} mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "USE ${DB_NAME}; SELECT COUNT(*) FROM user_permissions WHERE user_id='1';" -s -N 2>/dev/null || echo "0")
-    if [ "$permission_count" -ge "30" ]; then
-        log_success "✓ 用户权限校验通过 ($permission_count 个权限)"
-    else
-        log_error "✗ 用户权限校验失败 (期望:>=30, 实际:$permission_count)"
-        validation_failed=1
-    fi
-    
-    # 校验关键配置项
-    local site_name=$(docker exec ${DB_HOST}-mysql-${environment} mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "USE ${DB_NAME}; SELECT config_value FROM system_configs WHERE config_key='site_name';" -s -N 2>/dev/null || echo "")
-    if [ -n "$site_name" ]; then
-        log_success "✓ 网站配置校验通过 (site_name: $site_name)"
-    else
-        log_error "✗ 网站配置校验失败 (site_name 配置缺失)"
-        validation_failed=1
-    fi
-    
-    # 输出详细统计信息
-    log_info "数据库初始化统计信息:"
-    local stats_output=$(docker exec ${DB_HOST}-mysql-${environment} mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "
-        USE ${DB_NAME};
-        SELECT 'Users' as table_name, COUNT(*) as count FROM users
-        UNION ALL
-        SELECT 'System Configs' as table_name, COUNT(*) as count FROM system_configs
-        UNION ALL
-        SELECT 'User Permissions' as table_name, COUNT(*) as count FROM user_permissions;
-    " -s -N 2>/dev/null)
-    
-    echo "$stats_output" | while IFS=$'\t' read -r table_name count; do
-        log_info "  $table_name: $count"
-    done
-    
-    if [ $validation_failed -eq 0 ]; then
-        log_success "所有数据校验通过"
-        return 0
-    else
-        log_error "数据校验存在失败项"
-        return 1
-    fi
+    return $check_failed
 }
 
 # 部署服务
@@ -688,7 +607,7 @@ check_services_health() {
             continue
         fi
         
-        local container_name="${DB_HOST}-${service}-${ENVIRONMENT}"
+        local container_name="${PROJECT_NAME}-${service}-${ENVIRONMENT}"
         
         if docker ps --format "table {{.Names}}\t{{.Status}}" | grep -q "$container_name.*healthy\|Up"; then
             log_success "✓ $service 服务运行正常"

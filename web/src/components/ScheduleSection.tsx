@@ -102,8 +102,8 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, t
   // 稳定initialFilters对象，避免每次渲染时创建新对象
   const initialFilters = useMemo(() => ({
     teamId: 'all',
-    weddingDate: today,
-    weddingTime: 'lunch' as const
+    date: today,
+    timeSlot: 'lunch' as const
   }), [today]);
 
   // 处理查询
@@ -121,11 +121,11 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, t
 
       const queryParams = {
         teamId: team?.id || 'all',
-        weddingDate: filters?.weddingDate?.format('YYYY-MM-DD') || today.format('YYYY-MM-DD'),
-        weddingTime: filters?.weddingTime || 'lunch',
+        date: filters?.date?.format('YYYY-MM-DD') || today.format('YYYY-MM-DD'),
+        timeSlot: filters?.timeSlot || 'lunch',
       };
 
-      const result = await scheduleService.getAvailableHosts(queryParams);
+      const result = await scheduleService.getAvailableHosts(queryParams as any);
 
       if (result.data && Array.isArray(result.data.hosts)) {
         const available = result.data.hosts.map(host => transformTeamMember(host));
@@ -156,7 +156,7 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, t
     
     const initQuery = async () => {
       if (!isMounted) return;
-      await handleQuery({ weddingDate: today, weddingTime: 'lunch', teamId: team?.id || '' });
+      await handleQuery({ date: today, timeSlot: 'lunch', teamId: team?.id || '' });
     };
     
     const timer = setTimeout(initQuery, 100);
@@ -170,7 +170,7 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ title, description, t
   // 当team变化时重新查询
   useEffect(() => {
     if (team?.id && hasQueried) {
-      handleQuery({ date: today, mealType: 'lunch' } as any);
+      handleQuery({ date: today, timeSlot: 'lunch', teamId: team?.id } as any);
     }
   }, [team?.id]);
 

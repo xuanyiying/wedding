@@ -49,8 +49,8 @@ const SchedulesPage: React.FC = () => {
     search: "",
     teamId: "",
     userId: "",
-    weddingDate: null,
-    weddingTime: "lunch",
+    date: null,
+    timeSlot: "lunch",
   });
 
   // 模态框状态
@@ -86,7 +86,7 @@ const SchedulesPage: React.FC = () => {
     startDate?: string;
     endDate?: string;
     status?: string;
-    weddingTime?: "lunch" | "dinner";
+    timeSlot?: "lunch" | "dinner";
   }) => {
     setLoading(true);
     try {
@@ -97,6 +97,7 @@ const SchedulesPage: React.FC = () => {
       if (queryFilters?.endDate) params.endDate = queryFilters.endDate;
       if (queryFilters?.status) params.status = queryFilters.status;
       if (queryFilters?.teamId) params.teamId = queryFilters.teamId;
+      if (queryFilters?.timeSlot) params.timeSlot = queryFilters.timeSlot;
 
       const response = await scheduleService.getMySchedules(params);
       const scheduleData = response.data?.schedules || [];
@@ -173,7 +174,7 @@ const SchedulesPage: React.FC = () => {
       startDate?: string;
       endDate?: string;
       status?: string;
-      weddingTime?: "lunch" | "dinner";
+      timeSlot?: "lunch" | "dinner";
     } = {};
 
     if (searchFilters.teamId) {
@@ -184,13 +185,13 @@ const SchedulesPage: React.FC = () => {
       queryParams.userId = searchFilters.userId;
     }
 
-    if (searchFilters.weddingTime) {
-      queryParams.weddingTime = searchFilters.weddingTime;
+    if (searchFilters.timeSlot) {
+      queryParams.timeSlot = searchFilters.timeSlot;
     }
 
     // 如果选择了具体日期，查询该日期所在月份
-    if (searchFilters.weddingDate) {
-      const selectedDate = searchFilters.weddingDate.toDate();
+    if (searchFilters.date) {
+      const selectedDate = searchFilters.date.toDate();
       const startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1).toISOString().split('T')[0];
       const endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).toISOString().split('T')[0];
       queryParams.startDate = startDate;
@@ -213,8 +214,8 @@ const SchedulesPage: React.FC = () => {
       search: "",
       teamId: "",
       userId: "",
-      weddingDate: null,
-      weddingTime: undefined,
+      date: null,
+      timeSlot: undefined,
     });
 
     // 重置后查询当前用户的本月档期
@@ -236,7 +237,7 @@ const SchedulesPage: React.FC = () => {
 
   // 获取选中日期的档期
   const selectedDateSchedules = schedulesWithHost.filter((s) =>
-    dayjs(s.weddingDate).isSame(selectedDate, "day")
+    dayjs(s.date).isSame(selectedDate, "day")
   );
 
   return (

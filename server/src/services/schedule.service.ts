@@ -1,7 +1,7 @@
 import { Op, WhereOptions } from 'sequelize';
 import { Schedule, ScheduleAttributes, ScheduleCreationAttributes, Team, TeamMember, User } from '../models';
 import { logger } from '../utils/logger';
-import { ScheduleStatus, WeddingTime, UserRole, UserStatus, TeamMemberStatus, TeamStatus } from '../types';
+import { ScheduleStatus, TimeSlot, UserRole, UserStatus, TeamMemberStatus, TeamStatus } from '../types';
 import { TeamService } from '@/services/team.service';
 import { DashboardScheduleStats, PersonalScheduleStats, TeamScheduleStats } from '@/interfaces';
 import { createError } from '@/middlewares//error';
@@ -255,6 +255,12 @@ export class ScheduleService {
    * 创建档期
    */
   static async createSchedule(data: ScheduleCreationAttributes) {
+    // 检查是否为超级管理员
+    const user = await User.findByPk(data.userId);
+    if (user && user.role === UserRole.SUPER_ADMIN) {
+      throw createError.forbidden('超级管理员不能创建或参与业务数据');
+    }
+
     const schedule = await Schedule.create(data);
 
     // 返回包含关联数据的档期
@@ -311,7 +317,7 @@ export class ScheduleService {
   static async checkScheduleConflict(
     userId: string,
     date: Date,
-    timeSlot: WeddingTime,
+    timeSlot: TimeSlot,
     excludeScheduleId?: string,
   ) {
     // 确保日期只包含日期部分，不包含时间部分
@@ -562,9 +568,9 @@ export class ScheduleService {
       const dayData = dateStr ? dateMap.get(dateStr) : undefined;
 
       if (dayData) {
-        if (schedule.timeSlot === WeddingTime.LUNCH) {
+        if (schedule.timeSlot === TimeSlot.LUNCH) {
           dayData.lunch = schedule;
-        } else if (schedule.timeSlot === WeddingTime.DINNER) {
+        } else if (schedule.timeSlot === TimeSlot.DINNER) {
           dayData.dinner = schedule;
         }
 
@@ -595,13 +601,13 @@ export class ScheduleService {
   /**
    * 获取指定时间段内有冲突的主持人ID列表
    */
-  private static async getConflictingUserIds(weddingDate: Date, weddingTime: WeddingTime): Promise<string[]> {
+  private static async getConflictingUserIds(date: Date, timeSlot: TimeSlot): Promise<string[]> {
     const superAdminIds = await this.getSuperAdminIds();
 
     const conflictingSchedules = await Schedule.findAll({
       where: {
-        date: { [Op.eq]: weddingDate },
-        timeSlot: { [Op.eq]: weddingTime },
+        date: { [Op.eq]: date },
+        timeSlot: { [Op.eq]: timeSlot },
         ...(superAdminIds.length > 0 ? { userId: { [Op.notIn]: superAdminIds } } : {}),
       },
       attributes: ['userId'],
@@ -613,11 +619,11 @@ export class ScheduleService {
   /**
    * 查询可用主持人
    */
-  static async getAvailableHosts(params: { teamId?: string; weddingDate: Date; weddingTime: WeddingTime }) {
-    const { teamId, weddingDate, weddingTime } = params;
+  static async getAvailableHosts(params: { teamId?: string; date: Date; timeSlot: TimeSlot }) {
+    const { teamId, date, timeSlot } = params;
 
     // 获取冲突的主持人ID列表
-    const conflictingUserIds = await this.getConflictingUserIds(weddingDate, weddingTime);
+    const conflictingUserIds = await this.getConflictingUserIds(date, timeSlot);
     const superAdminIds = await this.getSuperAdminIds();
     
     // 合并需要排除的ID

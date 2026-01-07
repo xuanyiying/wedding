@@ -210,7 +210,7 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
   // 获取指定日期的档期事件
   const getDateEvents = (date: Dayjs) => {
     return schedules.filter(schedule => {
-      const scheduleDate = dayjs(schedule.weddingDate);
+      const scheduleDate = dayjs(schedule.date);
       return scheduleDate.isSame(date, 'day');
     });
   };

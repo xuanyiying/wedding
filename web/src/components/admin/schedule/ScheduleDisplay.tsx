@@ -74,7 +74,7 @@ const getStatusTag = (status: string): React.ReactNode => {
 };
 
 // 格式化餐次时间
-const formatWeddingTime = (time: 'lunch' | 'dinner'): string => {
+const formatTimeSlot = (time: 'lunch' | 'dinner'): string => {
   return time === 'lunch' ? '午宴' : '晚宴';
 };
 
@@ -176,9 +176,9 @@ const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
                               <PhoneOutlined /> {schedule.customerPhone}
                             </div>
                           )}
-                          {schedule.weddingTime && (
+                          {schedule.timeSlot && (
                             <div style={{ marginBottom: '4px' }}>
-                              <ClockCircleOutlined /> {formatWeddingTime(schedule.weddingTime)}
+                              <ClockCircleOutlined /> {formatTimeSlot(schedule.timeSlot)}
                             </div>
                           )}
                           {schedule.location && (

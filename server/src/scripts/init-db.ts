@@ -10,7 +10,7 @@ import { generateId } from '../utils/id.generator';
 import { UserRole, UserStatus } from '../interfaces';
 import {
   ScheduleStatus,
-  WeddingTime,
+  TimeSlot,
   WorkType,
   WorkCategory,
   WorkStatus,
@@ -478,8 +478,8 @@ export class DatabaseInitializer {
           userId: userId!,
           customerId: null, // 设置为null，因为客户可能不是系统用户
           title,
-          weddingTime: WeddingTime.LUNCH,
-          weddingDate: startTime,
+          timeSlot: TimeSlot.LUNCH,
+          date: startTime,
           location: locations[Math.floor(Math.random() * locations.length)] as string,
           status,
           price,
@@ -651,7 +651,7 @@ export class DatabaseInitializer {
 
         const timeDiff = endDate.getTime() - startDate.getTime();
         const randomTime = startDate.getTime() + Math.floor(Math.random() * timeDiff);
-        const weddingDate = new Date(randomTime);
+        const date = new Date(randomTime);
 
         // 随机选择标签（2-5个）
         const tagCount = Math.floor(Math.random() * 4) + 2;
@@ -714,17 +714,19 @@ export class DatabaseInitializer {
           category,
           tags: selectedTags,
           location: locations[Math.floor(Math.random() * locations.length)]!,
-          weddingDate,
+          date: date,
           status,
+          isPublic: true,
           isFeatured: Math.random() < 0.2, // 20%概率为精选
           viewCount: Math.floor(Math.random() * 1000),
           likeCount: Math.floor(Math.random() * 100),
           shareCount: Math.floor(Math.random() * 50),
           sortOrder: i,
-          publishedAt: status === WorkStatus.PUBLISHED ? new Date(weddingDate.getTime() + 24 * 60 * 60 * 1000) : null,
+          publishedAt: status === WorkStatus.PUBLISHED ? new Date(date.getTime() + 24 * 60 * 60 * 1000) : null,
           createdAt: new Date(),
           updatedAt: new Date(),
           fileIds: fileIds,
+          downloads:  0,
         };
 
         works.push(work);

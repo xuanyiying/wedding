@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, Card, Row, Col, Typography, message, Select, DatePicker, TimePicker } from 'antd';
+import { Form, Input, Button, Card, Row, Col, Typography, message, Select, DatePicker } from 'antd';
 import { CustomerServiceOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import { contactService } from '../../services';
 import type { Dayjs } from 'dayjs';
+import { TimeSlotSelector } from '../TimeSlotSelector';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -73,8 +74,8 @@ interface ContactFormData {
   name: string;
   phone: string;
   email: string;
-  weddingDate: Dayjs;
-  weddingTime: Dayjs;
+  date: Dayjs;
+  timeSlot: 'lunch' | 'dinner';
   location: string;
   guestCount: number;
   serviceType: 'wedding' | 'engagement' | 'anniversary' | 'other';
@@ -91,11 +92,11 @@ const ContactForm: React.FC = () => {
     try {
       const formattedValues = {
         ...values,
-        weddingDate: values.weddingDate ? values.weddingDate.format('YYYY-MM-DD') : '',
-        weddingTime: values.weddingTime ? values.weddingTime.format('HH:mm:ss') : ''
+        date: values.date ? values.date.format('YYYY-MM-DD') : '',
+        timeSlot: values.timeSlot
       };
 
-      await contactService.submitContact(formattedValues);
+      await contactService.submitContact(formattedValues as any);
       message.success('咨询信息已提交成功！我们会在24小时内与您联系。');
       form.resetFields();
     } catch (error) {
@@ -118,6 +119,7 @@ const ContactForm: React.FC = () => {
         layout="vertical"
         onFinish={handleSubmit}
         requiredMark={false}
+        initialValues={{ timeSlot: 'lunch' }}
       >
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={24} md={12}>
@@ -148,7 +150,7 @@ const ContactForm: React.FC = () => {
           <Col xs={24} sm={24} md={12}>
             <Form.Item
               label="婚礼日期"
-              name="weddingDate"
+              name="date"
               rules={[{ required: true, message: '请选择婚礼日期' }]}
             >
               <DatePicker
@@ -162,14 +164,12 @@ const ContactForm: React.FC = () => {
           <Col xs={24} sm={24} md={12}>
             <Form.Item
               label="婚礼时间"
-              name="weddingTime"
+              name="timeSlot"
               rules={[{ required: true, message: '请选择婚礼时间' }]}
             >
-              <TimePicker
-                placeholder="请选择婚礼时间"
-                size="large"
-                style={{ width: '100%' }}
-                format="HH:mm"
+              <TimeSlotSelector 
+                timeSlot={form.getFieldValue('timeSlot')} 
+                setTimeSlot={(value) => form.setFieldsValue({ timeSlot: value })} 
               />
             </Form.Item>
           </Col>

@@ -419,6 +419,7 @@ export const createError = {
     validation: (message: string, details?: unknown) => new ValidationError(message, details),
     authentication: (message?: string) => new AuthenticationError(message),
     authorization: (message?: string) => new AuthorizationError(message),
+    forbidden: (message?: string) => new AuthorizationError(message || '禁止访问'),
     notFound: (resource?: string) => new NotFoundError(resource),
     conflict: (message: string, details?: unknown) => new ConflictError(message, details),
     business: (message: string, code?: string, details?: unknown) => new BusinessError(message, code, details),

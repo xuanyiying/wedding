@@ -1,6 +1,6 @@
 import Joi from 'joi';
 import { validateRequest } from '@/middlewares';
-import { WeddingTime, ScheduleStatus } from '@/types';
+import { TimeSlot, ScheduleStatus } from '@/types';
 
 /**
  * 自定义验证函数：检查定金不能超过总价
@@ -22,7 +22,7 @@ const validateDeposit = (value: number, helpers: any) => {
  * @param helpers Joi验证辅助对象
  * @returns 验证结果
  */
-const validateWeddingDate = (value: Date, helpers: any) => {
+const validateDate = (value: Date, helpers: any) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
@@ -36,8 +36,8 @@ const validateWeddingDate = (value: Date, helpers: any) => {
  * 创建日程验证模式
  */
 export const createScheduleSchema = Joi.object({
-    weddingDate: Joi.date()
-        .custom(validateWeddingDate)
+    date: Joi.date()
+        .custom(validateDate)
         .required()
         .label('婚礼日期')
         .messages({
@@ -46,12 +46,12 @@ export const createScheduleSchema = Joi.object({
             'custom.pastDate': '婚礼日期不能早于当前日期'
         }),
     
-    weddingTime: Joi.string()
-        .valid(...Object.values(WeddingTime))
+    timeSlot: Joi.string()
+        .valid(...Object.values(TimeSlot))
         .required()
         .label('婚礼时间')
         .messages({
-            'any.only': `婚礼时间必须是以下值之一：${Object.values(WeddingTime).join('、')}`,
+            'any.only': `婚礼时间必须是以下值之一：${Object.values(TimeSlot).join('、')}`,
             'any.required': '婚礼时间是必填项'
         }),
     
@@ -162,19 +162,19 @@ export const createScheduleSchema = Joi.object({
  * 更新日程验证模式
  */
 export const updateScheduleSchema = Joi.object({
-    weddingDate: Joi.date()
-        .custom(validateWeddingDate)
+    date: Joi.date()
+        .custom(validateDate)
         .label('婚礼日期')
         .messages({
             'date.base': '婚礼日期必须是有效的日期格式',
             'custom.pastDate': '婚礼日期不能早于当前日期'
         }),
     
-    weddingTime: Joi.string()
-        .valid(...Object.values(WeddingTime))
+    timeSlot: Joi.string()
+        .valid(...Object.values(TimeSlot))
         .label('婚礼时间')
         .messages({
-            'any.only': `婚礼时间必须是以下值之一：${Object.values(WeddingTime).join('、')}`
+            'any.only': `婚礼时间必须是以下值之一：${Object.values(TimeSlot).join('、')}`
         }),
     
     location: Joi.string()
@@ -415,20 +415,20 @@ export const validateDeleteSchedule = validateRequest({
 
 // 获取可用主持人验证规则
 export const getAvailableHostsSchema = Joi.object({
-    weddingDate: Joi.date()
+    date: Joi.date()
         .required()
         .label('婚礼日期')
         .messages({
             'date.base': '日期必须是有效的日期格式',
             'any.required': '日期是必填项'
         }),
-    weddingTime: Joi.string()
-        .valid(...Object.values(WeddingTime))
+    timeSlot: Joi.string()
+        .valid(...Object.values(TimeSlot))
         .optional()
-        .default(WeddingTime.LUNCH)
+        .default(TimeSlot.LUNCH)
         .label('婚礼时间')
         .messages({
-            'any.only': `时间必须是以下值之一：${Object.values(WeddingTime).join('、')}`,
+            'any.only': `时间必须是以下值之一：${Object.values(TimeSlot).join('、')}`,
             'any.required': '时间是必填项'
         }),
   teamId: Joi.string()
@@ -452,19 +452,19 @@ export const validateGetAvailableHosts = validateRequest({
 
 // 检查冲突验证规则
 export const checkConflictSchema = Joi.object({
-    weddingDate: Joi.date()
+    date: Joi.date()
         .required()
         .label('婚礼日期')
         .messages({
             'date.base': '婚礼日期必须是有效的日期格式',
             'any.required': '婚礼日期是必填项'
         }),
-    weddingTime: Joi.string()
-        .valid(...Object.values(WeddingTime))
+    timeSlot: Joi.string()
+        .valid(...Object.values(TimeSlot))
         .required()
         .label('婚礼时间')
         .messages({
-            'any.only': `婚礼时间必须是以下值之一：${Object.values(WeddingTime).join('、')}`,
+            'any.only': `婚礼时间必须是以下值之一：${Object.values(TimeSlot).join('、')}`,
             'any.required': '婚礼时间是必填项'
         }),
     hostId: Joi.number()

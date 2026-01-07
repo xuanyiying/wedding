@@ -223,10 +223,10 @@ const WorkDetailPage: React.FC = () => {
           </div>
         )}
 
-        {work.weddingDate && (
+        {work.date && (
           <div>
             <Title level={4}>婚礼日期</Title>
-            <Paragraph>{new Date(work.weddingDate).toLocaleDateString()}</Paragraph>
+            <Paragraph>{new Date(work.date).toLocaleDateString()}</Paragraph>
           </div>
         )}
 

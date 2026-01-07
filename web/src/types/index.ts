@@ -311,8 +311,8 @@ export interface Schedule {
   userId: string;
   title: string;
   description?: string | null;
-  weddingDate: string; // 前端使用字符串格式
-  weddingTime: 'lunch' | 'dinner'; // 前端使用字符串格式
+  date: string; // 前端使用字符串格式
+  timeSlot: 'lunch' | 'dinner'; // 前端使用字符串格式
   location?: string | null;
   venueName?: string | null; // 场地名称
   venueAddress?: string | null; // 场地地址
@@ -341,7 +341,7 @@ export interface Work {
   category: WorkCategory;
   tags?: string[] | null;
   location?: string | null;
-  weddingDate?: Date | null;
+  date?: Date | null;
   author?: string | null;
   customer?: string | null; // 客户名称
   downloads?: number;
@@ -423,8 +423,8 @@ export interface ContactForm {
   name: string;
   phone: string;
   email: string;
-  weddingDate: string;
-  weddingTime: string;
+  date: string;
+  timeSlot: string;
   location: string;
   guestCount: number;
   serviceType: 'wedding' | 'engagement' | 'anniversary' | 'other';

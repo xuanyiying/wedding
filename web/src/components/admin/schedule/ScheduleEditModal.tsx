@@ -27,6 +27,7 @@ import {
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import { scheduleService } from "../../../services";
+import { TimeSlotSelector } from "../../TimeSlotSelector";
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -41,11 +42,6 @@ interface ScheduleEditModalProps {
   onDelete: (scheduleId: string) => Promise<void>;
 }
 
-const WEDDING_TIME_OPTIONS = [
-  { label: "午宴", value: "lunch" },
-  { label: "晚宴", value: "dinner" },
-];
-
 const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
   visible,
   schedule,
@@ -56,11 +52,9 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
   onDelete,
 }) => {
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
-
-  // 表单状态
-  const [weddingDate, setWeddingDate] = useState<Dayjs | null>(null);
-  const [weddingTime, setWeddingTime] = useState<"lunch" | "dinner">("lunch");
+  const [loading, setLoading] = useState(false);  // 表单状态
+  const [date, setDate] = useState<Dayjs | null>(null);
+  const [timeSlot, setTimeSlot] = useState<"lunch" | "dinner">("lunch");
   const [selectedHostId, setSelectedHostId] = useState<string>("");
 
   // 冲突检查状态
@@ -76,14 +70,14 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
     if (visible) {
       if (schedule) {
         // 编辑模式
-        const date = schedule.weddingDate ? dayjs(schedule.weddingDate) : null;
-        setWeddingDate(date);
-        setWeddingTime(schedule.weddingTime || "lunch");
+        const sDate = schedule.date ? dayjs(schedule.date) : null;
+        setDate(sDate);
+        setTimeSlot(schedule.timeSlot || "lunch");
         setSelectedHostId(schedule.userId || "");
 
         form.setFieldsValue({
           ...schedule,
-          weddingDate: date,
+          date: sDate,
           hostId: schedule.userId,
         });
 
@@ -98,8 +92,8 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
         }
       } else {
         // 新增模式
-        setWeddingDate(null);
-        setWeddingTime("lunch");
+        setDate(null);
+        setTimeSlot("lunch");
         setHasConflict(false);
         setConflictMessage("");
 
@@ -108,7 +102,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
 
         form.resetFields();
         form.setFieldsValue({
-          weddingTime: "lunch",
+          timeSlot: "lunch",
           status: ScheduleStatus.RESERVE,
           hostId: defaultHostId,
         });
@@ -119,7 +113,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
 
   // 加载可用主持人
   const loadAvailableHosts = useCallback(async () => {
-    if (!isAdmin || !weddingDate || !weddingTime) {
+    if (!isAdmin || !date || !timeSlot) {
       return;
     }
 
@@ -127,8 +121,8 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
     try {
       const response = await scheduleService.getAvailableHosts({
         teamId: "all",
-        weddingDate: weddingDate.format("YYYY-MM-DD"),
-        weddingTime: weddingTime,
+        date: date.format("YYYY-MM-DD"),
+        timeSlot: timeSlot,
       });
       const hosts = response.data?.hosts || [];
 
@@ -160,13 +154,13 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
     } finally {
       setHostsLoading(false);
     }
-  }, [isAdmin, weddingDate, weddingTime, schedule]);
+  }, [isAdmin, date, timeSlot, schedule]);
 
   // 检查档期冲突
   const checkConflict = useCallback(async () => {
     const hostId = selectedHostId || (isAdmin ? "" : user?.id || "");
 
-    if (!weddingDate || !weddingTime || !hostId) {
+    if (!date || !timeSlot || !hostId) {
       setHasConflict(false);
       setConflictMessage("");
       return;
@@ -175,8 +169,8 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
     try {
       const response = await scheduleService.checkScheduleConflict({
         userId: hostId,
-        weddingDate: weddingDate.format("YYYY-MM-DD"),
-        weddingTime: weddingTime,
+        date: date.format("YYYY-MM-DD"),
+        timeSlot: timeSlot,
         excludeId: schedule?.id, // 编辑时排除当前档期
       });
 
@@ -210,7 +204,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
         setConflictMessage("");
       }
     }
-  }, [selectedHostId, isAdmin, weddingDate, weddingTime, user?.id, schedule]);
+  }, [selectedHostId, isAdmin, date, timeSlot, user?.id, schedule]);
 
   // 当日期或时间变化时，加载可用主持人
   useEffect(() => {
@@ -227,15 +221,15 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
   }, [visible, checkConflict]);
 
   // 处理日期变化
-  const handleDateChange = (date: Dayjs | null) => {
-    setWeddingDate(date);
-    form.setFieldsValue({ weddingDate: date });
+  const handleDateChange = (d: Dayjs | null) => {
+    setDate(d);
+    form.setFieldsValue({ date: d });
   };
 
   // 处理时间变化
   const handleTimeChange = (value: "lunch" | "dinner") => {
-    setWeddingTime(value);
-    form.setFieldsValue({ weddingTime: value });
+    setTimeSlot(value);
+    form.setFieldsValue({ timeSlot: value });
   };
 
   // 处理主持人变化
@@ -263,8 +257,8 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
       const scheduleData = {
         ...values,
         userId: values.hostId,
-        weddingDate: values.weddingDate
-          ? values.weddingDate.format("YYYY-MM-DD")
+        date: values.date
+          ? values.date.format("YYYY-MM-DD")
           : null,
       };
 
@@ -323,7 +317,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item
-              name="weddingDate"
+              name="date"
               label="婚礼日期"
               rules={[{ required: true, message: "请选择婚礼日期" }]}
               validateStatus={hasConflict ? "error" : ""}
@@ -338,16 +332,14 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
           </Col>
           <Col span={12}>
             <Form.Item
-              name="weddingTime"
+              name="timeSlot"
               label="婚礼时间"
               rules={[{ required: true, message: "请选择婚礼时间" }]}
               validateStatus={hasConflict ? "error" : ""}
             >
-              <Radio.Group
-                options={WEDDING_TIME_OPTIONS}
-                onChange={(e) => handleTimeChange(e.target.value)}
-                optionType="button"
-                buttonStyle="solid"
+              <TimeSlotSelector
+                timeSlot={form.getFieldValue('timeSlot')}
+                setTimeSlot={(value) => handleTimeChange(value as 'lunch' | 'dinner')}
               />
             </Form.Item>
           </Col>

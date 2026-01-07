@@ -224,7 +224,7 @@ const ContactsPage: React.FC = () => {
         <div>
           <div style={{ marginBottom: 4 }}>
             <CalendarOutlined style={{ marginRight: 4, color: 'var(--admin-primary-color)' }} />
-            {record.weddingDate} {record.weddingTime}
+            {record.date} {record.timeSlot === 'lunch' ? '午宴' : '晚宴'}
           </div>
           <div style={{ marginBottom: 4 }}>
             <EnvironmentOutlined style={{ marginRight: 4, color: 'var(--admin-primary-color)' }} />
@@ -452,10 +452,10 @@ const ContactsPage: React.FC = () => {
               {state.selectedContact?.email}
             </Descriptions.Item>
             <Descriptions.Item label="婚礼日期" span={1}>
-              {state.selectedContact?.weddingDate}
+              {state.selectedContact?.date}
             </Descriptions.Item>
             <Descriptions.Item label="婚礼时间" span={1}>
-              {state.selectedContact?.weddingTime}
+              {state.selectedContact?.timeSlot === 'lunch' ? '午宴' : '晚宴'}
             </Descriptions.Item>
             <Descriptions.Item label="婚礼地点" span={2}>
               {state.selectedContact?.location}

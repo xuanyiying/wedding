@@ -239,6 +239,12 @@ export class WorkService {
    * 创建作品
    */
   static async createWork(data: WorkCreationAttributes) {
+    // 检查是否为超级管理员
+    const user = await User.findByPk(data.userId);
+    if (user && user.role === UserRole.SUPER_ADMIN) {
+      throw new Error('超级管理员不能创建或发布业务作品');
+    }
+
     // 验证必填字段
     if (!data.title || !data.type || !data.category) {
       throw new Error('验证失败：标题、类型和分类为必填项');

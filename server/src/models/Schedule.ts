@@ -1,6 +1,6 @@
 import { Model, DataTypes, Sequelize, Optional, Op } from 'sequelize';
 import User from './User';
-import { ScheduleStatus, WeddingTime } from '../types';
+import { ScheduleStatus, TimeSlot } from '../types';
 import logger from '@/utils/logger';
 
 // Schedule attributes interface
@@ -12,7 +12,7 @@ export interface ScheduleAttributes {
   title?: string;
   description: string | null;
   date: Date; // 婚礼日期
-  timeSlot: WeddingTime; // 婚礼时间
+  timeSlot: TimeSlot; // 婚礼时间
   location: string | null; // 婚礼地点
   venueName: string | null; // 场馆名称
   venueAddress: string | null; // 场馆地址
@@ -20,7 +20,6 @@ export interface ScheduleAttributes {
   price: number | null;
   deposit: number | null; // 定金
   isPaid: boolean; // 是否已结清
-  isPublic: boolean; // 是否公开
   customerPhone: string | null;
   requirements: string | null;
   notes: string | null;
@@ -41,7 +40,7 @@ class Schedule extends Model<ScheduleAttributes, ScheduleCreationAttributes> imp
   public title?: string;
   public description!: string | null;
   public date!: Date; // 婚礼日期
-  public timeSlot!: WeddingTime; // 婚礼时间
+  public timeSlot!: TimeSlot; // 婚礼时间
   public location!: string | null; // 婚礼地点
   public venueName!: string | null; // 场馆名称
   public venueAddress!: string | null; // 场馆地址
@@ -49,7 +48,6 @@ class Schedule extends Model<ScheduleAttributes, ScheduleCreationAttributes> imp
   public price!: number | null; // 婚礼价格
   public deposit!: number | null; // 定金
   public isPaid!: boolean; // 是否已结清
-  public isPublic!: boolean; // 是否公开
   public customerName!: string | null;
   public customerPhone!: string | null;
   public requirements!: string | null;
@@ -67,7 +65,7 @@ class Schedule extends Model<ScheduleAttributes, ScheduleCreationAttributes> imp
   public static async hasConflict(
     userId: string,
     date: Date,
-    timeSlot: WeddingTime,
+    timeSlot: TimeSlot,
     excludeScheduleId?: string,
   ): Promise<Schedule | null> {
     // 确保只比较日期部分，忽略时间部分
@@ -144,9 +142,8 @@ export const initSchedule = (sequelize: Sequelize): void => {
         comment: '婚礼日期',
       },
       timeSlot: {
-        type: DataTypes.ENUM(...Object.values(WeddingTime)),
+        type: DataTypes.ENUM(...Object.values(TimeSlot)),
         allowNull: false,
-        comment: '婚礼时间',
         field: 'time_slot',
       },
       location: {
@@ -194,12 +191,6 @@ export const initSchedule = (sequelize: Sequelize): void => {
         defaultValue: false,
         comment: '是否已结清',
         field: 'is_paid',
-      },
-      isPublic: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: true,
-        comment: '是否公开',
-        field: 'is_public',
       },
       requirements: {
         type: DataTypes.TEXT,

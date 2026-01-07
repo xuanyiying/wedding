@@ -152,8 +152,8 @@ export interface QueryFilters {
   search?: string;
   teamId?: string;
   userId?: string;
-  weddingDate?: Dayjs | null;
-  weddingTime?: 'lunch' | 'dinner'; // 仅用于档期页面
+  date?: Dayjs | null;
+  timeSlot?: 'lunch' | 'dinner'; // 仅用于档期页面
 }
 
 export interface QueryBarProps {
@@ -330,8 +330,8 @@ const QueryBar: React.FC<QueryBarProps> = ({
         <div className="query-item-date">
           <DatePicker
             placeholder="选择日期"
-            value={filters.weddingDate}
-            onChange={(date) => handleFilterChange('weddingDate', date)}
+            value={filters.date}
+            onChange={(date) => handleFilterChange('date', date)}
             format="YYYY-MM-DD"
           />
         </div>
@@ -341,8 +341,8 @@ const QueryBar: React.FC<QueryBarProps> = ({
           <div className="query-item-meal">
             <Select
               placeholder="选择时段"
-              value={filters.weddingTime}
-              onChange={(value) => handleFilterChange('weddingTime', value)}
+              value={filters.timeSlot}
+              onChange={(value) => handleFilterChange('timeSlot', value)}
               allowClear
             >
               <Option value="lunch">午宴</Option>

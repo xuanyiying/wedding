@@ -49,6 +49,12 @@ export class TeamService {
     establishedYear?: number;
   }) {
     try {
+      // 检查是否为超级管理员
+      const owner = await User.findByPk(teamData.ownerId);
+      if (owner && owner.role === UserRole.SUPER_ADMIN) {
+        throw new Error('超级管理员不能创建或拥有业务团队');
+      }
+
       const { serviceAreas, specialties, establishedYear, ...otherData } = teamData;
 
       const team = await Team.create({
@@ -98,6 +104,12 @@ export class TeamService {
     try {
       const offset = (page - 1) * limit;
       const where: any = {};
+
+      // 超级管理员隔离：排除超级管理员拥有的团队
+      const superAdminIds = await this.getSuperAdminIds();
+      if (superAdminIds.length > 0) {
+        where.ownerId = { [Op.notIn]: superAdminIds };
+      }
 
       // 搜索条件
       if (search) {
@@ -197,6 +209,12 @@ export class TeamService {
       if (!team) {
         throw new Error('团队不存在');
       }
+
+      // 超级管理员隔离：如果团队所有者是超级管理员，则视为不存在
+      if (team.owner && team.owner.role === UserRole.SUPER_ADMIN) {
+        throw new Error('团队不存在');
+      }
+
       team.memberCount = await TeamMember.count({
         where: {
           teamId: id,

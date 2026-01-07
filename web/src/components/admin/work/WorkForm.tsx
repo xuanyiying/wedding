@@ -48,7 +48,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
     if (initialValues) {
       const formValues = {
         ...initialValues,
-        weddingDate: initialValues.weddingDate ? dayjs(initialValues.weddingDate) : undefined,
+        date: initialValues.date ? dayjs(initialValues.date) : undefined,
       };
       form.setFieldsValue(formValues);
 
@@ -228,7 +228,7 @@ const WorkForm: React.FC<WorkFormProps> = ({
 
       const submitData = {
         ...values,
-        weddingDate: values.weddingDate?.format('YYYY-MM-DD'),
+        date: values.date?.format('YYYY-MM-DD'),
         tags,
         type: workType,
         category: workCategory, // 添加作品分类到提交数据
