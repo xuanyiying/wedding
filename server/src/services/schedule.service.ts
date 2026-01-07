@@ -38,6 +38,17 @@ interface GetPublicSchedulesParams {
 
 export class ScheduleService {
   /**
+   * 获取超级管理员ID列表
+   */
+  private static async getSuperAdminIds(): Promise<string[]> {
+    const superAdmins = await User.findAll({
+      where: { role: UserRole.SUPER_ADMIN },
+      attributes: ['id'],
+    });
+    return superAdmins.map(admin => admin.id);
+  }
+
+  /**
    * 获取档期列表
    */
   static async getSchedules(params: GetSchedulesParams & { date?: string }) {
@@ -48,27 +59,33 @@ export class ScheduleService {
 
     if (userId) {
       where.userId = userId;
+    } else {
+      // 超级管理员隔离：如果不指定用户，默认排除超级管理员的档期
+      const superAdminIds = await this.getSuperAdminIds();
+      if (superAdminIds.length > 0) {
+        where.userId = { [Op.notIn]: superAdminIds };
+      }
     }
 
     if (status) {
       where.status = status;
     }
     if (date) {
-      where.weddingDate = new Date(date);
+      where.date = new Date(date);
     }
     if (teamId) {
       where.teamId = teamId;
     }
     if (startDate && endDate) {
-      where.weddingDate = {
+      where.date = {
         [Op.between]: [new Date(startDate), new Date(endDate)],
       };
     } else if (startDate) {
-      where.weddingDate = {
+      where.date = {
         [Op.gte]: new Date(startDate),
       };
     } else if (endDate) {
-      where.weddingDate = {
+      where.date = {
         [Op.lte]: new Date(endDate),
       };
     }
@@ -88,7 +105,7 @@ export class ScheduleService {
           required: false,
         },
       ],
-      order: [['weddingDate', 'ASC']],
+      order: [['date', 'ASC']],
       limit: pageSize,
       offset,
     });
@@ -162,15 +179,15 @@ export class ScheduleService {
 
     // 日期范围筛选
     if (startDate && endDate) {
-      where.weddingDate = {
+      where.date = {
         [Op.between]: [new Date(startDate), new Date(endDate)],
       };
     } else if (startDate) {
-      where.weddingDate = {
+      where.date = {
         [Op.gte]: new Date(startDate),
       };
     } else if (endDate) {
-      where.weddingDate = {
+      where.date = {
         [Op.lte]: new Date(endDate),
       };
     }
@@ -190,7 +207,7 @@ export class ScheduleService {
           required: false,
         },
       ],
-      order: [['weddingDate', 'ASC']],
+      order: [['date', 'ASC']],
       limit: pageSize,
       offset,
     });
@@ -293,15 +310,15 @@ export class ScheduleService {
    */
   static async checkScheduleConflict(
     userId: string,
-    weddingDate: Date,
-    weddingTime: WeddingTime,
+    date: Date,
+    timeSlot: WeddingTime,
     excludeScheduleId?: string,
   ) {
     // 确保日期只包含日期部分，不包含时间部分
-    const dateOnly = new Date(weddingDate);
+    const dateOnly = new Date(date);
     dateOnly.setHours(0, 0, 0, 0);
 
-    const schedule = await Schedule.hasConflict(userId, dateOnly, weddingTime, excludeScheduleId);
+    const schedule = await Schedule.hasConflict(userId, dateOnly, timeSlot, excludeScheduleId);
     return {
       hasConflict: schedule !== null,
       customerName: schedule ? schedule.customerName : null,
@@ -319,14 +336,14 @@ export class ScheduleService {
     const schedules = await Schedule.findAll({
       where: {
         userId,
-        weddingDate: {
+        date: {
           [Op.between]: [startDate, endDate],
         },
       },
-      attributes: ['id', 'title', 'customerName', 'weddingDate', 'weddingTime', 'status'],
+      attributes: ['id', 'title', 'customerName', 'date', 'timeSlot', 'status'],
       order: [
-        ['weddingDate', 'ASC'],
-        ['weddingTime', 'ASC'],
+        ['date', 'ASC'],
+        ['timeSlot', 'ASC'],
       ],
     });
 
@@ -334,20 +351,20 @@ export class ScheduleService {
     const calendar: { [key: string]: any[] } = {};
 
     schedules.forEach(schedule => {
-      // 确保 startTime 和 endTime 是 Date 对象
-      const weddingDate = schedule.weddingDate instanceof Date ? schedule.weddingDate : new Date(schedule.weddingDate);
+      // 确保 date 是 Date 对象
+      const dateObj = schedule.date instanceof Date ? schedule.date : new Date(schedule.date);
 
-      const date = weddingDate.getFullYear() + '-' + (weddingDate.getMonth() + 1) + '-' + weddingDate.getDate();
-      if (date && !calendar[date]) {
-        calendar[date] = [];
+      const dateStr = dateObj.getFullYear() + '-' + (dateObj.getMonth() + 1) + '-' + dateObj.getDate();
+      if (dateStr && !calendar[dateStr]) {
+        calendar[dateStr] = [];
       }
-      if (date && calendar[date]) {
-        calendar[date].push({
+      if (dateStr && calendar[dateStr]) {
+        calendar[dateStr].push({
           id: schedule.id,
           title: schedule.title,
           status: schedule.status,
-          weddingDate: weddingDate.getFullYear() + '-' + (weddingDate.getMonth() + 1) + '-' + weddingDate.getDate(),
-          weddingTime: schedule.weddingTime,
+          date: dateStr,
+          timeSlot: schedule.timeSlot,
         });
       }
     });
@@ -368,6 +385,9 @@ export class ScheduleService {
     const { page, pageSize, startDate, endDate } = params;
     const offset = (page - 1) * pageSize;
 
+    // 超级管理员隔离：排除超级管理员的档期
+    const superAdminIds = await this.getSuperAdminIds();
+
     const where: WhereOptions = {
       isPublic: true,
       status: {
@@ -375,12 +395,16 @@ export class ScheduleService {
       },
     };
 
+    if (superAdminIds.length > 0) {
+      where.userId = { [Op.notIn]: superAdminIds };
+    }
+
     if (startDate && endDate) {
-      where.startTime = {
+      where.date = {
         [Op.between]: [new Date(startDate), new Date(endDate)],
       };
     } else if (startDate) {
-      where.startTime = {
+      where.date = {
         [Op.gte]: new Date(startDate),
       };
     }
@@ -395,7 +419,7 @@ export class ScheduleService {
           where: { status: 'active' },
         },
       ],
-      order: [['startTime', 'ASC']],
+      order: [['date', 'ASC']],
       limit: pageSize,
       offset,
     });
@@ -419,6 +443,12 @@ export class ScheduleService {
 
     if (userId) {
       where.userId = userId;
+    } else {
+      // 超级管理员隔离：统计时不包含超级管理员的数据
+      const superAdminIds = await this.getSuperAdminIds();
+      if (superAdminIds.length > 0) {
+        where.userId = { [Op.notIn]: superAdminIds };
+      }
     }
 
     const [total, booked, reserved, completed] = await Promise.all([
@@ -445,7 +475,7 @@ export class ScheduleService {
     const schedules = await Schedule.findAll({
       where: {
         userId,
-        weddingDate: {
+        date: {
           [Op.gte]: now,
         },
         status: {
@@ -453,11 +483,11 @@ export class ScheduleService {
         },
       },
       order: [
-        ['weddingDate', 'ASC'],
-        ['weddingTime', 'ASC'],
+        ['date', 'ASC'],
+        ['timeSlot', 'ASC'],
       ],
       limit,
-      attributes: ['id', 'title', 'weddingDate', 'weddingTime', 'status', 'location'],
+      attributes: ['id', 'title', 'date', 'timeSlot', 'status', 'location'],
     });
 
     return schedules;
@@ -473,15 +503,19 @@ export class ScheduleService {
   static async getClientScheduleAvailability(params: { startDate: string; endDate: string }) {
     const { startDate, endDate } = params;
 
+    // 超级管理员隔离
+    const superAdminIds = await this.getSuperAdminIds();
+
     // 获取指定日期范围内的所有档期
     const schedules = await Schedule.findAll({
       where: {
-        weddingDate: {
+        date: {
           [Op.between]: [new Date(startDate), new Date(endDate)],
         },
         status: {
           [Op.in]: [ScheduleStatus.RESERVE, ScheduleStatus.BOOKED],
         },
+        ...(superAdminIds.length > 0 ? { userId: { [Op.notIn]: superAdminIds } } : {}),
       },
       include: [
         {
@@ -490,7 +524,7 @@ export class ScheduleService {
           attributes: ['id', 'username', 'realName'],
         },
       ],
-      order: [['weddingDate', 'ASC']],
+      order: [['date', 'ASC']],
     });
 
     // 获取所有可用的主持人
@@ -498,6 +532,7 @@ export class ScheduleService {
       where: {
         role: UserRole.USER, // 假设团队成员使用USER角色
         status: UserStatus.ACTIVE,
+        ...(superAdminIds.length > 0 ? { id: { [Op.notIn]: superAdminIds } } : {}),
       },
       attributes: ['id', 'username', 'realName'],
     });
@@ -523,13 +558,13 @@ export class ScheduleService {
 
     // 填充已有档期数据
     schedules.forEach(schedule => {
-      const dateStr = schedule.weddingDate.toISOString().split('T')[0];
+      const dateStr = schedule.date.toISOString().split('T')[0];
       const dayData = dateStr ? dateMap.get(dateStr) : undefined;
 
       if (dayData) {
-        if (schedule.weddingTime === 'lunch') {
+        if (schedule.timeSlot === WeddingTime.LUNCH) {
           dayData.lunch = schedule;
-        } else if (schedule.weddingTime === 'dinner') {
+        } else if (schedule.timeSlot === WeddingTime.DINNER) {
           dayData.dinner = schedule;
         }
 
@@ -561,10 +596,13 @@ export class ScheduleService {
    * 获取指定时间段内有冲突的主持人ID列表
    */
   private static async getConflictingUserIds(weddingDate: Date, weddingTime: WeddingTime): Promise<string[]> {
+    const superAdminIds = await this.getSuperAdminIds();
+
     const conflictingSchedules = await Schedule.findAll({
       where: {
-        weddingDate: { [Op.eq]: weddingDate },
-        weddingTime: { [Op.eq]: weddingTime },
+        date: { [Op.eq]: weddingDate },
+        timeSlot: { [Op.eq]: weddingTime },
+        ...(superAdminIds.length > 0 ? { userId: { [Op.notIn]: superAdminIds } } : {}),
       },
       attributes: ['userId'],
     });
@@ -580,7 +618,12 @@ export class ScheduleService {
 
     // 获取冲突的主持人ID列表
     const conflictingUserIds = await this.getConflictingUserIds(weddingDate, weddingTime);
-    logger.info('conflictingUserIds:', conflictingUserIds);
+    const superAdminIds = await this.getSuperAdminIds();
+    
+    // 合并需要排除的ID
+    const excludeIds = [...new Set([...conflictingUserIds, ...superAdminIds])];
+    
+    logger.info('需要排除的主持人ID列表:', excludeIds);
     // 处理团队过滤
     let teamIds: string[] = [];
     if (teamId) {
@@ -595,7 +638,7 @@ export class ScheduleService {
     const availableHosts = await TeamMember.findAll({
       where: {
         userId: {
-          [Op.notIn]: conflictingUserIds,
+          [Op.notIn]: excludeIds,
         },
         teamId: {
           [Op.in]: teamIds,
@@ -706,7 +749,7 @@ export class ScheduleService {
     const schedules = await Schedule.findAll({
       where: {
         userId,
-        weddingDate: {
+        date: {
           [Op.between]: [startDate, endDate],
         },
       },

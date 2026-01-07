@@ -322,11 +322,11 @@ export const getPublicWorks = async (req: Request, res: Response, next: NextFunc
   try {
     const { page = 1, pageSize = 10, category, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
 
-    const result = await WorkService.getWorks({
+    const result = await WorkService.getPublicWorks({
       page: Number(page),
       pageSize: Number(pageSize),
       category: category as WorkCategory,
-      sortBy: sortBy as 'createdAt' | 'viewCount' | 'likeCount' | 'shareCount',
+      sortBy: sortBy as 'createdAt' | 'viewCount' | 'likeCount' | 'shareCount' | 'downloads',
       sortOrder: typeof sortOrder === 'string' ? (sortOrder.toUpperCase() as 'ASC' | 'DESC') : 'DESC',
     });
 
@@ -342,16 +342,9 @@ export const getPublicWorks = async (req: Request, res: Response, next: NextFunc
  */
 export const getPopularWorks = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { page = 1, pageSize = 10, category } = req.query;
+    const { pageSize = 10 } = req.query;
 
-    const result = await WorkService.getWorks({
-      page: Number(page),
-      pageSize: Number(pageSize),
-      category: category as WorkCategory,
-      sortBy: 'viewCount',
-      sortOrder: 'DESC',
-      // isPublic: true // 移除不存在的属性
-    });
+    const result = await WorkService.getPopularWorks(Number(pageSize) || 10);
 
     Resp.success(res, result, '获取热门作品成功');
   } catch (error) {
@@ -367,32 +360,16 @@ export const getRelatedWorks = async (req: Request, res: Response, next: NextFun
   try {
     const { id } = req.params;
     const workId = id;
-    const { limit = 5 } = req.query;
+    const { limit = 6 } = req.query;
 
     if (!workId) {
       const error = new Error('无效的作品ID');
       return next(error);
     }
 
-    // 获取当前作品信息
-    const currentWork = await WorkService.getWorkById(workId);
-    if (!currentWork) {
-      const error = new Error('作品不存在');
-      return next(error);
-    }
+    const result = await WorkService.getRelatedWorks(workId, Number(limit) || 6);
 
-    // 获取相同分类的其他作品
-    const result = await WorkService.getWorks({
-      page: 1,
-      pageSize: Number(limit),
-      category: currentWork.category,
-      // excludeWorkId: workId, // 移除不存在的属性
-      // isPublic: true, // 移除不存在的属性
-      sortBy: 'createdAt',
-      sortOrder: 'DESC',
-    });
-
-    Resp.success(res, result.works, '获取相关作品成功');
+    Resp.success(res, result, '获取相关作品成功');
   } catch (error) {
     logger.error('获取相关作品失败:', error);
     next(error);

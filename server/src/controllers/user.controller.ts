@@ -233,6 +233,8 @@ export const updateCurrentUserProfile = async (
     const updateData = req.body;
     // 过滤掉不允许用户自己修改的字段
     const allowedFields = [
+      'username',
+      'phone',
       'realName',
       'nickname',
       'bio',
@@ -242,6 +244,7 @@ export const updateCurrentUserProfile = async (
       'contactInfo',
       'socialLinks',
       'avatarUrl',
+      'isPublic',
       'priceRange',
       'minPrice',
       'maxPrice',
@@ -277,14 +280,14 @@ export const toggleCurrentUserProfilePublish = async (
       return next(error);
     }
 
-    const { isPublished } = req.body;
-    if (typeof isPublished !== 'boolean') {
+    const { isPublic } = req.body;
+    if (typeof isPublic !== 'boolean') {
       const error = new Error('请提供有效的发布状态');
       return next(error);
     }
 
-    const user = await UserService.updateUser(userId, { isPublished });
-    Resp.success(res, user, isPublished ? '发布个人资料成功' : '取消发布个人资料成功');
+    const user = await UserService.updateUser(userId, { isPublic });
+    Resp.success(res, user, isPublic ? '发布个人资料成功' : '取消发布个人资料成功');
   } catch (error) {
     logger.error('更新个人资料发布状态失败:', error);
     next(error);

@@ -165,25 +165,25 @@ export const deleteSchedule = async (req: AuthenticatedRequest, res: Response, n
  */
 export const checkScheduleConflict = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    let { userId, weddingDate, weddingTime, excludeId } = req.body;
+    let { userId, date, timeSlot, excludeId } = req.body;
     // 非管理员用户只能检查自己的档期冲突
     if (req.user?.role !== UserRole.USER && !userId) {
        userId = req.user!.id;
     }
     // 如果缺少必要参数，直接返回无冲突
-    if (!userId || !weddingDate || !weddingTime) {
+    if (!userId || !date || !timeSlot) {
       Resp.success(res, { hasConflict: false, customerName: null, hostName: null }, '检查档期冲突成功');
       return;
     }
 
     // 确保日期只包含日期部分，不包含时间部分
-    const dateOnly = new Date(weddingDate as string);
+    const dateOnly = new Date(date as string);
     dateOnly.setHours(0, 0, 0, 0);
 
     const data = await ScheduleService.checkScheduleConflict(
       userId as string,
       dateOnly,
-      weddingTime as WeddingTime,
+      timeSlot as WeddingTime,
       excludeId as string | undefined,
     );
     Resp.success(res, data, '检查档期冲突成功');
@@ -265,17 +265,17 @@ export const getPublicSchedules = async (req: Request, res: Response, next: Next
  */
 export const getAvailableHosts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { teamId, weddingDate, weddingTime } = req.query;
+    const { teamId, date, timeSlot } = req.query;
 
-    if (!weddingDate || !weddingTime) {
+    if (!date || !timeSlot) {
       Resp.badRequest(res, '请选择婚礼日期和婚礼时间');
       return;
     }
 
     const result = await ScheduleService.getAvailableHosts({
       teamId: teamId as string,
-      weddingDate: new Date(weddingDate as string),
-      weddingTime: weddingTime as WeddingTime,
+      weddingDate: new Date(date as string),
+      weddingTime: timeSlot as WeddingTime,
     });
 
     Resp.success(res, result, '获取可预订主持人成功');

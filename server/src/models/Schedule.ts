@@ -11,8 +11,8 @@ export interface ScheduleAttributes {
   customerName: string | null;
   title?: string;
   description: string | null;
-  weddingDate: Date; // 婚礼日期
-  weddingTime: WeddingTime; // 婚礼时间
+  date: Date; // 婚礼日期
+  timeSlot: WeddingTime; // 婚礼时间
   location: string | null; // 婚礼地点
   venueName: string | null; // 场馆名称
   venueAddress: string | null; // 场馆地址
@@ -20,6 +20,7 @@ export interface ScheduleAttributes {
   price: number | null;
   deposit: number | null; // 定金
   isPaid: boolean; // 是否已结清
+  isPublic: boolean; // 是否公开
   customerPhone: string | null;
   requirements: string | null;
   notes: string | null;
@@ -39,8 +40,8 @@ class Schedule extends Model<ScheduleAttributes, ScheduleCreationAttributes> imp
   public customerId!: string | null;
   public title?: string;
   public description!: string | null;
-  public weddingDate!: Date; // 婚礼日期
-  public weddingTime!: WeddingTime; // 婚礼时间
+  public date!: Date; // 婚礼日期
+  public timeSlot!: WeddingTime; // 婚礼时间
   public location!: string | null; // 婚礼地点
   public venueName!: string | null; // 场馆名称
   public venueAddress!: string | null; // 场馆地址
@@ -48,6 +49,7 @@ class Schedule extends Model<ScheduleAttributes, ScheduleCreationAttributes> imp
   public price!: number | null; // 婚礼价格
   public deposit!: number | null; // 定金
   public isPaid!: boolean; // 是否已结清
+  public isPublic!: boolean; // 是否公开
   public customerName!: string | null;
   public customerPhone!: string | null;
   public requirements!: string | null;
@@ -64,22 +66,22 @@ class Schedule extends Model<ScheduleAttributes, ScheduleCreationAttributes> imp
   // Static method to check for conflicting schedules
   public static async hasConflict(
     userId: string,
-    weddingDate: Date,
-    weddingTime: WeddingTime,
+    date: Date,
+    timeSlot: WeddingTime,
     excludeScheduleId?: string,
   ): Promise<Schedule | null> {
     // 确保只比较日期部分，忽略时间部分
-    const weddingDateOnly = new Date(weddingDate);
-    weddingDateOnly.setHours(0, 0, 0, 0);
+    const dateOnly = new Date(date);
+    dateOnly.setHours(0, 0, 0, 0);
     
     const where: any = {
       userId,
       status: { [Op.ne]: ScheduleStatus.CANCELLED },
-      weddingDate: {
-        [Op.gte]: weddingDateOnly,
-        [Op.lt]: new Date(weddingDateOnly.getTime() + 24 * 60 * 60 * 1000) // 加一天
+      date: {
+        [Op.gte]: dateOnly,
+        [Op.lt]: new Date(dateOnly.getTime() + 24 * 60 * 60 * 1000) // 加一天
       },
-      weddingTime: { [Op.eq]: weddingTime },
+      timeSlot: { [Op.eq]: timeSlot },
     };
 
     // 如果提供了excludeScheduleId，排除该档期
@@ -93,8 +95,8 @@ class Schedule extends Model<ScheduleAttributes, ScheduleCreationAttributes> imp
       attributes: [
         'id',
         'userId',
-        'weddingDate',
-        'weddingTime',
+        'date',
+        'timeSlot',
         'customerName',
       ],
     });
@@ -135,17 +137,17 @@ export const initSchedule = (sequelize: Sequelize): void => {
         type: DataTypes.TEXT,
         comment: '详细描述',
       },
-      weddingDate: {
+      date: {
         type: DataTypes.DATEONLY, // 改为 DATEONLY 类型，只保存日期部分
         allowNull: false,
-        field: 'wedding_date',
+        field: 'date',
         comment: '婚礼日期',
       },
-      weddingTime: {
+      timeSlot: {
         type: DataTypes.ENUM(...Object.values(WeddingTime)),
         allowNull: false,
         comment: '婚礼时间',
-        field: 'wedding_time',
+        field: 'time_slot',
       },
       location: {
         type: new DataTypes.STRING(255),
@@ -190,8 +192,14 @@ export const initSchedule = (sequelize: Sequelize): void => {
       isPaid: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
-        comment: '是否已支付',
+        comment: '是否已结清',
         field: 'is_paid',
+      },
+      isPublic: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+        comment: '是否公开',
+        field: 'is_public',
       },
       requirements: {
         type: DataTypes.TEXT,
@@ -228,9 +236,9 @@ export const initSchedule = (sequelize: Sequelize): void => {
       paranoid: true,
       comment: '日程表',
       indexes: [
-        { name: 'idx_schedules_user_id_wedding_date', fields: ['user_id', 'wedding_date'] },
+        { name: 'idx_schedules_user_id_date', fields: ['user_id', 'date'] },
         { name: 'idx_schedules_customer_id', fields: ['customer_id'] },
-        { name: 'idx_schedules_wedding_date_time', fields: ['wedding_date', 'wedding_time'] },
+        { name: 'idx_schedules_date_time_slot', fields: ['date', 'time_slot'] },
         { name: 'idx_schedules_deleted_at', fields: ['deleted_at'] },
       ],
     },

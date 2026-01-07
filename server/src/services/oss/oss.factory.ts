@@ -1,13 +1,12 @@
 import { OssService } from './oss.service';
 import { MinIOService, MinIOConfig } from './minio.service';
-import { AliyunOssService, OSSConfig } from './aliyun-oss.service';
 import { TencentCOSService, TencentCOSConfig } from './tencent-cos.service';
 
 export type OssType = 'minio' | 'aliyun' | 'tencent' | 'aws';
 
 export interface OssConfig {
   type: OssType;
-  config: MinIOConfig | OSSConfig | TencentCOSConfig;
+  config: MinIOConfig | TencentCOSConfig;
 }
 
 export class OssFactory {
@@ -21,9 +20,6 @@ export class OssFactory {
     switch (config.type) {
       case 'minio':
         return new MinIOService(config.config as MinIOConfig);
-
-      case 'aliyun':
-        return new AliyunOssService(config.config as OSSConfig);
 
       case 'tencent':
         return new TencentCOSService(config.config as TencentCOSConfig);
@@ -71,18 +67,6 @@ export class OssFactory {
           secretAccessKey: process.env.OSS_SECRET_KEY || 'osspassword',
           bucket: process.env.OSS_BUCKET || 'wedding-service'
         } as MinIOConfig
-      };
-    } else if (ossType === 'aliyun') {
-      return {
-        type: ossType,
-        config: {
-          region: process.env.OSS_REGION || 'oss-cn-hangzhou',
-          accessKeyId: process.env.OSS_ACCESS_KEY || '',
-          accessKeySecret: process.env.OSS_SECRET_KEY || '',
-          bucket: process.env.OSS_BUCKET || 'wedding-service',
-          endpoint: process.env.OSS_ENDPOINT,
-          secure: process.env.OSS_USE_SSL === 'true'
-        } as OSSConfig
       };
     } else if (ossType === 'tencent') {
       return {

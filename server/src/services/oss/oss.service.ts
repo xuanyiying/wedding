@@ -105,4 +105,46 @@ export interface OssService {
    * @param expires 过期时间（秒），默认3600秒
    */
   getPresignedDownloadUrl(key: string, expires?: number): Promise<string>;
+
+  /**
+   * 初始化分块上传
+   * @param key 文件键
+   * @param contentType 文件类型
+   * @returns uploadId
+   */
+  initMultipartUpload(key: string, contentType: string): Promise<string>;
+
+  /**
+   * 上传分块
+   * @param key 文件键
+   * @param uploadId 上传ID
+   * @param partNumber 分块编号
+   * @param body 分块数据
+   * @returns ETag
+   */
+  uploadPart(
+    key: string,
+    uploadId: string,
+    partNumber: number,
+    body: Buffer | stream.Readable
+  ): Promise<string>;
+
+  /**
+   * 完成分块上传
+   * @param key 文件键
+   * @param uploadId 上传ID
+   * @param parts 已上传的分块列表
+   */
+  completeMultipartUpload(
+    key: string,
+    uploadId: string,
+    parts: { PartNumber: number; ETag: string }[]
+  ): Promise<UploadResult>;
+
+  /**
+   * 取消分块上传
+   * @param key 文件键
+   * @param uploadId 上传ID
+   */
+  abortMultipartUpload(key: string, uploadId: string): Promise<void>;
 }

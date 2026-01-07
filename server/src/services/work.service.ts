@@ -1,7 +1,7 @@
 import { Op, WhereOptions } from 'sequelize';
 import { Work, WorkAttributes, WorkCreationAttributes, WorkLike, User } from '../models';
 import { logger } from '../utils/logger';
-import { WorkType, WorkCategory, WorkStatus } from '../types';
+import { WorkType, WorkCategory, WorkStatus, UserRole } from '../types';
 import File from '../models/File';
 
 interface GetWorksParams {
@@ -13,11 +13,12 @@ interface GetWorksParams {
   category?: WorkCategory;
   status?: WorkStatus;
   isFeatured?: boolean;
+  isPublic?: boolean;
   keyword?: string;
   tags?: string[];
   dateFrom?: string;
   dateTo?: string;
-  sortBy?: 'createdAt' | 'viewCount' | 'likeCount' | 'shareCount';
+  sortBy?: 'createdAt' | 'viewCount' | 'likeCount' | 'shareCount' | 'downloads';
   sortOrder?: 'ASC' | 'DESC';
 }
 
@@ -27,13 +28,25 @@ interface GetPublicWorksParams {
   type?: WorkType;
   category?: WorkCategory;
   isFeatured?: boolean;
+  isPublic?: boolean;
   keyword?: string;
   tags?: string[];
-  sortBy?: 'createdAt' | 'viewCount' | 'likeCount' | 'shareCount';
+  sortBy?: 'createdAt' | 'viewCount' | 'likeCount' | 'shareCount' | 'downloads';
   sortOrder?: 'ASC' | 'DESC';
 }
 
 export class WorkService {
+  /**
+   * 获取超级管理员ID列表
+   */
+  private static async getSuperAdminIds(): Promise<string[]> {
+    const superAdmins = await User.findAll({
+      where: { role: UserRole.SUPER_ADMIN },
+      attributes: ['id'],
+    });
+    return superAdmins.map(admin => admin.id);
+  }
+
   /**
    * 获取作品列表
    */
@@ -47,6 +60,7 @@ export class WorkService {
       category,
       status,
       isFeatured,
+      isPublic,
       keyword,
       tags,
       dateFrom,
@@ -57,6 +71,16 @@ export class WorkService {
     const offset = (page - 1) * pageSize;
 
     const where: WhereOptions = {};
+
+    if (userId) {
+      where.userId = userId;
+    } else {
+      // 超级管理员隔离：如果不指定用户，默认排除超级管理员的作品
+      const superAdminIds = await this.getSuperAdminIds();
+      if (superAdminIds.length > 0) {
+        where.userId = { [Op.notIn]: superAdminIds };
+      }
+    }
     const include: any[] = [
       {
         model: User,
@@ -64,10 +88,6 @@ export class WorkService {
         attributes: ['id', 'nickname', 'realName', 'avatarUrl', 'role', 'phone', 'bio'],
       },
     ];
-
-    if (userId) {
-      where.userId = userId;
-    }
 
     // 处理teamId过滤 - 通过关联查询团队成员
     if (teamId) {
@@ -100,8 +120,12 @@ export class WorkService {
       where.status = status;
     }
 
-    if (isFeatured !== undefined && isFeatured) {
+    if (isFeatured !== undefined) {
       where.isFeatured = isFeatured;
+    }
+
+    if (isPublic !== undefined) {
+      where.isPublic = isPublic;
     }
 
     // 日期范围过滤
@@ -113,7 +137,7 @@ export class WorkService {
       if (dateTo) {
         dateWhere[Op.lte] = new Date(dateTo);
       }
-      where.weddingDate = dateWhere;
+      where.date = dateWhere;
     }
 
     if (keyword) {
@@ -432,11 +456,16 @@ export class WorkService {
    * 获取精选作品
    */
   static async getFeaturedWorks(limit = 10) {
+    // 超级管理员隔离：排除超级管理员的作品
+    const superAdminIds = await this.getSuperAdminIds();
+
     const works = await Work.findAll({
       where: {
         status: WorkStatus.PUBLISHED,
+        isPublic: true,
         isFeatured: true,
         category: { [Op.ne]: WorkCategory.WEDDING_HOST },
+        ...(superAdminIds.length > 0 ? { userId: { [Op.notIn]: superAdminIds } } : {}),
       },
       include: [
         {
@@ -488,13 +517,14 @@ export class WorkService {
    * 获取用户作品统计
    */
   static async getUserWorkStats(userId: string) {
-    const [total, published, draft, archived, totalViews, totalLikes] = await Promise.all([
+    const [total, published, draft, archived, totalViews, totalLikes, totalDownloads] = await Promise.all([
       Work.count({ where: { userId } }),
       Work.count({ where: { userId, status: WorkStatus.PUBLISHED } }),
       Work.count({ where: { userId, status: WorkStatus.DRAFT } }),
       Work.count({ where: { userId, status: WorkStatus.ARCHIVED } }),
       Work.sum('viewCount', { where: { userId } }) || 0,
       Work.sum('likeCount', { where: { userId } }) || 0,
+      Work.sum('downloads', { where: { userId } }) || 0,
     ]);
 
     return {
@@ -504,6 +534,7 @@ export class WorkService {
       archived,
       totalViews,
       totalLikes,
+      totalDownloads,
     };
   }
 
@@ -517,6 +548,7 @@ export class WorkService {
       type,
       category,
       isFeatured,
+      isPublic,
       keyword,
       tags,
       sortBy = 'createdAt',
@@ -524,8 +556,13 @@ export class WorkService {
     } = params;
     const offset = (page - 1) * pageSize;
 
+    // 超级管理员隔离：排除超级管理员的作品
+    const superAdminIds = await this.getSuperAdminIds();
+
     const where: WhereOptions = {
       status: WorkStatus.PUBLISHED,
+      isPublic: true, // 默认只返回公开作品
+      ...(superAdminIds.length > 0 ? { userId: { [Op.notIn]: superAdminIds } } : {}),
     };
 
     if (type) {
@@ -538,6 +575,10 @@ export class WorkService {
 
     if (isFeatured !== undefined) {
       where.isFeatured = isFeatured;
+    }
+
+    if (isPublic !== undefined) {
+      where.isPublic = isPublic;
     }
 
     if (keyword) {
@@ -589,12 +630,17 @@ export class WorkService {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
+    // 超级管理员隔离：排除超级管理员的作品
+    const superAdminIds = await this.getSuperAdminIds();
+
     const works = await Work.findAll({
       where: {
         status: WorkStatus.PUBLISHED,
+        isPublic: true,
         createdAt: {
           [Op.gte]: startDate,
         },
+        ...(superAdminIds.length > 0 ? { userId: { [Op.notIn]: superAdminIds } } : {}),
       },
       include: [
         {
@@ -624,9 +670,14 @@ export class WorkService {
       return [];
     }
 
+    // 超级管理员隔离：排除超级管理员的作品
+    const superAdminIds = await this.getSuperAdminIds();
+
     const where: WhereOptions = {
       status: WorkStatus.PUBLISHED,
+      isPublic: true,
       id: { [Op.ne]: workId },
+      ...(superAdminIds.length > 0 ? { userId: { [Op.notIn]: superAdminIds } } : {}),
     };
 
     // 优先匹配同类型和同分类的作品

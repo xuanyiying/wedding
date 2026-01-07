@@ -248,6 +248,8 @@ services:
     volumes:
       - ./deployment/loki:/loki
       - ./deployment/logs/loki:/var/log/loki
+      - ./deployment/docker/loki/loki-config.yaml:/etc/loki/local-config.yaml:ro
+      - ./deployment/docker/loki/rules.yml:/loki/rules/fake/rules.yml:ro
     environment:
       - TZ=Asia/Shanghai
     command: -config.file=/etc/loki/local-config.yaml
@@ -287,6 +289,23 @@ services:
         labels: "service=promtail,environment=${ENVIRONMENT:-prod}"
     depends_on:
       - loki
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: wedding-service-alertmanager-${ENVIRONMENT:-prod}
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./deployment/docker/monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    networks:
+      - wedding-service-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service=alertmanager,environment=${ENVIRONMENT:-prod}"
 
   grafana:
     image: grafana/grafana:latest

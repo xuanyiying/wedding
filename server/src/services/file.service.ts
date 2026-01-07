@@ -48,6 +48,9 @@ interface ChunkUploadSession {
   totalChunks: number;
   userId: string;
   uploadedChunks: number[];
+  ossUploadId?: string;
+  ossKey?: string;
+  parts?: { PartNumber: number; ETag: string }[];
   createdAt: number; // 时间戳
 }
 
@@ -624,7 +627,7 @@ export class FileService {
   private static getMaxFileSize(type: FileType): number {
     const limits = {
       [FileType.IMAGE]: 10 * 1024 * 1024, // 10MB
-      [FileType.VIDEO]: 100 * 1024 * 1024, // 100MB
+      [FileType.VIDEO]: 500 * 1024 * 1024, // 500MB
     };
 
     return limits[type] || limits[FileType.IMAGE];
@@ -707,6 +710,15 @@ export class FileService {
     // 生成唯一的上传ID
     const uploadId = generateId();
 
+    // 确定文件类型
+    const fileType = this.getFileTypeFromMimeType(mimeType);
+    const folder = this.getFolderByType(fileType);
+    const fileExtension = path.extname(filename);
+    const ossKey = `${folder}/${generateId()}${fileExtension}`;
+
+    // 初始化 OSS 分块上传
+    const ossUploadId = await this.ossService.initMultipartUpload(ossKey, mimeType);
+
     // 创建上传会话对象
     const session: ChunkUploadSession = {
       uploadId,
@@ -717,6 +729,9 @@ export class FileService {
       totalChunks,
       userId,
       uploadedChunks: [],
+      ossUploadId,
+      ossKey,
+      parts: [],
       createdAt: Date.now()
     };
 
@@ -794,18 +809,26 @@ export class FileService {
         totalChunks: session.totalChunks
       };
     }
-// 存储分块数据到Redis，使用更长的过期时间确保数据不会在上传过程中丢失
-    const chunkKey = `${CHUNK_UPLOAD_PREFIX}${uploadId}:chunk:${chunkIndex}`;
-    const extendedExpireTime = CHUNK_SESSION_EXPIRE_TIME * 2; // 48小时，比会话时间更长
 
-    await redisClient.setex(
-      chunkKey,
-      extendedExpireTime,
-      chunkData.toString('base64') // 将Buffer转换为base64字符串存储
+    // 上传分块到 OSS
+    if (!session.ossKey || !session.ossUploadId) {
+      throw new Error('OSS 上传会话未正确初始化');
+    }
+
+    const etag = await this.ossService.uploadPart(
+      session.ossKey,
+      session.ossUploadId,
+      chunkIndex + 1, // OSS PartNumber 通常从 1 开始
+      chunkData
     );
 
-    // 更新已上传的分块列表
+    // 更新已上传的分块列表和 ETag 信息
     session.uploadedChunks.push(chunkIndex);
+    if (!session.parts) session.parts = [];
+    session.parts.push({
+      PartNumber: chunkIndex + 1,
+      ETag: etag
+    });
 
     // 保存更新后的会话
     await redisClient.setex(
@@ -814,12 +837,13 @@ export class FileService {
       JSON.stringify(session)
     );
 
-    logger.info('分块上传成功:', {
+    logger.info('分块上传到 OSS 成功:', {
       uploadId,
       chunkIndex,
       chunkSize: chunkData.length,
       uploadedChunks: session.uploadedChunks.length,
-      totalChunks: session.totalChunks
+      totalChunks: session.totalChunks,
+      etag
     });
 
     return {
@@ -860,19 +884,12 @@ export class FileService {
     const availableChunks: number[] = [];
 
     for (let i = 0; i < session.totalChunks; i++) {
-      const chunkKey = `${CHUNK_UPLOAD_PREFIX}${uploadId}:chunk:${i}`;
+      const isUploaded = session.uploadedChunks.includes(i);
+      chunkStatus[i] = isUploaded;
 
-      try {
-        const exists = await redisClient.exists(chunkKey);
-        chunkStatus[i] = exists === 1;
-
-        if (exists === 1) {
-          availableChunks.push(i);
-        } else {
-          missingChunks.push(i);
-        }
-      } catch (error) {
-        chunkStatus[i] = false;
+      if (isUploaded) {
+        availableChunks.push(i);
+      } else {
         missingChunks.push(i);
       }
     }
@@ -937,103 +954,31 @@ export class FileService {
     }
 
     try {
-      // 按顺序获取所有分块数据，增加详细的错误处理
-      const chunks: Buffer[] = [];
-      const missingChunks: number[] = [];
-
-      for (let i = 0; i < session.totalChunks; i++) {
-        const chunkKey = `${CHUNK_UPLOAD_PREFIX}${uploadId}:chunk:${i}`;
-
-        try {
-          const chunkData = await redisClient.get(chunkKey);
-
-          if (!chunkData) {
-            missingChunks.push(i);
-            logger.error('分块数据丢失:', {
-              uploadId,
-              chunkIndex: i,
-              chunkKey,
-              sessionAge: Date.now() - session.createdAt,
-              totalChunks: session.totalChunks
-            });
-            continue;
-          }
-
-          // 验证 base64 数据格式
-          if (typeof chunkData !== 'string') {
-            missingChunks.push(i);
-            logger.error('分块数据格式错误:', {
-              uploadId,
-              chunkIndex: i,
-              dataType: typeof chunkData
-            });
-            continue;
-          }
-
-          // 转换 base64 到 Buffer
-          const chunkBuffer = Buffer.from(chunkData, 'base64');
-          chunks[i] = chunkBuffer;
-
-        } catch (error) {
-          missingChunks.push(i);
-          logger.error('获取分块数据失败:', {
-            uploadId,
-            chunkIndex: i,
-            error: error instanceof Error ? error.message : String(error)
-          });
-        }
+      if (!session.ossKey || !session.ossUploadId || !session.parts) {
+        throw new Error('OSS 分块信息缺失，无法完成上传');
       }
 
-      // 如果有丢失的分块，提供详细的错误信息
-      if (missingChunks.length > 0) {
-        const errorMessage = `分块数据丢失，丢失的分块索引: [${missingChunks.join(', ')}]，总共丢失 ${missingChunks.length}/${session.totalChunks} 个分块`;
+      // 按 PartNumber 排序 parts
+      const sortedParts = [...session.parts].sort((a, b) => a.PartNumber - b.PartNumber);
 
-        logger.error('分块上传完成失败:', {
-          uploadId,
-          userId,
-          filename: session.filename,
-          missingChunks,
-          missingCount: missingChunks.length,
-          totalChunks: session.totalChunks,
-          sessionAge: Date.now() - session.createdAt,
-          sessionExpireTime: CHUNK_SESSION_EXPIRE_TIME
-        });
-
-        throw new Error(errorMessage);
-      }
-
-      // 合并所有分块
-      const completeBuffer = Buffer.concat(chunks);
-
-      // 验证文件大小
-      if (completeBuffer.length !== session.fileSize) {
-        throw new Error(`文件大小不匹配，期望 ${session.fileSize} 字节，实际 ${completeBuffer.length} 字节`);
-      }
-
-      // 生成文件名和路径
-      const fileExtension = path.extname(session.filename);
-      const uniqueFilename = `${generateId()}${fileExtension}`;
-
-      // 确定文件类型
-      const fileType = this.getFileTypeFromMimeType(session.mimeType);
-
-      // 上传到OSS
-      const ossResult = await this.ossService.uploadFile(
-        completeBuffer,
-        uniqueFilename,
-        session.mimeType,
-        fileType
+      // 通知 OSS 完成分块合并
+      await this.ossService.completeMultipartUpload(
+        session.ossKey,
+        session.ossUploadId,
+        sortedParts
       );
+// 确定文件类型
+      const fileType = this.getFileTypeFromMimeType(session.mimeType);
 
       // 保存文件记录到数据库
       const fileRecord = await File.create({
         id: fileId,
-        filename: ossResult.key,
+        filename: session.ossKey,
         originalName: session.filename,
         mimeType: session.mimeType,
         fileSize: session.fileSize,
-        fileUrl: ossResult.url,
-        filePath: ossResult.key,
+        fileUrl: this.ossService.getFileUrl(session.ossKey),
+        filePath: session.ossKey,
         userId: session.userId,
         fileType: fileType,
         category: session.category as FileCategory,
@@ -1042,12 +987,8 @@ export class FileService {
         downloadCount: 0
       });
 
-      // 清理Redis中的上传会话和分块数据
-      const cleanupKeys = [sessionKey];
-      for (let i = 0; i < session.totalChunks; i++) {
-        cleanupKeys.push(`${CHUNK_UPLOAD_PREFIX}${uploadId}:chunk:${i}`);
-      }
-      await redisClient.del(...cleanupKeys);
+      // 清理Redis中的上传会话
+      await redisClient.del(sessionKey);
 
       logger.info('分块上传完成:', {
         uploadId,
@@ -1061,11 +1002,16 @@ export class FileService {
 
     } catch (error) {
       // 上传失败时清理Redis数据
-      const cleanupKeys = [sessionKey];
-      for (let i = 0; i < session.totalChunks; i++) {
-        cleanupKeys.push(`${CHUNK_UPLOAD_PREFIX}${uploadId}:chunk:${i}`);
+      await redisClient.del(sessionKey);
+
+      // 如果有 OSS 会话，尝试取消
+      if (session.ossKey && session.ossUploadId) {
+        try {
+          await this.ossService.abortMultipartUpload(session.ossKey, session.ossUploadId);
+        } catch (abortError) {
+          logger.warn('取消 OSS 分块上传失败:', abortError);
+        }
       }
-      await redisClient.del(...cleanupKeys);
 
       logger.error('分块上传完成失败:', error);
       throw error;

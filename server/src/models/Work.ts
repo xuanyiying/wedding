@@ -13,14 +13,18 @@ export interface WorkAttributes {
   category: WorkCategory;
   tags: string[] | null;
   location: string | null;
-  weddingDate: Date | null;
+  date: Date | null;
   equipmentInfo: any | null;
   technicalInfo: any | null;
   status: WorkStatus;
   isFeatured: boolean;
+  isPublic: boolean;
+  author: string | null;
+  customer: string | null;
   viewCount: number;
   likeCount: number;
   shareCount: number;
+  downloads: number;
   sortOrder: number;
   publishedAt: Date | null;
   createdAt?: Date;
@@ -43,14 +47,18 @@ class Work extends Model<WorkAttributes, WorkCreationAttributes> implements Work
   public category!: WorkCategory;
   public tags!: string[] | null;
   public location!: string | null;
-  public weddingDate!: Date | null;
+  public date!: Date | null;
   public equipmentInfo!: any | null;
   public technicalInfo!: any | null;
   public status!: WorkStatus;
   public isFeatured!: boolean;
+  public isPublic!: boolean;
+  public author!: string | null;
+  public customer!: string | null;
   public viewCount!: number;
   public likeCount!: number;
   public shareCount!: number;
+  public downloads!: number;
   public sortOrder!: number;
   public publishedAt!: Date | null;
   public fileIds!: string[];
@@ -130,12 +138,13 @@ export const initWork = (sequelize: Sequelize): void => {
         comment: '标签',
       },
       location: {
-        type: new DataTypes.STRING(255),
-        field: 'location',
+        type: DataTypes.STRING(255),
+        allowNull: true,
         comment: '拍摄地点',
       },
-      weddingDate: {
+      date: {
         type: DataTypes.DATEONLY,
+        allowNull: true,
         field: 'wedding_date',
         comment: '婚礼日期',
       },
@@ -160,7 +169,24 @@ export const initWork = (sequelize: Sequelize): void => {
         allowNull: false,
         defaultValue: false,
         field: 'is_featured',
-        comment: '是否精选',
+        comment: '是否推荐',
+      },
+      isPublic: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
+        field: 'is_public',
+        comment: '是否公开',
+      },
+      author: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+        comment: '作者',
+      },
+      customer: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+        comment: '客户名称',
       },
       viewCount: {
         type: DataTypes.INTEGER,
@@ -182,6 +208,12 @@ export const initWork = (sequelize: Sequelize): void => {
         defaultValue: 0,
         field: 'share_count',
         comment: '分享次数',
+      },
+      downloads: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+        comment: '下载次数',
       },
       sortOrder: {
         type: DataTypes.INTEGER,

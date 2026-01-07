@@ -47,6 +47,7 @@ interface Config {
 
   // 文件上传配置
   upload: {
+    maxFiles: number;
     dir: string;
     maxFileSize: number;
     allowedImageTypes: string[];
@@ -177,7 +178,8 @@ export const config: Config = {
 
   upload: {
     dir: getEnvVar('UPLOAD_DIR', 'uploads'),
-    maxFileSize: getEnvNumber('MAX_FILE_SIZE', 524288000), // 500MB (支持大文件上传)
+    maxFiles: getEnvNumber('MAX_FILES', 50),
+    maxFileSize: getEnvNumber('MAX_FILE_SIZE', 1048576000), // 1024MB (支持大文件上传)
     allowedImageTypes: getEnvArray('ALLOWED_IMAGE_TYPES', ['image/jpeg', 'image/png', 'image/gif', 'image/webp']),
     allowedVideoTypes: getEnvArray('ALLOWED_VIDEO_TYPES', ['video/mp4', 'video/avi', 'video/mov', 'video/wmv']),
     allowedAudioTypes: getEnvArray('ALLOWED_AUDIO_TYPES', ['audio/mp3', 'audio/wav', 'audio/aac']),

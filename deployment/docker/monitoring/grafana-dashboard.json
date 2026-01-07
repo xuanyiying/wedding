@@ -600,6 +600,42 @@
             }
           }
         }
+      },
+      {
+        "id": 22,
+        "title": "Application Logs",
+        "type": "row",
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 45
+        },
+        "collapsed": false
+      },
+      {
+        "id": 23,
+        "title": "Server Error Logs (Last 1h)",
+        "type": "logs",
+        "gridPos": {
+          "h": 12,
+          "w": 24,
+          "x": 0,
+          "y": 46
+        },
+        "targets": [
+          {
+            "expr": "{job=~\"api|web\"} |~ \"ERROR|CRITICAL|Exception\"",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showTime": true,
+          "showLabels": true,
+          "showCommonLabels": false,
+          "wrapLogMessages": true,
+          "sortOrder": "Descending"
+        }
       }
     ]
   }

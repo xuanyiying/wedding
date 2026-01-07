@@ -21,14 +21,10 @@ export interface UserAttributes {
   location?: string; // 工作地点
   contactInfo?: any; // 联系信息
   priceRange?: string; // 价格范围
-  minPrice?: number; // 最低价格
-  maxPrice?: number; // 最高价格
-  socialLinks?: {
-    weibo?: { value: string; hidden?: boolean };
-    wechat?: { value: string; hidden?: boolean };
-    xiaohongshu?: { value: string; hidden?: boolean };
-    douyin?: { value: string; hidden?: boolean };
-  }; // 社交链接
+  minPrice?: number; // 市场价格
+  maxPrice?: number; // 服务价格
+  socialLinks?: any; // 社交链接
+  isPublic?: boolean; // 是否公开个人资料
   hideSocialLinks?: boolean; // 控制是否隐藏整个社交媒体部分
   lastLoginAt?: Date;
   lastLoginIp?: string;
@@ -61,6 +57,7 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public location?: string;
   public contactInfo?: any;
   public socialLinks?: any;
+  public isPublic?: boolean;
   public hideSocialLinks?: boolean;
   public lastLoginAt?: Date;
   public lastLoginIp?: string;
@@ -185,17 +182,23 @@ export const initUser = (sequelize: Sequelize): void => {
       minPrice: {
         type: DataTypes.DECIMAL(10, 2),
         field: 'min_price',
-        comment: '最低价格',
+        comment: '市场价格',
       },
       maxPrice: {
         type: DataTypes.DECIMAL(10, 2),
         field: 'max_price',
-        comment: '最高价格',
+        comment: '服务价格',
       },
       socialLinks: {
         type: DataTypes.JSON,
         field: 'social_links',
         comment: '社交媒体链接',
+      },
+      isPublic: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        field: 'is_public',
+        comment: '是否公开个人资料',
       },
       hideSocialLinks: {
         type: DataTypes.BOOLEAN,

@@ -3,9 +3,20 @@ import { Op } from 'sequelize';
 import { sequelize } from '../config/database';
 import { logger } from '../utils/logger';
 import { User } from '../models';
-import { TeamMemberRole, TeamMemberStatus, TeamStatus } from '../types';
+import { TeamMemberRole, TeamMemberStatus, TeamStatus, UserRole } from '../types';
 
 export class TeamService {
+  /**
+   * 获取超级管理员ID列表
+   */
+  private static async getSuperAdminIds(): Promise<string[]> {
+    const superAdmins = await User.findAll({
+      where: { role: UserRole.SUPER_ADMIN },
+      attributes: ['id'],
+    });
+    return superAdmins.map(admin => admin.id);
+  }
+
   static async getTeamsByUserId(userId: string): Promise<Team[]> {
     return Team.findAll({
       where: await (async () => {
@@ -306,10 +317,12 @@ export class TeamService {
    */
   static async getTeamMembersByTeamId(teamId: string) {
     try {
+      const superAdminIds = await this.getSuperAdminIds();
       const members = await TeamMember.findAll({
         where: {
           teamId,
           status: TeamMemberStatus.ACTIVE,
+          ...(superAdminIds.length > 0 ? { userId: { [Op.notIn]: superAdminIds } } : {}),
         },
         include: [
           {
@@ -345,10 +358,16 @@ export class TeamService {
   }) {
     try {
       const offset = (page - 1) * limit;
+      const superAdminIds = await this.getSuperAdminIds();
       const where: any = {};
       if (teamId) {
         where.teamId = teamId;
       }
+
+      if (superAdminIds.length > 0) {
+        where.userId = { [Op.notIn]: superAdminIds };
+      }
+
       // 搜索条件
       if (search) {
         where[Op.or] = [
@@ -415,7 +434,7 @@ export class TeamService {
   }
 
   /**
-   * 获取可邀请的用户列表（排除已在团队中的用户）
+   * 获取可邀请的用户列表（排除已在团队中的用户和超级管理员）
    */
   static async getAvailableUsers({
     teamId,
@@ -438,9 +457,15 @@ export class TeamService {
         raw: true,
       }).then((members: TeamMember[]) => members.map(m => m.userId));
 
-      logger.info('已存在团队成员ID列表:', existingMemberIds);
+      // 获取超级管理员ID列表
+      const superAdminIds = await this.getSuperAdminIds();
+      
+      // 合并需要排除的ID
+      const excludeIds = [...new Set([...existingMemberIds, ...superAdminIds])];
+
+      logger.info('需要排除的用户ID列表:', excludeIds);
       const where: any = {
-        id: { [Op.notIn]: existingMemberIds },
+        id: { [Op.notIn]: excludeIds },
       };
 
       // 搜索条件

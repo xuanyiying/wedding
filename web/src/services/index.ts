@@ -310,8 +310,8 @@ export const userService = {
   },
 
   // 发布/取消发布当前用户资料
-  toggleCurrentUserProfilePublish: (isPublished: boolean): Promise<ApiResponse<User>> => {
-    return http.patch("/users/me/profile/publish", { isPublished });
+  toggleCurrentUserProfilePublish: (isPublic: boolean): Promise<ApiResponse<User>> => {
+    return http.patch("/users/me/profile/publish", { isPublic });
   }
 };
 

@@ -342,4 +342,120 @@ export class TencentCOSService implements OssService {
       );
     });
   }
+
+  /**
+   * 初始化分块上传
+   */
+  async initMultipartUpload(key: string, contentType: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      this.cosClient.multipartInit(
+        {
+          Bucket: this.bucket,
+          Region: this.region,
+          Key: key,
+          ContentType: contentType,
+        },
+        (err, data) => {
+          if (err) {
+            logger.error(`Error initializing multipart upload in Tencent COS: ${err.message}`);
+            reject(err);
+          } else {
+            resolve(data.UploadId);
+          }
+        }
+      );
+    });
+  }
+
+  /**
+   * 上传分块
+   */
+  async uploadPart(
+    key: string,
+    uploadId: string,
+    partNumber: number,
+    body: Buffer | Readable
+  ): Promise<string> {
+    return new Promise((resolve, reject) => {
+      this.cosClient.multipartUpload(
+        {
+          Bucket: this.bucket,
+          Region: this.region,
+          Key: key,
+          UploadId: uploadId,
+          PartNumber: partNumber,
+          Body: body,
+        },
+        (err, data) => {
+          if (err) {
+            logger.error(`Error uploading part ${partNumber} to Tencent COS: ${err.message}`);
+            reject(err);
+          } else {
+            resolve(data.ETag);
+          }
+        }
+      );
+    });
+  }
+
+  /**
+   * 完成分块上传
+   */
+  async completeMultipartUpload(
+    key: string,
+    uploadId: string,
+    parts: { PartNumber: number; ETag: string }[]
+  ): Promise<UploadResult> {
+    return new Promise((resolve, reject) => {
+      this.cosClient.multipartComplete(
+        {
+          Bucket: this.bucket,
+          Region: this.region,
+          Key: key,
+          UploadId: uploadId,
+          Parts: parts.map(p => ({
+            PartNumber: p.PartNumber,
+            ETag: p.ETag
+          })),
+        },
+        (err, data) => {
+          if (err) {
+            logger.error(`Error completing multipart upload in Tencent COS: ${err.message}`);
+            reject(err);
+          } else {
+            resolve({
+              key,
+              url: this.getFileUrl(key),
+              size: 0, // Multipart complete doesn't return size directly in all SDKs
+              contentType: '', // Nor content type
+            });
+          }
+        }
+      );
+    });
+  }
+
+  /**
+   * 取消分块上传
+   */
+  async abortMultipartUpload(key: string, uploadId: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.cosClient.multipartAbort(
+        {
+          Bucket: this.bucket,
+          Region: this.region,
+          Key: key,
+          UploadId: uploadId,
+        },
+        (err) => {
+          if (err) {
+            logger.error(`Error aborting multipart upload in Tencent COS: ${err.message}`);
+            reject(err);
+          } else {
+            resolve();
+          }
+        }
+      );
+    });
+  }
 }

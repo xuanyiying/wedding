@@ -30,6 +30,10 @@ export class UserService {
         status: {
           [Op.not]: UserStatus.DELETED,
         },
+        // 超级管理员隔离：默认不显示超级管理员，除非明确指定
+        role: {
+          [Op.not]: UserRole.SUPER_ADMIN,
+        },
       };
 
       // 搜索条件
@@ -154,7 +158,7 @@ export class UserService {
       bio?: string;
       role?: UserRole;
       status?: UserStatus;
-      isPublished?: boolean;
+      isPublic?: boolean;
       nickname?: string;
       specialties?: any;
       experienceYears?: number;
@@ -181,7 +185,7 @@ export class UserService {
       // Validate price range
       if (updateData.minPrice !== undefined && updateData.maxPrice !== undefined) {
         if (updateData.minPrice > updateData.maxPrice) {
-          throw new Error('最低价格不能高于最高价格');
+          throw new Error('市场价格不能高于服务价格');
         }
       }
 

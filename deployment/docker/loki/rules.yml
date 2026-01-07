@@ -1,0 +1,24 @@
+groups:
+  - name: log-alerts
+    rules:
+      - alert: HighErrorLogRate
+        expr: |
+          sum by (service) (rate({job=~"api|web|nginx"} |~ "ERROR" [5m])) > 5
+        for: 2m
+        labels:
+          severity: critical
+          service: "{{ $labels.service }}"
+        annotations:
+          summary: "High error rate in logs for {{ $labels.service }}"
+          description: "Detected more than 5 errors per second in {{ $labels.service }} logs for the last 2 minutes."
+
+      - alert: CriticalErrorLogged
+        expr: |
+          sum by (service) (count_over_time({job=~"api|web"} |~ "CRITICAL|FATAL|Exception" [1m])) > 0
+        for: 0s
+        labels:
+          severity: critical
+          service: "{{ $labels.service }}"
+        annotations:
+          summary: "Critical error or Exception detected in {{ $labels.service }}"
+          description: "A critical error, fatal log or unhandled exception was detected in {{ $labels.service }} logs."

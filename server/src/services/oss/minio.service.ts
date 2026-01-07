@@ -7,7 +7,11 @@ import {
   ListObjectsV2Command,
   HeadObjectCommand,
   HeadBucketCommand,
-  PutBucketPolicyCommand
+  PutBucketPolicyCommand,
+  CreateMultipartUploadCommand,
+  UploadPartCommand,
+  CompleteMultipartUploadCommand,
+  AbortMultipartUploadCommand
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Readable } from 'stream';
@@ -428,7 +432,7 @@ export class MinIOService implements OssService {
   /**
    * 生成预签名下载URL
    */
-  async getPresignedDownloadUrl(key: string, expires: number = 3600): Promise<string> {
+  async getPresignedDownloadUrl(key: string, expires?: number): Promise<string> {
     try {
       const command = new GetObjectCommand({
         Bucket: this.bucket,
@@ -436,7 +440,7 @@ export class MinIOService implements OssService {
       });
 
       // 获取内部URL
-      const internalUrl = await getSignedUrl(this.s3Client, command, { expiresIn: expires });
+      const internalUrl = await getSignedUrl(this.s3Client, command, { expiresIn: expires || 3600 });
 
       // 将内部OSS地址替换为外部可访问的地址
       const publicEndpoint = process.env.OSS_PUBLIC_ENDPOINT;
@@ -459,6 +463,97 @@ export class MinIOService implements OssService {
     } catch (error) {
       console.error('Error generating presigned download URL:', error);
       throw new Error('Failed to generate presigned download URL');
+    }
+  }
+
+  /**
+   * 初始化分块上传
+   */
+  async initMultipartUpload(key: string, contentType: string): Promise<string> {
+    try {
+      const command = new CreateMultipartUploadCommand({
+        Bucket: this.bucket,
+        Key: key,
+        ContentType: contentType
+      });
+      const response = await this.s3Client.send(command);
+      return response.UploadId || '';
+    } catch (error) {
+      console.error('Error initializing multipart upload in MinIO:', error);
+      throw new Error('Failed to initialize multipart upload');
+    }
+  }
+
+  /**
+   * 上传分块
+   */
+  async uploadPart(
+    key: string,
+    uploadId: string,
+    partNumber: number,
+    body: Buffer | Readable
+  ): Promise<string> {
+    try {
+      const command = new UploadPartCommand({
+        Bucket: this.bucket,
+        Key: key,
+        UploadId: uploadId,
+        PartNumber: partNumber,
+        Body: body
+      });
+      const response = await this.s3Client.send(command);
+      return response.ETag || '';
+    } catch (error) {
+      console.error(`Error uploading part ${partNumber} to MinIO:`, error);
+      throw new Error('Failed to upload part');
+    }
+  }
+
+  /**
+   * 完成分块上传
+   */
+  async completeMultipartUpload(
+    key: string,
+    uploadId: string,
+    parts: { PartNumber: number; ETag: string }[]
+  ): Promise<UploadResult> {
+    try {
+      const command = new CompleteMultipartUploadCommand({
+        Bucket: this.bucket,
+        Key: key,
+        UploadId: uploadId,
+        MultipartUpload: {
+          Parts: parts
+        }
+      });
+      await this.s3Client.send(command);
+
+      return {
+        key,
+        url: this.getFileUrl(key),
+        size: 0,
+        contentType: ''
+      };
+    } catch (error) {
+      console.error('Error completing multipart upload in MinIO:', error);
+      throw new Error('Failed to complete multipart upload');
+    }
+  }
+
+  /**
+   * 取消分块上传
+   */
+  async abortMultipartUpload(key: string, uploadId: string): Promise<void> {
+    try {
+      const command = new AbortMultipartUploadCommand({
+        Bucket: this.bucket,
+        Key: key,
+        UploadId: uploadId
+      });
+      await this.s3Client.send(command);
+    } catch (error) {
+      console.error('Error aborting multipart upload in MinIO:', error);
+      throw new Error('Failed to abort multipart upload');
     }
   }
 }

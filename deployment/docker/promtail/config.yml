@@ -29,6 +29,11 @@ scrape_configs:
 
   # API 服务日志
   - job_name: api
+    pipeline_stages:
+      - regex:
+          expression: "^(?P<time>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}) \\[(?P<level>[A-Z]+)\\]: (?P<message>.*)"
+      - labels:
+          level:
     static_configs:
       - targets:
           - localhost
@@ -39,6 +44,11 @@ scrape_configs:
 
   # Web 服务日志
   - job_name: web
+    pipeline_stages:
+      - regex:
+          expression: "^(?P<time>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}) \\[(?P<level>[A-Z]+)\\]: (?P<message>.*)"
+      - labels:
+          level:
     static_configs:
       - targets:
           - localhost

@@ -4,7 +4,7 @@ import { config } from '../config/config';
 // 文件大小限制 - 从配置文件读取
 const limits = {
   fileSize: config.upload.maxFileSize, // 从配置读取
-  files: 10, // 最多10个文件
+  files: config.upload.maxFiles, // 最多10个文件
 };
 
 // 创建multer实例
