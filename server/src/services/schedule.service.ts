@@ -640,24 +640,55 @@ export class ScheduleService {
       }
     }
     logger.info('teamIds:', teamIds);
-    const availableHosts = await TeamMember.findAll({
-      where: {
-        userId: {
-          [Op.notIn]: excludeIds,
+
+    // 如果指定了 teamId 但没有找到任何团队，且 teamId 并非 'all'，则返回空
+    if (teamId && teamId !== 'all' && teamIds.length === 0) {
+      return { hosts: [], total: 0 };
+    }
+
+    let availableHosts: any[] = [];
+
+    if (teamIds.length > 0) {
+      // 1. 如果有团队，从团队成员中查找
+      const teamMembers = await TeamMember.findAll({
+        where: {
+          userId: {
+            [Op.notIn]: excludeIds,
+          },
+          teamId: {
+            [Op.in]: teamIds,
+          },
+          status: TeamMemberStatus.ACTIVE,
         },
-        teamId: {
-          [Op.in]: teamIds,
+        include: [
+          {
+            model: User,
+            as: 'user',
+            attributes: ['id', 'realName', 'nickname', 'avatarUrl', 'phone', 'bio'],
+          },
+        ],
+      });
+      availableHosts = teamMembers;
+    } else {
+      // 2. 如果没有指定团队或没有活跃团队，且 teamId 为 'all' 或未指定，则从所有激活用户中查找
+      const users = await User.findAll({
+        where: {
+          id: {
+            [Op.notIn]: excludeIds,
+          },
+          status: UserStatus.ACTIVE,
+          // 这里可以根据需要筛选角色，例如 role: UserRole.HOST (如果定义了该角色)
         },
-        status: TeamMemberStatus.ACTIVE,
-      },
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'realName', 'nickname', 'avatarUrl', 'phone', 'bio'],
-        },
-      ],
-    });
+        attributes: ['id', 'realName', 'nickname', 'avatarUrl', 'phone', 'bio'],
+      });
+      
+      // 转换为统一格式
+      availableHosts = users.map(user => ({
+        userId: user.id,
+        user: user,
+      }));
+    }
+
     logger.info('availableHosts:', availableHosts);
     return {
       hosts: availableHosts,

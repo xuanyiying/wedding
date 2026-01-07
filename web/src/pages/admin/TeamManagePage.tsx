@@ -165,7 +165,10 @@ const TeamManagePage: React.FC = () => {
   // 处理用户选择
   const handleUserSelect = (userId: string, isSelected: boolean) => {
     if (isSelected) {
-      setSelectedUserIds(prev => [...prev, userId]);
+      setSelectedUserIds(prev => {
+        if (prev.includes(userId)) return prev;
+        return [...prev, userId];
+      });
     } else {
       setSelectedUserIds(prev => prev.filter(id => id !== userId));
     }

@@ -526,7 +526,9 @@ export class TeamService {
     inviterId: string;
   }) {
     try {
-      const { userIds, teamId, role = TeamMemberRole.MEMBER, inviterId } = memberData;
+      const { userIds: rawUserIds, teamId, role = TeamMemberRole.MEMBER, inviterId } = memberData;
+      // 去重
+      const userIds = [...new Set(rawUserIds)];
 
       // 验证团队是否存在
       const team = await Team.findByPk(teamId);
