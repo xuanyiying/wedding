@@ -333,6 +333,7 @@ export interface Schedule {
 
 // 作品相关类型
 export interface Work {
+  isPublic: boolean;
   id: string;
   userId: string;
   title: string;

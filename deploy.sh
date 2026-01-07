@@ -205,7 +205,6 @@ check_env_file() {
 # 设置环境变量
 setup_environment() {
     export ENVIRONMENT="$ENVIRONMENT"
-    export COMPOSE_DB_HOST="${DB_HOST}"
     
     # 加载环境变量文件
     local env_file="./deployment/environments/.env.$ENVIRONMENT"
@@ -230,11 +229,14 @@ setup_environment() {
         log_error "环境变量文件不存在: $env_file"
         return 1
     fi
+
+    # 导出 Docker Compose 特需的变量（这些变量现在已经从 env 文件中加载了）
+    export COMPOSE_DB_HOST="${DB_HOST:-localhost}"
     
     # 设置Docker Compose文件
     export COMPOSE_FILE="$COMPOSE_FILE"
     
-    log_info "项目名称: $COMPOSE_DB_HOST"
+    log_info "数据库主机: $COMPOSE_DB_HOST"
     log_info "环境: $ENVIRONMENT"
 }
 
