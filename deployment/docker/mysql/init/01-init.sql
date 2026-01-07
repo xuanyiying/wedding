@@ -195,7 +195,6 @@ CREATE TABLE IF NOT EXISTS `schedules` (
                              `customer_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '客户姓名',
                              `customer_phone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '客户电话',
                              `is_paid` tinyint(1) DEFAULT '0' COMMENT '是否已结清',
-                             `is_public` tinyint(1) NOT NULL DEFAULT '1' COMMENT '是否公开',
                              `requirements` text COLLATE utf8mb4_unicode_ci COMMENT '特殊要求',
                              `notes` text COLLATE utf8mb4_unicode_ci COMMENT '备注',
                              `tags` json DEFAULT NULL COMMENT '标签',
