@@ -418,7 +418,7 @@ export class TencentCOSService implements OssService {
             ETag: p.ETag
           })),
         },
-        (err, data) => {
+        (err, _data) => {
           if (err) {
             logger.error(`Error completing multipart upload in Tencent COS: ${err.message}`);
             reject(err);
