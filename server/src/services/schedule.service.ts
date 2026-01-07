@@ -395,7 +395,6 @@ export class ScheduleService {
     const superAdminIds = await this.getSuperAdminIds();
 
     const where: WhereOptions = {
-      isPublic: true,
       status: {
         [Op.in]: [ScheduleStatus.RESERVE, ScheduleStatus.BOOKED],
       },

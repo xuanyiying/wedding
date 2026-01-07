@@ -345,7 +345,6 @@ export interface Work {
   author?: string | null;
   customer?: string | null; // 客户名称
   downloads?: number;
-  isPublic?: boolean; // 前端使用字符串格式
   equipmentInfo?: {
     cameras?: string[];
     lenses?: string[];
