@@ -511,23 +511,23 @@ export class DashboardService {
       }
 
       if (startDate || endDate) {
-        where.startTime = {};
+        where.date = {};
         if (startDate) {
-          (where.startTime as any)[Op.gte] = new Date(startDate);
+          (where.date as any)[Op.gte] = startDate;
         }
         if (endDate) {
-          (where.startTime as any)[Op.lte] = new Date(endDate);
+          (where.date as any)[Op.lte] = endDate;
         }
       }
 
-      // 按小时统计
+      // 按小时统计 - 由于 date 是 DATEONLY，这里无法按小时统计，改为按 time_slot 统计
       const hourlyData = await Schedule.findAll({
         where,
         attributes: [
-          [Schedule.sequelize!.fn('HOUR', Schedule.sequelize!.col('startTime')), 'hour'],
+          ['time_slot', 'hour'],
           [Schedule.sequelize!.fn('COUNT', Schedule.sequelize!.col('id')), 'count'],
         ],
-        group: [Schedule.sequelize!.fn('HOUR', Schedule.sequelize!.col('startTime'))],
+        group: ['time_slot'],
         order: [[Schedule.sequelize!.fn('COUNT', Schedule.sequelize!.col('id')), 'DESC']],
         raw: true,
       });
@@ -536,10 +536,10 @@ export class DashboardService {
       const weeklyData = await Schedule.findAll({
         where,
         attributes: [
-          [Schedule.sequelize!.fn('DAYOFWEEK', Schedule.sequelize!.col('startTime')), 'dayOfWeek'],
+          [Schedule.sequelize!.fn('DAYOFWEEK', Schedule.sequelize!.col('date')), 'dayOfWeek'],
           [Schedule.sequelize!.fn('COUNT', Schedule.sequelize!.col('id')), 'count'],
         ],
-        group: [Schedule.sequelize!.fn('DAYOFWEEK', Schedule.sequelize!.col('startTime'))],
+        group: [Schedule.sequelize!.fn('DAYOFWEEK', Schedule.sequelize!.col('date'))],
         order: [[Schedule.sequelize!.fn('COUNT', Schedule.sequelize!.col('id')), 'DESC']],
         raw: true,
       });

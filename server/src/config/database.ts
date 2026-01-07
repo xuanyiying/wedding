@@ -40,7 +40,7 @@ export const connectDatabase = async (): Promise<void> => {
     // 初始化模型关联关系
     initModels(sequelize);
     logger.info('Database models initialized successfully.');
-    await sequelize.sync({ alter: false });
+    await sequelize.sync({ alter: true });
     logger.info('Database models synchronized successfully (alter mode).');
 
   } catch (error) {
