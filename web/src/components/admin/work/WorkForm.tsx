@@ -142,14 +142,14 @@ const WorkForm: React.FC<WorkFormProps> = ({
     }
     let newWorkMedias: FileInfo[] = [];
     if (workType === 'video') {
-      const file = (await fileService.getFile(results[0].id)).data
+      const file = (await fileService.getFile(results[0].fileId)).data
       if (file) {
         newWorkMedias = [{ ...file, fileType: 'video', thumbnailUrl: file.thumbnailUrl }];
       };
     }
     else {
       newWorkMedias = results.map(result => ({
-        fileId: result.id,
+        fileId: result.fileId,
         fileType: result.fileType as FileType,
         thumbnailUrl: result.url,
         fileUrl: result.url,

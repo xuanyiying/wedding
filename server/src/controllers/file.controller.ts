@@ -25,7 +25,7 @@ export const uploadFile = async (req: AuthenticatedRequest, res: Response, next:
       return;
     }
 
-    const { fileType, category } = req.body;
+    const { fileType, category, thumbnailUrl } = req.body;
     const userId = req.user!.id;
     const fileData = {
       buffer: req.file.buffer, // 使用内存存储的 buffer
@@ -35,6 +35,7 @@ export const uploadFile = async (req: AuthenticatedRequest, res: Response, next:
       userId: userId,
       fileType: fileType as FileType,
       category: category,
+      thumbnailUrl: thumbnailUrl,
     };
 
     console.log('📤 开始上传到OSS:', {
@@ -44,6 +45,10 @@ export const uploadFile = async (req: AuthenticatedRequest, res: Response, next:
     });
 
     const result = await FileService.uploadFile(fileData);
+
+    if (!result) {
+      throw new Error('文件上传失败，未能生成记录');
+    }
 
     console.log('✅ 文件上传成功:', {
       fileId: result.id,

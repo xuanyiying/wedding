@@ -137,13 +137,13 @@ export const initSchedule = (sequelize: Sequelize): void => {
       },
       date: {
         type: DataTypes.DATEONLY, // 改为 DATEONLY 类型，只保存日期部分
-        allowNull: false,
+        allowNull: true,
         field: 'date',
         comment: '婚礼日期',
       },
       timeSlot: {
         type: DataTypes.ENUM(...Object.values(TimeSlot)),
-        allowNull: false,
+        allowNull: true,
         field: 'time_slot',
       },
       location: {

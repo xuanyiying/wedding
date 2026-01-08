@@ -30,11 +30,20 @@ export class DirectUploadService {
   /**
    * 上传单个文件
    */
-  async uploadFile(file: File, fileType: FileType, category?: "other" | "avatar" | "work" | "profile" | "cover" | "favicon" | "logo"): Promise<DirectUploadResult> {
+  async uploadFile(
+    file: File, 
+    fileType: FileType, 
+    category?: FileCategory,
+    options?: {
+      thumbnailUrl?: string | Promise<string | { url: string; fileId: string } | undefined>;
+      onProgress?: (progress: DirectUploadProgress) => void;
+    }
+  ): Promise<DirectUploadResult> {
     const config: DirectUploadConfig = {
       fileType: this.mapFileType(fileType),
       category: category || 'other',
-      onProgress: this.progressCallback
+      thumbnailUrl: options?.thumbnailUrl,
+      onProgress: options?.onProgress || this.progressCallback
     };
     const uploader = new DirectUploader(file, config);
     return uploader.upload();
@@ -43,7 +52,7 @@ export class DirectUploadService {
   /**
    * 批量上传文件
    */
-  async uploadFiles(files: File[], fileType: FileType, category?: 'avatar' | 'work' | 'profile' | 'other'): Promise<DirectUploadResult[]> {
+  async uploadFiles(files: File[], fileType: FileType, category?: FileCategory): Promise<DirectUploadResult[]> {
     const results: DirectUploadResult[] = [];
     const maxConcurrent = 3; // 最大并发数
     const delay = 500; // 请求间隔（毫秒）

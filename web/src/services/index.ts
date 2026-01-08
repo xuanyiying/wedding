@@ -607,12 +607,15 @@ export const settingsService = {
 
 export const fileService = {
   // 上传单个文件
-  uploadFile: (file: File, data: { fileType: FileType; category?: string }): Promise<ApiResponse<MediaFile>> => {
+  uploadFile: (file: File, data: { fileType: FileType; category?: string; thumbnailUrl?: string }): Promise<ApiResponse<MediaFile>> => {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("fileType", data.fileType);
     if (data.category) {
       formData.append("category", data.category);
+    }
+    if (data.thumbnailUrl) {
+      formData.append("thumbnailUrl", data.thumbnailUrl);
     }
     return http.upload("/files/upload", formData);
   },

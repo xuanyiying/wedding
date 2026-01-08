@@ -4,13 +4,12 @@
  */
 
 import { message } from 'antd';
-import { fileService } from '../../../services';
-import { DirectUploader } from '../../../utils/direct-upload';
+import { directUploadService } from '../../../services';
 import type { DirectUploadResult, DirectUploadProgress, DirectUploadStatusType } from '../../../utils/direct-upload';
 import { DirectUploadStatus } from '../../../utils/direct-upload';
 import type { MediaFileItem, MediaUploadConfig, UploadProgressInfo, VideoCoverSelection } from './types';
 import { UploadStatus } from './types';
-import { http } from "../../../utils/request.ts";
+import { FileType } from "../../../types";
 
 // 默认配置
 const DEFAULT_CONFIG: MediaUploadConfig = {
@@ -27,36 +26,6 @@ const DEFAULT_CONFIG: MediaUploadConfig = {
   concurrent: 2
 };
 
-// 分块配置
-const CHUNK_CONFIG = {
-  SMALL_FILE_THRESHOLD: 10 * 1024 * 1024, // 10MB
-  DEFAULT_CHUNK_SIZE: 5 * 1024 * 1024, // 5MB
-  MAX_CHUNK_SIZE: 50 * 1024 * 1024, // 50MB
-  MIN_CHUNK_SIZE: 1 * 1024 * 1024, // 1MB
-  MAX_CONCURRENT: 6,
-  RETRY_ATTEMPTS: 3,
-  RETRY_DELAY: 1000
-};
-
-// 网络状态
-interface NetworkMetrics {
-  speed: number; // bytes/s
-  latency: number; // ms
-  stability: 'stable' | 'unstable' | 'poor';
-}
-
-// 上传会话
-interface UploadSession {
-  id: string;
-  fileId: string;
-  fileName: string;
-  fileSize: number;
-  chunkSize: number;
-  totalChunks: number;
-  uploadedChunks: Set<number>;
-  createdAt: number;
-  lastActivity: number;
-}
 
 // 进度信息
 interface FileProgress {
@@ -86,9 +55,7 @@ export class UploadManager {
   
   // 状态管理
   private activeUploads = new Map<string, AbortController>();
-  private uploadSessions = new Map<string, UploadSession>();
   private fileProgresses = new Map<string, FileProgress>();
-  private networkMetrics: NetworkMetrics = { speed: 0, latency: 0, stability: 'stable' };
   
   // 进度节流
   private progressThrottlers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -151,167 +118,6 @@ export class UploadManager {
       status: UploadStatus.PENDING,
       progress: 0,
       preview: URL.createObjectURL(file),
-    };
-  }
-
-  /**
-   * 计算最优分块策略
-   */
-  private calculateChunkStrategy(fileSize: number): { chunkSize: number; concurrent: number } {
-    const { speed, stability } = this.networkMetrics;
-    
-    let chunkSize = CHUNK_CONFIG.DEFAULT_CHUNK_SIZE;
-    let concurrent = 3;
-
-    // 根据文件大小调整
-    if (fileSize > 100 * 1024 * 1024) { // > 100MB
-      chunkSize = Math.min(20 * 1024 * 1024, CHUNK_CONFIG.MAX_CHUNK_SIZE);
-      concurrent = 4;
-    } else if (fileSize > 50 * 1024 * 1024) { // > 50MB
-      chunkSize = 10 * 1024 * 1024;
-      concurrent = 3;
-    }
-
-    // 根据网络状况调整
-    if (speed > 50 * 1024 * 1024) { // > 50MB/s
-      concurrent = Math.min(concurrent + 2, CHUNK_CONFIG.MAX_CONCURRENT);
-    } else if (speed < 5 * 1024 * 1024) { // < 5MB/s
-      concurrent = Math.max(concurrent - 1, 1);
-      chunkSize = Math.max(chunkSize / 2, CHUNK_CONFIG.MIN_CHUNK_SIZE);
-    }
-
-    if (stability === 'unstable') {
-      concurrent = Math.max(concurrent - 1, 1);
-    } else if (stability === 'poor') {
-      concurrent = 1;
-      chunkSize = CHUNK_CONFIG.MIN_CHUNK_SIZE;
-    }
-
-    return { chunkSize, concurrent };
-  }
-
-  /**
-   * 创建文件分块
-   */
-  private createFileChunks(file: File, chunkSize: number): Blob[] {
-    const chunks: Blob[] = [];
-    let start = 0;
-
-    while (start < file.size) {
-      const end = Math.min(start + chunkSize, file.size);
-      chunks.push(file.slice(start, end));
-      start = end;
-    }
-
-    return chunks;
-  }
-
-  /**
-   * 上传单个分块
-   */
-  private async uploadChunk(
-    chunk: Blob,
-    chunkIndex: number,
-    uploadId: string,
-    fileName: string,
-    retryCount = 0
-  ): Promise<void> {
-    try {
-      const formData = new FormData();
-      formData.append('chunk', chunk, `chunk_${chunkIndex}`);
-      formData.append('chunkIndex', chunkIndex.toString());
-      formData.append('uploadId', uploadId);
-
-      const response = await http.upload('/files/chunk/upload', formData);
-
-      if (!response.success) {
-        throw new Error(`分块上传失败: ${response.message}`);
-      }
-    } catch (error) {
-      if (retryCount < CHUNK_CONFIG.RETRY_ATTEMPTS) {
-        await new Promise(resolve => setTimeout(resolve, CHUNK_CONFIG.RETRY_DELAY * (retryCount + 1)));
-        return this.uploadChunk(chunk, chunkIndex, uploadId, fileName, retryCount + 1);
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * 分块上传文件
-   */
-  private async uploadFileWithChunks(
-    file: File,
-    fileId: string,
-    onProgress: (progress: number) => void
-  ): Promise<DirectUploadResult> {
-    const { chunkSize, concurrent } = this.calculateChunkStrategy(file.size);
-    const chunks = this.createFileChunks(file, chunkSize);
-    
-    // 1. 初始化分块上传，从服务器获取 uploadId
-    const initResponse = await http.post<{ uploadId: string; uploadUrl: string }>('/files/chunk/init', {
-      filename: file.name,
-      fileSize: file.size,
-      mimeType: file.type,
-      category: this.config.category,
-      totalChunks: chunks.length
-    });
-
-    if (!initResponse.success || !initResponse.data?.uploadId) {
-      throw new Error('初始化分块上传失败');
-    }
-
-    const uploadId = initResponse.data.uploadId;
-    
-    // 创建本地上传会话
-    const session: UploadSession = {
-      id: uploadId,
-      fileId,
-      fileName: file.name,
-      fileSize: file.size,
-      chunkSize,
-      totalChunks: chunks.length,
-      uploadedChunks: new Set(),
-      createdAt: Date.now(),
-      lastActivity: Date.now()
-    };
-    this.uploadSessions.set(uploadId, session);
-
-    // 2. 并发上传分块
-    const semaphore = new Semaphore(concurrent);
-    const uploadPromises = chunks.map((chunk, index) =>
-      semaphore.acquire(async () => {
-        await this.uploadChunk(chunk, index, uploadId, file.name);
-        session.uploadedChunks.add(index);
-        session.lastActivity = Date.now();
-        
-        const progress = (session.uploadedChunks.size / chunks.length) * 100;
-        onProgress(progress);
-      })
-    );
-
-    await Promise.all(uploadPromises);
-
-    // 3. 完成上传
-    const completeResponse = await http.post('/files/chunk/complete', {
-      uploadId
-    });
-
-    if (!completeResponse.success) {
-      throw new Error('完成分块上传失败');
-    }
-
-    const result = completeResponse.data as DirectUploadResult;
-    this.uploadSessions.delete(uploadId);
-
-    return {
-      id: result.id,
-      url: result.url,
-      fileType: file.type.startsWith('image/') ? 'image' : 'video',
-      category: this.config.category!,
-      filename: result.filename || file.name,
-      originalName: file.name,
-      uploadedAt: new Date().toISOString(),
-      fileSize: file.size,
     };
   }
 
@@ -391,56 +197,67 @@ export class UploadManager {
     fileItem: MediaFileItem,
     videoCoverInfo?: { videoFile: File; coverSelection: VideoCoverSelection }
   ): Promise<DirectUploadResult> {
-    const shouldUseChunkedUpload = file.size > CHUNK_CONFIG.SMALL_FILE_THRESHOLD;
-    
     try {
-      let result: DirectUploadResult;
+      let thumbnailPromise: Promise<string | { url: string; fileId: string } | undefined> | undefined;
 
-      if (shouldUseChunkedUpload) {
-        // 分块上传
-        result = await this.uploadFileWithChunks(file, fileItem.id, (progress) => {
-          const loadedBytes = Math.round((file.size * progress) / 100);
-          this.updateFileProgress(fileItem.id, loadedBytes, file.size);
-        });
-      } else if (this.options.directUploadOss) {
-        // OSS直传
-        const uploader = new DirectUploader(file, {
-          fileType: file.type.startsWith('image/') ? 'image' : 'video',
-          category: this.config.category!,
+      // 视频文件处理逻辑：必须首先选择或上传封面图片
+      if (file.type.startsWith('video/')) {
+        const isTargetVideo = videoCoverInfo && file === videoCoverInfo.videoFile;
+        const coverSelection = isTargetVideo ? videoCoverInfo.coverSelection : undefined;
+        
+        // 强制约束：如果是目标视频但没有封面信息，且配置要求封面，中止上传
+        if (isTargetVideo && !coverSelection && this.config.requireCover !== false) {
+          throw new Error(`视频文件 "${file.name}" 必须选择封面图才能上传`);
+        }
+
+        if (coverSelection) {
+          let coverFile: File | null = null;
+          if (coverSelection.coverType === 'upload' && coverSelection.coverFile) {
+            coverFile = coverSelection.coverFile;
+          } else if (coverSelection.coverType === 'frame' && coverSelection.selectedFrame?.blob) {
+            coverFile = new File(
+              [coverSelection.selectedFrame.blob],
+              `${file.name}_cover.jpg`,
+              { type: 'image/jpeg' }
+            );
+          }
+
+          if (coverFile) {
+            // 1. 系统优先上传封面图片
+            try {
+              const coverResp = await directUploadService.uploadFile(
+                coverFile,
+                FileType.IMAGE,
+                this.config.category
+              );
+              
+              // 2. 封面成功上传后，存储返回的信息，用于后续视频确认
+              thumbnailPromise = Promise.resolve({
+                url: coverResp.url,
+                fileId: coverResp.fileId
+              });
+            } catch (coverError) {
+              console.error('封面上传失败，中止视频上传流程:', coverError);
+              throw new Error(`封面图上传失败: ${coverError instanceof Error ? coverError.message : '未知错误'}`);
+            }
+          }
+        }
+      }
+
+      // 3. 封面成功后（或无需封面），开始上传视频文件
+      const fileType = file.type.startsWith('image/') ? FileType.IMAGE : FileType.VIDEO;
+      
+      const result = await directUploadService.uploadFile(
+        file,
+        fileType,
+        this.config.category,
+        {
+          thumbnailUrl: thumbnailPromise,
           onProgress: (progress) => {
             this.updateFileProgress(fileItem.id, progress.loaded, progress.total);
           }
-        });
-        result = await uploader.upload();
-      } else {
-        // 服务端上传
-        const resp = await fileService.uploadFile(file, {
-          fileType: file.type.startsWith('image/') ? 'image' : 'video',
-          category: this.config.category!,
-        });
-
-        if (!resp.data?.fileUrl || !resp.data?.id) {
-          throw new Error('上传失败');
         }
-
-        result = {
-          id: resp.data.id,
-          url: resp.data.fileUrl,
-          fileType: file.type.startsWith('image/') ? 'image' : 'video',
-          category: this.config.category!,
-          filename: resp.data.filename || file.name,
-          originalName: file.name,
-          uploadedAt: new Date().toISOString(),
-          fileSize: resp.data.fileSize || file.size,
-        };
-
-        this.updateFileProgress(fileItem.id, file.size, file.size);
-      }
-
-      // 处理视频封面
-      if (videoCoverInfo && result.id) {
-        await this.handleVideoCoverUpload(result.id, file, videoCoverInfo);
-      }
+      );
 
       return result;
     } catch (error) {
@@ -450,32 +267,6 @@ export class UploadManager {
         this.fileProgresses.set(fileItem.id, progress);
       }
       throw error;
-    }
-  }
-
-  /**
-   * 处理视频封面上传
-   */
-  private async handleVideoCoverUpload(
-    fileId: string,
-    videoFile: File,
-    videoCoverInfo: { videoFile: File; coverSelection: VideoCoverSelection }
-  ): Promise<void> {
-    try {
-      const { coverSelection } = videoCoverInfo;
-
-      if (coverSelection.coverType === 'upload' && coverSelection.coverFile) {
-        await fileService.uploadVideoCover(coverSelection.coverFile, fileId);
-      } else if (coverSelection.coverType === 'frame' && coverSelection.selectedFrame?.blob) {
-        const coverFile = new File(
-          [coverSelection.selectedFrame.blob],
-          `${videoFile.name}_cover.jpg`,
-          { type: 'image/jpeg' }
-        );
-        await fileService.uploadVideoCover(coverFile, fileId);
-      }
-    } catch (error) {
-      console.warn('封面上传失败:', error);
     }
   }
 
@@ -601,46 +392,8 @@ export class UploadManager {
    */
   cleanup(): void {
     this.cancelUpload();
-    this.uploadSessions.clear();
     this.fileProgresses.clear();
     this.progressThrottlers.forEach(timeoutId => clearTimeout(timeoutId));
     this.progressThrottlers.clear();
-  }
-}
-
-// 信号量控制并发
-class Semaphore {
-  private capacity: number;
-  private running: number = 0;
-  private queue: Array<() => void> = [];
-
-  constructor(capacity: number) {
-    this.capacity = capacity;
-  }
-
-  async acquire<T>(task: () => Promise<T>): Promise<T> {
-    return new Promise((resolve, reject) => {
-      const run = async () => {
-        this.running++;
-        try {
-          const result = await task();
-          resolve(result);
-        } catch (error) {
-          reject(error);
-        } finally {
-          this.running--;
-          if (this.queue.length > 0) {
-            const next = this.queue.shift()!;
-            next();
-          }
-        }
-      };
-
-      if (this.running < this.capacity) {
-        run();
-      } else {
-        this.queue.push(run);
-      }
-    });
   }
 }

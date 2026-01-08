@@ -38,7 +38,7 @@ export class DirectUploadController {
    */
   static async confirmUpload(req: Request, res: Response): Promise<void> {
     try {
-      const { uploadSessionId, actualFileSize } = req.body;
+      const { uploadSessionId, actualFileSize, thumbnailFileId } = req.body;
       const userId = req.user?.id;
 
       // 参数校验
@@ -50,7 +50,8 @@ export class DirectUploadController {
       const result = await DirectUploadService.confirmUpload({
         uploadSessionId,
         userId,
-        actualFileSize
+        actualFileSize,
+        thumbnailFileId
       });
       Resp.success(res, result);
     } catch (error) {

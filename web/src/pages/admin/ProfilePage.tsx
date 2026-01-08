@@ -150,7 +150,8 @@ const ProfilePage: React.FC = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const [previewVisible, setPreviewVisible] = useState(false);
-  const [previewImage, setPreviewImage] = useState('');
+  const [previewFile, setPreviewFile] = useState<MediaFile | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
 
   const [uploading] = useState(false);
@@ -330,7 +331,7 @@ const ProfilePage: React.FC = () => {
         if (results.length > 0) {
           await profileService.batchCreateMediaProfiles(currentUser.id, {
             mediaProfiles: results.map((result, index) => ({
-              fileId: result.id,
+              fileId: result.fileId,
               fileType: result.fileType as FileType || FileType.IMAGE,
               category: 'profile',
               mediaOrder: index + 1,
@@ -365,8 +366,9 @@ const ProfilePage: React.FC = () => {
 
   // 预览媒体文件
   const handlePreview = (file: MediaFile) => {
-    setPreviewImage(file.fileUrl || '');
+    setPreviewFile(file);
     setPreviewVisible(true);
+    setPreviewLoading(true);
   };
   return (
     <ProfileContainer>
@@ -474,6 +476,7 @@ const ProfilePage: React.FC = () => {
                         category: "profile",
                         multiple: true,
                         concurrent: 2,
+                        requireCover: true, // 明确要求视频必须有封面
                       }}
                       onUploadSuccess={handleUploadSuccess}
                       onUploadError={(error: Error) => {
@@ -496,27 +499,63 @@ const ProfilePage: React.FC = () => {
         ]}
       ></Tabs>
 
-      {/* 图片预览模态框 */}
+      {/* 媒体预览模态框 */}
       <Modal
         open={previewVisible}
-        title="预览"
         footer={null}
-        onCancel={() => setPreviewVisible(false)}
-        width={800}
+        onCancel={() => {
+          setPreviewVisible(false);
+          setPreviewFile(null);
+        }}
+        width={1000}
+        centered
+        destroyOnClose
+        styles={{
+          body: {
+            padding: 0,
+            backgroundColor: "#000",
+            minHeight: "200px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          },
+        }}
       >
-        {previewImage &&
-          (previewImage.includes(".mp4") ||
-            previewImage.includes(".mov") ||
-            previewImage.includes(".avi") ? (
-            <video
-              src={previewImage}
-              controls
-              style={{ width: "100%", maxHeight: "600px" }}
-              autoPlay
-            />
-          ) : (
-            <img alt="preview" style={{ width: "100%" }} src={previewImage} />
-          ))}
+        {previewFile && (
+           <div
+             style={{
+               position: "relative",
+               width: "100%",
+               display: "flex",
+               justifyContent: "center",
+             }}
+           >
+             {previewLoading && (
+               <div
+                 style={{
+                   position: "absolute",
+                   top: "50%",
+                   left: "50%",
+                   transform: "translate(-50%, -50%)",
+                   color: "#fff",
+                 }}
+               >
+                 加载中...
+               </div>
+             )}
+             <img
+               src={previewFile.fileUrl}
+               alt="preview"
+               style={{
+                 maxWidth: "100%",
+                 maxHeight: "80vh",
+                 objectFit: "contain",
+                 display: "block",
+               }}
+               onLoad={() => setPreviewLoading(false)}
+             />
+           </div>
+         )}
       </Modal>
     </ProfileContainer>
   );

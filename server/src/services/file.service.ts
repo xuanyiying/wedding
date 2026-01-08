@@ -7,6 +7,7 @@ import * as fsSync from 'fs';
 import { Readable } from 'stream';
 import * as crypto from 'crypto';
 import * as sharp from 'sharp';
+import * as ffmpeg from 'fluent-ffmpeg';
 import { OssService } from './oss/oss.service';
 import { getOssService } from '../config/oss';
 import { createRetryHandler } from '../middlewares/upload';
@@ -26,16 +27,17 @@ interface GetFilesParams {
 }
 
 interface UploadFileData {
-  filename?: string; // 内存存储时不需要filename
+  filename?: string | undefined; // 内存存储时不需要filename
   originalName: string;
   mimetype: string;
   size: number;
-  path?: string;
-  buffer?: Buffer;
+  path?: string | undefined;
+  buffer?: Buffer | undefined;
   userId: string;
   fileType: FileType;
-  description?: string;
-  category?: string;
+  description?: string | undefined;
+  category?: string | undefined;
+  thumbnailUrl?: string | undefined; // 新增：缩略图URL
 }
 
 // 分块上传会话接口
@@ -109,25 +111,16 @@ export class FileService {
   }
 
   /**
-   * 获取文件详情
+   * 根据ID获取文件记录
    */
   static async getFileById(id: string) {
-    const file = await File.findOne({
-      where: { id },
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'username', 'realName'],
-        },
-      ],
-    });
-
-    if (!file) {
-      throw new Error('文件不存在');
-    }
-
-    return file;
+    const file = await File.findByPk(id);
+    if (!file) return null;
+    
+    return {
+      ...file.toJSON(),
+      url: file.fileUrl
+    };
   }
 
   /**
@@ -229,7 +222,7 @@ export class FileService {
       isPublic: false,
       downloadCount: 0,
       category: data.category as FileCategory,
-      thumbnailUrl: null, // 缩略图URL将在视频处理后更新
+      thumbnailUrl: data.thumbnailUrl || null, // 使用传入的缩略图URL或默认为空
     });
 
     // 清理临时文件
@@ -397,10 +390,11 @@ export class FileService {
     filePath: string;
     fileSize: number;
     mimeType: string;
-    category?: string;
+    category?: string | undefined;
     fileType: FileType;
     userId: string;
     url: string;
+    thumbnailUrl?: string | undefined; // 新增：支持传入缩略图URL
   }) {
     try {
       // 计算文件哈希（对于直传的文件，我们无法在服务端计算真实哈希）
@@ -435,7 +429,7 @@ export class FileService {
         ossType: (process.env.OSS_TYPE as OssType) || OssType.minio,
         isPublic: false,
         downloadCount: 0,
-        thumbnailUrl: null,
+        thumbnailUrl: fileData.thumbnailUrl || null,
         category: fileData.category as FileCategory,
       });
       return this.getFileById(file.id);
@@ -549,33 +543,54 @@ export class FileService {
    */
   static async generateThumbnail(id: string, width = 200, height = 200) {
     const file = await File.findOne({
-      where: { id, fileType: FileType.IMAGE },
+      where: { id },
     });
 
     if (!file) {
-      throw new Error('图片文件不存在');
+      throw new Error('文件不存在');
     }
 
-    const thumbnailDir = path.join(path.dirname(file.filePath), 'thumbnails');
-    const thumbnailFilename = `${path.parse(file.originalName).name}_${width}x${height}.webp`;
-    const thumbnailPath = path.join(thumbnailDir, thumbnailFilename);
-
-    // 确保缩略图目录存在
-    await fs.mkdir(thumbnailDir, { recursive: true });
-
-    // 检查缩略图是否已存在
-    try {
-      await fs.access(thumbnailPath);
+    // 如果缩略图已存在，直接返回
+    if (file.thumbnailUrl) {
       return {
-        url: `/uploads/thumbnails/${thumbnailFilename}`,
-        path: thumbnailPath,
+        url: file.thumbnailUrl,
+        path: file.thumbnailUrl,
       };
-    } catch {
-      // 缩略图不存在，需要生成
     }
+
+    let result: { url: string; path: string };
+
+    if (file.fileType === FileType.IMAGE) {
+      result = await this.generateImageThumbnail(file, width, height);
+    } else if (file.fileType === FileType.VIDEO) {
+      result = await this.generateVideoThumbnail(file, width, height);
+    } else {
+      throw new Error('不支持的文件类型生成缩略图');
+    }
+
+    // 更新文件记录
+    await file.update({
+      thumbnailUrl: result.url,
+    });
+
+    return result;
+  }
+
+  /**
+   * 为图片生成缩略图
+   */
+  private static async generateImageThumbnail(file: File, width: number, height: number): Promise<{ url: string; path: string }> {
+    const tempDir = path.join(process.cwd(), 'temp', 'thumbnails');
+    await fs.mkdir(tempDir, { recursive: true });
+
+    const thumbnailFilename = `img_thumb_${file.id}_${width}x${height}.webp`;
+    const thumbnailPath = path.join(tempDir, thumbnailFilename);
+
+    // 下载图片
+    const imageBuffer = await this.ossService.downloadFile(file.filePath);
 
     // 生成缩略图
-    await sharp.default(file.filePath)
+    await (sharp.default || sharp)(imageBuffer)
       .resize(width, height, {
         fit: 'cover',
         position: 'center',
@@ -583,10 +598,75 @@ export class FileService {
       .webp({ quality: 80 })
       .toFile(thumbnailPath);
 
+    // 上传到OSS
+    const thumbnailResult = await this.ossService.uploadFile(
+      await fs.readFile(thumbnailPath),
+      thumbnailFilename,
+      'image/webp',
+      'thumbnails'
+    );
+
+    // 清理临时文件
+    await fs.unlink(thumbnailPath).catch(() => {});
+
     return {
-      url: `/uploads/thumbnails/${thumbnailFilename}`,
-      path: thumbnailPath,
+      url: thumbnailResult.url,
+      path: thumbnailResult.key,
     };
+  }
+
+  /**
+   * 为视频生成缩略图
+   */
+  private static async generateVideoThumbnail(file: File, width: number, height: number): Promise<{ url: string; path: string }> {
+    const tempDir = path.join(process.cwd(), 'temp', 'thumbnails');
+    await fs.mkdir(tempDir, { recursive: true });
+
+    const thumbnailFilename = `video_thumb_${file.id}_${width}x${height}.jpg`;
+    const thumbnailPath = path.join(tempDir, thumbnailFilename);
+
+    // 下载视频到临时文件进行处理
+    const videoBuffer = await this.ossService.downloadFile(file.filePath);
+    const tempVideoPath = path.join(tempDir, `temp_video_${file.id}${path.extname(file.originalName)}`);
+    await fs.writeFile(tempVideoPath, videoBuffer);
+
+    return new Promise((resolve, reject) => {
+      (ffmpeg.default || ffmpeg)(tempVideoPath)
+        .screenshots({
+          timestamps: ['00:00:01'], // 截取第1秒
+          filename: thumbnailFilename,
+          folder: tempDir,
+          size: `${width}x${height}`
+        })
+        .on('end', async () => {
+          try {
+            // 上传缩略图到OSS
+            const thumbnailBuffer = await fs.readFile(thumbnailPath);
+            const uploadResult = await this.ossService.uploadFile(
+              thumbnailBuffer,
+              thumbnailFilename,
+              'image/jpeg',
+              'thumbnails'
+            );
+
+            // 清理临时文件
+            await fs.unlink(tempVideoPath).catch(() => {});
+            await fs.unlink(thumbnailPath).catch(() => {});
+
+            resolve({
+              url: uploadResult.url,
+              path: uploadResult.key
+            });
+          } catch (error) {
+            reject(error);
+          }
+        })
+        .on('error', async (err) => {
+          // 清理临时视频文件
+          await fs.unlink(tempVideoPath).catch(() => {});
+          reject(err);
+        });
+    });
   }
 
   /**

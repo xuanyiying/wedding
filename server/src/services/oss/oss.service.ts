@@ -100,6 +100,12 @@ export interface OssService {
   getPresignedUploadUrl(key: string, expires?: number, contentType?: string): Promise<string>;
 
   /**
+   * 获取 STS 临时密钥 (仅腾讯云 COS 支持)
+   * @param scope 权限范围
+   */
+  getSTSToken?(scope: any[]): Promise<any>;
+
+  /**
    * 生成预签名下载URL
    * @param key 文件键
    * @param expires 过期时间（秒），默认3600秒

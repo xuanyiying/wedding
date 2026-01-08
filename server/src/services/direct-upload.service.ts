@@ -28,21 +28,23 @@ interface PresignedUrlRequest {
   fileSize: number;
   contentType: string;
   fileType: 'video' | 'image';
-  category?: string;
-  expires?: number;
+  category?: string | undefined;
+  expires?: number | undefined;
 }
 
 // 确认上传请求参数
 interface ConfirmUploadRequest {
   uploadSessionId: string;
   userId: string;
-  actualFileSize?: number;
+  actualFileSize?: number | undefined;
+  thumbnailUrl?: string | undefined; // 新增：支持传入封面图URL
+  thumbnailFileId?: string | undefined; // 新增：支持传入封面文件ID
 }
 
 // 文件类型配置
 const FILE_TYPE_CONFIG = {
   video: {
-    maxSize: 500 * 1024 * 1024, // 500MB
+    maxSize: 1024 * 1024 * 1024, // 1GB
     allowedTypes: [
       'video/mp4',
       'video/avi',
@@ -102,6 +104,22 @@ export class DirectUploadService {
       contentType
     );
 
+    // 获取 STS Token (如果是大视频直传分块)
+    let stsToken = null;
+    if (fileType === 'video' && fileSize > 10 * 1024 * 1024 && this.ossService.getSTSToken) {
+      stsToken = await this.ossService.getSTSToken([
+        { action: 'name/cos:PostObject', prefix: ossKey },
+        { action: 'name/cos:PutObject', prefix: ossKey },
+        { action: 'name/cos:InitiateMultipartUpload', prefix: ossKey },
+        { action: 'name/cos:ListMultipartUploads', prefix: ossKey },
+        { action: 'name/cos:ListParts', prefix: ossKey },
+        { action: 'name/cos:UploadPart', prefix: ossKey },
+        { action: 'name/cos:CompleteMultipartUpload', prefix: ossKey },
+        { action: 'name/cos:AbortMultipartUpload', prefix: ossKey },
+        { action: 'name/cos:HeadObject', prefix: ossKey },
+      ]);
+    }
+
     // 创建上传会话
     const sessionId = uuidv4();
     const session: UploadSession = {
@@ -152,7 +170,10 @@ export class DirectUploadService {
       presignedUrl: finalPresignedUrl,
       uploadSessionId: sessionId,
       ossKey,
-      expires
+      expires,
+      stsToken,
+      region: (this.ossService as any).region,
+      bucket: (this.ossService as any).bucketName
     };
   }
 
@@ -160,7 +181,7 @@ export class DirectUploadService {
    * 确认上传完成
    */
   static async confirmUpload(request: ConfirmUploadRequest) {
-    const { uploadSessionId, userId, actualFileSize } = request;
+    const { uploadSessionId, userId, actualFileSize, thumbnailUrl, thumbnailFileId } = request;
 
     // 获取上传会话
     const session = await this.getSession(uploadSessionId);
@@ -191,6 +212,29 @@ export class DirectUploadService {
       // 获取文件的公共访问URL而不是预签名URL
       const fileAccessUrl = this.ossService.getFileUrl(session.ossKey);
 
+      /**
+       * 缩略图/封面图解析逻辑优化：
+       * 优先尝试通过 thumbnailFileId 关联已上传的正式文件。
+       * 如果没有 ID 或查找失败，则回退到使用传入的 thumbnailUrl。
+       */
+      let finalThumbnailUrl = thumbnailUrl;
+      if (thumbnailFileId && session.fileType === 'video') {
+        try {
+          const thumbFile = await FileService.getFileById(thumbnailFileId);
+          if (thumbFile) {
+            finalThumbnailUrl = thumbFile.fileUrl; // 优先使用正式文件的持久化 URL
+          }
+        } catch (err) {
+          logger.warn(`通过 ID [${thumbnailFileId}] 关联封面失败，尝试回退到 URL 模式`, err);
+        }
+      }
+
+      // 验证最终的封面URL有效性（基础校验：必须是 http(s) 开头）
+      if (finalThumbnailUrl && !finalThumbnailUrl.startsWith('http')) {
+        logger.warn(`检测到无效的封面URL格式: ${finalThumbnailUrl}，将尝试清理`);
+        finalThumbnailUrl = ''; 
+      }
+
       // 创建文件记录
       const fileRecord = await FileService.createFileRecord({
         userId,
@@ -201,18 +245,18 @@ export class DirectUploadService {
         category: session.category,
         url: fileAccessUrl,    // 使用文件的公共访问URL
         filePath: session.ossKey,      // OSS Key
-        mimeType: session.contentType
+        mimeType: session.contentType,
+        thumbnailUrl: finalThumbnailUrl
       });
+
+      // 显式空值检查与防御性编程
+      if (!fileRecord) {
+        throw new Error('创建文件数据库记录失败，请检查数据库状态');
+      }
 
       // 更新会话状态为完成
       session.status = 'completed';
       await this.saveSession(session);
-
-      logger.info(`确认上传完成: ${uploadSessionId}`, {
-        userId,
-        fileId: fileRecord.id,
-        fileName: session.fileName
-      });
 
       return {
         fileId: fileRecord.id,

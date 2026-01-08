@@ -84,19 +84,24 @@ export class ProfileController {
    * 
    */
   async batchCreateMediaProfiles(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const userId = req.user?.id;
-    if (!userId) {
-      Resp.badRequest(res, '用户ID不存在');
-      return;
-    }
-    const { mediaProfiles } = req.body;
-    if (!mediaProfiles || !Array.isArray(mediaProfiles)) {
-      Resp.badRequest(res, '参数错误');
-      return;
-    }
-    const result = await ProfileService.batchCreateMediaProfile(userId, mediaProfiles);
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        Resp.badRequest(res, '用户ID不存在');
+        return;
+      }
+      const { mediaProfiles } = req.body;
+      if (!mediaProfiles || !Array.isArray(mediaProfiles)) {
+        Resp.badRequest(res, '参数错误');
+        return;
+      }
+      const result = await ProfileService.batchCreateMediaProfile(userId, mediaProfiles);
 
-    Resp.success(res, result);
+      Resp.success(res, result);
+    } catch (error: any) {
+      console.error('batchCreateMediaProfiles error:', error);
+      Resp.error(res, error.message || '批量创建媒体资料失败');
+    }
   }
 
   // 获取用户资料（包含媒体）

@@ -5,7 +5,7 @@ import { UserService } from './user.service';
 import { generateId } from '@/utils/id.generator';
 import logger from '@/utils/logger';
 import { FileService } from './file.service';
-import { FileCategory, OssType } from '@/types';
+import { FileCategory, OssType, FileType } from '@/types';
 import { Op } from 'sequelize';
 
 export class MediaProfileService {
@@ -194,11 +194,14 @@ export class MediaProfileService {
     // 获取当前用 MediaProfile 的mediaOrder最大值
     const maxOrder = await MediaProfile.max('mediaOrder', { where: { userId } });
     const profilesWithIds = mediaProfiles.map((p, index) => {
+      if (!p.fileId) {
+        throw new Error(`第 ${index + 1} 个媒体资料缺少 fileId`);
+      }
       const profile: MediaProfileCreationAttributes = {
         id: p.id || generateId(),
         userId,
-        fileId: p.fileId!,
-        fileType: p.fileType!,
+        fileId: p.fileId,
+        fileType: p.fileType || FileType.IMAGE,
         mediaOrder: p.mediaOrder ?? (maxOrder !== null ? Number(maxOrder) + index + 1 : index + 1),
       };
       return profile;

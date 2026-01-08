@@ -1,3 +1,4 @@
+import COS from 'cos-js-sdk-v5';
 import type { FileCategory } from '../types';
 import { uploadRequest } from './request';
 
@@ -34,6 +35,9 @@ export interface DirectUploadConfig {
   enableCompression?: boolean; // 是否启用图片压缩，默认true
   compressionQuality?: number; // 压缩质量 0-1，默认0.8
   progressUpdateInterval?: number; // 进度更新间隔（毫秒），默认500ms
+  thumbnailUrl?: string | Promise<string | { url: string; fileId: string } | undefined>;
+  thumbnailFileId?: string;
+  requireCover?: boolean; // 是否必须提供封面（主要针对视频）
   onProgress?: (progress: DirectUploadProgress) => void;
   onStatusChange?: (status: DirectUploadStatusType) => void;
   onError?: (error: Error) => void;
@@ -43,7 +47,7 @@ export interface DirectUploadConfig {
 
 // 直传上传结果
 export interface DirectUploadResult {
-  id: string; // 文件ID
+  fileId: string; // 文件ID
   filename: string;
   originalName: string;
   fileSize: number;
@@ -59,6 +63,17 @@ interface PresignedUrlResponse {
   uploadSessionId: string;
   ossKey: string;
   expires: number;
+  stsToken?: {
+    credentials: {
+      tmpSecretId: string;
+      tmpSecretKey: string;
+      sessionToken: string;
+    };
+    startTime: number;
+    expiredTime: number;
+  };
+  region?: string;
+  bucket?: string;
 }
 
 
@@ -70,6 +85,7 @@ export class DirectUploader {
   private config: DirectUploadConfig;
   private uploadSessionId: string | null = null;
   private uploadUrl: string | null = null;
+  private presignedData: PresignedUrlResponse | null = null;
   private abortController: AbortController | null = null;
   private status: DirectUploadStatusType = DirectUploadStatus.PENDING;
   private startTime: number = 0;
@@ -98,13 +114,17 @@ export class DirectUploader {
       await this.preprocessFile();
 
       // 2. 获取预签名URL
-      const presignedData = await this.getPresignedUrl();
-      this.uploadSessionId = presignedData.uploadSessionId;
-      this.uploadUrl = presignedData.presignedUrl;
+      this.presignedData = await this.getPresignedUrl();
+      this.uploadSessionId = this.presignedData.uploadSessionId;
+      this.uploadUrl = this.presignedData.presignedUrl;
 
       // 3. 直接上传到OSS（带重试机制）
       this.updateStatus(DirectUploadStatus.UPLOADING);
-      await this.uploadToOssWithRetry();
+      if (this.presignedData.stsToken && this.config.fileType === 'video') {
+        await this.uploadToCosWithSdk();
+      } else {
+        await this.uploadToOssWithRetry();
+      }
 
       // 4. 确认上传完成
       const result = await this.confirmUpload();
@@ -153,6 +173,13 @@ export class DirectUploader {
    */
   getStatus(): DirectUploadStatusType {
     return this.status;
+  }
+
+  /**
+   * 设置封面文件ID
+   */
+  setThumbnailFileId(fileId: string): void {
+    this.config.thumbnailFileId = fileId;
   }
 
   /**
@@ -271,6 +298,65 @@ export class DirectUploader {
   }
 
   /**
+   * 使用腾讯云 SDK 分块直传
+   */
+  private async uploadToCosWithSdk(): Promise<void> {
+    if (!this.presignedData || !this.presignedData.stsToken) {
+      throw new Error('STS Token 不存在');
+    }
+
+    const { stsToken, region, bucket, ossKey } = this.presignedData;
+    const fileToUpload = this.processedFile || this.file;
+
+    const cos = new (COS as any)({
+      getAuthorization: (_options: any, callback: any) => {
+        callback({
+          TmpSecretId: stsToken.credentials.tmpSecretId,
+          TmpSecretKey: stsToken.credentials.tmpSecretKey,
+          SecurityToken: stsToken.credentials.sessionToken,
+          StartTime: stsToken.startTime,
+          ExpiredTime: stsToken.expiredTime,
+        });
+      },
+    });
+
+    this.startTime = Date.now();
+    const updateInterval = this.config.progressUpdateInterval || 500;
+    let lastUpdateTime = 0;
+
+    return new Promise((resolve, reject) => {
+      cos.sliceUploadFile({
+        Bucket: bucket!,
+        Region: region!,
+        Key: ossKey,
+        Body: fileToUpload,
+        onProgress: (progressData: any) => {
+          const now = Date.now();
+          if (now - lastUpdateTime > updateInterval || progressData.percent === 1) {
+            lastUpdateTime = now;
+            const progress: DirectUploadProgress = {
+              loaded: progressData.loaded,
+              total: progressData.total,
+              percentage: Math.round(progressData.percent * 100),
+              speed: progressData.speed,
+              remainingTime: 0,
+              status: this.status
+            };
+            this.config.onProgress?.(progress);
+          }
+        },
+      }, (err: any, data: any) => {
+        if (err) {
+          reject(err);
+        } else {
+          console.log('COS SDK Upload Success:', data);
+          resolve();
+        }
+      });
+    });
+  }
+
+  /**
    * 直接上传到OSS
    */
   private async uploadToOss(): Promise<void> {
@@ -361,9 +447,34 @@ export class DirectUploader {
     }
 
     const fileToUpload = this.processedFile || this.file;
+    
+    // 解析缩略图信息（如果是串行上传，这里已经是一个 resolved 的 Promise）
+    let thumbnailUrl = this.config.thumbnailUrl;
+    let thumbnailFileId = this.config.thumbnailFileId;
+
+    if (thumbnailUrl instanceof Promise) {
+      try {
+        const resolved = await thumbnailUrl;
+        if (resolved && typeof resolved === 'object') {
+          thumbnailUrl = resolved.url;
+          thumbnailFileId = resolved.fileId;
+        } else {
+          thumbnailUrl = resolved;
+        }
+      } catch (error) {
+        console.error('获取上传成功的封面信息失败:', error);
+        // 如果封面必选且获取失败，这里可以抛出异常，防止没有封面的视频被确认
+        if (this.config.fileType === 'video' && this.config.requireCover !== false) {
+           throw new Error('无法关联视频封面，请重试');
+        }
+      }
+    }
+
     const response = await uploadRequest.post('/direct-upload/confirm', {
       uploadSessionId: this.uploadSessionId,
-      actualFileSize: fileToUpload.size
+      actualFileSize: fileToUpload.size,
+      thumbnailUrl: thumbnailUrl,
+      thumbnailFileId: thumbnailFileId
     }, {
       headers: {
         'Content-Type': 'application/json'

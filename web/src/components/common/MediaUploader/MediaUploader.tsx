@@ -59,7 +59,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
     const options: UploadManagerOptions = {
       config,
       userToken: token || '',
-      directUploadOss: import.meta.env.DIRECT_UPLOAD_OSS === 'true',
+      directUploadOss: true,
       onUploadStart: (files) => {
         setUploading(true);
         setGlobalError(null);
@@ -80,8 +80,6 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
         setGlobalError(error.message);
         onUploadError?.(error, fileId);
       }
-      // 注意：UploadManager 不支持 onUploadPause, onUploadResume, onUploadCancel
-      // 这些回调需要在其他地方处理
     };
 
     uploadManagerRef.current = new UploadManager(options);
@@ -114,9 +112,12 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
 
     // 获取合并后的配置，确保使用默认值
     const mergedConfig = uploadManagerRef.current.getConfig();
+    const requireCover = mergedConfig.requireCover !== false; // 默认要求封面
 
-    if (videoFiles.length > 0 && mergedConfig.requireCover) {
+    if (videoFiles.length > 0 && requireCover) {
       // 如果有视频文件且需要封面，显示封面选择弹窗
+      // 提示：优化用户体验，告诉用户视频上传前需要先设置封面
+      message.info(`请为视频 "${videoFiles[0].name}" 选择封面图`);
       setCurrentVideoFile(videoFiles[0]);
       setPendingFiles(files);
       setCoverModalVisible(true);

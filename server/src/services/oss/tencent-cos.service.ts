@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { OssService, UploadResult, FileInfo } from './oss.service';
 import { Readable } from 'stream';
 import logger from '@/utils/logger';
+import STS from 'qcloud-cos-sts';
 
 export interface TencentCOSConfig {
   region: string;
@@ -17,8 +18,10 @@ export class TencentCOSService implements OssService {
   private cosClient: COS;
   private bucket: string;
   private region: string;
+  private config: TencentCOSConfig;
 
   constructor(config: TencentCOSConfig) {
+    this.config = config;
     this.bucket = config.bucket;
     this.bucketName = config.bucket;
     this.region = config.region;
@@ -29,7 +32,40 @@ export class TencentCOSService implements OssService {
   }
 
   /**
-   * 初始化存储桶
+   * 获取 STS 临时密钥
+   */
+  async getSTSToken(scope: any[]): Promise<any> {
+    return new Promise((resolve, reject) => {
+      const policy = {
+        version: '2.0',
+        statement: [{
+          action: scope.map(s => s.action),
+          effect: 'allow',
+          resource: ['*'],
+        }],
+      };
+
+      STS.getCredential(
+        {
+          secretId: this.config.secretId,
+          secretKey: this.config.secretKey,
+          policy: policy,
+          durationSeconds: 3600,
+        },
+        (err, credential) => {
+          if (err) {
+            logger.error(`Error getting STS token from Tencent COS: ${JSON.stringify(err)}`);
+            reject(err);
+          } else {
+            resolve(credential);
+          }
+        }
+      );
+    });
+  }
+
+  /**
+   * 初始化存储桶并配置 CORS
    */
   async initializeBucket(): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -38,34 +74,81 @@ export class TencentCOSService implements OssService {
           Bucket: this.bucket,
           Region: this.region,
         },
-        (err) => {
-          if (err) {
-            if (err.statusCode === 404) {
-              this.cosClient.putBucket(
-                {
-                  Bucket: this.bucket,
-                  Region: this.region,
-                },
-                (putErr) => {
-                  if (putErr) {
-                    logger.error(`Error creating Tencent COS bucket: ${putErr.message}`);
-                    reject(putErr);
-                  } else {
-                    logger.info(`Tencent COS Bucket ${this.bucket} created successfully`);
-                    resolve();
-                  }
-                }
-              );
+        async (err) => {
+          try {
+            if (err) {
+              if (err.statusCode === 404) {
+                await new Promise<void>((res, rej) => {
+                  this.cosClient.putBucket(
+                    {
+                      Bucket: this.bucket,
+                      Region: this.region,
+                    },
+                    (putErr) => {
+                      if (putErr) rej(putErr);
+                      else res();
+                    }
+                  );
+                });
+                logger.info(`Tencent COS Bucket ${this.bucket} created successfully`);
+              } else {
+                throw err;
+              }
             } else {
-              logger.error(`Error checking Tencent COS bucket: ${err.message}`);
-              reject(err);
+              logger.info(`Tencent COS Bucket ${this.bucket} already exists`);
             }
-          } else {
-            logger.info(`Tencent COS Bucket ${this.bucket} already exists`);
+
+            // 配置 CORS
+            try {
+              await this.putBucketCors();
+            } catch (corsErr) {
+              logger.warn(`Failed to configure CORS (may already be configured or transient error): ${corsErr instanceof Error ? corsErr.message : String(corsErr)}`);
+            }
             resolve();
+          } catch (e) {
+            logger.error(`Error initializing Tencent COS bucket: ${e instanceof Error ? e.message : String(e)}`);
+            reject(e);
           }
         }
       );
+    });
+  }
+
+  /**
+   * 配置存储桶 CORS
+   */
+  private async putBucketCors(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const params = {
+        Bucket: this.bucket,
+        Region: this.region,
+        CORSRules: [
+          {
+            AllowedOrigin: ['*'], // 在生产环境中建议指定具体的域名
+            AllowedMethod: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD'],
+            AllowedHeader: ['*'],
+            ExposeHeader: [
+              'ETag',
+              'Content-Type',
+              'Content-Length',
+              'x-cos-request-id',
+              'x-cos-meta-filename',
+              'x-cos-meta-fileid'
+            ],
+            MaxAgeSeconds: 600,
+          },
+        ],
+      };
+
+      this.cosClient.putBucketCors(params, (err) => {
+        if (err) {
+          logger.error(`Error setting CORS for Tencent COS bucket: ${err.message}`);
+          reject(err);
+        } else {
+          logger.info(`Tencent COS Bucket ${this.bucket} CORS configured successfully`);
+          resolve();
+        }
+      });
     });
   }
 
@@ -418,17 +501,28 @@ export class TencentCOSService implements OssService {
             ETag: p.ETag
           })),
         },
-        (err, _data) => {
+        async (err, _data) => {
           if (err) {
             logger.error(`Error completing multipart upload in Tencent COS: ${err.message}`);
             reject(err);
           } else {
-            resolve({
-              key,
-              url: this.getFileUrl(key),
-              size: 0, // Multipart complete doesn't return size directly in all SDKs
-              contentType: '', // Nor content type
-            });
+            try {
+              // 完成后获取文件信息以填充真实的 size 和 contentType
+              const fileInfo = await this.getFileInfo(key);
+              resolve({
+                key,
+                url: fileInfo.url,
+                size: fileInfo.size,
+                contentType: fileInfo.contentType,
+              });
+            } catch (error) {
+              resolve({
+                key,
+                url: this.getFileUrl(key),
+                size: 0,
+                contentType: 'application/octet-stream',
+              });
+            }
           }
         }
       );
