@@ -124,7 +124,7 @@ export class TencentCOSService implements OssService {
         Region: this.region,
         CORSRules: [
           {
-            AllowedOrigin: ['*'], // 在生产环境中建议指定具体的域名
+            AllowedOrigin: ['luhe.site', '*.luhe.site'], // 在生产环境中建议指定具体的域名
             AllowedMethod: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD'],
             AllowedHeader: ['*'],
             ExposeHeader: [
